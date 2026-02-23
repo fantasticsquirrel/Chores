@@ -76,3 +76,51 @@ def test_update_child_returns_not_found(tmp_path: Path, monkeypatch) -> None:
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Child not found."
+
+
+def test_create_child_rejects_whitespace_only_name(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        response = client.post(
+            "/children",
+            json={"household_id": household_id, "name": "   "},
+        )
+
+    assert response.status_code == 422
+    details = response.json()["detail"]
+    assert any(detail["loc"][-1] == "name" for detail in details)
+
+
+def test_patch_child_requires_name_or_active(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        created = client.post(
+            "/children",
+            json={"household_id": household_id, "name": "Riley", "active": True},
+        ).json()
+
+        response = client.patch(
+            f"/children/{created['id']}",
+            json={"household_id": household_id},
+        )
+
+    assert response.status_code == 422
+    details = response.json()["detail"]
+    assert any("At least one field must be provided for update." in detail["msg"] for detail in details)
+
+
+def test_create_child_invalid_household_returns_bad_request(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/children",
+            json={"household_id": 9999, "name": "Riley"},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid household reference."
