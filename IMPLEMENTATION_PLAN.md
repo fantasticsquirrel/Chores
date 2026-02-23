@@ -35,7 +35,7 @@
 - [x] 4.5 — Add regression test for API client fetch binding bug.
 
 ## Phase 5: Deploy + Verify
-- [ ] 5.1 — Rebuild frontend and restart backend service.
+- [x] 5.1 — Rebuild frontend and restart backend service.
 - [ ] 5.2 — Smoke test with Playwright on deployed `/chore/`: login required, create child works, child submission works, board approval works.
 - [ ] 5.3 — Verify anonymous access is blocked on protected pages and APIs return 401/403 correctly.
 - [ ] 5.4 — Update README with auth setup, first parent bootstrap user flow, and production test checklist.
