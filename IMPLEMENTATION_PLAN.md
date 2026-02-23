@@ -6,7 +6,7 @@
 - [x] 1.3 — Add environment configuration and startup checks
 
 ## Phase 2: Core Architecture
-- [ ] 2.1 — Define core data models and storage strategy
+- [x] 2.1 — Define core data models and storage strategy
 - [ ] 2.2 — Implement repository/service boundaries
 - [ ] 2.3 — Add baseline error handling and logging
 

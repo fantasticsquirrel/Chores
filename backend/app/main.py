@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.config import get_settings
+from app.db import initialize_database
 from app.startup import run_startup_checks
 
 
@@ -10,6 +11,7 @@ from app.startup import run_startup_checks
 async def lifespan(_: FastAPI):
     settings = get_settings()
     run_startup_checks(settings)
+    initialize_database(settings)
     yield
 
 
