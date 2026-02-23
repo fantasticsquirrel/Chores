@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from app.api import children_router
+from app.api import children_router, workflow_router
 from app.config import get_settings
 from app.db import initialize_database
 from app.error_handling import RequestLoggingMiddleware, register_exception_handlers
@@ -25,6 +25,7 @@ app = FastAPI(title="Chore Tracker API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(RequestLoggingMiddleware)
 register_exception_handlers(app)
 app.include_router(children_router)
+app.include_router(workflow_router)
 
 
 @app.get("/health")

@@ -26,7 +26,7 @@
 
 ## Phase 5: Integration & Reliability
 - [x] 5.1 — Ensure frontend uses configurable API base for production (`/chore-api`) and local dev
-- [ ] 5.2 — Add end-to-end happy-path test: create child → child submits chore → parent approves → balance updates
+- [x] 5.2 — Add end-to-end happy-path test: create child → child submits chore → parent approves → balance updates
 - [ ] 5.3 — Add frontend tests for major views and API error handling
 - [ ] 5.4 — Verify backend health/readiness + frontend build in CI-quality gate sequence
 
