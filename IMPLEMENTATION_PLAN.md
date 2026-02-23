@@ -32,7 +32,7 @@
 - [x] 4.2 — Add backend permission tests (role enforcement by endpoint).
 - [x] 4.3 — Add frontend tests for protected-route redirects and authenticated navigation.
 - [x] 4.4 — Add integration tests for create child, submit chore, approve/reject flow under authenticated session.
-- [ ] 4.5 — Add regression test for API client fetch binding bug.
+- [x] 4.5 — Add regression test for API client fetch binding bug.
 
 ## Phase 5: Deploy + Verify
 - [ ] 5.1 — Rebuild frontend and restart backend service.
