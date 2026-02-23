@@ -28,7 +28,7 @@
 - [x] 5.1 — Ensure frontend uses configurable API base for production (`/chore-api`) and local dev
 - [x] 5.2 — Add end-to-end happy-path test: create child → child submits chore → parent approves → balance updates
 - [x] 5.3 — Add frontend tests for major views and API error handling
-- [ ] 5.4 — Verify backend health/readiness + frontend build in CI-quality gate sequence
+- [x] 5.4 — Verify backend health/readiness + frontend build in CI-quality gate sequence
 
 ## Phase 6: Deployment Finish
 - [ ] 6.1 — Verify `/chore/` serves built frontend assets and all API calls resolve to `/chore-api/`
