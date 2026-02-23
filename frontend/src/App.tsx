@@ -8,6 +8,7 @@ import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
+import type { UserRole } from "./api";
 import { Button, Card } from "./ui";
 
 type RouteCardProps = {
@@ -15,12 +16,22 @@ type RouteCardProps = {
   description: string;
 };
 
-const navItems = [
-  { to: "/parent/dashboard", label: "Parent Dashboard" },
-  { to: "/parent/children", label: "Children" },
-  { to: "/child/today", label: "Child Today" },
-  { to: "/board", label: "Board" },
+type NavItem = {
+  to: string;
+  label: string;
+  roles: UserRole[];
+};
+
+const navItems: NavItem[] = [
+  { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/child/today", label: "Child Today", roles: ["CHILD"] },
 ];
+
+function getDefaultRouteForRole(role: UserRole): string {
+  return role === "CHILD" ? "/child/today" : "/parent/dashboard";
+}
 
 function RouteCard({ title, description }: RouteCardProps): ReactElement {
   return (
@@ -41,7 +52,7 @@ function NotFoundPage(): ReactElement {
 }
 
 function ProtectedRoute(): ReactElement {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   if (status === "loading") {
     return (
@@ -56,12 +67,38 @@ function ProtectedRoute(): ReactElement {
     return <Navigate to="/login" replace />;
   }
 
+  if (user === null) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+}
+
+type RoleProtectedRouteProps = {
+  allowedRoles: UserRole[];
+};
+
+function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactElement {
+  const { status, user } = useAuth();
+
+  if (status !== "authenticated" || user === null) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!allowedRoles.includes(user.role)) {
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+  }
+
   return <Outlet />;
 }
 
 function AppShell(): ReactElement {
   const navigate = useNavigate();
   const { status, user, logout } = useAuth();
+  const visibleNavItems =
+    status === "authenticated" && user !== null
+      ? navItems.filter((item) => item.roles.includes(user.role))
+      : [];
 
   return (
     <div className="app-shell">
@@ -73,7 +110,7 @@ function AppShell(): ReactElement {
           <h2>Jewel Pop Workspace</h2>
         </div>
         <nav aria-label="Primary">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -115,43 +152,47 @@ export default function App(): ReactElement {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route
-              path="/board"
-              element={<ParentSubmissionReviewPage />}
-            />
-            <Route
-              path="/child/today"
-              element={<ChildTodayPage />}
-            />
-            <Route
-              path="/child/calendar"
-              element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
-            />
-            <Route
-              path="/child/history"
-              element={<RouteCard title="Child History" description="History and balance timeline will be wired after core API tasks." />}
-            />
-            <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
-            <Route
-              path="/parent/chores"
-              element={<RouteCard title="Parent Chores" description="Chore authoring and scheduling pages will be built in subsequent iterations." />}
-            />
-            <Route
-              path="/parent/children"
-              element={<ParentChildrenPage />}
-            />
-            <Route
-              path="/parent/tags"
-              element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}
-            />
-            <Route
-              path="/parent/templates"
-              element={<RouteCard title="Parent Templates" description="Template scheduling UX is queued for a later task." />}
-            />
-            <Route
-              path="/parent/reports"
-              element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
-            />
+            <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
+              <Route
+                path="/board"
+                element={<ParentSubmissionReviewPage />}
+              />
+              <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
+              <Route
+                path="/parent/chores"
+                element={<RouteCard title="Parent Chores" description="Chore authoring and scheduling pages will be built in subsequent iterations." />}
+              />
+              <Route
+                path="/parent/children"
+                element={<ParentChildrenPage />}
+              />
+              <Route
+                path="/parent/tags"
+                element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}
+              />
+              <Route
+                path="/parent/templates"
+                element={<RouteCard title="Parent Templates" description="Template scheduling UX is queued for a later task." />}
+              />
+              <Route
+                path="/parent/reports"
+                element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
+              />
+            </Route>
+            <Route element={<RoleProtectedRoute allowedRoles={["CHILD"]} />}>
+              <Route
+                path="/child/today"
+                element={<ChildTodayPage />}
+              />
+              <Route
+                path="/child/calendar"
+                element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
+              />
+              <Route
+                path="/child/history"
+                element={<RouteCard title="Child History" description="History and balance timeline will be wired after core API tasks." />}
+              />
+            </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Route>

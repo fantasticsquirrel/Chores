@@ -40,7 +40,7 @@ describe("Mobile browser smoke flows", () => {
 
     expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Parent Dashboard" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Child Today" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Leo" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
@@ -57,6 +57,16 @@ describe("Mobile browser smoke flows", () => {
   });
 
   it("runs child key flow on mobile: load chores and submit selection", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 7,
+        household_id: 1,
+        email: "child@example.com",
+        role: "CHILD",
+        child_id: 12,
+      },
+      csrf_token: null,
+    });
     const listEligibleChoresSpy = vi.spyOn(apiClient, "listEligibleChores");
     listEligibleChoresSpy
       .mockResolvedValueOnce([

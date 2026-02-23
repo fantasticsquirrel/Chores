@@ -11,7 +11,7 @@ describe("App", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Parent Dashboard" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Parent Dashboard" })).not.toBeInTheDocument();
   });
 
   it("redirects root path to login", async () => {

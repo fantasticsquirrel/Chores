@@ -5,6 +5,19 @@ import App from "./App";
 import { ApiClientError, apiClient } from "./api";
 
 describe("Child today page", () => {
+  beforeEach(() => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 9,
+        household_id: 1,
+        email: "child@example.com",
+        role: "CHILD",
+        child_id: 9,
+      },
+      csrf_token: null,
+    });
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
