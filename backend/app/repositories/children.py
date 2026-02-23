@@ -24,3 +24,13 @@ class ChildRepository(SQLAlchemyRepository):
         self.session.flush()
         self.session.refresh(child)
         return child
+
+    def update(self, child: Child, *, name: str | None = None, active: bool | None = None) -> Child:
+        if name is not None:
+            child.name = name
+        if active is not None:
+            child.active = active
+
+        self.session.flush()
+        self.session.refresh(child)
+        return child

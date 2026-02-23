@@ -26,6 +26,14 @@ class _FakeChildRepository:
         self.calls.append(("get_by_id", (household_id, child_id), {}))
         return Child(id=child_id, household_id=household_id, name="Found", active=True)
 
+    def update(self, child: Child, *, name: str | None = None, active: bool | None = None) -> Child:
+        self.calls.append(("update", (child,), {"name": name, "active": active}))
+        if name is not None:
+            child.name = name
+        if active is not None:
+            child.active = active
+        return child
+
 
 def _settings(database_url: str) -> Settings:
     return Settings(
@@ -85,14 +93,22 @@ def test_child_service_delegates_to_repository() -> None:
     children = service.list_children(fake_session, 10, active_only=True)
     created = service.create_child(fake_session, 10, "  Riley  ")
     found = service.get_child(fake_session, 10, 99)
+    updated = service.update_child(fake_session, 10, 99, name="  Updated  ", active=False)
 
     assert len(children) == 1
     assert children[0].name == "Demo"
     assert created.name == "Riley"
     assert found is not None
     assert found.id == 99
+    assert updated is not None
+    assert updated.name == "Updated"
+    assert updated.active is False
 
     all_calls = [call for repository in built_repositories for call in repository.calls]
     assert ("list_by_household", (10,), {"active_only": True}) in all_calls
     assert any(call[0] == "add" and isinstance(call[1][0], Child) for call in all_calls)
     assert ("get_by_id", (10, 99), {}) in all_calls
+    assert any(
+        call[0] == "update" and call[2] == {"name": "Updated", "active": False}
+        for call in all_calls
+    )

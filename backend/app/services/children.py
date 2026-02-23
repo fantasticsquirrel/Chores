@@ -29,3 +29,20 @@ class ChildService:
     def get_child(self, session: Session, household_id: int, child_id: int) -> Child | None:
         repository = self._repository_factory(session)
         return repository.get_by_id(household_id, child_id)
+
+    def update_child(
+        self,
+        session: Session,
+        household_id: int,
+        child_id: int,
+        *,
+        name: str | None = None,
+        active: bool | None = None,
+    ) -> Child | None:
+        repository = self._repository_factory(session)
+        child = repository.get_by_id(household_id, child_id)
+        if child is None:
+            return None
+
+        normalized_name = name.strip() if name is not None else None
+        return repository.update(child, name=normalized_name, active=active)
