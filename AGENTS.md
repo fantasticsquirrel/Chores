@@ -346,3 +346,6 @@ One-time chore auto-removal on expiration
 - Lint: npm run lint
 - Test: npm test
 - Build: npm run build
+
+## Operational Learnings
+- Monorepo baseline initialized with a root npm workspace pointing to `frontend`, plus a Python backend scaffold in `backend/`; current `lint`, `test`, and `build` scripts are intentional placeholders to be replaced in task `1.2`.
