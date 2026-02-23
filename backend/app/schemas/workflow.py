@@ -56,3 +56,13 @@ class SubmissionReviewResponse(BaseModel):
     for_date: date
     status: SubmissionStatus
     items: list[SubmissionReviewItemResponse]
+
+
+class SubmissionItemDecisionRequest(BaseModel):
+    status: SubmissionStatus
+
+    @model_validator(mode="after")
+    def validate_submission_item_decision_status(self) -> "SubmissionItemDecisionRequest":
+        if self.status == SubmissionStatus.PENDING:
+            raise ValueError("status must be APPROVED or REJECTED.")
+        return self

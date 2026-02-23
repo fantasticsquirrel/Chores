@@ -29,6 +29,7 @@ from app.models.enums import (
 from app.schemas.workflow import (
     CreateSubmissionRequest,
     EligibleChoreResponse,
+    SubmissionItemDecisionRequest,
     SubmissionItemResponse,
     SubmissionResponse,
     SubmissionReviewItemResponse,
@@ -165,6 +166,67 @@ def approve_submission(
     return _serialize_submission_review(session, submission)
 
 
+@router.post("/submissions/{submission_id}/items/{item_id}/decision", response_model=SubmissionReviewResponse)
+def decide_submission_item(
+    payload: SubmissionItemDecisionRequest,
+    submission_id: int = Path(gt=0),
+    item_id: int = Path(gt=0),
+    session: Session = Depends(get_db_session),
+    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+) -> SubmissionReviewResponse:
+    submission = session.get(Submission, submission_id)
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found.")
+    if submission.household_id != user.household_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+    if submission.status != SubmissionStatus.PENDING:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission was already processed.")
+
+    item = session.scalar(
+        select(SubmissionItem).where(
+            SubmissionItem.id == item_id,
+            SubmissionItem.submission_id == submission_id,
+        )
+    )
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission item not found.")
+    if item.status != SubmissionStatus.PENDING:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission item was already processed.")
+
+    item.status = payload.status
+    if payload.status == SubmissionStatus.APPROVED:
+        chore = session.get(Chore, item.chore_id)
+        if chore is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chore not found for submission item.")
+        session.add(
+            CompletionRecord(
+                household_id=submission.household_id,
+                child_id=submission.child_id,
+                chore_id=item.chore_id,
+                date=submission.for_date,
+                status=CompletionStatus.APPROVED,
+            )
+        )
+        session.add(
+            Transaction(
+                household_id=submission.household_id,
+                child_id=submission.child_id,
+                amount_cents=chore.reward_cents,
+                type=TransactionType.CHORE_APPROVAL,
+            )
+        )
+
+    submission_items = list(
+        session.scalars(
+            select(SubmissionItem).where(SubmissionItem.submission_id == submission_id).order_by(SubmissionItem.id.asc())
+        ).all()
+    )
+    submission.status = _derive_submission_status(submission_items)
+    session.commit()
+    session.refresh(submission)
+    return _serialize_submission_review(session, submission)
+
+
 def _resolve_active_child(session: Session, user: User, child_id: int | None) -> Child:
     if user.role == UserRole.CHILD:
         if user.child_id is None:
@@ -291,3 +353,11 @@ def _serialize_submission_review(session: Session, submission: Submission) -> Su
             for item in items
         ],
     )
+
+
+def _derive_submission_status(items: list[SubmissionItem]) -> SubmissionStatus:
+    if any(item.status == SubmissionStatus.PENDING for item in items):
+        return SubmissionStatus.PENDING
+    if any(item.status == SubmissionStatus.APPROVED for item in items):
+        return SubmissionStatus.APPROVED
+    return SubmissionStatus.REJECTED

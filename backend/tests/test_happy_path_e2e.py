@@ -232,3 +232,64 @@ def test_child_session_can_load_eligible_chores_and_submit(tmp_path: Path, monke
         assert submit_response.json()["child_id"] == child_id
         assert submit_response.json()["status"] == "PENDING"
         assert submit_response.json()["items"] == [{"chore_id": chore_id, "status": "PENDING"}]
+
+
+def test_parent_can_decide_submission_items_individually(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 2, 23)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
+        create_child_response = client.post(
+            "/chore-api/children",
+            json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert create_child_response.status_code == 201
+        child_id = create_child_response.json()["id"]
+
+        first_chore_id = _create_chore(household_id, target_date)
+        second_chore_id = _create_chore(household_id, target_date)
+        submit_response = client.post(
+            f"/chore-api/submissions?child_id={child_id}",
+            json={"for_date": target_date.isoformat(), "chore_ids": [first_chore_id, second_chore_id]},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert submit_response.status_code == 201
+        submission_id = submit_response.json()["id"]
+
+        submissions_response = client.get("/chore-api/submissions?status=PENDING")
+        assert submissions_response.status_code == 200
+        submission_items = submissions_response.json()[0]["items"]
+        first_item_id = next(item["id"] for item in submission_items if item["chore_id"] == first_chore_id)
+        second_item_id = next(item["id"] for item in submission_items if item["chore_id"] == second_chore_id)
+
+        reject_response = client.post(
+            f"/chore-api/submissions/{submission_id}/items/{first_item_id}/decision",
+            json={"status": "REJECTED"},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert reject_response.status_code == 200
+        reject_payload = reject_response.json()
+        assert reject_payload["status"] == "PENDING"
+        assert next(item for item in reject_payload["items"] if item["id"] == first_item_id)["status"] == "REJECTED"
+
+        approve_response = client.post(
+            f"/chore-api/submissions/{submission_id}/items/{second_item_id}/decision",
+            json={"status": "APPROVED"},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert approve_response.status_code == 200
+        approve_payload = approve_response.json()
+        assert approve_payload["status"] == "APPROVED"
+        assert next(item for item in approve_payload["items"] if item["id"] == second_item_id)["status"] == "APPROVED"
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        total_balance_cents = session.scalar(
+            select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(Transaction.child_id == child_id)
+        )
+        assert total_balance_cents == 350
