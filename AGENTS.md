@@ -352,3 +352,4 @@ One-time chore auto-removal on expiration
 - Task `1.2` established frontend quality tooling: Vite build, Vitest (`jsdom`), ESLint flat config for TypeScript/React, and Prettier checks under the `frontend` workspace scripts.
 - Task `1.3` introduced backend env bootstrap with `backend/.env.example`, cached settings parsing (`APP_ENV`, `DATABASE_URL`, `SECRET_KEY`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`), and FastAPI lifespan startup checks validating production secrets plus SQLite directory readiness.
 - Task `2.1` added SQLAlchemy core domain models and DB bootstrap in `backend/app/db.py` with SQLite storage pragmas (`foreign_keys=ON`, `journal_mode=WAL`) plus startup table initialization and backend persistence tests.
+- Task `2.2` introduced backend repository/service boundaries for child management (`app/repositories`, `app/services`) with integration tests for repository filtering and unit tests verifying service delegation.

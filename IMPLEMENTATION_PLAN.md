@@ -7,7 +7,7 @@
 
 ## Phase 2: Core Architecture
 - [x] 2.1 — Define core data models and storage strategy
-- [ ] 2.2 — Implement repository/service boundaries
+- [x] 2.2 — Implement repository/service boundaries
 - [ ] 2.3 — Add baseline error handling and logging
 
 ## Phase 3: Feature Delivery
