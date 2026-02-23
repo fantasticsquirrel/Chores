@@ -17,5 +17,5 @@
 
 ## Phase 4: Hardening
 - [x] 4.1 — Improve observability and operational checks
-- [ ] 4.2 — Finalize docs and run full quality gates
+- [x] 4.2 — Finalize docs and run full quality gates
 - [ ] 4.3 — Mark plan complete when all tasks are done
