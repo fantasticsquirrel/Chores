@@ -64,4 +64,58 @@ describe("ApiClient", () => {
       detail: "Child not found.",
     });
   });
+
+  it("calls eligible chores endpoint with date query param", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ chore_id: 12, name: "Dishes", reward_cents: 300, occurrence_date: "2026-02-23" }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const chores = await client.listEligibleChores({ date: "2026-02-23" });
+
+    expect(chores).toEqual([{ chore_id: 12, name: "Dishes", reward_cents: 300, occurrence_date: "2026-02-23" }]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/children/me/eligible-chores?date=2026-02-23",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+  });
+
+  it("serializes submission payload for submit requests", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 5,
+          child_id: 9,
+          for_date: "2026-02-23",
+          status: "PENDING",
+          items: [{ chore_id: 12, status: "PENDING" }],
+        }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.createSubmission({ for_date: "2026-02-23", chore_ids: [12] });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/submissions",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ for_date: "2026-02-23", chore_ids: [12] }),
+      }),
+    );
+  });
 });

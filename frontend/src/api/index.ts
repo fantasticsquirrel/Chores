@@ -3,8 +3,12 @@ export type {
   ApiErrorResponse,
   Child,
   CreateChildRequest,
+  EligibleChore,
   HealthResponse,
+  ListEligibleChoresParams,
   ListChildrenParams,
   ReadinessResponse,
+  SubmissionRequest,
+  SubmissionResponse,
   UpdateChildRequest,
 } from "./models";

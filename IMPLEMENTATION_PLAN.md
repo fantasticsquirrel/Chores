@@ -20,7 +20,7 @@
 - [x] 4.2 — Add API client layer in frontend for `/chore-api/*` endpoints with typed request/response models
 - [x] 4.3 — Build Parent Dashboard view showing child balances, pending submissions count, and quick actions
 - [x] 4.4 — Build Children management page (list/create/edit active status) wired to backend `/children` APIs
-- [ ] 4.5 — Build Child Today page (eligible chores list, submission flow) with loading/error/empty states
+- [x] 4.5 — Build Child Today page (eligible chores list, submission flow) with loading/error/empty states
 - [ ] 4.6 — Build Submission review page for parents (approve/reject per item)
 - [ ] 4.7 — Implement shared UI system (cards, buttons, badges, forms, toast/errors) with Jewel Pop styling
 

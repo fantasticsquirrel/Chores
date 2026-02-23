@@ -2,9 +2,13 @@ import type {
   ApiErrorResponse,
   Child,
   CreateChildRequest,
+  EligibleChore,
   HealthResponse,
+  ListEligibleChoresParams,
   ListChildrenParams,
   ReadinessResponse,
+  SubmissionRequest,
+  SubmissionResponse,
   UpdateChildRequest,
 } from "./models";
 
@@ -64,6 +68,14 @@ export class ApiClient {
 
   async updateChild(childId: number, payload: UpdateChildRequest): Promise<Child> {
     return this.patch<Child, UpdateChildRequest>(`/children/${childId}`, payload);
+  }
+
+  async listEligibleChores(params: ListEligibleChoresParams): Promise<EligibleChore[]> {
+    return this.get<EligibleChore[]>("/children/me/eligible-chores", params);
+  }
+
+  async createSubmission(payload: SubmissionRequest): Promise<SubmissionResponse> {
+    return this.post<SubmissionResponse, SubmissionRequest>("/submissions", payload);
   }
 
   private async get<TResponse>(path: string, query?: RequestQuery): Promise<TResponse> {
