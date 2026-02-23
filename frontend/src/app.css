@@ -263,6 +263,54 @@ body {
   box-shadow: 0 12px 24px #13072f85;
 }
 
+.button-reset {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.button-reset:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.children-form {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.75rem;
+  max-width: 22rem;
+}
+
+.children-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.children-form input[type="text"] {
+  border: 1px solid #ffffff42;
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  color: #f8f3ff;
+  background: #ffffff14;
+}
+
+.children-form input[type="text"]::placeholder {
+  color: #f3e5ffb0;
+}
+
+.children-form input[type="text"]:focus-visible {
+  outline: 2px solid #67d8ff;
+  outline-offset: 1px;
+}
+
+.checkbox-row {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .metric-card,
   .dashboard-panel {

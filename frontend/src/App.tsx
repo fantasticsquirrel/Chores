@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { Navigate, NavLink, Outlet, Route, Routes } from "react-router-dom";
 
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
+import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 
 type RouteCardProps = {
   title: string;
@@ -100,7 +101,7 @@ export default function App(): ReactElement {
         />
         <Route
           path="/parent/children"
-          element={<RouteCard title="Parent Children" description="Children CRUD UI wiring arrives in task 4.4." />}
+          element={<ParentChildrenPage />}
         />
         <Route
           path="/parent/tags"
