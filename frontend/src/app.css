@@ -1,0 +1,148 @@
+:root {
+  font-family: "Trebuchet MS", "Gill Sans", "Avenir Next", sans-serif;
+  color: #f8f3ff;
+  background: #170f2d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 22%, #2fc4ff40 0%, transparent 36%),
+    radial-gradient(circle at 82% 18%, #f2549c3d 0%, transparent 32%),
+    linear-gradient(145deg, #140d2d 0%, #221546 56%, #130e2f 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  padding: 1.25rem;
+  overflow: hidden;
+}
+
+.background-orb {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+.orb-one {
+  width: 16rem;
+  height: 16rem;
+  top: -4rem;
+  right: -3rem;
+  background: radial-gradient(circle, #ff71b8 0%, #fb5f6a33 70%, transparent 100%);
+}
+
+.orb-two {
+  width: 18rem;
+  height: 18rem;
+  left: -6rem;
+  bottom: -7rem;
+  background: radial-gradient(circle, #4fc8ff 0%, #6f8fff30 68%, transparent 100%);
+}
+
+.glass-card {
+  position: relative;
+  z-index: 1;
+  border: 1px solid #ffffff33;
+  border-radius: 1.25rem;
+  background: linear-gradient(140deg, #ffffff2f 0%, #ffffff10 100%);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px #07041970;
+}
+
+.top-bar {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.72rem;
+  color: #dad2ff;
+}
+
+.top-bar h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.45rem;
+}
+
+.top-bar nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.nav-chip {
+  text-decoration: none;
+  color: #f6eeff;
+  font-weight: 600;
+  border: 1px solid #ffffff2b;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  background: #ffffff14;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-chip:hover {
+  transform: translateY(-1px);
+  background: #ffffff2a;
+}
+
+.nav-chip.active {
+  background: linear-gradient(120deg, #25d0ff 0%, #ff4da3 100%);
+  border-color: transparent;
+}
+
+.content-grid {
+  position: relative;
+  z-index: 1;
+  margin-top: 1rem;
+}
+
+.content-grid .glass-card {
+  padding: 1.5rem;
+  max-width: 48rem;
+}
+
+.content-grid h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw + 1rem, 2rem);
+}
+
+.content-grid p {
+  margin: 0.65rem 0 0;
+  color: #efe9ff;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    padding: 1rem;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .top-bar nav {
+    justify-content: flex-start;
+  }
+}

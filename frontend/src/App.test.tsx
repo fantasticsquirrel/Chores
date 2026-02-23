@@ -1,9 +1,26 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import App from "./App";
 
 describe("App", () => {
-  it("renders the app title", () => {
-    render(<App />);
-    expect(screen.getByRole("heading", { name: "Chore Tracker v3" })).toBeVisible();
+  it("renders the routed shell and login route", async () => {
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Parent Dashboard" })).toBeVisible();
+  });
+
+  it("redirects root path to login", async () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
   });
 });

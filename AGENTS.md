@@ -348,6 +348,7 @@ One-time chore auto-removal on expiration
 - Build: npm run build
 
 ## Operational Learnings
+- After initial loop completion, project was backend-heavy with a placeholder frontend (`<h1>Chore Tracker v3</h1>`). Treat frontend feature delivery as mandatory before declaring product complete.
 - Monorepo baseline initialized with a root npm workspace pointing to `frontend`, plus a Python backend scaffold in `backend/`; current `lint`, `test`, and `build` scripts are intentional placeholders to be replaced in task `1.2`.
 - Task `1.2` established frontend quality tooling: Vite build, Vitest (`jsdom`), ESLint flat config for TypeScript/React, and Prettier checks under the `frontend` workspace scripts.
 - Task `1.3` introduced backend env bootstrap with `backend/.env.example`, cached settings parsing (`APP_ENV`, `DATABASE_URL`, `SECRET_KEY`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`), and FastAPI lifespan startup checks validating production secrets plus SQLite directory readiness.
@@ -360,3 +361,4 @@ One-time chore auto-removal on expiration
 - Task `4.1` expanded operational visibility with request correlation IDs in logs/response headers plus dedicated liveness/readiness endpoints (`/health/live`, `/health/ready`) backed by an explicit database readiness probe and API coverage in `backend/tests/test_health_api.py`.
 - Task `4.2` finalized baseline documentation in root `README.md` with current API scope, local setup/run commands, and explicit quality-gate commands for frontend and backend verification.
 - Task `4.3` closed the implementation checklist by marking all plan items complete, appending `STATUS: COMPLETE` to `IMPLEMENTATION_PLAN.md`, and re-running the root backpressure quality gates (`npm run lint`, `npm test`).
+- Frontend task `4.1` now delivers a routed React shell in `frontend/src/App.tsx` with `BrowserRouter` bootstrap in `frontend/src/main.tsx`; component tests should mount `App` with `MemoryRouter` to control route assertions.
