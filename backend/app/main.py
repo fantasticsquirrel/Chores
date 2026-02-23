@@ -1,6 +1,19 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
-app = FastAPI(title="Chore Tracker API", version="0.1.0")
+from app.config import get_settings
+from app.startup import run_startup_checks
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    settings = get_settings()
+    run_startup_checks(settings)
+    yield
+
+
+app = FastAPI(title="Chore Tracker API", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")
