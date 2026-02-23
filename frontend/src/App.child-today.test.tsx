@@ -95,4 +95,41 @@ describe("Child today page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     expect(await screen.findByText("No eligible chores for this date.")).toBeVisible();
   });
+
+  it("shows an error message when submission fails", async () => {
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([
+      {
+        chore_id: 7,
+        name: "Make Bed",
+        reward_cents: 150,
+        occurrence_date: "2026-02-23",
+      },
+    ]);
+    const createSubmissionSpy = vi.spyOn(apiClient, "createSubmission");
+    createSubmissionSpy.mockRejectedValue(
+      new ApiClientError(400, "Submission window has closed", {
+        detail: "Submission window has closed",
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/child/today"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Make Bed");
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: "Submit Selected Chores" }));
+
+    await waitFor(() =>
+      expect(createSubmissionSpy).toHaveBeenCalledWith({
+        for_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/u),
+        chore_ids: [7],
+      }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not submit chores: Submission window has closed",
+    );
+  });
 });
