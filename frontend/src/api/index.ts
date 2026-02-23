@@ -1,10 +1,13 @@
 export { ApiClient, ApiClientError, apiClient, createApiClient } from "./client";
 export type {
   ApiErrorResponse,
+  AuthSessionResponse,
+  AuthUser,
   Child,
   CreateChildRequest,
   EligibleChore,
   HealthResponse,
+  LoginRequest,
   ListEligibleChoresParams,
   ListSubmissionsParams,
   ListChildrenParams,
@@ -15,4 +18,5 @@ export type {
   SubmissionRequest,
   SubmissionResponse,
   UpdateChildRequest,
+  UserRole,
 } from "./models";

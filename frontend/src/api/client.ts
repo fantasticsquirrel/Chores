@@ -1,9 +1,11 @@
 import type {
   ApiErrorResponse,
+  AuthSessionResponse,
   Child,
   CreateChildRequest,
   EligibleChore,
   HealthResponse,
+  LoginRequest,
   ListEligibleChoresParams,
   ListSubmissionsParams,
   ListChildrenParams,
@@ -59,6 +61,10 @@ export class ApiClient {
 
   async getReadiness(): Promise<ReadinessResponse> {
     return this.get<ReadinessResponse>("/health/ready");
+  }
+
+  async login(payload: LoginRequest): Promise<AuthSessionResponse> {
+    return this.post<AuthSessionResponse, LoginRequest>("/auth/login", payload);
   }
 
   async listChildren(params: ListChildrenParams): Promise<Child[]> {

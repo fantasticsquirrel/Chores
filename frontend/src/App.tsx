@@ -5,6 +5,7 @@ import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
+import { LoginPage } from "./pages/LoginPage";
 import { Card } from "./ui";
 
 type RouteCardProps = {
@@ -25,15 +26,6 @@ function RouteCard({ title, description }: RouteCardProps): ReactElement {
       <h1>{title}</h1>
       <p>{description}</p>
     </Card>
-  );
-}
-
-function LoginPage(): ReactElement {
-  return (
-    <RouteCard
-      title="Welcome Back"
-      description="Sign in to manage chores, approvals, and balances for your household."
-    />
   );
 }
 

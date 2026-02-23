@@ -47,6 +47,44 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes login payload for auth endpoint", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: 11,
+            household_id: 2,
+            email: "parent@example.com",
+            role: "PARENT",
+            child_id: null,
+          },
+          csrf_token: "csrf-token",
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.login({ email: "parent@example.com", password: "password123" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/auth/login",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ email: "parent@example.com", password: "password123" }),
+      }),
+    );
+  });
+
   it("throws ApiClientError with backend detail on non-2xx responses", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(

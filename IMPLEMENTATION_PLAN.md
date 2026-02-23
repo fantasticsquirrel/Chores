@@ -13,7 +13,7 @@
 - [x] 1.5 — Protect all household data routes (children, chores, submissions, board) with auth dependencies.
 
 ## Phase 2: Frontend Auth & Route Protection
-- [ ] 2.1 — Build real login form (email/password) on `/login` and wire to backend auth endpoints.
+- [x] 2.1 — Build real login form (email/password) on `/login` and wire to backend auth endpoints.
 - [ ] 2.2 — Add auth state store + bootstrap (`/auth/me` on app load) and logout handling.
 - [ ] 2.3 — Enforce protected routes: anonymous users must be redirected to `/login`.
 - [ ] 2.4 — Add role-aware nav visibility and route access restrictions.

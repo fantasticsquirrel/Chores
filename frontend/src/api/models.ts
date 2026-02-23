@@ -2,6 +2,26 @@ export interface ApiErrorResponse {
   detail?: string;
 }
 
+export type UserRole = "PARENT_ADMIN" | "PARENT" | "CHILD";
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  household_id: number;
+  email: string;
+  role: UserRole;
+  child_id?: number | null;
+}
+
+export interface AuthSessionResponse {
+  user: AuthUser;
+  csrf_token?: string | null;
+}
+
 export interface HealthResponse {
   status: string;
 }
