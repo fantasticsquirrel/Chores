@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -144,5 +144,65 @@ describe("Parent children page", () => {
       "Could not save child: Concurrent update conflict",
     );
     expect(listChildrenSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses authenticated household scope for list/create/update requests", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 22,
+        household_id: 42,
+        email: "parent42@example.com",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: null,
+    });
+
+    const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
+    listChildrenSpy
+      .mockResolvedValueOnce([{ id: 5, household_id: 42, name: "Ari", active: true }])
+      .mockResolvedValueOnce([
+        { id: 5, household_id: 42, name: "Ari", active: true },
+        { id: 8, household_id: 42, name: "Nova", active: true },
+      ])
+      .mockResolvedValueOnce([
+        { id: 5, household_id: 42, name: "Ari", active: false },
+        { id: 8, household_id: 42, name: "Nova", active: true },
+      ]);
+    const createChildSpy = vi.spyOn(apiClient, "createChild");
+    createChildSpy.mockResolvedValue({ id: 8, household_id: 42, name: "Nova", active: true });
+    const updateChildSpy = vi.spyOn(apiClient, "updateChild");
+    updateChildSpy.mockResolvedValue({ id: 5, household_id: 42, name: "Ari", active: false });
+
+    render(
+      <MemoryRouter initialEntries={["/parent/children"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Ari")).toBeVisible();
+    expect(listChildrenSpy).toHaveBeenNthCalledWith(1, { household_id: 42 });
+
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Nova" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
+
+    await waitFor(() =>
+      expect(createChildSpy).toHaveBeenCalledWith({
+        household_id: 42,
+        name: "Nova",
+        active: true,
+      }),
+    );
+
+    const ariRow = screen.getByText("Ari").closest("li");
+    expect(ariRow).not.toBeNull();
+    fireEvent.click(within(ariRow as HTMLLIElement).getByRole("button", { name: "Set Inactive" }));
+
+    await waitFor(() =>
+      expect(updateChildSpy).toHaveBeenCalledWith(5, {
+        household_id: 42,
+        active: false,
+      }),
+    );
   });
 });

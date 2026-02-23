@@ -1,10 +1,9 @@
 import type { FormEvent, ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ApiClientError, apiClient, type Child } from "../api";
+import { useAuth } from "../auth/useAuth";
 import { Badge, Button, Card, CheckboxField, FormField, InlineNotice, TextInput } from "../ui";
-
-const DEFAULT_HOUSEHOLD_ID = 1;
 
 type PageState = {
   children: Child[];
@@ -25,6 +24,8 @@ function formatLoadError(error: unknown): string {
 }
 
 export function ParentChildrenPage(): ReactElement {
+  const { user } = useAuth();
+  const householdId = user?.household_id ?? null;
   const [state, setState] = useState<PageState>({
     children: [],
     loading: true,
@@ -36,20 +37,25 @@ export function ParentChildrenPage(): ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [updatingChildId, setUpdatingChildId] = useState<number | null>(null);
 
-  async function loadChildren(): Promise<void> {
+  const loadChildren = useCallback(async (): Promise<void> => {
+    if (householdId === null) {
+      setState({ children: [], loading: false, error: "Could not determine household scope." });
+      return;
+    }
+
     setState((previous) => ({ ...previous, loading: true, error: null }));
 
     try {
-      const children = await apiClient.listChildren({ household_id: DEFAULT_HOUSEHOLD_ID });
+      const children = await apiClient.listChildren({ household_id: householdId });
       setState({ children, loading: false, error: null });
     } catch (error: unknown) {
       setState({ children: [], loading: false, error: formatLoadError(error) });
     }
-  }
+  }, [householdId]);
 
   useEffect(() => {
     void loadChildren();
-  }, []);
+  }, [loadChildren]);
 
   async function handleCreateChild(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -64,8 +70,12 @@ export function ParentChildrenPage(): ReactElement {
     setSubmitError(null);
 
     try {
+      if (householdId === null) {
+        throw new Error("Could not determine household scope.");
+      }
+
       await apiClient.createChild({
-        household_id: DEFAULT_HOUSEHOLD_ID,
+        household_id: householdId,
         name: trimmedName,
         active: activeOnCreate,
       });
@@ -80,12 +90,17 @@ export function ParentChildrenPage(): ReactElement {
   }
 
   async function handleToggleActive(child: Child): Promise<void> {
+    if (householdId === null) {
+      setSubmitError("Could not determine household scope.");
+      return;
+    }
+
     setUpdatingChildId(child.id);
     setSubmitError(null);
 
     try {
       await apiClient.updateChild(child.id, {
-        household_id: DEFAULT_HOUSEHOLD_ID,
+        household_id: householdId,
         active: !child.active,
       });
       await loadChildren();
@@ -101,7 +116,7 @@ export function ParentChildrenPage(): ReactElement {
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h1>Children Management</h1>
-          <Badge>Household {DEFAULT_HOUSEHOLD_ID}</Badge>
+          <Badge>Household {householdId ?? "Unknown"}</Badge>
         </div>
         <p>Create and update active status for children in this household.</p>
       </Card>
