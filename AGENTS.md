@@ -349,6 +349,8 @@ One-time chore auto-removal on expiration
 
 ## Operational Learnings
 - After initial loop completion, project was backend-heavy with a placeholder frontend (`<h1>Chore Tracker v3</h1>`). Treat frontend feature delivery as mandatory before declaring product complete.
+- Critical production regression identified on mobile: frontend API client can throw `Failed to execute 'fetch' on 'Window': Illegal invocation` unless fetch is bound correctly; this must be fixed before feature work is considered stable.
+- Auth was missing despite auth text in specs. Never mark project complete if protected routes/APIs can be used anonymously.
 - Monorepo baseline initialized with a root npm workspace pointing to `frontend`, plus a Python backend scaffold in `backend/`; current `lint`, `test`, and `build` scripts are intentional placeholders to be replaced in task `1.2`.
 - Task `1.2` established frontend quality tooling: Vite build, Vitest (`jsdom`), ESLint flat config for TypeScript/React, and Prettier checks under the `frontend` workspace scripts.
 - Task `1.3` introduced backend env bootstrap with `backend/.env.example`, cached settings parsing (`APP_ENV`, `DATABASE_URL`, `SECRET_KEY`, `LOG_LEVEL`, `SESSION_COOKIE_SECURE`), and FastAPI lifespan startup checks validating production secrets plus SQLite directory readiness.
@@ -376,3 +378,7 @@ One-time chore auto-removal on expiration
 - Task `6.2` added `frontend/src/App.mobile-smoke.test.tsx` to run parent (`/parent/children`) and child (`/child/today`) key flows under a mobile viewport (`390x844`); reuse this pattern for future responsive smoke coverage by setting `window.innerWidth/innerHeight` before route rendering.
 - Task `6.3` updated `README.md` with exact production URL mapping (`/chore/*`, `/chore-api/*`) and an operator runbook covering production env vars, build/start steps, health verification, and SQLite backup/restore commands.
 - Task `6.4` finalized the checklist by marking `IMPLEMENTATION_PLAN.md` complete and appending `STATUS: COMPLETE`; no code-path changes were required, so continue validating completion-only tasks with the standard root quality gates.
+- Recovery task `3.1` fixed the frontend fetch `Illegal invocation` regression by binding the default global fetch to `globalThis` inside `ApiClient`; preserve this binding when refactoring client initialization.
+
+## Injected Instructions (2026-02-23 12:06)
+Priority reset: follow the rewritten IMPLEMENTATION_PLAN.md focused on auth + core functionality recovery. Validate with real API calls and UI interactions, not placeholder text. Fix fetch Illegal invocation first (task 3.1), then implement backend+frontend auth (Phase 1-2), then functional flows and tests. Do not mark complete until Playwright deploy smoke checks in Phase 5 pass.

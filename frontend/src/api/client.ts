@@ -46,7 +46,7 @@ export class ApiClient {
 
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl());
-    this.fetchImpl = config.fetchImpl ?? fetch;
+    this.fetchImpl = resolveFetchImpl(config.fetchImpl);
   }
 
   async getHealth(): Promise<HealthResponse> {
@@ -157,6 +157,18 @@ export function resolveApiBaseUrl(): string {
   }
 
   return rawValue;
+}
+
+function resolveFetchImpl(fetchImpl?: typeof fetch): typeof fetch {
+  if (fetchImpl !== undefined) {
+    return fetchImpl;
+  }
+
+  if (typeof globalThis.fetch !== "function") {
+    throw new Error("Global fetch is not available.");
+  }
+
+  return globalThis.fetch.bind(globalThis);
 }
 
 function normalizeBaseUrl(baseUrl: string): string {

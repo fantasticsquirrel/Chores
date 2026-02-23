@@ -242,4 +242,28 @@ describe("ApiClient", () => {
     expect(resolveApiBaseUrl()).toBe(DEFAULT_API_BASE_URL);
     vi.unstubAllEnvs();
   });
+
+  it("binds global fetch to avoid illegal invocation errors", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(function (this: unknown) {
+        if (this !== globalThis) {
+          throw new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation");
+        }
+
+        return Promise.resolve(
+          new Response(JSON.stringify([{ id: 1, household_id: 2, name: "Maya", active: true }]), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      } as typeof fetch);
+
+    const client = new ApiClient();
+    await expect(client.listChildren({ household_id: 2 })).resolves.toEqual([
+      { id: 1, household_id: 2, name: "Maya", active: true },
+    ]);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
 });
