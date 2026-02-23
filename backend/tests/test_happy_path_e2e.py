@@ -51,6 +51,27 @@ def _create_parent_user(household_id: int, email: str = "parent@example.com", pa
     return password
 
 
+def _create_child_user(
+    household_id: int,
+    child_id: int,
+    email: str = "child@example.com",
+    password: str = "password123",
+) -> str:
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        user = User(
+            household_id=household_id,
+            email=email.lower(),
+            password_hash=hash_password(password),
+            role=UserRole.CHILD,
+            child_id=child_id,
+        )
+        session.add(user)
+        session.commit()
+    return password
+
+
 def _login_parent(client: TestClient, email: str = "parent@example.com", password: str = "password123") -> str:
     login_response = client.post(
         "/chore-api/auth/login",
@@ -167,3 +188,47 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
             )
         ).one_or_none()
         assert transaction is not None
+
+
+def test_child_session_can_load_eligible_chores_and_submit(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 2, 23)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        parent_csrf_token = _login_parent(client)
+        create_child_response = client.post(
+            "/chore-api/children",
+            json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: parent_csrf_token},
+        )
+        assert create_child_response.status_code == 201
+        child_id = create_child_response.json()["id"]
+
+        _create_chore(household_id, target_date)
+        child_password = _create_child_user(household_id, child_id)
+
+        child_login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": "child@example.com", "password": child_password},
+        )
+        assert child_login_response.status_code == 200
+        child_csrf_token = child_login_response.cookies.get(CSRF_COOKIE_NAME)
+        assert child_csrf_token is not None
+
+        eligible_response = client.get(f"/chore-api/children/me/eligible-chores?date={target_date.isoformat()}")
+        assert eligible_response.status_code == 200
+        eligible_payload = eligible_response.json()
+        assert len(eligible_payload) == 1
+        chore_id = eligible_payload[0]["chore_id"]
+
+        submit_response = client.post(
+            "/chore-api/submissions",
+            json={"for_date": target_date.isoformat(), "chore_ids": [chore_id]},
+            headers={CSRF_HEADER_NAME: child_csrf_token},
+        )
+        assert submit_response.status_code == 201
+        assert submit_response.json()["child_id"] == child_id
+        assert submit_response.json()["status"] == "PENDING"
+        assert submit_response.json()["items"] == [{"chore_id": chore_id, "status": "PENDING"}]
