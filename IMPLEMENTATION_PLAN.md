@@ -18,7 +18,7 @@
 ## Phase 4: Frontend Product UI (required)
 - [x] 4.1 — Replace placeholder `frontend/src/App.tsx` with routed application shell and top-level layout
 - [x] 4.2 — Add API client layer in frontend for `/chore-api/*` endpoints with typed request/response models
-- [ ] 4.3 — Build Parent Dashboard view showing child balances, pending submissions count, and quick actions
+- [x] 4.3 — Build Parent Dashboard view showing child balances, pending submissions count, and quick actions
 - [ ] 4.4 — Build Children management page (list/create/edit active status) wired to backend `/children` APIs
 - [ ] 4.5 — Build Child Today page (eligible chores list, submission flow) with loading/error/empty states
 - [ ] 4.6 — Build Submission review page for parents (approve/reject per item)

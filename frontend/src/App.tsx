@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { Navigate, NavLink, Outlet, Route, Routes } from "react-router-dom";
 
+import { ParentDashboardPage } from "./pages/ParentDashboardPage";
+
 type RouteCardProps = {
   title: string;
   description: string;
@@ -91,10 +93,7 @@ export default function App(): ReactElement {
           path="/child/history"
           element={<RouteCard title="Child History" description="History and balance timeline will be wired after core API tasks." />}
         />
-        <Route
-          path="/parent/dashboard"
-          element={<RouteCard title="Parent Dashboard" description="Summary metrics and quick actions arrive in task 4.3." />}
-        />
+        <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
         <Route
           path="/parent/chores"
           element={<RouteCard title="Parent Chores" description="Chore authoring and scheduling pages will be built in subsequent iterations." />}

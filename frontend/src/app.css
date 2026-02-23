@@ -146,3 +146,131 @@ body {
     justify-content: flex-start;
   }
 }
+
+.dashboard-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.metric-card,
+.dashboard-panel {
+  padding: 1.2rem;
+}
+
+.metric-card {
+  grid-column: span 6;
+}
+
+.dashboard-panel {
+  grid-column: span 12;
+}
+
+.metric-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.73rem;
+  color: #f7e7ffcc;
+}
+
+.metric-value {
+  margin: 0.4rem 0 0;
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  font-weight: 800;
+}
+
+.metric-footnote {
+  margin: 0.45rem 0 0;
+  color: #f2e8ffcf;
+  font-size: 0.88rem;
+}
+
+.panel-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.pill {
+  border: 1px solid #ffffff42;
+  border-radius: 999px;
+  padding: 0.22rem 0.72rem;
+  font-size: 0.78rem;
+  background: #ffffff1f;
+}
+
+.balance-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.balance-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #ffffff2f;
+  border-radius: 0.95rem;
+  padding: 0.75rem 0.8rem;
+  background: #ffffff12;
+}
+
+.balance-name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.balance-meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.84rem;
+  color: #e4d7ff;
+}
+
+.balance-pill {
+  border: 1px solid #ffffff33;
+  border-radius: 999px;
+  padding: 0.26rem 0.64rem;
+  font-size: 0.76rem;
+  background: #ff93cf26;
+  white-space: nowrap;
+}
+
+.quick-actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.jewel-button {
+  text-decoration: none;
+  color: #fff7ff;
+  font-weight: 700;
+  border-radius: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  background: linear-gradient(125deg, #1dd4fc 0%, #6287ff 48%, #ff4f9e 100%);
+  box-shadow: 0 10px 20px #13072f70;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.jewel-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px #13072f85;
+}
+
+@media (max-width: 768px) {
+  .metric-card,
+  .dashboard-panel {
+    grid-column: span 12;
+  }
+
+  .balance-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
