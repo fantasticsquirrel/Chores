@@ -19,7 +19,6 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Loading children...")).toBeVisible();
     expect(await screen.findByText("Maya")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 1 });
   });

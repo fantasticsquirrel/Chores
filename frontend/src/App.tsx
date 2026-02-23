@@ -40,6 +40,25 @@ function NotFoundPage(): ReactElement {
   );
 }
 
+function ProtectedRoute(): ReactElement {
+  const { status } = useAuth();
+
+  if (status === "loading") {
+    return (
+      <RouteCard
+        title="Checking Session"
+        description="Verifying your session before loading this page."
+      />
+    );
+  }
+
+  if (status === "anonymous") {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
+}
+
 function AppShell(): ReactElement {
   const navigate = useNavigate();
   const { status, user, logout } = useAuth();
@@ -95,44 +114,46 @@ export default function App(): ReactElement {
         <Route element={<AppShell />}>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/board"
-            element={<ParentSubmissionReviewPage />}
-          />
-          <Route
-            path="/child/today"
-            element={<ChildTodayPage />}
-          />
-          <Route
-            path="/child/calendar"
-            element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
-          />
-          <Route
-            path="/child/history"
-            element={<RouteCard title="Child History" description="History and balance timeline will be wired after core API tasks." />}
-          />
-          <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
-          <Route
-            path="/parent/chores"
-            element={<RouteCard title="Parent Chores" description="Chore authoring and scheduling pages will be built in subsequent iterations." />}
-          />
-          <Route
-            path="/parent/children"
-            element={<ParentChildrenPage />}
-          />
-          <Route
-            path="/parent/tags"
-            element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}
-          />
-          <Route
-            path="/parent/templates"
-            element={<RouteCard title="Parent Templates" description="Template scheduling UX is queued for a later task." />}
-          />
-          <Route
-            path="/parent/reports"
-            element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
-          />
-          <Route path="*" element={<NotFoundPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route
+              path="/board"
+              element={<ParentSubmissionReviewPage />}
+            />
+            <Route
+              path="/child/today"
+              element={<ChildTodayPage />}
+            />
+            <Route
+              path="/child/calendar"
+              element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
+            />
+            <Route
+              path="/child/history"
+              element={<RouteCard title="Child History" description="History and balance timeline will be wired after core API tasks." />}
+            />
+            <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
+            <Route
+              path="/parent/chores"
+              element={<RouteCard title="Parent Chores" description="Chore authoring and scheduling pages will be built in subsequent iterations." />}
+            />
+            <Route
+              path="/parent/children"
+              element={<ParentChildrenPage />}
+            />
+            <Route
+              path="/parent/tags"
+              element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}
+            />
+            <Route
+              path="/parent/templates"
+              element={<RouteCard title="Parent Templates" description="Template scheduling UX is queued for a later task." />}
+            />
+            <Route
+              path="/parent/reports"
+              element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
+            />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Route>
       </Routes>
     </AuthProvider>

@@ -26,7 +26,6 @@ describe("Child today page", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Loading eligible chores...")).toBeVisible();
     expect(await screen.findByText("Unload Dishwasher")).toBeVisible();
     expect(listEligibleChoresSpy).toHaveBeenCalledWith({ date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/u) });
   });

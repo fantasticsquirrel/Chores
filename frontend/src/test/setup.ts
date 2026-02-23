@@ -1,10 +1,17 @@
 import "@testing-library/jest-dom/vitest";
 import { beforeEach } from "vitest";
 
-import { ApiClientError, apiClient } from "../api";
+import { apiClient } from "../api";
 
 beforeEach(() => {
-  vi.spyOn(apiClient, "getCurrentSession").mockRejectedValue(
-    new ApiClientError(401, "Not authenticated.", { detail: "Not authenticated." }),
-  );
+  vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+    user: {
+      id: 1,
+      household_id: 1,
+      email: "parent@example.com",
+      role: "PARENT",
+      child_id: null,
+    },
+    csrf_token: null,
+  });
 });

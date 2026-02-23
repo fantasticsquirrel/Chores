@@ -19,7 +19,6 @@ describe("Parent dashboard", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Loading child balances...")).toBeVisible();
     expect(await screen.findByText("Maya")).toBeVisible();
     expect(screen.getByRole("link", { name: "Manage Children" })).toHaveAttribute("href", "/parent/children");
     expect(screen.getByRole("link", { name: "Open Board" })).toHaveAttribute("href", "/board");

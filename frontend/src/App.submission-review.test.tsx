@@ -36,7 +36,6 @@ describe("Parent submission review page", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Loading pending submissions...")).toBeVisible();
     expect(await screen.findByText("Maya")).toBeVisible();
     expect(screen.getByText("Dishes")).toBeVisible();
     expect(listSubmissionsSpy).toHaveBeenCalledWith({ status: "PENDING" });

@@ -15,7 +15,7 @@
 ## Phase 2: Frontend Auth & Route Protection
 - [x] 2.1 — Build real login form (email/password) on `/login` and wire to backend auth endpoints.
 - [x] 2.2 — Add auth state store + bootstrap (`/auth/me` on app load) and logout handling.
-- [ ] 2.3 — Enforce protected routes: anonymous users must be redirected to `/login`.
+- [x] 2.3 — Enforce protected routes: anonymous users must be redirected to `/login`.
 - [ ] 2.4 — Add role-aware nav visibility and route access restrictions.
 - [ ] 2.5 — Add login/logout/error UX states for mobile and desktop.
 
