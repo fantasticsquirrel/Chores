@@ -68,3 +68,31 @@ test("deployed chore smoke flow enforces login and supports parent/child/board a
   await submissionRow(page, fixture.child_name).getByRole("button", { name: "Approve All" }).click();
   await expect(page.getByText("No pending submissions right now.")).toBeVisible();
 });
+
+test("deployed auth protections block anonymous and wrong-role access", async ({ page }) => {
+  const fixture = readFixture();
+
+  await page.goto("/chore/board");
+  await expect(page).toHaveURL(/\/chore\/login$/);
+  await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
+
+  const anonymousChildrenResponse = await page.request.get("/chore-api/children?household_id=1");
+  expect(anonymousChildrenResponse.status()).toBe(401);
+  const anonymousChildrenBody = await anonymousChildrenResponse.json();
+  expect(anonymousChildrenBody).toMatchObject({
+    detail: "Not authenticated.",
+  });
+
+  await signIn(page, fixture.child_email, fixture.child_password);
+  await expect(page).toHaveURL(/\/chore\/child\/today$/);
+
+  await page.goto("/chore/parent/dashboard");
+  await expect(page).toHaveURL(/\/chore\/child\/today$/);
+
+  const childParentEndpointResponse = await page.request.get("/chore-api/submissions");
+  expect(childParentEndpointResponse.status()).toBe(403);
+  const childParentEndpointBody = await childParentEndpointResponse.json();
+  expect(childParentEndpointBody).toMatchObject({
+    detail: "Forbidden.",
+  });
+});
