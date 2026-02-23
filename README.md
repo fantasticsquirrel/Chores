@@ -140,6 +140,106 @@ sqlite3 data/chore_tracking.db ".backup backups/chore_tracking-$(date +%F).db"
 cp backups/chore_tracking-YYYY-MM-DD.db data/chore_tracking.db
 ```
 
+## Auth Setup
+
+Auth endpoints:
+
+- `POST /chore-api/auth/login`
+- `POST /chore-api/auth/logout`
+- `GET /chore-api/auth/me`
+
+Login sets two cookies:
+
+- `chore_tracker_session` (HttpOnly session cookie)
+- `chore_tracker_csrf` (CSRF cookie)
+
+All authenticated write requests to `/chore-api/*` (except login) must include:
+
+- Header `X-CSRF-Token: <chore_tracker_csrf cookie value>`
+
+Example login and authenticated session check:
+
+```bash
+curl -i -c /tmp/chore.cookies \
+  -H "Content-Type: application/json" \
+  -X POST http://127.0.0.1:8000/chore-api/auth/login \
+  -d '{"email":"parent.admin@example.com","password":"change-me-strong-password"}'
+
+CSRF_TOKEN="$(awk '/chore_tracker_csrf/ {print $7}' /tmp/chore.cookies | tail -n 1)"
+
+curl -i -b /tmp/chore.cookies \
+  http://127.0.0.1:8000/chore-api/auth/me
+```
+
+## First Parent Bootstrap Flow
+
+Use this once per new database to create the first household and parent admin user.
+
+1. Configure backend env and install deps:
+
+```bash
+cp backend/.env.example backend/.env
+source .venv/bin/activate
+pip install -e "backend[dev]"
+```
+
+2. Create the initial household + `PARENT_ADMIN` account:
+
+```bash
+source .venv/bin/activate
+PYTHONPATH=backend python - <<'PY'
+from app.config import get_settings
+from app.db import get_session_factory, initialize_database
+from app.models.core import Household, User
+from app.models.enums import UserRole
+from app.security import hash_password
+
+settings = get_settings()
+initialize_database(settings)
+session_factory = get_session_factory(settings.database_url)
+
+admin_email = "parent.admin@example.com"
+admin_password = "change-me-strong-password"
+
+with session_factory() as session:
+    household = Household(name="My Household", timezone="UTC")
+    session.add(household)
+    session.flush()
+    session.add(
+        User(
+            household_id=household.id,
+            email=admin_email,
+            password_hash=hash_password(admin_password),
+            role=UserRole.PARENT_ADMIN,
+            child_id=None,
+        )
+    )
+    session.commit()
+    print(f"Created household_id={household.id}, admin_email={admin_email}")
+PY
+```
+
+3. Sign in through `POST /chore-api/auth/login` or `https://YOUR_DOMAIN/chore/login`, then create children from `/chore/parent/children`.
+
+## Production Test Checklist
+
+Run this checklist after each deploy:
+
+1. Build and start:
+   - `npm run build`
+   - `uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8501`
+2. Runtime health:
+   - `curl -fsS http://127.0.0.1:8501/chore-api/health`
+   - `curl -fsS http://127.0.0.1:8501/chore-api/health/live`
+   - `curl -fsS http://127.0.0.1:8501/chore-api/health/ready`
+   - `curl -I http://127.0.0.1:8501/chore/`
+3. Auth protections:
+   - Anonymous `GET /chore-api/children?household_id=1` returns `401` with `Not authenticated.`
+   - Child account `GET /chore-api/submissions` returns `403` with `Forbidden.`
+4. Deployed UI smoke flow:
+   - `DATABASE_URL=sqlite:///$PWD/data/chore_tracking.db npm run test:smoke --workspace frontend`
+   - Confirms login redirect, parent child-create flow, child submission flow, and parent board approval flow.
+
 ## Quality Gates
 
 Project backpressure commands:

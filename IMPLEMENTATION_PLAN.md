@@ -38,5 +38,5 @@
 - [x] 5.1 — Rebuild frontend and restart backend service.
 - [x] 5.2 — Smoke test with Playwright on deployed `/chore/`: login required, create child works, child submission works, board approval works.
 - [x] 5.3 — Verify anonymous access is blocked on protected pages and APIs return 401/403 correctly.
-- [ ] 5.4 — Update README with auth setup, first parent bootstrap user flow, and production test checklist.
+- [x] 5.4 — Update README with auth setup, first parent bootstrap user flow, and production test checklist.
 - [ ] 5.5 — Mark plan complete only after all auth and functional checks pass.
