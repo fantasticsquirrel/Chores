@@ -17,7 +17,7 @@
 - [x] 2.2 — Add auth state store + bootstrap (`/auth/me` on app load) and logout handling.
 - [x] 2.3 — Enforce protected routes: anonymous users must be redirected to `/login`.
 - [x] 2.4 — Add role-aware nav visibility and route access restrictions.
-- [ ] 2.5 — Add login/logout/error UX states for mobile and desktop.
+- [x] 2.5 — Add login/logout/error UX states for mobile and desktop.
 
 ## Phase 3: Core Functionality Bug Fixes
 - [x] 3.1 — Fix API client fetch invocation bug (`Illegal invocation`) by binding fetch correctly in all browsers.

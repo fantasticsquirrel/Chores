@@ -51,12 +51,9 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
-    try {
-      await apiClient.logout();
-    } finally {
-      setUser(null);
-      setStatus("anonymous");
-    }
+    await apiClient.logout();
+    setUser(null);
+    setStatus("anonymous");
   }, []);
 
   const contextValue = useMemo<AuthContextValue>(

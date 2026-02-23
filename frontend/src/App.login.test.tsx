@@ -63,4 +63,45 @@ describe("Login page", () => {
       "Could not sign in: Invalid email or password.",
     );
   });
+
+  it("shows submitting state while login request is in flight", async () => {
+    let resolveLogin: (() => void) | null = null;
+    const loginPromise = new Promise((resolve) => {
+      resolveLogin = () => resolve(undefined);
+    });
+
+    const loginSpy = vi.spyOn(apiClient, "login");
+    loginSpy.mockImplementation(async () => {
+      await loginPromise;
+      return {
+        user: {
+          id: 8,
+          household_id: 1,
+          email: "parent@example.com",
+          role: "PARENT",
+          child_id: null,
+        },
+        csrf_token: "csrf-token",
+      };
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "parent@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+    expect(await screen.findByRole("button", { name: "Signing In..." })).toBeDisabled();
+    expect(screen.getByText("Signing you in...")).toBeVisible();
+
+    resolveLogin?.();
+
+    await waitFor(() => expect(loginSpy).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
+  });
 });

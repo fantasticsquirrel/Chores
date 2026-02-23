@@ -30,6 +30,20 @@ export function LoginPage(): ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  function handleEmailChange(value: string): void {
+    setEmail(value);
+    if (submitError !== null) {
+      setSubmitError(null);
+    }
+  }
+
+  function handlePasswordChange(value: string): void {
+    setPassword(value);
+    if (submitError !== null) {
+      setSubmitError(null);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
 
@@ -63,27 +77,30 @@ export function LoginPage(): ReactElement {
           <TextInput
             type="email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(event) => handleEmailChange(event.target.value)}
             placeholder="parent@example.com"
             autoComplete="email"
             disabled={submitting}
             maxLength={320}
+            required
           />
         </FormField>
         <FormField label="Password">
           <TextInput
             type="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => handlePasswordChange(event.target.value)}
             autoComplete="current-password"
             disabled={submitting}
             maxLength={1024}
+            required
           />
         </FormField>
         <Button type="submit" disabled={submitting}>
           {submitting ? "Signing In..." : "Sign In"}
         </Button>
       </form>
+      {submitting ? <InlineNotice variant="info">Signing you in...</InlineNotice> : null}
       {submitError !== null ? <InlineNotice variant="error">Could not sign in: {submitError}</InlineNotice> : null}
     </Card>
   );

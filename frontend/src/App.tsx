@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { Navigate, NavLink, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
@@ -8,8 +8,8 @@ import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
-import type { UserRole } from "./api";
-import { Button, Card } from "./ui";
+import { ApiClientError, type UserRole } from "./api";
+import { Button, Card, InlineNotice } from "./ui";
 
 type RouteCardProps = {
   title: string;
@@ -31,6 +31,18 @@ const navItems: NavItem[] = [
 
 function getDefaultRouteForRole(role: UserRole): string {
   return role === "CHILD" ? "/child/today" : "/parent/dashboard";
+}
+
+function formatAuthActionError(error: unknown): string {
+  if (error instanceof ApiClientError) {
+    return error.detail;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Request failed.";
 }
 
 function RouteCard({ title, description }: RouteCardProps): ReactElement {
@@ -95,10 +107,26 @@ function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactEle
 function AppShell(): ReactElement {
   const navigate = useNavigate();
   const { status, user, logout } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const visibleNavItems =
     status === "authenticated" && user !== null
       ? navItems.filter((item) => item.roles.includes(user.role))
       : [];
+
+  async function handleLogout(): Promise<void> {
+    setLoggingOut(true);
+    setLogoutError(null);
+
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error: unknown) {
+      setLogoutError(formatAuthActionError(error));
+    } finally {
+      setLoggingOut(false);
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -124,18 +152,20 @@ function AppShell(): ReactElement {
               type="button"
               className="nav-chip"
               onClick={() => {
-                void logout().then(() => {
-                  navigate("/login", { replace: true });
-                });
+                void handleLogout();
               }}
+              disabled={loggingOut}
             >
-              Log Out
+              {loggingOut ? "Logging Out..." : "Log Out"}
             </Button>
           ) : null}
         </nav>
       </header>
       {status === "authenticated" && user !== null ? (
         <p className="eyebrow">Signed in as {user.email}</p>
+      ) : null}
+      {logoutError !== null ? (
+        <InlineNotice variant="error">Could not sign out: {logoutError}</InlineNotice>
       ) : null}
       <main className="content-grid">
         <Outlet />

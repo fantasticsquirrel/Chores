@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
-import { apiClient } from "./api";
+import { ApiClientError, apiClient } from "./api";
 
 describe("Auth bootstrap and logout", () => {
   afterEach(() => {
@@ -59,5 +59,38 @@ describe("Auth bootstrap and logout", () => {
 
     await waitFor(() => expect(logoutSpy).toHaveBeenCalledTimes(1));
     expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+  });
+
+  it("shows logout error and keeps session when logout fails", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 5,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    const logoutSpy = vi.spyOn(apiClient, "logout");
+    logoutSpy.mockRejectedValue(
+      new ApiClientError(500, "Service unavailable.", {
+        detail: "Service unavailable.",
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Log Out" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not sign out: Service unavailable.");
+    expect(screen.getByText("Signed in as parent@example.com")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Log Out" })).toBeVisible();
+    expect(logoutSpy).toHaveBeenCalledTimes(1);
   });
 });
