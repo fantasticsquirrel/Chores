@@ -379,6 +379,7 @@ One-time chore auto-removal on expiration
 - Task `6.3` updated `README.md` with exact production URL mapping (`/chore/*`, `/chore-api/*`) and an operator runbook covering production env vars, build/start steps, health verification, and SQLite backup/restore commands.
 - Task `6.4` finalized the checklist by marking `IMPLEMENTATION_PLAN.md` complete and appending `STATUS: COMPLETE`; no code-path changes were required, so continue validating completion-only tasks with the standard root quality gates.
 - Recovery task `3.1` fixed the frontend fetch `Illegal invocation` regression by binding the default global fetch to `globalThis` inside `ApiClient`; preserve this binding when refactoring client initialization.
+- Recovery task `1.1` added backend auth foundations: Argon2 password hashing utilities in `backend/app/security/passwords.py`, a `users` role-to-child check constraint (`ck_users_user_role_child_link`), and Alembic scaffolding with revision `20260223_0001` to enforce auth linkage on existing databases.
 
 ## Injected Instructions (2026-02-23 12:06)
 Priority reset: follow the rewritten IMPLEMENTATION_PLAN.md focused on auth + core functionality recovery. Validate with real API calls and UI interactions, not placeholder text. Fix fetch Illegal invocation first (task 3.1), then implement backend+frontend auth (Phase 1-2), then functional flows and tests. Do not mark complete until Playwright deploy smoke checks in Phase 5 pass.
