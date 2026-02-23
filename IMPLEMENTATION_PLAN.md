@@ -34,4 +34,5 @@
 - [x] 6.1 — Verify `/chore/` serves built frontend assets and all API calls resolve to `/chore-api/`
 - [x] 6.2 — Smoke test on mobile browser for parent and child key flows
 - [x] 6.3 — Update README with exact production URLs and operator runbook
-- [ ] 6.4 — Mark plan complete when all tasks are done
+- [x] 6.4 — Mark plan complete when all tasks are done
+STATUS: COMPLETE
