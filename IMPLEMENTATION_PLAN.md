@@ -13,7 +13,7 @@
 ## Phase 3: Feature Delivery
 - [x] 3.1 — Implement primary MVP feature flow
 - [x] 3.2 — Add input validation and edge-case handling
-- [ ] 3.3 — Add tests for happy path and failure modes
+- [x] 3.3 — Add tests for happy path and failure modes
 
 ## Phase 4: Hardening
 - [ ] 4.1 — Improve observability and operational checks
