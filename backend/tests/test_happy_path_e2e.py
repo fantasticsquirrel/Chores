@@ -60,7 +60,7 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
     with TestClient(app) as client:
         household_id = _create_household()
         create_child_response = client.post(
-            "/children",
+            "/chore-api/children",
             json={"household_id": household_id, "name": "Riley", "active": True},
         )
         assert create_child_response.status_code == 201
@@ -68,7 +68,9 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
 
         chore_id = _create_chore(household_id, target_date)
 
-        eligible_response = client.get(f"/children/me/eligible-chores?date={target_date.isoformat()}&child_id={child_id}")
+        eligible_response = client.get(
+            f"/chore-api/children/me/eligible-chores?date={target_date.isoformat()}&child_id={child_id}"
+        )
         assert eligible_response.status_code == 200
         assert eligible_response.json() == [
             {
@@ -81,7 +83,7 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
         ]
 
         submit_response = client.post(
-            f"/submissions?child_id={child_id}",
+            f"/chore-api/submissions?child_id={child_id}",
             json={"for_date": target_date.isoformat(), "chore_ids": [chore_id]},
         )
         assert submit_response.status_code == 201
@@ -89,13 +91,13 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
         assert submit_response.json()["status"] == "PENDING"
         assert submit_response.json()["items"] == [{"chore_id": chore_id, "status": "PENDING"}]
 
-        approve_response = client.post(f"/submissions/{submission_id}/approve-all")
+        approve_response = client.post(f"/chore-api/submissions/{submission_id}/approve-all")
         assert approve_response.status_code == 200
         assert approve_response.json()["status"] == "APPROVED"
         assert approve_response.json()["items"][0]["status"] == "APPROVED"
 
         eligible_after_approval = client.get(
-            f"/children/me/eligible-chores?date={target_date.isoformat()}&child_id={child_id}"
+            f"/chore-api/children/me/eligible-chores?date={target_date.isoformat()}&child_id={child_id}"
         )
         assert eligible_after_approval.status_code == 200
         assert eligible_after_approval.json() == []

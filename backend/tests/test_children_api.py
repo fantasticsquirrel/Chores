@@ -37,7 +37,7 @@ def test_children_primary_flow(tmp_path: Path, monkeypatch) -> None:
         household_id = _create_household()
 
         create_response = client.post(
-            "/children",
+            "/chore-api/children",
             json={"household_id": household_id, "name": "  Riley  ", "active": True},
         )
 
@@ -47,19 +47,19 @@ def test_children_primary_flow(tmp_path: Path, monkeypatch) -> None:
         assert created["name"] == "Riley"
         assert created["active"] is True
 
-        list_response = client.get(f"/children?household_id={household_id}")
+        list_response = client.get(f"/chore-api/children?household_id={household_id}")
         assert list_response.status_code == 200
         assert [child["name"] for child in list_response.json()] == ["Riley"]
 
         update_response = client.patch(
-            f"/children/{created['id']}",
+            f"/chore-api/children/{created['id']}",
             json={"household_id": household_id, "name": "  Rowan ", "active": False},
         )
         assert update_response.status_code == 200
         assert update_response.json()["name"] == "Rowan"
         assert update_response.json()["active"] is False
 
-        active_only_response = client.get(f"/children?household_id={household_id}&active_only=true")
+        active_only_response = client.get(f"/chore-api/children?household_id={household_id}&active_only=true")
         assert active_only_response.status_code == 200
         assert active_only_response.json() == []
 
@@ -70,12 +70,12 @@ def test_patch_child_supports_partial_active_update(tmp_path: Path, monkeypatch)
     with TestClient(app) as client:
         household_id = _create_household()
         created = client.post(
-            "/children",
+            "/chore-api/children",
             json={"household_id": household_id, "name": "Riley", "active": True},
         ).json()
 
         response = client.patch(
-            f"/children/{created['id']}",
+            f"/chore-api/children/{created['id']}",
             json={"household_id": household_id, "active": False},
         )
 
@@ -90,7 +90,7 @@ def test_update_child_returns_not_found(tmp_path: Path, monkeypatch) -> None:
     with TestClient(app) as client:
         household_id = _create_household()
         response = client.patch(
-            "/children/999",
+            "/chore-api/children/999",
             json={"household_id": household_id, "name": "Missing"},
         )
 
@@ -104,7 +104,7 @@ def test_create_child_rejects_whitespace_only_name(tmp_path: Path, monkeypatch) 
     with TestClient(app) as client:
         household_id = _create_household()
         response = client.post(
-            "/children",
+            "/chore-api/children",
             json={"household_id": household_id, "name": "   "},
         )
 
@@ -119,12 +119,12 @@ def test_patch_child_requires_name_or_active(tmp_path: Path, monkeypatch) -> Non
     with TestClient(app) as client:
         household_id = _create_household()
         created = client.post(
-            "/children",
+            "/chore-api/children",
             json={"household_id": household_id, "name": "Riley", "active": True},
         ).json()
 
         response = client.patch(
-            f"/children/{created['id']}",
+            f"/chore-api/children/{created['id']}",
             json={"household_id": household_id},
         )
 
@@ -138,7 +138,7 @@ def test_create_child_invalid_household_returns_bad_request(tmp_path: Path, monk
 
     with TestClient(app) as client:
         response = client.post(
-            "/children",
+            "/chore-api/children",
             json={"household_id": 9999, "name": "Riley"},
         )
 
@@ -150,7 +150,7 @@ def test_list_children_requires_positive_household_id(tmp_path: Path, monkeypatc
     _configure_test_settings(tmp_path, monkeypatch)
 
     with TestClient(app) as client:
-        response = client.get("/children?household_id=0")
+        response = client.get("/chore-api/children?household_id=0")
 
     assert response.status_code == 422
     details = response.json()["detail"]
@@ -163,7 +163,7 @@ def test_patch_child_requires_positive_child_id(tmp_path: Path, monkeypatch) -> 
     with TestClient(app) as client:
         household_id = _create_household()
         response = client.patch(
-            "/children/0",
+            "/chore-api/children/0",
             json={"household_id": household_id, "name": "Riley"},
         )
 
