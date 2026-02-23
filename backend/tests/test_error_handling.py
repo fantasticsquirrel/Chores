@@ -39,9 +39,9 @@ def test_unhandled_exception_logs_failure(caplog) -> None:
     caplog.set_level(logging.ERROR, logger="app.error_handling")
 
     with TestClient(app, raise_server_exceptions=False) as client:
-        client.get("/boom")
+        client.get("/boom", headers={"X-Request-ID": "req-123"})
 
-    assert "request.failed method=GET path=/boom" in caplog.text
+    assert "request.failed request_id=req-123 method=GET path=/boom" in caplog.text
 
 
 def test_request_logging_middleware_logs_completion(caplog) -> None:
@@ -54,7 +54,8 @@ def test_request_logging_middleware_logs_completion(caplog) -> None:
     caplog.set_level(logging.INFO, logger="app.error_handling")
 
     with TestClient(app) as client:
-        response = client.get("/ok")
+        response = client.get("/ok", headers={"X-Request-ID": "req-456"})
 
     assert response.status_code == 200
-    assert "request.completed method=GET path=/ok status=200" in caplog.text
+    assert response.headers["X-Request-ID"] == "req-456"
+    assert "request.completed request_id=req-456 method=GET path=/ok status=200" in caplog.text
