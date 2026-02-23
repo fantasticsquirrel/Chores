@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiClient, ApiClientError, type AuthSessionResponse } from "../api";
+import { useAuth } from "../auth/useAuth";
 import { Button, Card, FormField, InlineNotice, TextInput } from "../ui";
 
 function formatLoginError(error: unknown): string {
@@ -23,6 +24,7 @@ function getPostLoginPath(session: AuthSessionResponse): string {
 
 export function LoginPage(): ReactElement {
   const navigate = useNavigate();
+  const { setAuthenticatedSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +44,7 @@ export function LoginPage(): ReactElement {
 
     try {
       const session = await apiClient.login({ email: trimmedEmail, password });
+      setAuthenticatedSession(session);
       setPassword("");
       navigate(getPostLoginPath(session), { replace: true });
     } catch (error: unknown) {

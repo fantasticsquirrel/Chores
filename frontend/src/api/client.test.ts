@@ -1,4 +1,4 @@
-import { ApiClient, ApiClientError, DEFAULT_API_BASE_URL, resolveApiBaseUrl } from "./client";
+import { ApiClient, ApiClientError, CSRF_HEADER_NAME, DEFAULT_API_BASE_URL, resolveApiBaseUrl } from "./client";
 
 describe("ApiClient", () => {
   it("calls /chore-api children list endpoint with typed query params", async () => {
@@ -81,6 +81,80 @@ describe("ApiClient", () => {
           "Content-Type": "application/json",
         }),
         body: JSON.stringify({ email: "parent@example.com", password: "password123" }),
+      }),
+    );
+  });
+
+  it("loads current session from /auth/me", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: 11,
+            household_id: 2,
+            email: "parent@example.com",
+            role: "PARENT",
+            child_id: null,
+          },
+          csrf_token: null,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.getCurrentSession();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/auth/me",
+      expect.objectContaining({
+        method: "GET",
+        credentials: "include",
+      }),
+    );
+  });
+
+  it("sends CSRF header on logout after login", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            user: {
+              id: 11,
+              household_id: 2,
+              email: "parent@example.com",
+              role: "PARENT",
+              child_id: null,
+            },
+            csrf_token: "csrf-token",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.login({ email: "parent@example.com", password: "password123" });
+    await client.logout();
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/auth/logout",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          [CSRF_HEADER_NAME]: "csrf-token",
+        }),
       }),
     );
   });

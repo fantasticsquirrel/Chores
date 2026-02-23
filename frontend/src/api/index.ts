@@ -1,4 +1,4 @@
-export { ApiClient, ApiClientError, apiClient, createApiClient } from "./client";
+export { ApiClient, ApiClientError, apiClient, createApiClient, CSRF_HEADER_NAME } from "./client";
 export type {
   ApiErrorResponse,
   AuthSessionResponse,

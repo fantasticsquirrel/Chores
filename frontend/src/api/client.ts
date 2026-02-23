@@ -18,6 +18,8 @@ import type {
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "/chore-api";
+export const CSRF_HEADER_NAME = "X-CSRF-Token";
+const CSRF_COOKIE_NAME = "chore_tracker_csrf";
 
 type QueryValue = string | number | boolean | undefined;
 
@@ -45,10 +47,12 @@ export type ApiClientConfig = {
 export class ApiClient {
   private baseUrl: string;
   private fetchImpl: typeof fetch;
+  private csrfToken: string | null;
 
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl());
     this.fetchImpl = resolveFetchImpl(config.fetchImpl);
+    this.csrfToken = readCookieValue(CSRF_COOKIE_NAME);
   }
 
   async getHealth(): Promise<HealthResponse> {
@@ -64,7 +68,20 @@ export class ApiClient {
   }
 
   async login(payload: LoginRequest): Promise<AuthSessionResponse> {
-    return this.post<AuthSessionResponse, LoginRequest>("/auth/login", payload);
+    const session = await this.post<AuthSessionResponse, LoginRequest>("/auth/login", payload);
+    this.csrfToken = session.csrf_token ?? readCookieValue(CSRF_COOKIE_NAME);
+    return session;
+  }
+
+  async getCurrentSession(): Promise<AuthSessionResponse> {
+    const session = await this.get<AuthSessionResponse>("/auth/me");
+    this.csrfToken = session.csrf_token ?? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME);
+    return session;
+  }
+
+  async logout(): Promise<void> {
+    await this.postNoContent("/auth/logout");
+    this.csrfToken = null;
   }
 
   async listChildren(params: ListChildrenParams): Promise<Child[]> {
@@ -118,6 +135,10 @@ export class ApiClient {
     });
   }
 
+  private async postNoContent(path: string): Promise<void> {
+    await this.request<void>(path, { method: "POST" });
+  }
+
   private async patch<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PATCH",
@@ -127,11 +148,14 @@ export class ApiClient {
   }
 
   private async request<TResponse>(path: string, init: RequestInit, query?: RequestQuery): Promise<TResponse> {
+    const csrfToken = requiresCsrfToken(init.method) ? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME) : null;
+
     const response = await this.fetchImpl(buildUrl(this.baseUrl, path, query), {
       ...init,
       headers: {
         Accept: "application/json",
         ...init.headers,
+        ...(csrfToken !== null ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
       },
       credentials: "include",
     });
@@ -228,6 +252,27 @@ function appendQueryParams(searchParams: URLSearchParams, query?: RequestQuery):
 
 function isAbsoluteHttpUrl(value: string): boolean {
   return /^https?:\/\//i.test(value);
+}
+
+function requiresCsrfToken(method?: string): boolean {
+  return method !== undefined && method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+}
+
+function readCookieValue(name: string): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const prefix = `${name}=`;
+  for (const rawCookie of document.cookie.split(";")) {
+    const cookie = rawCookie.trim();
+    if (cookie.startsWith(prefix)) {
+      const value = cookie.slice(prefix.length);
+      return value.length > 0 ? decodeURIComponent(value) : "";
+    }
+  }
+
+  return null;
 }
 
 function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
