@@ -72,7 +72,7 @@ def _create_child_user(
     return password
 
 
-def _login_parent(client: TestClient, email: str = "parent@example.com", password: str = "password123") -> str:
+def _login(client: TestClient, email: str, password: str) -> str:
     login_response = client.post(
         "/chore-api/auth/login",
         json={"email": email, "password": password},
@@ -81,6 +81,10 @@ def _login_parent(client: TestClient, email: str = "parent@example.com", passwor
     csrf_token = login_response.cookies.get(CSRF_COOKIE_NAME)
     assert csrf_token is not None
     return csrf_token
+
+
+def _login_parent(client: TestClient, email: str = "parent@example.com", password: str = "password123") -> str:
+    return _login(client, email=email, password=password)
 
 
 def _create_chore(household_id: int, target_date: date) -> int:
@@ -364,3 +368,80 @@ def test_parent_rejecting_submission_item_marks_submission_rejected_without_bala
             )
         ).one_or_none()
         assert credit_transaction is None
+
+
+def test_authenticated_parent_child_approve_reject_flow_updates_balance_for_approved_items_only(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 2, 23)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        parent_password = _create_parent_user(household_id)
+        parent_csrf_token = _login_parent(client, password=parent_password)
+        create_child_response = client.post(
+            "/chore-api/children",
+            json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: parent_csrf_token},
+        )
+        assert create_child_response.status_code == 201
+        child_id = create_child_response.json()["id"]
+
+        first_chore_id = _create_chore(household_id, target_date)
+        second_chore_id = _create_chore(household_id, target_date)
+        child_password = _create_child_user(household_id, child_id)
+
+        child_csrf_token = _login(client, email="child@example.com", password=child_password)
+        child_submit_response = client.post(
+            "/chore-api/submissions",
+            json={"for_date": target_date.isoformat(), "chore_ids": [first_chore_id, second_chore_id]},
+            headers={CSRF_HEADER_NAME: child_csrf_token},
+        )
+        assert child_submit_response.status_code == 201
+        submission_id = child_submit_response.json()["id"]
+        assert child_submit_response.json()["child_id"] == child_id
+        assert child_submit_response.json()["status"] == "PENDING"
+
+        parent_csrf_token = _login_parent(client, password=parent_password)
+        pending_submissions_response = client.get("/chore-api/submissions?status=PENDING")
+        assert pending_submissions_response.status_code == 200
+        pending_payload = pending_submissions_response.json()
+        assert len(pending_payload) == 1
+        assert pending_payload[0]["id"] == submission_id
+
+        first_item_id = next(item["id"] for item in pending_payload[0]["items"] if item["chore_id"] == first_chore_id)
+        second_item_id = next(item["id"] for item in pending_payload[0]["items"] if item["chore_id"] == second_chore_id)
+
+        reject_response = client.post(
+            f"/chore-api/submissions/{submission_id}/items/{first_item_id}/decision",
+            json={"status": "REJECTED"},
+            headers={CSRF_HEADER_NAME: parent_csrf_token},
+        )
+        assert reject_response.status_code == 200
+        assert reject_response.json()["status"] == "PENDING"
+
+        approve_response = client.post(
+            f"/chore-api/submissions/{submission_id}/items/{second_item_id}/decision",
+            json={"status": "APPROVED"},
+            headers={CSRF_HEADER_NAME: parent_csrf_token},
+        )
+        assert approve_response.status_code == 200
+        assert approve_response.json()["status"] == "APPROVED"
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        total_balance_cents = session.scalar(
+            select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(Transaction.child_id == child_id)
+        )
+        assert total_balance_cents == 350
+
+        transactions = session.scalars(
+            select(Transaction).where(
+                Transaction.child_id == child_id,
+                Transaction.type == TransactionType.CHORE_APPROVAL,
+            )
+        ).all()
+        assert len(transactions) == 1
