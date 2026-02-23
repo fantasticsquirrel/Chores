@@ -293,3 +293,74 @@ def test_parent_can_decide_submission_items_individually(tmp_path: Path, monkeyp
             select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(Transaction.child_id == child_id)
         )
         assert total_balance_cents == 350
+
+
+def test_parent_rejecting_submission_item_marks_submission_rejected_without_balance_credit(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 2, 23)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
+        create_child_response = client.post(
+            "/chore-api/children",
+            json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert create_child_response.status_code == 201
+        child_id = create_child_response.json()["id"]
+
+        chore_id = _create_chore(household_id, target_date)
+        submit_response = client.post(
+            f"/chore-api/submissions?child_id={child_id}",
+            json={"for_date": target_date.isoformat(), "chore_ids": [chore_id]},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert submit_response.status_code == 201
+        submission_id = submit_response.json()["id"]
+
+        submissions_response = client.get("/chore-api/submissions?status=PENDING")
+        assert submissions_response.status_code == 200
+        item_id = submissions_response.json()[0]["items"][0]["id"]
+
+        reject_response = client.post(
+            f"/chore-api/submissions/{submission_id}/items/{item_id}/decision",
+            json={"status": "REJECTED"},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert reject_response.status_code == 200
+        reject_payload = reject_response.json()
+        assert reject_payload["status"] == "REJECTED"
+        assert reject_payload["items"] == [
+            {
+                "id": item_id,
+                "chore_id": chore_id,
+                "chore_name": "Dishes",
+                "chore_reward_cents": 350,
+                "status": "REJECTED",
+            }
+        ]
+
+        pending_after_rejection_response = client.get("/chore-api/submissions?status=PENDING")
+        assert pending_after_rejection_response.status_code == 200
+        assert pending_after_rejection_response.json() == []
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        total_balance_cents = session.scalar(
+            select(func.coalesce(func.sum(Transaction.amount_cents), 0)).where(Transaction.child_id == child_id)
+        )
+        assert total_balance_cents == 0
+
+        credit_transaction = session.scalars(
+            select(Transaction).where(
+                Transaction.child_id == child_id,
+                Transaction.type == TransactionType.CHORE_APPROVAL,
+            )
+        ).one_or_none()
+        assert credit_transaction is None

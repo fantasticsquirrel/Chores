@@ -25,7 +25,7 @@
 - [x] 3.3 — Ensure parent dashboard and children pages actually load live data from `/chore-api`.
 - [x] 3.4 — Ensure child-today flow can fetch eligible chores and submit selected items successfully.
 - [x] 3.5 — Implement/fix submission decision endpoint used by board UI (`/submissions/{id}/items/{item_id}/decision`) and wire frontend.
-- [ ] 3.6 — Validate board actions update statuses and balances correctly.
+- [x] 3.6 — Validate board actions update statuses and balances correctly.
 
 ## Phase 4: Test Coverage for Auth + Flows
 - [ ] 4.1 — Add backend auth tests (login success/failure, cookie/session, unauthorized access blocked).
