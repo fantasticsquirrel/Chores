@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -76,5 +76,64 @@ describe("Protected routes", () => {
     expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
     await waitFor(() => expect(listEligibleChoresSpy).not.toHaveBeenCalled());
+  });
+
+  it("shows parent navigation and allows authenticated parent navigation between parent routes", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 13,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Parent Dashboard" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Children" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Board" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("link", { name: "Children" }));
+    expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
+
+    fireEvent.click(screen.getByRole("link", { name: "Board" }));
+    expect(await screen.findByRole("heading", { name: "Submission Review" })).toBeVisible();
+  });
+
+  it("shows child navigation and keeps child users on child routes", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 14,
+        household_id: 1,
+        email: "child@example.com",
+        role: "CHILD",
+        child_id: 14,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={["/child/today"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Child Today" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Parent Dashboard" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Children" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Board" })).not.toBeInTheDocument();
   });
 });
