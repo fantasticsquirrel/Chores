@@ -318,6 +318,50 @@ body {
   align-items: end;
 }
 
+.submission-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.submission-item {
+  border: 1px solid #ffffff2f;
+  border-radius: 0.95rem;
+  padding: 0.95rem;
+  background: #ffffff12;
+}
+
+.item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.item-status {
+  border: 1px solid #ffffff36;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.73rem;
+  min-width: 5.2rem;
+  text-align: center;
+}
+
+.item-status.approved {
+  border-color: #64ffa370;
+  background: #65ff981f;
+}
+
+.item-status.rejected {
+  border-color: #ff7aa880;
+  background: #ff557929;
+}
+
+.danger-button {
+  background: linear-gradient(125deg, #ff7697 0%, #ff5e8d 45%, #f5455f 100%);
+}
+
 .task-checkbox {
   width: 100%;
   justify-content: flex-start;

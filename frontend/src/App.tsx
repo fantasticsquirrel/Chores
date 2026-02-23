@@ -4,6 +4,7 @@ import { Navigate, NavLink, Outlet, Route, Routes } from "react-router-dom";
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
+import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 
 type RouteCardProps = {
   title: string;
@@ -81,7 +82,7 @@ export default function App(): ReactElement {
         <Route path="/login" element={<LoginPage />} />
         <Route
           path="/board"
-          element={<RouteCard title="Board" description="Household board monitoring arrives in task 4.6." />}
+          element={<ParentSubmissionReviewPage />}
         />
         <Route
           path="/child/today"

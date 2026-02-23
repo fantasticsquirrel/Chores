@@ -64,3 +64,28 @@ export interface SubmissionResponse {
   status: string;
   items: SubmissionItemResponse[];
 }
+
+export interface SubmissionReviewItem {
+  id: number;
+  chore_id: number;
+  chore_name: string;
+  chore_reward_cents: number;
+  status: string;
+}
+
+export interface SubmissionReview {
+  id: number;
+  child_id: number;
+  child_name: string;
+  for_date: string;
+  status: string;
+  items: SubmissionReviewItem[];
+}
+
+export interface ListSubmissionsParams {
+  status?: string;
+}
+
+export interface SubmissionItemDecisionRequest {
+  status: "APPROVED" | "REJECTED";
+}

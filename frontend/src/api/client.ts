@@ -5,8 +5,11 @@ import type {
   EligibleChore,
   HealthResponse,
   ListEligibleChoresParams,
+  ListSubmissionsParams,
   ListChildrenParams,
   ReadinessResponse,
+  SubmissionItemDecisionRequest,
+  SubmissionReview,
   SubmissionRequest,
   SubmissionResponse,
   UpdateChildRequest,
@@ -76,6 +79,25 @@ export class ApiClient {
 
   async createSubmission(payload: SubmissionRequest): Promise<SubmissionResponse> {
     return this.post<SubmissionResponse, SubmissionRequest>("/submissions", payload);
+  }
+
+  async listSubmissions(params: ListSubmissionsParams = {}): Promise<SubmissionReview[]> {
+    return this.get<SubmissionReview[]>("/submissions", params);
+  }
+
+  async approveSubmission(submissionId: number): Promise<SubmissionReview> {
+    return this.post<SubmissionReview, Record<string, never>>(`/submissions/${submissionId}/approve-all`, {});
+  }
+
+  async decideSubmissionItem(
+    submissionId: number,
+    itemId: number,
+    payload: SubmissionItemDecisionRequest,
+  ): Promise<SubmissionReview> {
+    return this.post<SubmissionReview, SubmissionItemDecisionRequest>(
+      `/submissions/${submissionId}/items/${itemId}/decision`,
+      payload,
+    );
   }
 
   private async get<TResponse>(path: string, query?: RequestQuery): Promise<TResponse> {

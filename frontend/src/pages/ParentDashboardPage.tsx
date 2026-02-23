@@ -67,7 +67,7 @@ export function ParentDashboardPage(): ReactElement {
       <article className="glass-card metric-card">
         <p className="metric-label">Pending Submissions</p>
         <p className="metric-value">{pendingSubmissionsCount}</p>
-        <p className="metric-footnote">Submission API wiring arrives in task 4.6.</p>
+        <p className="metric-footnote">Review approvals on the Board page.</p>
       </article>
 
       <article className="glass-card metric-card">

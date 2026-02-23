@@ -118,4 +118,101 @@ describe("ApiClient", () => {
       }),
     );
   });
+
+  it("calls pending submissions endpoint with status query", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          {
+            id: 8,
+            child_id: 1,
+            child_name: "Maya",
+            for_date: "2026-02-23",
+            status: "PENDING",
+            items: [
+              {
+                id: 21,
+                chore_id: 12,
+                chore_name: "Dishes",
+                chore_reward_cents: 300,
+                status: "PENDING",
+              },
+            ],
+          },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const submissions = await client.listSubmissions({ status: "PENDING" });
+
+    expect(submissions[0]?.child_name).toBe("Maya");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/submissions?status=PENDING",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+  });
+
+  it("serializes approve-all and per-item decision submission actions", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 8,
+            child_id: 1,
+            child_name: "Maya",
+            for_date: "2026-02-23",
+            status: "APPROVED",
+            items: [],
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 8,
+            child_id: 1,
+            child_name: "Maya",
+            for_date: "2026-02-23",
+            status: "PENDING",
+            items: [],
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.approveSubmission(8);
+    await client.decideSubmissionItem(8, 21, { status: "REJECTED" });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/chore-api/submissions/8/approve-all",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/submissions/8/items/21/decision",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ status: "REJECTED" }),
+      }),
+    );
+  });
 });
