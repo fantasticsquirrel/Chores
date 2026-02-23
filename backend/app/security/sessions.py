@@ -4,6 +4,7 @@ from itsdangerous import BadSignature, URLSafeSerializer
 
 SESSION_COOKIE_NAME = "chore_tracker_session"
 SESSION_COOKIE_SALT = "chore-tracker-session"
+SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 14
 
 
 def _serializer(secret_key: str) -> URLSafeSerializer:

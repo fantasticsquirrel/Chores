@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from app.api import auth_router, children_router, workflow_router
 from app.config import get_settings
 from app.db import initialize_database
-from app.error_handling import RequestLoggingMiddleware, register_exception_handlers
+from app.error_handling import CsrfProtectionMiddleware, RequestLoggingMiddleware, register_exception_handlers
 from app.health import build_readiness_payload
 from app.logging_config import configure_logging
 from app.startup import run_startup_checks
@@ -29,6 +29,7 @@ async def lifespan(_: FastAPI):
 
 def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
     app = FastAPI(title="Chore Tracker API", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     register_exception_handlers(app)
     app.include_router(auth_router, prefix=API_PREFIX)

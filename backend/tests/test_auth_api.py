@@ -9,6 +9,7 @@ from app.db import get_session_factory, initialize_database
 from app.main import app
 from app.models.core import Household, User
 from app.models.enums import UserRole
+from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
 from app.security import hash_password
 
 
@@ -63,6 +64,8 @@ def test_login_and_me_flow(tmp_path: Path, monkeypatch) -> None:
         assert payload["child_id"] is None
 
         assert "chore_tracker_session" in login_response.cookies
+        assert CSRF_COOKIE_NAME in login_response.cookies
+        assert login_response.json()["csrf_token"] == login_response.cookies[CSRF_COOKIE_NAME]
 
         me_response = client.get("/chore-api/auth/me")
         assert me_response.status_code == 200
@@ -92,7 +95,13 @@ def test_logout_clears_session_cookie(tmp_path: Path, monkeypatch) -> None:
             "/chore-api/auth/login",
             json={"email": user.email, "password": password},
         )
-        logout_response = client.post("/chore-api/auth/logout")
+        csrf_token = client.cookies.get(CSRF_COOKIE_NAME)
+        assert csrf_token is not None
+
+        logout_response = client.post(
+            "/chore-api/auth/logout",
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
         assert logout_response.status_code == 204
 
         me_response = client.get("/chore-api/auth/me")
@@ -109,3 +118,20 @@ def test_me_requires_authenticated_session(tmp_path: Path, monkeypatch) -> None:
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Not authenticated."
+
+
+def test_write_with_session_requires_csrf_token(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user()
+
+    with TestClient(app) as client:
+        login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": password},
+        )
+        assert login_response.status_code == 200
+
+        response = client.post("/chore-api/auth/logout")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "CSRF token missing or invalid."

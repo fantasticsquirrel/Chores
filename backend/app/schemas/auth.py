@@ -24,3 +24,4 @@ class AuthUserResponse(BaseModel):
 
 class AuthSessionResponse(BaseModel):
     user: AuthUserResponse
+    csrf_token: str | None = None
