@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import Select, and_, exists, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session
+from app.api.dependencies import get_db_session, require_roles
 from app.models.core import (
     Child,
     Chore,
@@ -15,8 +15,17 @@ from app.models.core import (
     Submission,
     SubmissionItem,
     Transaction,
+    User,
 )
-from app.models.enums import AssignmentMode, CompletionMode, CompletionStatus, ScheduleMode, SubmissionStatus, TransactionType
+from app.models.enums import (
+    AssignmentMode,
+    CompletionMode,
+    CompletionStatus,
+    ScheduleMode,
+    SubmissionStatus,
+    TransactionType,
+    UserRole,
+)
 from app.schemas.workflow import (
     CreateSubmissionRequest,
     EligibleChoreResponse,
@@ -34,8 +43,9 @@ def list_eligible_chores(
     target_date: date = Query(alias="date"),
     child_id: int | None = Query(default=None, gt=0),
     session: Session = Depends(get_db_session),
+    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN, UserRole.CHILD)),
 ) -> list[EligibleChoreResponse]:
-    child = _resolve_active_child(session, child_id)
+    child = _resolve_active_child(session, user, child_id)
     return _eligible_chores_for_child(session, child, target_date)
 
 
@@ -44,8 +54,9 @@ def create_submission(
     payload: CreateSubmissionRequest,
     child_id: int | None = Query(default=None, gt=0),
     session: Session = Depends(get_db_session),
+    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN, UserRole.CHILD)),
 ) -> SubmissionResponse:
-    child = _resolve_active_child(session, child_id)
+    child = _resolve_active_child(session, user, child_id)
     eligible = _eligible_chores_for_child(session, child, payload.for_date)
     eligible_chore_ids = {item.chore_id for item in eligible}
 
@@ -90,8 +101,13 @@ def create_submission(
 def list_submissions(
     status_filter: SubmissionStatus | None = Query(default=None, alias="status"),
     session: Session = Depends(get_db_session),
+    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
 ) -> list[SubmissionReviewResponse]:
-    query: Select[tuple[Submission]] = select(Submission).order_by(Submission.id.asc())
+    query: Select[tuple[Submission]] = (
+        select(Submission)
+        .where(Submission.household_id == user.household_id)
+        .order_by(Submission.id.asc())
+    )
     if status_filter is not None:
         query = query.where(Submission.status == status_filter)
 
@@ -103,10 +119,13 @@ def list_submissions(
 def approve_submission(
     submission_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
+    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
 ) -> SubmissionReviewResponse:
     submission = session.get(Submission, submission_id)
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found.")
+    if submission.household_id != user.household_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
 
     items = list(session.scalars(select(SubmissionItem).where(SubmissionItem.submission_id == submission_id)).all())
     if not items:
@@ -146,14 +165,23 @@ def approve_submission(
     return _serialize_submission_review(session, submission)
 
 
-def _resolve_active_child(session: Session, child_id: int | None) -> Child:
+def _resolve_active_child(session: Session, user: User, child_id: int | None) -> Child:
+    if user.role == UserRole.CHILD:
+        if user.child_id is None:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+        if child_id is not None and child_id != user.child_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+        child_id = user.child_id
+
     if child_id is not None:
         child = session.get(Child, child_id)
-        if child is None or not child.active:
+        if child is None or not child.active or child.household_id != user.household_id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active child not found.")
         return child
 
-    child = session.scalars(select(Child).where(Child.active.is_(True)).order_by(Child.id.asc())).first()
+    child = session.scalars(
+        select(Child).where(Child.household_id == user.household_id, Child.active.is_(True)).order_by(Child.id.asc())
+    ).first()
     if child is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Active child not found.")
     return child

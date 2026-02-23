@@ -7,7 +7,10 @@ from fastapi.testclient import TestClient
 from app.config import get_settings
 from app.db import get_session_factory
 from app.main import app
-from app.models.core import Household
+from app.models.core import Household, User
+from app.models.enums import UserRole
+from app.security import hash_password
+from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
 
 
 def _configure_test_settings(tmp_path: Path, monkeypatch) -> None:
@@ -30,15 +33,45 @@ def _create_household() -> int:
         return household.id
 
 
+def _create_parent_user(household_id: int, email: str = "parent@example.com", password: str = "password123") -> str:
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        user = User(
+            household_id=household_id,
+            email=email.lower(),
+            password_hash=hash_password(password),
+            role=UserRole.PARENT,
+            child_id=None,
+        )
+        session.add(user)
+        session.commit()
+    return password
+
+
+def _login_parent(client: TestClient, email: str = "parent@example.com", password: str = "password123") -> str:
+    login_response = client.post(
+        "/chore-api/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login_response.status_code == 200
+    csrf_token = login_response.cookies.get(CSRF_COOKIE_NAME)
+    assert csrf_token is not None
+    return csrf_token
+
+
 def test_children_primary_flow(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
 
         create_response = client.post(
             "/chore-api/children",
             json={"household_id": household_id, "name": "  Riley  ", "active": True},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
         assert create_response.status_code == 201
@@ -54,6 +87,7 @@ def test_children_primary_flow(tmp_path: Path, monkeypatch) -> None:
         update_response = client.patch(
             f"/chore-api/children/{created['id']}",
             json={"household_id": household_id, "name": "  Rowan ", "active": False},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
         assert update_response.status_code == 200
         assert update_response.json()["name"] == "Rowan"
@@ -69,14 +103,18 @@ def test_patch_child_supports_partial_active_update(tmp_path: Path, monkeypatch)
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         created = client.post(
             "/chore-api/children",
             json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: csrf_token},
         ).json()
 
         response = client.patch(
             f"/chore-api/children/{created['id']}",
             json={"household_id": household_id, "active": False},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
     assert response.status_code == 200
@@ -89,9 +127,12 @@ def test_update_child_returns_not_found(tmp_path: Path, monkeypatch) -> None:
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         response = client.patch(
             "/chore-api/children/999",
             json={"household_id": household_id, "name": "Missing"},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
     assert response.status_code == 404
@@ -103,9 +144,12 @@ def test_create_child_rejects_whitespace_only_name(tmp_path: Path, monkeypatch) 
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         response = client.post(
             "/chore-api/children",
             json={"household_id": household_id, "name": "   "},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
     assert response.status_code == 422
@@ -118,14 +162,18 @@ def test_patch_child_requires_name_or_active(tmp_path: Path, monkeypatch) -> Non
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         created = client.post(
             "/chore-api/children",
             json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: csrf_token},
         ).json()
 
         response = client.patch(
             f"/chore-api/children/{created['id']}",
             json={"household_id": household_id},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
     assert response.status_code == 422
@@ -137,19 +185,26 @@ def test_create_child_invalid_household_returns_bad_request(tmp_path: Path, monk
     _configure_test_settings(tmp_path, monkeypatch)
 
     with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         response = client.post(
             "/chore-api/children",
             json={"household_id": 9999, "name": "Riley"},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Invalid household reference."
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Forbidden."
 
 
 def test_list_children_requires_positive_household_id(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
 
     with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        _login_parent(client)
         response = client.get("/chore-api/children?household_id=0")
 
     assert response.status_code == 422
@@ -162,9 +217,12 @@ def test_patch_child_requires_positive_child_id(tmp_path: Path, monkeypatch) -> 
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         response = client.patch(
             "/chore-api/children/0",
             json={"household_id": household_id, "name": "Riley"},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
 
     assert response.status_code == 422

@@ -36,7 +36,7 @@ def test_api_routes_are_namespaced_under_chore_api(tmp_path: Path, monkeypatch) 
         prefixed_response = client.get("/chore-api/children")
         root_response = client.get("/children")
 
-    assert prefixed_response.status_code == 422
+    assert prefixed_response.status_code == 401
     assert root_response.status_code == 404
 
 

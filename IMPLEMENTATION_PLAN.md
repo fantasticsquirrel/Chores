@@ -10,7 +10,7 @@
 - [x] 1.2 — Implement auth service: login, logout, current-session (`/auth/login`, `/auth/logout`, `/auth/me`).
 - [x] 1.3 — Implement secure session cookies + CSRF protection for write endpoints.
 - [x] 1.4 — Add role model enforcement (`PARENT_ADMIN`, `PARENT`, `CHILD`) and dependency guards.
-- [ ] 1.5 — Protect all household data routes (children, chores, submissions, board) with auth dependencies.
+- [x] 1.5 — Protect all household data routes (children, chores, submissions, board) with auth dependencies.
 
 ## Phase 2: Frontend Auth & Route Protection
 - [ ] 2.1 — Build real login form (email/password) on `/login` and wire to backend auth endpoints.

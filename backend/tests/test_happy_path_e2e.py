@@ -9,8 +9,10 @@ from sqlalchemy import func, select
 from app.config import get_settings
 from app.db import get_session_factory
 from app.main import app
-from app.models.core import Child, Chore, CompletionRecord, Household, Transaction
-from app.models.enums import AssignmentMode, CompletionStatus, CompletionMode, ScheduleMode, TransactionType
+from app.models.core import Child, Chore, CompletionRecord, Household, Transaction, User
+from app.models.enums import AssignmentMode, CompletionStatus, CompletionMode, ScheduleMode, TransactionType, UserRole
+from app.security import hash_password
+from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
 
 
 def _configure_test_settings(tmp_path: Path, monkeypatch) -> None:
@@ -31,6 +33,33 @@ def _create_household() -> int:
         session.add(household)
         session.commit()
         return household.id
+
+
+def _create_parent_user(household_id: int, email: str = "parent@example.com", password: str = "password123") -> str:
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        user = User(
+            household_id=household_id,
+            email=email.lower(),
+            password_hash=hash_password(password),
+            role=UserRole.PARENT,
+            child_id=None,
+        )
+        session.add(user)
+        session.commit()
+    return password
+
+
+def _login_parent(client: TestClient, email: str = "parent@example.com", password: str = "password123") -> str:
+    login_response = client.post(
+        "/chore-api/auth/login",
+        json={"email": email, "password": password},
+    )
+    assert login_response.status_code == 200
+    csrf_token = login_response.cookies.get(CSRF_COOKIE_NAME)
+    assert csrf_token is not None
+    return csrf_token
 
 
 def _create_chore(household_id: int, target_date: date) -> int:
@@ -59,9 +88,12 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
 
     with TestClient(app) as client:
         household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
         create_child_response = client.post(
             "/chore-api/children",
             json={"household_id": household_id, "name": "Riley", "active": True},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
         assert create_child_response.status_code == 201
         child_id = create_child_response.json()["id"]
@@ -85,13 +117,17 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
         submit_response = client.post(
             f"/chore-api/submissions?child_id={child_id}",
             json={"for_date": target_date.isoformat(), "chore_ids": [chore_id]},
+            headers={CSRF_HEADER_NAME: csrf_token},
         )
         assert submit_response.status_code == 201
         submission_id = submit_response.json()["id"]
         assert submit_response.json()["status"] == "PENDING"
         assert submit_response.json()["items"] == [{"chore_id": chore_id, "status": "PENDING"}]
 
-        approve_response = client.post(f"/chore-api/submissions/{submission_id}/approve-all")
+        approve_response = client.post(
+            f"/chore-api/submissions/{submission_id}/approve-all",
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
         assert approve_response.status_code == 200
         assert approve_response.json()["status"] == "APPROVED"
         assert approve_response.json()["items"][0]["status"] == "APPROVED"
