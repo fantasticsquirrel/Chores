@@ -9,7 +9,7 @@
 - [x] 1.1 — Add auth data model/migrations (parent users + household-scoped credentials) with secure password hashing.
 - [x] 1.2 — Implement auth service: login, logout, current-session (`/auth/login`, `/auth/logout`, `/auth/me`).
 - [x] 1.3 — Implement secure session cookies + CSRF protection for write endpoints.
-- [ ] 1.4 — Add role model enforcement (`PARENT_ADMIN`, `PARENT`, `CHILD`) and dependency guards.
+- [x] 1.4 — Add role model enforcement (`PARENT_ADMIN`, `PARENT`, `CHILD`) and dependency guards.
 - [ ] 1.5 — Protect all household data routes (children, chores, submissions, board) with auth dependencies.
 
 ## Phase 2: Frontend Auth & Route Protection

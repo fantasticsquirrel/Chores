@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session
+from app.api.dependencies import get_current_user, get_db_session
+from app.models.core import User
 from app.config import get_settings
 from app.schemas.auth import AuthSessionResponse, AuthUserResponse, LoginRequest
 from app.security.csrf import CSRF_COOKIE_NAME, create_csrf_token
@@ -11,7 +12,6 @@ from app.security.sessions import (
     SESSION_COOKIE_MAX_AGE_SECONDS,
     SESSION_COOKIE_NAME,
     create_session_token,
-    parse_session_token,
 )
 from app.services.auth import AuthService
 
@@ -64,19 +64,6 @@ def logout(response: Response) -> Response:
 
 @router.get("/me", response_model=AuthSessionResponse)
 def get_current_session(
-    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
-    session: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
 ) -> AuthSessionResponse:
-    if session_token is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
-
-    settings = get_settings()
-    user_id = parse_session_token(settings.secret_key, session_token)
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
-
-    user = _service.get_user(session, user_id)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
-
     return _build_session_response(user)
