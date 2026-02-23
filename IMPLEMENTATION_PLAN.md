@@ -28,7 +28,7 @@
 - [x] 3.6 — Validate board actions update statuses and balances correctly.
 
 ## Phase 4: Test Coverage for Auth + Flows
-- [ ] 4.1 — Add backend auth tests (login success/failure, cookie/session, unauthorized access blocked).
+- [x] 4.1 — Add backend auth tests (login success/failure, cookie/session, unauthorized access blocked).
 - [ ] 4.2 — Add backend permission tests (role enforcement by endpoint).
 - [ ] 4.3 — Add frontend tests for protected-route redirects and authenticated navigation.
 - [ ] 4.4 — Add integration tests for create child, submit chore, approve/reject flow under authenticated session.

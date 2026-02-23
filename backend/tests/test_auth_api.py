@@ -11,6 +11,7 @@ from app.models.core import Household, User
 from app.models.enums import UserRole
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
 from app.security import hash_password
+from app.security.sessions import SESSION_COOKIE_MAX_AGE_SECONDS
 
 
 def _configure_test_settings(tmp_path: Path, monkeypatch) -> None:
@@ -135,3 +136,49 @@ def test_write_with_session_requires_csrf_token(tmp_path: Path, monkeypatch) -> 
 
     assert response.status_code == 403
     assert response.json()["detail"] == "CSRF token missing or invalid."
+
+
+def test_login_sets_expected_cookie_attributes(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user()
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": password},
+        )
+
+    assert response.status_code == 200
+    set_cookie_headers = response.headers.get_list("set-cookie")
+
+    session_cookie_header = next(
+        header for header in set_cookie_headers if header.startswith("chore_tracker_session=")
+    )
+    assert "HttpOnly" in session_cookie_header
+    assert "SameSite=lax" in session_cookie_header
+    assert "Path=/" in session_cookie_header
+    assert f"Max-Age={SESSION_COOKIE_MAX_AGE_SECONDS}" in session_cookie_header
+
+    csrf_cookie_header = next(header for header in set_cookie_headers if header.startswith(f"{CSRF_COOKIE_NAME}="))
+    assert "HttpOnly" not in csrf_cookie_header
+    assert "SameSite=lax" in csrf_cookie_header
+    assert "Path=/" in csrf_cookie_header
+    assert f"Max-Age={SESSION_COOKIE_MAX_AGE_SECONDS}" in csrf_cookie_header
+
+
+def test_me_rejects_tampered_session_cookie(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user()
+
+    with TestClient(app) as client:
+        login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": password},
+        )
+        assert login_response.status_code == 200
+
+        client.cookies.set("chore_tracker_session", "tampered-token")
+        me_response = client.get("/chore-api/auth/me")
+
+    assert me_response.status_code == 401
+    assert me_response.json()["detail"] == "Not authenticated."
