@@ -1,4 +1,4 @@
-import { ApiClient, ApiClientError } from "./client";
+import { ApiClient, ApiClientError, DEFAULT_API_BASE_URL, resolveApiBaseUrl } from "./client";
 
 describe("ApiClient", () => {
   it("calls /chore-api children list endpoint with typed query params", async () => {
@@ -214,5 +214,32 @@ describe("ApiClient", () => {
         body: JSON.stringify({ status: "REJECTED" }),
       }),
     );
+  });
+
+  it("supports absolute API base URLs for local development backends", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([{ id: 1, household_id: 2, name: "Maya", active: true }]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const client = new ApiClient({
+      baseUrl: "http://127.0.0.1:8000/chore-api",
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.listChildren({ household_id: 2 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8000/chore-api/children?household_id=2",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+  });
+
+  it("falls back to the production API base when env configuration is missing", () => {
+    vi.stubEnv("VITE_API_BASE_URL", "");
+    expect(resolveApiBaseUrl()).toBe(DEFAULT_API_BASE_URL);
+    vi.unstubAllEnvs();
   });
 });

@@ -15,7 +15,7 @@ import type {
   UpdateChildRequest,
 } from "./models";
 
-const DEFAULT_API_BASE_URL = "/chore-api";
+export const DEFAULT_API_BASE_URL = "/chore-api";
 
 type QueryValue = string | number | boolean | undefined;
 
@@ -45,7 +45,7 @@ export class ApiClient {
   private fetchImpl: typeof fetch;
 
   constructor(config: ApiClientConfig = {}) {
-    this.baseUrl = normalizeBaseUrl(config.baseUrl ?? DEFAULT_API_BASE_URL);
+    this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl());
     this.fetchImpl = config.fetchImpl ?? fetch;
   }
 
@@ -148,33 +148,68 @@ export function createApiClient(config: ApiClientConfig = {}): ApiClient {
   return new ApiClient(config);
 }
 
-export const apiClient = createApiClient();
+export const apiClient = createApiClient({ baseUrl: import.meta.env.VITE_API_BASE_URL });
 
-function normalizeBaseUrl(baseUrl: string): string {
-  if (!baseUrl.startsWith("/")) {
-    return `/${baseUrl.replace(/\/+$/, "")}`;
+export function resolveApiBaseUrl(): string {
+  const rawValue = import.meta.env.VITE_API_BASE_URL;
+  if (rawValue === undefined || rawValue.trim().length === 0) {
+    return DEFAULT_API_BASE_URL;
   }
 
-  return baseUrl.replace(/\/+$/, "");
+  return rawValue;
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+  const trimmedBaseUrl = baseUrl.trim();
+  if (trimmedBaseUrl.length === 0) {
+    return DEFAULT_API_BASE_URL;
+  }
+
+  if (isAbsoluteHttpUrl(trimmedBaseUrl)) {
+    return trimmedBaseUrl.replace(/\/+$/, "");
+  }
+
+  if (!trimmedBaseUrl.startsWith("/")) {
+    return `/${trimmedBaseUrl.replace(/^\/+/, "").replace(/\/+$/, "")}`;
+  }
+
+  return trimmedBaseUrl.replace(/\/+$/, "");
 }
 
 function buildUrl(baseUrl: string, path: string, query?: RequestQuery): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = `${baseUrl}${normalizedPath}`;
 
+  if (isAbsoluteHttpUrl(baseUrl)) {
+    const absoluteUrl = new URL(normalizedPath.replace(/^\/+/, ""), `${baseUrl}/`);
+    appendQueryParams(absoluteUrl.searchParams, query);
+    return absoluteUrl.toString();
+  }
+
+  const relativeUrl = `${baseUrl}${normalizedPath}`;
   if (query === undefined) {
-    return url;
+    return relativeUrl;
   }
 
   const searchParams = new URLSearchParams();
+  appendQueryParams(searchParams, query);
+  const serialized = searchParams.toString();
+  return serialized.length > 0 ? `${relativeUrl}?${serialized}` : relativeUrl;
+}
+
+function appendQueryParams(searchParams: URLSearchParams, query?: RequestQuery): void {
+  if (query === undefined) {
+    return;
+  }
+
   for (const [key, value] of Object.entries(query)) {
     if (value !== undefined) {
       searchParams.set(key, String(value));
     }
   }
+}
 
-  const serialized = searchParams.toString();
-  return serialized.length > 0 ? `${url}?${serialized}` : url;
+function isAbsoluteHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
 }
 
 function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
