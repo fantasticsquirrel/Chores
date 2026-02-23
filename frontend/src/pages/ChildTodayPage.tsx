@@ -2,6 +2,7 @@ import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
 import { ApiClientError, apiClient, type EligibleChore } from "../api";
+import { Badge, Button, Card, DateInput, FormField, InlineNotice } from "../ui";
 
 type PageState = {
   chores: EligibleChore[];
@@ -102,40 +103,35 @@ export function ChildTodayPage(): ReactElement {
 
   return (
     <section className="dashboard-grid" aria-label="Child today page">
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h1>Child Today</h1>
-          <span className="pill">Daily Chores</span>
+          <Badge>Daily Chores</Badge>
         </div>
         <p>Select completed chores and submit them for parent approval.</p>
-      </article>
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Eligible Chores</h2>
         </div>
         <form className="children-form today-controls" onSubmit={(event) => event.preventDefault()}>
-          <label>
-            Date
-            <input
-              type="date"
+          <FormField label="Date">
+            <DateInput
               value={targetDate}
               onChange={handleDateChange}
               max="9999-12-31"
             />
-          </label>
-          <button
-            type="button"
-            className="jewel-button button-reset"
-            onClick={() => void loadChores(targetDate)}
-            disabled={state.loading}
-          >
+          </FormField>
+          <Button onClick={() => void loadChores(targetDate)} disabled={state.loading}>
             {state.loading ? "Refreshing..." : "Refresh"}
-          </button>
+          </Button>
         </form>
 
         {state.loading ? <p>Loading eligible chores...</p> : null}
-        {!state.loading && state.error !== null ? <p role="alert">Could not load chores: {state.error}</p> : null}
+        {!state.loading && state.error !== null ? (
+          <InlineNotice variant="error">Could not load chores: {state.error}</InlineNotice>
+        ) : null}
         {!state.loading && state.error === null && state.chores.length === 0 ? (
           <p>No eligible chores for this date.</p>
         ) : null}
@@ -163,24 +159,22 @@ export function ChildTodayPage(): ReactElement {
             ))}
           </ul>
         ) : null}
-      </article>
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Submission</h2>
-          <span className="pill">{selectedChoreIds.length} selected</span>
+          <Badge>{selectedChoreIds.length} selected</Badge>
         </div>
-        <button
-          type="button"
-          className="jewel-button button-reset"
+        <Button
           onClick={() => void handleSubmit()}
           disabled={submitting || state.loading || selectedChoreIds.length === 0}
         >
           {submitting ? "Submitting..." : "Submit Selected Chores"}
-        </button>
-        {submitError !== null ? <p role="alert">Could not submit chores: {submitError}</p> : null}
-        {submitSuccess !== null ? <p>{submitSuccess}</p> : null}
-      </article>
+        </Button>
+        {submitError !== null ? <InlineNotice variant="error">Could not submit chores: {submitError}</InlineNotice> : null}
+        {submitSuccess !== null ? <InlineNotice variant="success">{submitSuccess}</InlineNotice> : null}
+      </Card>
     </section>
   );
 }

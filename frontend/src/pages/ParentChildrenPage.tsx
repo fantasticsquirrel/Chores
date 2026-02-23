@@ -2,6 +2,7 @@ import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
 import { ApiClientError, apiClient, type Child } from "../api";
+import { Badge, Button, Card, CheckboxField, FormField, InlineNotice, TextInput } from "../ui";
 
 const DEFAULT_HOUSEHOLD_ID = 1;
 
@@ -97,22 +98,21 @@ export function ParentChildrenPage(): ReactElement {
 
   return (
     <section className="dashboard-grid" aria-label="Parent children management">
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h1>Children Management</h1>
-          <span className="pill">Household {DEFAULT_HOUSEHOLD_ID}</span>
+          <Badge>Household {DEFAULT_HOUSEHOLD_ID}</Badge>
         </div>
         <p>Create and update active status for children in this household.</p>
-      </article>
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Add Child</h2>
         </div>
         <form className="children-form" onSubmit={(event) => void handleCreateChild(event)}>
-          <label>
-            Name
-            <input
+          <FormField label="Name">
+            <TextInput
               type="text"
               value={nameInput}
               onChange={(event) => setNameInput(event.target.value)}
@@ -120,30 +120,29 @@ export function ParentChildrenPage(): ReactElement {
               maxLength={255}
               disabled={submitting}
             />
-          </label>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={activeOnCreate}
-              onChange={(event) => setActiveOnCreate(event.target.checked)}
-              disabled={submitting}
-            />
-            Active
-          </label>
-          <button type="submit" className="jewel-button button-reset" disabled={submitting}>
+          </FormField>
+          <CheckboxField
+            label="Active"
+            checked={activeOnCreate}
+            onChange={(event) => setActiveOnCreate(event.target.checked)}
+            disabled={submitting}
+          />
+          <Button type="submit" disabled={submitting}>
             {submitting ? "Saving..." : "Create Child"}
-          </button>
+          </Button>
         </form>
-        {submitError !== null ? <p role="alert">Could not save child: {submitError}</p> : null}
-      </article>
+        {submitError !== null ? <InlineNotice variant="error">Could not save child: {submitError}</InlineNotice> : null}
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Children</h2>
         </div>
 
         {state.loading ? <p>Loading children...</p> : null}
-        {!state.loading && state.error !== null ? <p role="alert">Could not load children: {state.error}</p> : null}
+        {!state.loading && state.error !== null ? (
+          <InlineNotice variant="error">Could not load children: {state.error}</InlineNotice>
+        ) : null}
 
         {!state.loading && state.error === null && state.children.length === 0 ? (
           <p>No children found yet for this household.</p>
@@ -161,20 +160,15 @@ export function ParentChildrenPage(): ReactElement {
                     <p className="balance-name">{child.name}</p>
                     <p className="balance-meta">{child.active ? "Active" : "Inactive"}</p>
                   </div>
-                  <button
-                    type="button"
-                    className="jewel-button button-reset"
-                    onClick={() => void handleToggleActive(child)}
-                    disabled={isUpdating}
-                  >
+                  <Button onClick={() => void handleToggleActive(child)} disabled={isUpdating}>
                     {isUpdating ? "Updating..." : buttonLabel}
-                  </button>
+                  </Button>
                 </li>
               );
             })}
           </ul>
         ) : null}
-      </article>
+      </Card>
     </section>
   );
 }

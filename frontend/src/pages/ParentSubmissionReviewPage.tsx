@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { ApiClientError, apiClient, type SubmissionItemDecisionRequest, type SubmissionReview } from "../api";
+import { Badge, Button, Card, InlineNotice } from "../ui";
 
 type PageState = {
   submissions: SubmissionReview[];
@@ -97,21 +98,23 @@ export function ParentSubmissionReviewPage(): ReactElement {
 
   return (
     <section className="dashboard-grid" aria-label="Parent submission review">
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h1>Submission Review</h1>
-          <span className="pill">{pendingItemsCount} pending item(s)</span>
+          <Badge>{pendingItemsCount} pending item(s)</Badge>
         </div>
         <p>Approve all chores in a submission or decide each item individually.</p>
-      </article>
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Pending Submissions</h2>
         </div>
 
         {state.loading ? <p>Loading pending submissions...</p> : null}
-        {!state.loading && state.error !== null ? <p role="alert">Could not load submissions: {state.error}</p> : null}
+        {!state.loading && state.error !== null ? (
+          <InlineNotice variant="error">Could not load submissions: {state.error}</InlineNotice>
+        ) : null}
 
         {!state.loading && state.error === null && state.submissions.length === 0 ? (
           <p>No pending submissions right now.</p>
@@ -131,14 +134,9 @@ export function ParentSubmissionReviewPage(): ReactElement {
                         For {submission.for_date} • {submission.items.length} item(s) • Potential {toUsd(computeSubmissionTotal(submission))}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      className="jewel-button button-reset"
-                      onClick={() => void handleApproveAll(submission.id)}
-                      disabled={submittingKey !== null}
-                    >
+                    <Button onClick={() => void handleApproveAll(submission.id)} disabled={submittingKey !== null}>
                       {approvingAll ? "Approving..." : "Approve All"}
-                    </button>
+                    </Button>
                   </div>
 
                   <ul className="balance-list" aria-label={`Submission ${submission.id} items`}>
@@ -154,9 +152,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
                           </div>
                           <div className="item-actions">
                             <span className={itemStatusClass}>{item.status}</span>
-                            <button
-                              type="button"
-                              className="jewel-button button-reset"
+                            <Button
                               onClick={() =>
                                 void handleItemDecision(submission.id, item.id, {
                                   status: "APPROVED",
@@ -165,10 +161,9 @@ export function ParentSubmissionReviewPage(): ReactElement {
                               disabled={submittingKey !== null || item.status === "APPROVED"}
                             >
                               {itemActionPending ? "Saving..." : "Approve"}
-                            </button>
-                            <button
-                              type="button"
-                              className="jewel-button button-reset danger-button"
+                            </Button>
+                            <Button
+                              variant="danger"
                               onClick={() =>
                                 void handleItemDecision(submission.id, item.id, {
                                   status: "REJECTED",
@@ -177,7 +172,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
                               disabled={submittingKey !== null || item.status === "REJECTED"}
                             >
                               {itemActionPending ? "Saving..." : "Reject"}
-                            </button>
+                            </Button>
                           </div>
                         </li>
                       );
@@ -189,8 +184,10 @@ export function ParentSubmissionReviewPage(): ReactElement {
           </ul>
         ) : null}
 
-        {actionError !== null ? <p role="alert">Could not update submission decision: {actionError}</p> : null}
-      </article>
+        {actionError !== null ? (
+          <InlineNotice variant="error">Could not update submission decision: {actionError}</InlineNotice>
+        ) : null}
+      </Card>
     </section>
   );
 }

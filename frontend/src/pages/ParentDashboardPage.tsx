@@ -1,8 +1,8 @@
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 
 import { apiClient, ApiClientError, type Child } from "../api";
+import { Badge, ButtonLink, Card, InlineNotice } from "../ui";
 
 type DashboardState = {
   children: Child[];
@@ -64,28 +64,28 @@ export function ParentDashboardPage(): ReactElement {
 
   return (
     <section className="dashboard-grid" aria-label="Parent dashboard">
-      <article className="glass-card metric-card">
+      <Card className="metric-card">
         <p className="metric-label">Pending Submissions</p>
         <p className="metric-value">{pendingSubmissionsCount}</p>
         <p className="metric-footnote">Review approvals on the Board page.</p>
-      </article>
+      </Card>
 
-      <article className="glass-card metric-card">
+      <Card className="metric-card">
         <p className="metric-label">Active Children</p>
         <p className="metric-value">{state.loading ? "-" : activeChildrenCount}</p>
         <p className="metric-footnote">Loaded from household {DEFAULT_HOUSEHOLD_ID}.</p>
-      </article>
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h1>Parent Dashboard</h1>
-          <span className="pill">Child Balances</span>
+          <Badge>Child Balances</Badge>
         </div>
 
         {state.loading ? <p>Loading child balances...</p> : null}
 
         {!state.loading && state.error !== null ? (
-          <p role="alert">Could not load children: {state.error}</p>
+          <InlineNotice variant="error">Could not load children: {state.error}</InlineNotice>
         ) : null}
 
         {!state.loading && state.error === null && state.children.length === 0 ? (
@@ -105,24 +105,24 @@ export function ParentDashboardPage(): ReactElement {
             ))}
           </ul>
         ) : null}
-      </article>
+      </Card>
 
-      <article className="glass-card dashboard-panel">
+      <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Quick Actions</h2>
         </div>
         <div className="quick-actions">
-          <Link to="/parent/children" className="jewel-button">
+          <ButtonLink to="/parent/children">
             Manage Children
-          </Link>
-          <Link to="/board" className="jewel-button">
+          </ButtonLink>
+          <ButtonLink to="/board">
             Open Board
-          </Link>
-          <Link to="/parent/reports" className="jewel-button">
+          </ButtonLink>
+          <ButtonLink to="/parent/reports">
             View Reports
-          </Link>
+          </ButtonLink>
         </div>
-      </article>
+      </Card>
     </section>
   );
 }

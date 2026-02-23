@@ -22,7 +22,7 @@
 - [x] 4.4 — Build Children management page (list/create/edit active status) wired to backend `/children` APIs
 - [x] 4.5 — Build Child Today page (eligible chores list, submission flow) with loading/error/empty states
 - [x] 4.6 — Build Submission review page for parents (approve/reject per item)
-- [ ] 4.7 — Implement shared UI system (cards, buttons, badges, forms, toast/errors) with Jewel Pop styling
+- [x] 4.7 — Implement shared UI system (cards, buttons, badges, forms, toast/errors) with Jewel Pop styling
 
 ## Phase 5: Integration & Reliability
 - [ ] 5.1 — Ensure frontend uses configurable API base for production (`/chore-api`) and local dev

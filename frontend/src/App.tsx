@@ -5,6 +5,7 @@ import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
+import { Card } from "./ui";
 
 type RouteCardProps = {
   title: string;
@@ -20,10 +21,10 @@ const navItems = [
 
 function RouteCard({ title, description }: RouteCardProps): ReactElement {
   return (
-    <section className="glass-card">
+    <Card as="section">
       <h1>{title}</h1>
       <p>{description}</p>
-    </section>
+    </Card>
   );
 }
 
