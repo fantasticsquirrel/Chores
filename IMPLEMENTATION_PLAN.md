@@ -22,7 +22,7 @@
 ## Phase 3: Core Functionality Bug Fixes
 - [x] 3.1 — Fix API client fetch invocation bug (`Illegal invocation`) by binding fetch correctly in all browsers.
 - [x] 3.2 — Verify and fix child creation/update forms (input wiring, payload shape, household scoping).
-- [ ] 3.3 — Ensure parent dashboard and children pages actually load live data from `/chore-api`.
+- [x] 3.3 — Ensure parent dashboard and children pages actually load live data from `/chore-api`.
 - [ ] 3.4 — Ensure child-today flow can fetch eligible chores and submit selected items successfully.
 - [ ] 3.5 — Implement/fix submission decision endpoint used by board UI (`/submissions/{id}/items/{item_id}/decision`) and wire frontend.
 - [ ] 3.6 — Validate board actions update statuses and balances correctly.

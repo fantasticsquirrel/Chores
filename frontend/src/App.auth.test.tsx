@@ -22,6 +22,7 @@ describe("Auth bootstrap and logout", () => {
       csrf_token: null,
     });
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
       <MemoryRouter initialEntries={["/parent/dashboard"]}>
@@ -46,6 +47,7 @@ describe("Auth bootstrap and logout", () => {
       csrf_token: null,
     });
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
     const logoutSpy = vi.spyOn(apiClient, "logout");
     logoutSpy.mockResolvedValue(undefined);
 
@@ -73,6 +75,7 @@ describe("Auth bootstrap and logout", () => {
       csrf_token: null,
     });
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
     const logoutSpy = vi.spyOn(apiClient, "logout");
     logoutSpy.mockRejectedValue(
       new ApiClientError(500, "Service unavailable.", {

@@ -2,16 +2,15 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { apiClient, ApiClientError, type Child } from "../api";
+import { useAuth } from "../auth/useAuth";
 import { Badge, ButtonLink, Card, InlineNotice } from "../ui";
 
 type DashboardState = {
   children: Child[];
+  pendingSubmissionsCount: number;
   loading: boolean;
   error: string | null;
 };
-
-const DEFAULT_HOUSEHOLD_ID = 1;
-const pendingSubmissionsCount = 0;
 
 function formatLoadError(error: unknown): string {
   if (error instanceof ApiClientError) {
@@ -26,8 +25,11 @@ function formatLoadError(error: unknown): string {
 }
 
 export function ParentDashboardPage(): ReactElement {
+  const { user } = useAuth();
+  const householdId = user?.household_id ?? null;
   const [state, setState] = useState<DashboardState>({
     children: [],
+    pendingSubmissionsCount: 0,
     loading: true,
     error: null,
   });
@@ -35,27 +37,51 @@ export function ParentDashboardPage(): ReactElement {
   useEffect(() => {
     let isMounted = true;
 
-    apiClient
-      .listChildren({ household_id: DEFAULT_HOUSEHOLD_ID })
-      .then((children) => {
+    if (householdId === null) {
+      setState({
+        children: [],
+        pendingSubmissionsCount: 0,
+        loading: false,
+        error: "Could not determine household scope.",
+      });
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    Promise.all([
+      apiClient.listChildren({ household_id: householdId }),
+      apiClient.listSubmissions({ status: "PENDING" }),
+    ])
+      .then(([children, submissions]) => {
         if (!isMounted) {
           return;
         }
 
-        setState({ children, loading: false, error: null });
+        setState({
+          children,
+          pendingSubmissionsCount: submissions.length,
+          loading: false,
+          error: null,
+        });
       })
       .catch((error: unknown) => {
         if (!isMounted) {
           return;
         }
 
-        setState({ children: [], loading: false, error: formatLoadError(error) });
+        setState({
+          children: [],
+          pendingSubmissionsCount: 0,
+          loading: false,
+          error: formatLoadError(error),
+        });
       });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [householdId]);
 
   const activeChildrenCount = useMemo(
     () => state.children.filter((child) => child.active).length,
@@ -66,14 +92,14 @@ export function ParentDashboardPage(): ReactElement {
     <section className="dashboard-grid" aria-label="Parent dashboard">
       <Card className="metric-card">
         <p className="metric-label">Pending Submissions</p>
-        <p className="metric-value">{pendingSubmissionsCount}</p>
+        <p className="metric-value">{state.loading ? "-" : state.pendingSubmissionsCount}</p>
         <p className="metric-footnote">Review approvals on the Board page.</p>
       </Card>
 
       <Card className="metric-card">
         <p className="metric-label">Active Children</p>
         <p className="metric-value">{state.loading ? "-" : activeChildrenCount}</p>
-        <p className="metric-footnote">Loaded from household {DEFAULT_HOUSEHOLD_ID}.</p>
+        <p className="metric-footnote">Loaded from household {householdId ?? "Unknown"}.</p>
       </Card>
 
       <Card className="dashboard-panel">
