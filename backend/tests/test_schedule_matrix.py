@@ -194,3 +194,54 @@ def test_rotating_every_day_assigns_different_children(tmp_path: Path, monkeypat
         b_day2 = client.get("/chore-api/children/me/eligible-chores?date=2026-02-02&child_id=%d" % child_b)
         assert all(item["chore_id"] != chore_id for item in a_day2.json())
         assert any(item["chore_id"] == chore_id for item in b_day2.json())
+
+
+def test_rotating_after_completion_moves_to_next_child(tmp_path: Path, monkeypatch) -> None:
+    _configure(tmp_path, monkeypatch)
+    household_id, child_a, child_b = _seed_household_with_parent_and_children()
+
+    chore_id = _create_chore(
+        household_id=household_id,
+        name="Rotate after completion",
+        reward_cents=100,
+        start_date=date(2026, 2, 1),
+        schedule_mode=ScheduleMode.AFTER_COMPLETION,
+        schedule_interval=1,
+        schedule_unit=ScheduleUnit.DAY,
+        completion_mode=CompletionMode.PER_CHILD,
+        assignment_mode=AssignmentMode.ROTATING,
+    )
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        session.add_all(
+            [
+                ChoreRotationMember(chore_id=chore_id, child_id=child_a, position=0),
+                ChoreRotationMember(chore_id=chore_id, child_id=child_b, position=1),
+            ]
+        )
+        session.commit()
+
+    with TestClient(app) as client:
+        csrf = _login_parent(client)
+
+        day1_a = client.get(f"/chore-api/children/me/eligible-chores?date=2026-02-01&child_id={child_a}")
+        day1_b = client.get(f"/chore-api/children/me/eligible-chores?date=2026-02-01&child_id={child_b}")
+        assert any(item["chore_id"] == chore_id for item in day1_a.json())
+        assert all(item["chore_id"] != chore_id for item in day1_b.json())
+
+        submission = client.post(
+            f"/chore-api/submissions?child_id={child_a}",
+            json={"for_date": "2026-02-01", "chore_ids": [chore_id]},
+            headers={CSRF_HEADER_NAME: csrf},
+        )
+        assert submission.status_code == 201
+        submission_id = submission.json()["id"]
+        approve = client.post(f"/chore-api/submissions/{submission_id}/approve-all", headers={CSRF_HEADER_NAME: csrf})
+        assert approve.status_code == 200
+
+        day2_a = client.get(f"/chore-api/children/me/eligible-chores?date=2026-02-02&child_id={child_a}")
+        day2_b = client.get(f"/chore-api/children/me/eligible-chores?date=2026-02-02&child_id={child_b}")
+        assert all(item["chore_id"] != chore_id for item in day2_a.json())
+        assert any(item["chore_id"] == chore_id for item in day2_b.json())
