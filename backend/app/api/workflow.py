@@ -11,6 +11,8 @@ from app.models.core import (
     Child,
     Chore,
     ChoreAllowedChild,
+    ChoreRotationMember,
+    ChoreRotationState,
     CompletionRecord,
     Submission,
     SubmissionItem,
@@ -22,6 +24,7 @@ from app.models.enums import (
     CompletionMode,
     CompletionStatus,
     ScheduleMode,
+    ScheduleUnit,
     SubmissionStatus,
     TransactionType,
     UserRole,
@@ -132,10 +135,11 @@ def approve_submission(
     if not items:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Submission has no items.")
 
-    reward_map = {
-        row.id: row.reward_cents
+    chore_map = {
+        row.id: row
         for row in session.scalars(select(Chore).where(Chore.id.in_([item.chore_id for item in items]))).all()
     }
+    processed_rotation_chores: set[int] = set()
 
     for item in items:
         if item.status != SubmissionStatus.PENDING:
@@ -155,10 +159,15 @@ def approve_submission(
             Transaction(
                 household_id=submission.household_id,
                 child_id=submission.child_id,
-                amount_cents=reward_map.get(item.chore_id, 0),
+                amount_cents=chore_map.get(item.chore_id).reward_cents if chore_map.get(item.chore_id) else 0,
                 type=TransactionType.CHORE_APPROVAL,
             )
         )
+
+        chore = chore_map.get(item.chore_id)
+        if chore is not None and chore.id not in processed_rotation_chores:
+            _advance_rotation_state_if_needed(session, chore, submission.for_date)
+            processed_rotation_chores.add(chore.id)
 
     submission.status = SubmissionStatus.APPROVED
     session.commit()
@@ -215,6 +224,7 @@ def decide_submission_item(
                 type=TransactionType.CHORE_APPROVAL,
             )
         )
+        _advance_rotation_state_if_needed(session, chore, submission.for_date)
 
     submission_items = list(
         session.scalars(
@@ -250,61 +260,40 @@ def _resolve_active_child(session: Session, user: User, child_id: int | None) ->
 
 
 def _eligible_chores_for_child(session: Session, child: Child, target_date: date) -> list[EligibleChoreResponse]:
-    has_allowed_rows = exists(select(1).where(ChoreAllowedChild.chore_id == Chore.id))
-    explicitly_allowed = exists(
-        select(1).where(
-            and_(
-                ChoreAllowedChild.chore_id == Chore.id,
-                ChoreAllowedChild.child_id == child.id,
+    chores = list(
+        session.scalars(
+            select(Chore)
+            .where(
+                Chore.household_id == child.household_id,
+                Chore.archived_at.is_(None),
+                Chore.start_date <= target_date,
+                or_(Chore.expires_at.is_(None), Chore.expires_at >= target_date),
             )
-        )
-    )
-    child_has_completion = exists(
-        select(1).where(
-            and_(
-                CompletionRecord.child_id == child.id,
-                CompletionRecord.chore_id == Chore.id,
-                CompletionRecord.date == target_date,
-                CompletionRecord.status == CompletionStatus.APPROVED,
-            )
-        )
-    )
-    any_child_has_completion = exists(
-        select(1).where(
-            and_(
-                CompletionRecord.household_id == child.household_id,
-                CompletionRecord.chore_id == Chore.id,
-                CompletionRecord.date == target_date,
-                CompletionRecord.status == CompletionStatus.APPROVED,
-            )
-        )
+            .order_by(Chore.id.asc())
+        ).all()
     )
 
-    query = (
-        select(Chore)
-        .where(
-            Chore.household_id == child.household_id,
-            Chore.archived_at.is_(None),
-            Chore.schedule_mode == ScheduleMode.NONE,
-            Chore.assignment_mode == AssignmentMode.STATIC,
-            Chore.start_date <= target_date,
-            or_(Chore.expires_at.is_(None), Chore.expires_at >= target_date),
-            or_(~has_allowed_rows, explicitly_allowed),
-            or_(
-                and_(Chore.completion_mode == CompletionMode.PER_CHILD, ~child_has_completion),
-                and_(Chore.completion_mode == CompletionMode.SHARED, ~any_child_has_completion),
-            ),
-        )
-        .order_by(Chore.id.asc())
-    )
-
-    chores = list(session.scalars(query).all())
     results: list[EligibleChoreResponse] = []
 
     for chore in chores:
+        if not _is_child_allowed_for_chore(session, chore.id, child.id):
+            continue
+
+        occurrence_date = _scheduled_occurrence_for_target(session, chore, child, target_date)
+        if occurrence_date is None:
+            continue
+
+        if chore.assignment_mode == AssignmentMode.ROTATING and not _is_child_rotation_assignee(
+            session, chore, child.id, occurrence_date
+        ):
+            continue
+
+        if _has_approved_completion_for_occurrence(session, chore, child, occurrence_date):
+            continue
+
         expires_on: date | None = None
         if chore.timeout_days is not None:
-            expires_on = chore.start_date + timedelta(days=chore.timeout_days)
+            expires_on = occurrence_date + timedelta(days=chore.timeout_days)
             if target_date > expires_on:
                 continue
 
@@ -313,12 +302,153 @@ def _eligible_chores_for_child(session: Session, child: Child, target_date: date
                 chore_id=chore.id,
                 name=chore.name,
                 reward_cents=chore.reward_cents,
-                occurrence_date=chore.start_date,
+                occurrence_date=occurrence_date,
                 expires_on=expires_on,
             )
         )
 
     return results
+
+
+def _schedule_unit_days(unit: ScheduleUnit | None) -> int:
+    if unit == ScheduleUnit.WEEK:
+        return 7
+    if unit == ScheduleUnit.MONTH:
+        return 30
+    return 1
+
+
+def _is_child_allowed_for_chore(session: Session, chore_id: int, child_id: int) -> bool:
+    any_rows = session.scalar(select(exists().where(ChoreAllowedChild.chore_id == chore_id)))
+    if not any_rows:
+        return True
+    return bool(
+        session.scalar(
+            select(exists().where(and_(ChoreAllowedChild.chore_id == chore_id, ChoreAllowedChild.child_id == child_id)))
+        )
+    )
+
+
+def _latest_completion_date_for_scope(session: Session, chore: Chore, child: Child) -> date | None:
+    query = select(CompletionRecord.date).where(
+        CompletionRecord.chore_id == chore.id,
+        CompletionRecord.status == CompletionStatus.APPROVED,
+    )
+    if chore.completion_mode == CompletionMode.PER_CHILD:
+        query = query.where(CompletionRecord.child_id == child.id)
+    else:
+        query = query.where(CompletionRecord.household_id == child.household_id)
+    query = query.order_by(CompletionRecord.date.desc()).limit(1)
+    return session.scalar(query)
+
+
+def _scheduled_occurrence_for_target(session: Session, chore: Chore, child: Child, target_date: date) -> date | None:
+    if target_date < chore.start_date:
+        return None
+
+    if chore.schedule_mode == ScheduleMode.NONE:
+        return chore.start_date
+
+    if chore.schedule_mode == ScheduleMode.ONCE:
+        return chore.start_date if target_date == chore.start_date else None
+
+    if chore.schedule_mode == ScheduleMode.EVERY:
+        if chore.schedule_interval is None:
+            return None
+        step_days = chore.schedule_interval * _schedule_unit_days(chore.schedule_unit)
+        delta_days = (target_date - chore.start_date).days
+        if delta_days < 0 or delta_days % step_days != 0:
+            return None
+        return target_date
+
+    if chore.schedule_mode == ScheduleMode.AFTER_COMPLETION:
+        interval = chore.schedule_interval or 1
+        step_days = interval * _schedule_unit_days(chore.schedule_unit)
+        latest_completion = _latest_completion_date_for_scope(session, chore, child)
+        due_date = chore.start_date if latest_completion is None else latest_completion + timedelta(days=step_days)
+        if target_date < due_date:
+            return None
+        return due_date
+
+    return None
+
+
+def _has_approved_completion_for_occurrence(session: Session, chore: Chore, child: Child, occurrence_date: date) -> bool:
+    query = select(exists().where(
+        and_(
+            CompletionRecord.chore_id == chore.id,
+            CompletionRecord.date == occurrence_date,
+            CompletionRecord.status == CompletionStatus.APPROVED,
+        )
+    ))
+    if chore.completion_mode == CompletionMode.PER_CHILD:
+        query = select(exists().where(
+            and_(
+                CompletionRecord.chore_id == chore.id,
+                CompletionRecord.date == occurrence_date,
+                CompletionRecord.status == CompletionStatus.APPROVED,
+                CompletionRecord.child_id == child.id,
+            )
+        ))
+    else:
+        query = select(exists().where(
+            and_(
+                CompletionRecord.chore_id == chore.id,
+                CompletionRecord.date == occurrence_date,
+                CompletionRecord.status == CompletionStatus.APPROVED,
+                CompletionRecord.household_id == child.household_id,
+            )
+        ))
+    return bool(session.scalar(query))
+
+
+def _is_child_rotation_assignee(session: Session, chore: Chore, child_id: int, occurrence_date: date) -> bool:
+    members = list(
+        session.scalars(
+            select(ChoreRotationMember)
+            .where(ChoreRotationMember.chore_id == chore.id)
+            .order_by(ChoreRotationMember.position.asc())
+        ).all()
+    )
+    if not members:
+        return False
+
+    step_days = max(1, (chore.schedule_interval or 1) * _schedule_unit_days(chore.schedule_unit))
+    if chore.schedule_mode == ScheduleMode.EVERY:
+        idx = ((occurrence_date - chore.start_date).days // step_days) % len(members)
+    elif chore.schedule_mode == ScheduleMode.ONCE:
+        idx = 0
+    else:
+        state = session.get(ChoreRotationState, chore.id)
+        idx = (state.current_position if state is not None else 0) % len(members)
+
+    return members[idx].child_id == child_id
+
+
+def _advance_rotation_state_if_needed(session: Session, chore: Chore, occurrence_date: date) -> None:
+    if chore.assignment_mode != AssignmentMode.ROTATING:
+        return
+
+    members = list(
+        session.scalars(
+            select(ChoreRotationMember)
+            .where(ChoreRotationMember.chore_id == chore.id)
+            .order_by(ChoreRotationMember.position.asc())
+        ).all()
+    )
+    if len(members) <= 1:
+        return
+
+    state = session.get(ChoreRotationState, chore.id)
+    if state is None:
+        state = ChoreRotationState(chore_id=chore.id, current_position=0, last_occurrence_date=None)
+        session.add(state)
+
+    if state.last_occurrence_date == occurrence_date:
+        return
+
+    state.current_position = (state.current_position + 1) % len(members)
+    state.last_occurrence_date = occurrence_date
 
 
 def _serialize_submission_review(session: Session, submission: Submission) -> SubmissionReviewResponse:
