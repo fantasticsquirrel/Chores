@@ -14,5 +14,6 @@ export default defineConfig({
   use: {
     baseURL,
     headless: true,
+    ignoreHTTPSErrors: true,
   },
 });
