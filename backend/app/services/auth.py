@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.core import User
 from app.repositories.users import UserRepository
-from app.security import needs_rehash, verify_password
+from app.security import hash_password, needs_rehash, verify_password
 
 
 class AuthService:
@@ -34,3 +34,17 @@ class AuthService:
     def get_user(self, session: Session, user_id: int) -> User | None:
         repository = self._repository_factory(session)
         return repository.get_by_id(user_id)
+
+    def change_password(
+        self,
+        session: Session,
+        user: User,
+        current_password: str,
+        new_password: str,
+    ) -> bool:
+        if not verify_password(current_password, user.password_hash):
+            return False
+
+        user.password_hash = hash_password(new_password)
+        session.flush()
+        return True

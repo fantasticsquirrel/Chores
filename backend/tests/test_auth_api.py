@@ -10,7 +10,7 @@ from app.main import app
 from app.models.core import Household, User
 from app.models.enums import UserRole
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
-from app.security import hash_password
+from app.security import hash_password, verify_password
 from app.security.sessions import SESSION_COOKIE_MAX_AGE_SECONDS
 
 
@@ -182,3 +182,91 @@ def test_me_rejects_tampered_session_cookie(tmp_path: Path, monkeypatch) -> None
 
     assert me_response.status_code == 401
     assert me_response.json()["detail"] == "Not authenticated."
+
+
+def test_change_password_updates_password_hash_and_accepts_new_password(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, original_password = _create_parent_user()
+    new_password = "new-password-456"
+
+    with TestClient(app) as client:
+        login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": original_password},
+        )
+        assert login_response.status_code == 200
+        csrf_token = client.cookies.get(CSRF_COOKIE_NAME)
+        assert csrf_token is not None
+
+        change_response = client.post(
+            "/chore-api/auth/change-password",
+            headers={CSRF_HEADER_NAME: csrf_token},
+            json={"current_password": original_password, "new_password": new_password},
+        )
+        assert change_response.status_code == 204
+
+        client.post("/chore-api/auth/logout", headers={CSRF_HEADER_NAME: csrf_token})
+
+        old_login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": original_password},
+        )
+        assert old_login_response.status_code == 401
+
+        new_login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": new_password},
+        )
+        assert new_login_response.status_code == 200
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        db_user = session.get(User, user.id)
+        assert db_user is not None
+        assert verify_password(new_password, db_user.password_hash) is True
+
+
+def test_change_password_rejects_invalid_current_password(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user()
+
+    with TestClient(app) as client:
+        login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": password},
+        )
+        assert login_response.status_code == 200
+        csrf_token = client.cookies.get(CSRF_COOKIE_NAME)
+        assert csrf_token is not None
+
+        response = client.post(
+            "/chore-api/auth/change-password",
+            headers={CSRF_HEADER_NAME: csrf_token},
+            json={"current_password": "incorrect-current-password", "new_password": "new-password-456"},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Current password is incorrect."
+
+
+def test_change_password_requires_minimum_new_password_length(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user()
+
+    with TestClient(app) as client:
+        login_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": user.email, "password": password},
+        )
+        assert login_response.status_code == 200
+        csrf_token = client.cookies.get(CSRF_COOKIE_NAME)
+        assert csrf_token is not None
+
+        response = client.post(
+            "/chore-api/auth/change-password",
+            headers={CSRF_HEADER_NAME: csrf_token},
+            json={"current_password": password, "new_password": "short"},
+        )
+
+    assert response.status_code == 422

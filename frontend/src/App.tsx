@@ -6,6 +6,7 @@ import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
+import { AccountSecurityPage } from "./pages/AccountSecurityPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { ApiClientError, type UserRole } from "./api";
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
   { to: "/child/today", label: "Child Today", roles: ["CHILD"] },
 ];
 
@@ -182,6 +184,7 @@ export default function App(): ReactElement {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
+            <Route path="/chore/account/security" element={<AccountSecurityPage />} />
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
               <Route
                 path="/board"

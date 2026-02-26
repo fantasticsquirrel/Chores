@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user, get_db_session
 from app.models.core import User
 from app.config import get_settings
-from app.schemas.auth import AuthSessionResponse, AuthUserResponse, LoginRequest
+from app.schemas.auth import AuthSessionResponse, AuthUserResponse, ChangePasswordRequest, LoginRequest
 from app.security.csrf import CSRF_COOKIE_NAME, create_csrf_token
 from app.security.sessions import (
     SESSION_COOKIE_MAX_AGE_SECONDS,
@@ -67,3 +67,21 @@ def get_current_session(
     user: User = Depends(get_current_user),
 ) -> AuthSessionResponse:
     return _build_session_response(user)
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    payload: ChangePasswordRequest,
+    session: Session = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+) -> Response:
+    if not _service.change_password(
+        session=session,
+        user=user,
+        current_password=payload.current_password,
+        new_password=payload.new_password,
+    ):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

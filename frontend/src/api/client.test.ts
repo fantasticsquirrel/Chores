@@ -159,6 +159,55 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes change-password payload with CSRF header", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            user: {
+              id: 11,
+              household_id: 2,
+              email: "parent@example.com",
+              role: "PARENT",
+              child_id: null,
+            },
+            csrf_token: "csrf-token",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.login({ email: "parent@example.com", password: "password123" });
+    await client.changePassword({
+      current_password: "password123",
+      new_password: "new-password-456",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/auth/change-password",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          [CSRF_HEADER_NAME]: "csrf-token",
+        }),
+        body: JSON.stringify({
+          current_password: "password123",
+          new_password: "new-password-456",
+        }),
+      }),
+    );
+  });
+
   it("throws ApiClientError with backend detail on non-2xx responses", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(

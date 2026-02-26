@@ -1,6 +1,7 @@
 import type {
   ApiErrorResponse,
   AuthSessionResponse,
+  ChangePasswordRequest,
   Child,
   CreateChildRequest,
   EligibleChore,
@@ -84,6 +85,10 @@ export class ApiClient {
     this.csrfToken = null;
   }
 
+  async changePassword(payload: ChangePasswordRequest): Promise<void> {
+    await this.postNoContentWithBody("/auth/change-password", payload);
+  }
+
   async listChildren(params: ListChildrenParams): Promise<Child[]> {
     return this.get<Child[]>("/children", params);
   }
@@ -137,6 +142,14 @@ export class ApiClient {
 
   private async postNoContent(path: string): Promise<void> {
     await this.request<void>(path, { method: "POST" });
+  }
+
+  private async postNoContentWithBody<TBody>(path: string, body: TBody): Promise<void> {
+    await this.request<void>(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
   }
 
   private async patch<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {

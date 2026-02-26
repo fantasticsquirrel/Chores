@@ -3,6 +3,7 @@ export type {
   ApiErrorResponse,
   AuthSessionResponse,
   AuthUser,
+  ChangePasswordRequest,
   Child,
   CreateChildRequest,
   EligibleChore,
