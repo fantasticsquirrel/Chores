@@ -23,6 +23,9 @@ class ChoreResponse(BaseModel):
     completion_mode: CompletionMode
     assignment_mode: AssignmentMode
     archived_at: datetime | None
+    # Populated by the API layer (not ORM-mapped)
+    allowed_child_ids: list[int] = Field(default_factory=list)
+    rotation_order: list[int] = Field(default_factory=list)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -49,15 +52,26 @@ class CreateChoreRequest(BaseModel):
     schedule_unit: ScheduleUnit | None = None
     completion_mode: CompletionMode = CompletionMode.PER_CHILD
     assignment_mode: AssignmentMode = AssignmentMode.STATIC
+    # [] = all children allowed; non-empty = only those children (STATIC mode)
+    allowed_child_ids: list[int] = Field(default_factory=list)
+    # Ordered child IDs for rotation (ROTATING mode only)
+    rotation_order: list[int] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def validate_schedule(self) -> "CreateChoreRequest":
+    def validate_schedule_and_assignment(self) -> "CreateChoreRequest":
         if self.schedule_mode == ScheduleMode.EVERY:
             if self.schedule_interval is None or self.schedule_unit is None:
                 raise ValueError("schedule_interval and schedule_unit are required when schedule_mode is EVERY.")
+        elif self.schedule_mode == ScheduleMode.AFTER_COMPLETION:
+            if self.schedule_interval is None or self.schedule_unit is None:
+                raise ValueError("schedule_interval and schedule_unit are required when schedule_mode is AFTER_COMPLETION.")
         else:
             if self.schedule_interval is not None or self.schedule_unit is not None:
-                raise ValueError("schedule_interval and schedule_unit must be null when schedule_mode is not EVERY.")
+                raise ValueError("schedule_interval and schedule_unit must be null when schedule_mode is not EVERY or AFTER_COMPLETION.")
+
+        if self.assignment_mode == AssignmentMode.ROTATING and len(self.rotation_order) < 2:
+            raise ValueError("rotation_order must contain at least 2 children when assignment_mode is ROTATING.")
+
         return self
 
 
@@ -75,11 +89,17 @@ class UpdateChoreRequest(BaseModel):
     schedule_unit: ScheduleUnit | None = None
     completion_mode: CompletionMode | None = None
     assignment_mode: AssignmentMode | None = None
+    # None = don't touch; [] = clear (all allowed); [ids] = set specific children
+    allowed_child_ids: list[int] | None = None
+    rotation_order: list[int] | None = None
 
     @model_validator(mode="after")
     def validate_at_least_one(self) -> "UpdateChoreRequest":
-        fields = [self.name, self.reward_cents, self.start_date, self.schedule_mode,
-                  self.completion_mode, self.assignment_mode]
+        fields = [
+            self.name, self.reward_cents, self.start_date, self.schedule_mode,
+            self.completion_mode, self.assignment_mode, self.allowed_child_ids,
+            self.rotation_order,
+        ]
         if all(f is None for f in fields):
             raise ValueError("At least one field must be provided for update.")
         return self

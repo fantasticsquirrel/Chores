@@ -136,6 +136,8 @@ export interface Chore {
   assignment_mode: AssignmentMode;
   archived_at: string | null;
   is_active: boolean;
+  allowed_child_ids: number[];
+  rotation_order: number[];
 }
 
 export interface ListChoresParams {
@@ -155,6 +157,8 @@ export interface CreateChoreRequest {
   schedule_unit?: ScheduleUnit | null;
   completion_mode: CompletionMode;
   assignment_mode: AssignmentMode;
+  allowed_child_ids: number[];
+  rotation_order: number[];
 }
 
 export interface UpdateChoreRequest {
@@ -169,4 +173,6 @@ export interface UpdateChoreRequest {
   schedule_unit?: ScheduleUnit | null;
   completion_mode?: CompletionMode;
   assignment_mode?: AssignmentMode;
+  allowed_child_ids?: number[] | null;
+  rotation_order?: number[] | null;
 }

@@ -198,7 +198,8 @@ export class ApiClient {
     });
 
     const contentType = response.headers.get("content-type");
-    const hasJsonBody = contentType !== null && contentType.includes("application/json");
+    const noBody = response.status === 204 || response.status === 205;
+    const hasJsonBody = !noBody && contentType !== null && contentType.includes("application/json");
     const data: unknown = hasJsonBody ? await response.json() : undefined;
 
     if (!response.ok) {
