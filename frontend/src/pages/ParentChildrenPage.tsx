@@ -37,6 +37,14 @@ export function ParentChildrenPage(): ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const [updatingChildId, setUpdatingChildId] = useState<number | null>(null);
 
+  // Child login linking form
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
+  const [childEmail, setChildEmail] = useState("");
+  const [childPassword, setChildPassword] = useState("");
+  const [linkingAccount, setLinkingAccount] = useState(false);
+  const [linkAccountError, setLinkAccountError] = useState<string | null>(null);
+  const [linkAccountSuccess, setLinkAccountSuccess] = useState<string | null>(null);
+
   const loadChildren = useCallback(async (): Promise<void> => {
     if (householdId === null) {
       setState({ children: [], loading: false, error: "Could not determine household scope." });
@@ -48,10 +56,13 @@ export function ParentChildrenPage(): ReactElement {
     try {
       const children = await apiClient.listChildren({ household_id: householdId });
       setState({ children, loading: false, error: null });
+      if (children.length > 0 && selectedChildId === null) {
+        setSelectedChildId(children[0].id);
+      }
     } catch (error: unknown) {
       setState({ children: [], loading: false, error: formatLoadError(error) });
     }
-  }, [householdId]);
+  }, [householdId, selectedChildId]);
 
   useEffect(() => {
     void loadChildren();
@@ -111,6 +122,46 @@ export function ParentChildrenPage(): ReactElement {
     }
   }
 
+  async function handleCreateChildAccount(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setLinkAccountError(null);
+    setLinkAccountSuccess(null);
+
+    if (householdId === null) {
+      setLinkAccountError("Could not determine household scope.");
+      return;
+    }
+    if (selectedChildId === null) {
+      setLinkAccountError("Choose a child first.");
+      return;
+    }
+    if (childEmail.trim().length < 3) {
+      setLinkAccountError("Email is required.");
+      return;
+    }
+    if (childPassword.length < 8) {
+      setLinkAccountError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setLinkingAccount(true);
+    try {
+      const account = await apiClient.createChildAccount(selectedChildId, {
+        household_id: householdId,
+        email: childEmail.trim().toLowerCase(),
+        password: childPassword,
+      });
+      const childName = state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
+      setLinkAccountSuccess(`Linked login created for ${childName}: ${account.email}`);
+      setChildEmail("");
+      setChildPassword("");
+    } catch (error: unknown) {
+      setLinkAccountError(formatLoadError(error));
+    } finally {
+      setLinkingAccount(false);
+    }
+  }
+
   return (
     <section className="dashboard-grid" aria-label="Parent children management">
       <Card className="dashboard-panel">
@@ -118,7 +169,7 @@ export function ParentChildrenPage(): ReactElement {
           <h1>Children Management</h1>
           <Badge>Household {householdId ?? "Unknown"}</Badge>
         </div>
-        <p>Create and update active status for children in this household.</p>
+        <p>Create child profiles and link login accounts for child sign-in.</p>
       </Card>
 
       <Card className="dashboard-panel">
@@ -147,6 +198,54 @@ export function ParentChildrenPage(): ReactElement {
           </Button>
         </form>
         {submitError !== null ? <InlineNotice variant="error">Could not save child: {submitError}</InlineNotice> : null}
+      </Card>
+
+      <Card className="dashboard-panel">
+        <div className="panel-header-row">
+          <h2>Link Child Login</h2>
+        </div>
+        <form className="children-form" onSubmit={(event) => void handleCreateChildAccount(event)}>
+          <FormField label="Child">
+            <select
+              className="text-input"
+              value={selectedChildId ?? ""}
+              onChange={(event) => setSelectedChildId(event.target.value.length > 0 ? Number(event.target.value) : null)}
+              disabled={linkingAccount || state.children.length === 0}
+            >
+              {state.children.length === 0 ? <option value="">No children found</option> : null}
+              {state.children.map((child) => (
+                <option key={child.id} value={child.id}>
+                  {child.name} {child.active ? "" : "(inactive)"}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="Child Email">
+            <TextInput
+              type="email"
+              value={childEmail}
+              onChange={(event) => setChildEmail(event.target.value)}
+              placeholder="kid@example.com"
+              disabled={linkingAccount}
+            />
+          </FormField>
+          <FormField label="Temporary Password">
+            <TextInput
+              type="password"
+              value={childPassword}
+              onChange={(event) => setChildPassword(event.target.value)}
+              placeholder="at least 8 chars"
+              disabled={linkingAccount}
+            />
+          </FormField>
+          <Button type="submit" disabled={linkingAccount || state.children.length === 0}>
+            {linkingAccount ? "Linking..." : "Create Linked Child Login"}
+          </Button>
+        </form>
+        {linkAccountError !== null ? (
+          <InlineNotice variant="error">Could not link child login: {linkAccountError}</InlineNotice>
+        ) : null}
+        {linkAccountSuccess !== null ? <InlineNotice>{linkAccountSuccess}</InlineNotice> : null}
       </Card>
 
       <Card className="dashboard-panel">

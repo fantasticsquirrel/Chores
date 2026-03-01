@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.models.enums import UserRole
+
 
 class ChildResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -32,3 +34,21 @@ class UpdateChildRequest(BaseModel):
         if self.name is None and self.active is None:
             raise ValueError("At least one field must be provided for update.")
         return self
+
+
+class CreateChildAccountRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=8, max_length=1024)
+
+
+class ChildAccountResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    household_id: int
+    email: str
+    role: UserRole
+    child_id: int

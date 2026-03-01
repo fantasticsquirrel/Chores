@@ -60,6 +60,20 @@ export interface UpdateChildRequest {
   active?: boolean;
 }
 
+export interface CreateChildAccountRequest {
+  household_id: number;
+  email: string;
+  password: string;
+}
+
+export interface ChildAccount {
+  id: number;
+  household_id: number;
+  email: string;
+  role: UserRole;
+  child_id: number;
+}
+
 export interface EligibleChore {
   chore_id: number;
   name: string;

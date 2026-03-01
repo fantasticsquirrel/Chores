@@ -47,7 +47,9 @@ test("deployed chore smoke flow enforces login and supports parent/child/board a
   await expect(page).toHaveURL(/\/chore\/parent\/children$/);
   await page.getByLabel("Name").fill(fixture.create_child_name);
   await page.getByRole("button", { name: "Create Child" }).click();
-  await expect(page.getByText(fixture.create_child_name)).toBeVisible();
+  await expect(
+    page.getByRole("list", { name: "Children list" }).locator("li.balance-item").filter({ hasText: fixture.create_child_name })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Log Out" }).click();
   await expect(page).toHaveURL(/\/chore\/login$/);
 

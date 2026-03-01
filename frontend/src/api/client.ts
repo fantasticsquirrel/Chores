@@ -3,7 +3,9 @@ import type {
   AuthSessionResponse,
   ChangePasswordRequest,
   Child,
+  ChildAccount,
   Chore,
+  CreateChildAccountRequest,
   CreateChildRequest,
   CreateChoreRequest,
   EligibleChore,
@@ -103,6 +105,10 @@ export class ApiClient {
 
   async updateChild(childId: number, payload: UpdateChildRequest): Promise<Child> {
     return this.patch<Child, UpdateChildRequest>(`/children/${childId}`, payload);
+  }
+
+  async createChildAccount(childId: number, payload: CreateChildAccountRequest): Promise<ChildAccount> {
+    return this.post<ChildAccount, CreateChildAccountRequest>(`/children/${childId}/account`, payload);
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {
