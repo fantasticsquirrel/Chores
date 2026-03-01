@@ -62,8 +62,13 @@ export interface UpdateChildRequest {
 
 export interface CreateChildAccountRequest {
   household_id: number;
-  email: string;
+  email?: string | null;
   password: string;
+}
+
+export interface ResetChildAccountEmailRequest {
+  household_id: number;
+  email?: string | null;
 }
 
 export interface ChildAccount {

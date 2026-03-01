@@ -16,6 +16,7 @@ import type {
   ListSubmissionsParams,
   ListChildrenParams,
   ReadinessResponse,
+  ResetChildAccountEmailRequest,
   SubmissionItemDecisionRequest,
   SubmissionReview,
   SubmissionRequest,
@@ -109,6 +110,10 @@ export class ApiClient {
 
   async createChildAccount(childId: number, payload: CreateChildAccountRequest): Promise<ChildAccount> {
     return this.post<ChildAccount, CreateChildAccountRequest>(`/children/${childId}/account`, payload);
+  }
+
+  async resetChildAccountEmail(childId: number, payload: ResetChildAccountEmailRequest): Promise<ChildAccount> {
+    return this.patch<ChildAccount, ResetChildAccountEmailRequest>(`/children/${childId}/account-email`, payload);
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {

@@ -22,12 +22,12 @@ async function signIn(page: Page, email: string, password: string): Promise<void
   await page.getByRole("button", { name: "Sign In" }).click();
 }
 
-test("parent can link a child login account and child can sign in", async ({ page }) => {
+test("parent can link a child account without email, reset email, and child can sign in", async ({ page }) => {
   const fixture = readFixture();
   const suffix = randomUUID().slice(0, 8);
   const newChildName = `Linked Kid ${suffix}`;
-  const childEmail = `linked.kid.${suffix}@example.com`;
   const childPassword = "linked-kid-pass-123";
+  const resetEmail = `linked.kid.reset.${suffix}@example.com`;
 
   await signIn(page, fixture.parent_email, fixture.parent_password);
   await expect(page).toHaveURL(/\/chore\/parent\/dashboard$/);
@@ -43,18 +43,24 @@ test("parent can link a child login account and child can sign in", async ({ pag
     page.getByRole("list", { name: "Children list" }).locator("li.balance-item").filter({ hasText: newChildName })
   ).toBeVisible();
 
-  // Link account to that child
-  await page.getByRole("combobox", { name: "Child" }).selectOption({ label: newChildName });
-  await page.getByRole("textbox", { name: "Child Email" }).fill(childEmail);
-  await page.getByRole("textbox", { name: "Temporary Password" }).fill(childPassword);
+  // Link account without providing email (auto-generated)
+  await page.getByRole("combobox", { name: "Child" }).first().selectOption({ label: newChildName });
+  await page.getByRole("textbox", { name: /Temporary Password/i }).fill(childPassword);
   await page.getByRole("button", { name: "Create Linked Child Login" }).click();
 
-  await expect(page.getByText(`Linked login created for ${newChildName}: ${childEmail}`)).toBeVisible();
+  const successLink = page.getByText(new RegExp(`Linked login created for ${newChildName}: child-`));
+  await expect(successLink).toBeVisible();
 
-  // Child can log in with linked credentials
+  // Reset email to explicit address
+  await page.getByRole("combobox", { name: "Child" }).nth(1).selectOption({ label: newChildName });
+  await page.getByRole("textbox", { name: /New Email/i }).fill(resetEmail);
+  await page.getByRole("button", { name: "Reset Child Email" }).click();
+  await expect(page.getByText(`Updated child login email for ${newChildName}: ${resetEmail}`)).toBeVisible();
+
+  // Child can log in with reset email + same password
   await page.getByRole("button", { name: "Log Out" }).click();
   await expect(page).toHaveURL(/\/chore\/login$/);
 
-  await signIn(page, childEmail, childPassword);
+  await signIn(page, resetEmail, childPassword);
   await expect(page).toHaveURL(/\/chore\/child\/today$/);
 });

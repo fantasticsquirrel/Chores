@@ -44,6 +44,10 @@ export function ParentChildrenPage(): ReactElement {
   const [linkingAccount, setLinkingAccount] = useState(false);
   const [linkAccountError, setLinkAccountError] = useState<string | null>(null);
   const [linkAccountSuccess, setLinkAccountSuccess] = useState<string | null>(null);
+  const [resetEmailInput, setResetEmailInput] = useState("");
+  const [resettingEmail, setResettingEmail] = useState(false);
+  const [resetEmailError, setResetEmailError] = useState<string | null>(null);
+  const [resetEmailSuccess, setResetEmailSuccess] = useState<string | null>(null);
 
   const loadChildren = useCallback(async (): Promise<void> => {
     if (householdId === null) {
@@ -135,8 +139,8 @@ export function ParentChildrenPage(): ReactElement {
       setLinkAccountError("Choose a child first.");
       return;
     }
-    if (childEmail.trim().length < 3) {
-      setLinkAccountError("Email is required.");
+    if (childEmail.trim().length > 0 && childEmail.trim().length < 3) {
+      setLinkAccountError("If provided, email must be valid-ish length.");
       return;
     }
     if (childPassword.length < 8) {
@@ -146,9 +150,10 @@ export function ParentChildrenPage(): ReactElement {
 
     setLinkingAccount(true);
     try {
+      const normalizedEmail = childEmail.trim().toLowerCase();
       const account = await apiClient.createChildAccount(selectedChildId, {
         household_id: householdId,
-        email: childEmail.trim().toLowerCase(),
+        email: normalizedEmail.length > 0 ? normalizedEmail : null,
         password: childPassword,
       });
       const childName = state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
@@ -159,6 +164,37 @@ export function ParentChildrenPage(): ReactElement {
       setLinkAccountError(formatLoadError(error));
     } finally {
       setLinkingAccount(false);
+    }
+  }
+
+  async function handleResetChildEmail(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setResetEmailError(null);
+    setResetEmailSuccess(null);
+
+    if (householdId === null) {
+      setResetEmailError("Could not determine household scope.");
+      return;
+    }
+    if (selectedChildId === null) {
+      setResetEmailError("Choose a child first.");
+      return;
+    }
+
+    setResettingEmail(true);
+    try {
+      const normalizedEmail = resetEmailInput.trim().toLowerCase();
+      const account = await apiClient.resetChildAccountEmail(selectedChildId, {
+        household_id: householdId,
+        email: normalizedEmail.length > 0 ? normalizedEmail : null,
+      });
+      const childName = state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
+      setResetEmailSuccess(`Updated child login email for ${childName}: ${account.email}`);
+      setResetEmailInput("");
+    } catch (error: unknown) {
+      setResetEmailError(formatLoadError(error));
+    } finally {
+      setResettingEmail(false);
     }
   }
 
@@ -220,7 +256,7 @@ export function ParentChildrenPage(): ReactElement {
               ))}
             </select>
           </FormField>
-          <FormField label="Child Email">
+          <FormField label="Child Email (optional)">
             <TextInput
               type="email"
               value={childEmail}
@@ -246,6 +282,45 @@ export function ParentChildrenPage(): ReactElement {
           <InlineNotice variant="error">Could not link child login: {linkAccountError}</InlineNotice>
         ) : null}
         {linkAccountSuccess !== null ? <InlineNotice>{linkAccountSuccess}</InlineNotice> : null}
+      </Card>
+
+      <Card className="dashboard-panel">
+        <div className="panel-header-row">
+          <h2>Reset Child Login Email</h2>
+        </div>
+        <form className="children-form" onSubmit={(event) => void handleResetChildEmail(event)}>
+          <FormField label="Child">
+            <select
+              className="text-input"
+              value={selectedChildId ?? ""}
+              onChange={(event) => setSelectedChildId(event.target.value.length > 0 ? Number(event.target.value) : null)}
+              disabled={resettingEmail || state.children.length === 0}
+            >
+              {state.children.length === 0 ? <option value="">No children found</option> : null}
+              {state.children.map((child) => (
+                <option key={child.id} value={child.id}>
+                  {child.name} {child.active ? "" : "(inactive)"}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="New Email (optional, leave blank to auto-generate)">
+            <TextInput
+              type="email"
+              value={resetEmailInput}
+              onChange={(event) => setResetEmailInput(event.target.value)}
+              placeholder="kid+new@example.com"
+              disabled={resettingEmail}
+            />
+          </FormField>
+          <Button type="submit" disabled={resettingEmail || state.children.length === 0}>
+            {resettingEmail ? "Resetting..." : "Reset Child Email"}
+          </Button>
+        </form>
+        {resetEmailError !== null ? (
+          <InlineNotice variant="error">Could not reset child email: {resetEmailError}</InlineNotice>
+        ) : null}
+        {resetEmailSuccess !== null ? <InlineNotice>{resetEmailSuccess}</InlineNotice> : null}
       </Card>
 
       <Card className="dashboard-panel">

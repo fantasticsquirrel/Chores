@@ -40,8 +40,15 @@ class CreateChildAccountRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     household_id: int = Field(gt=0)
-    email: str = Field(min_length=3, max_length=320)
+    email: str | None = Field(default=None, min_length=3, max_length=320)
     password: str = Field(min_length=8, max_length=1024)
+
+
+class ResetChildAccountEmailRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    email: str | None = Field(default=None, min_length=3, max_length=320)
 
 
 class ChildAccountResponse(BaseModel):

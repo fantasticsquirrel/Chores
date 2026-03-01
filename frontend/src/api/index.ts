@@ -20,6 +20,7 @@ export type {
   ListSubmissionsParams,
   ListChildrenParams,
   ReadinessResponse,
+  ResetChildAccountEmailRequest,
   ScheduleMode,
   ScheduleUnit,
   SubmissionItemDecisionRequest,
