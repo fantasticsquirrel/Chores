@@ -3,4 +3,14 @@ dist/
 .venv/
 __pycache__/
 *.pyc
+*.pyo
 .DS_Store
+.ralph/
+data/
+*.db
+*.db-shm
+*.db-wal
+*.egg-info/
+test-results/
+frontend/data/
+backend/data/

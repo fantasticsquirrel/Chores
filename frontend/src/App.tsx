@@ -3,6 +3,7 @@ import { Navigate, NavLink, Outlet, Route, Routes, useNavigate } from "react-rou
 
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
+import { ParentChoresPage } from "./pages/ParentChoresPage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -25,6 +26,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
@@ -191,10 +193,7 @@ export default function App(): ReactElement {
                 element={<ParentSubmissionReviewPage />}
               />
               <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
-              <Route
-                path="/parent/chores"
-                element={<RouteCard title="Parent Chores" description="Chore authoring and scheduling pages will be built in subsequent iterations." />}
-              />
+              <Route path="/parent/chores" element={<ParentChoresPage />} />
               <Route
                 path="/parent/children"
                 element={<ParentChildrenPage />}

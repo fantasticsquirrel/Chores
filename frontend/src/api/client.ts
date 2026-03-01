@@ -3,10 +3,13 @@ import type {
   AuthSessionResponse,
   ChangePasswordRequest,
   Child,
+  Chore,
   CreateChildRequest,
+  CreateChoreRequest,
   EligibleChore,
   HealthResponse,
   LoginRequest,
+  ListChoresParams,
   ListEligibleChoresParams,
   ListSubmissionsParams,
   ListChildrenParams,
@@ -16,6 +19,7 @@ import type {
   SubmissionRequest,
   SubmissionResponse,
   UpdateChildRequest,
+  UpdateChoreRequest,
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "/chore-api";
@@ -101,6 +105,22 @@ export class ApiClient {
     return this.patch<Child, UpdateChildRequest>(`/children/${childId}`, payload);
   }
 
+  async listChores(params: ListChoresParams): Promise<Chore[]> {
+    return this.get<Chore[]>("/chores", params);
+  }
+
+  async createChore(payload: CreateChoreRequest): Promise<Chore> {
+    return this.post<Chore, CreateChoreRequest>("/chores", payload);
+  }
+
+  async updateChore(choreId: number, payload: UpdateChoreRequest): Promise<Chore> {
+    return this.patch<Chore, UpdateChoreRequest>(`/chores/${choreId}`, payload);
+  }
+
+  async archiveChore(choreId: number, householdId: number): Promise<void> {
+    return this.delete(`/chores/${choreId}`, { household_id: householdId });
+  }
+
   async listEligibleChores(params: ListEligibleChoresParams): Promise<EligibleChore[]> {
     return this.get<EligibleChore[]>("/children/me/eligible-chores", params);
   }
@@ -158,6 +178,10 @@ export class ApiClient {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+  }
+
+  private async delete(path: string, query?: RequestQuery): Promise<void> {
+    await this.request<void>(path, { method: "DELETE" }, query);
   }
 
   private async request<TResponse>(path: string, init: RequestInit, query?: RequestQuery): Promise<TResponse> {

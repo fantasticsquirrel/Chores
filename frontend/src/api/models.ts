@@ -114,3 +114,59 @@ export interface ListSubmissionsParams {
 export interface SubmissionItemDecisionRequest {
   status: "APPROVED" | "REJECTED";
 }
+
+export type ScheduleMode = "NONE" | "EVERY" | "AFTER_COMPLETION" | "ONCE";
+export type ScheduleUnit = "DAY" | "WEEK" | "MONTH";
+export type CompletionMode = "PER_CHILD" | "SHARED";
+export type AssignmentMode = "STATIC" | "ROTATING";
+
+export interface Chore {
+  id: number;
+  household_id: number;
+  name: string;
+  reward_cents: number;
+  reward_dollars: number;
+  start_date: string;
+  expires_at: string | null;
+  timeout_days: number | null;
+  schedule_mode: ScheduleMode;
+  schedule_interval: number | null;
+  schedule_unit: ScheduleUnit | null;
+  completion_mode: CompletionMode;
+  assignment_mode: AssignmentMode;
+  archived_at: string | null;
+  is_active: boolean;
+}
+
+export interface ListChoresParams {
+  household_id: number;
+  active_only?: boolean;
+}
+
+export interface CreateChoreRequest {
+  household_id: number;
+  name: string;
+  reward_cents: number;
+  start_date: string;
+  expires_at?: string | null;
+  timeout_days?: number | null;
+  schedule_mode: ScheduleMode;
+  schedule_interval?: number | null;
+  schedule_unit?: ScheduleUnit | null;
+  completion_mode: CompletionMode;
+  assignment_mode: AssignmentMode;
+}
+
+export interface UpdateChoreRequest {
+  household_id: number;
+  name?: string;
+  reward_cents?: number;
+  start_date?: string;
+  expires_at?: string | null;
+  timeout_days?: number | null;
+  schedule_mode?: ScheduleMode;
+  schedule_interval?: number | null;
+  schedule_unit?: ScheduleUnit | null;
+  completion_mode?: CompletionMode;
+  assignment_mode?: AssignmentMode;
+}
