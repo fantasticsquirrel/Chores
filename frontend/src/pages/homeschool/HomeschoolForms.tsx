@@ -89,7 +89,7 @@ export function HomeschoolForms({
 }: HomeschoolFormsProps): ReactElement {
   return (
     <>
-      <Card className="dashboard-panel">
+      <Card className="dashboard-panel homeschool-form-card">
         <h2>{editingSemesterId === null ? "Create Semester" : "Edit Semester"}</h2>
         <form className="children-form" onSubmit={onCreateSemester}>
           <FormField label="Semester Name">
@@ -108,7 +108,7 @@ export function HomeschoolForms({
         </form>
       </Card>
 
-      <Card className="dashboard-panel">
+      <Card className="dashboard-panel homeschool-form-card">
         <h2>{editingSubjectId === null ? "Create Subject" : "Edit Subject"}</h2>
         <form className="children-form" onSubmit={onCreateSubject}>
           <FormField label="Subject Name">
@@ -124,7 +124,7 @@ export function HomeschoolForms({
         </form>
       </Card>
 
-      <Card className="dashboard-panel">
+      <Card className="dashboard-panel homeschool-record-card">
         <h2>Quick Attendance</h2>
         <form className="children-form" onSubmit={onSaveAttendance}>
           <ChildSelect value={attendance.childId} children={children} onChange={(childId) => onAttendanceChange({ childId })} />
@@ -143,7 +143,7 @@ export function HomeschoolForms({
         </form>
       </Card>
 
-      <Card className="dashboard-panel">
+      <Card className="dashboard-panel homeschool-record-card">
         <h2>Day Comment</h2>
         <form className="children-form" onSubmit={onSaveDayComment}>
           <ChildSelect value={dayComment.childId} children={children} onChange={(childId) => onDayCommentChange({ childId })} />
@@ -157,7 +157,7 @@ export function HomeschoolForms({
         </form>
       </Card>
 
-      <Card className="dashboard-panel">
+      <Card className="dashboard-panel homeschool-record-card">
         <h2>Subject Grade</h2>
         <form className="children-form" onSubmit={onSaveGrade}>
           <ChildSelect value={grade.childId} children={children} onChange={(childId) => onGradeChange({ childId })} />

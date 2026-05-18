@@ -316,6 +316,12 @@ export function HomeschoolPage(): ReactElement {
       {actionError !== null ? <InlineNotice variant="error">Homeschool action failed: {actionError}</InlineNotice> : null}
       {actionMessage !== null ? <InlineNotice>{actionMessage}</InlineNotice> : null}
 
+      <div className="dashboard-section-header">
+        <p className="eyebrow">Daily tools</p>
+        <h2>Setup & Records</h2>
+        <p>Create the reusable school structure, then log daily work without bouncing around the page.</p>
+      </div>
+
       <HomeschoolForms
         householdId={householdId}
         children={state.children}
@@ -347,6 +353,12 @@ export function HomeschoolPage(): ReactElement {
         onSaveDayComment={(event) => void handleSaveDayComment(event)}
         onSaveGrade={(event) => void handleSaveGrade(event)}
       />
+
+      <div className="dashboard-section-header">
+        <p className="eyebrow">Review</p>
+        <h2>Calendar & Progress</h2>
+        <p>Review logged attendance, notes, grades, and setup records for the selected child.</p>
+      </div>
 
       <AttendanceCalendar
         calendarYearMonth={calendarYearMonth}

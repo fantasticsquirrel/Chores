@@ -42,6 +42,8 @@ describe("Homeschool page", () => {
 
     expect(await screen.findByRole("heading", { name: "Homeschool" })).toBeVisible();
     expect(await screen.findByText("Children: Maya")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Setup & Records" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Calendar & Progress" })).toBeVisible();
     expect(screen.getByText("Subjects: 1")).toBeVisible();
     expect(await screen.findByText("Fall 2026 · 2026-08-15 to 2026-12-20")).toBeVisible();
     expect(screen.getByText("Grade: A")).toBeVisible();
