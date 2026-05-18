@@ -13,6 +13,7 @@ import { HomeschoolPage } from "./pages/HomeschoolPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { ApiClientError, type UserRole } from "./api";
+import type { FamilyModuleKey } from "./modules/registry";
 import { Button, Card, InlineNotice } from "./ui";
 
 type RouteCardProps = {
@@ -24,7 +25,7 @@ type NavItem = {
   to: string;
   label: string;
   roles: UserRole[];
-  moduleKey?: string;
+  moduleKey?: FamilyModuleKey;
 };
 
 const navItems: NavItem[] = [
@@ -33,9 +34,9 @@ const navItems: NavItem[] = [
   { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
   { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
   { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
-  { to: "/child/today", label: "Child Today", roles: ["CHILD"] },
+  { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
 ];
 
 function getDefaultRouteForRole(role: UserRole): string {
@@ -108,6 +109,30 @@ function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactEle
 
   if (!allowedRoles.includes(user.role)) {
     return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+  }
+
+  return <Outlet />;
+}
+
+
+type ModuleProtectedRouteProps = {
+  moduleKey: FamilyModuleKey;
+};
+
+function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactElement {
+  const { status, moduleKeys } = useAuth();
+
+  if (status !== "authenticated") {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!moduleKeys.includes(moduleKey)) {
+    return (
+      <RouteCard
+        title="Module Not Available"
+        description="This module is not enabled for your account. Ask a household admin to update module access."
+      />
+    );
   }
 
   return <Outlet />;
@@ -193,13 +218,17 @@ export default function App(): ReactElement {
           <Route element={<ProtectedRoute />}>
             <Route path="/chore/account/security" element={<AccountSecurityPage />} />
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
-              <Route
-                path="/board"
-                element={<ParentSubmissionReviewPage />}
-              />
               <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
-              <Route path="/parent/chores" element={<ParentChoresPage />} />
-              <Route path="/homeschool" element={<HomeschoolPage />} />
+              <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+                <Route
+                  path="/board"
+                  element={<ParentSubmissionReviewPage />}
+                />
+                <Route path="/parent/chores" element={<ParentChoresPage />} />
+              </Route>
+              <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
+                <Route path="/homeschool" element={<HomeschoolPage />} />
+              </Route>
               <Route
                 path="/parent/children"
                 element={<ParentChildrenPage />}
@@ -218,13 +247,17 @@ export default function App(): ReactElement {
               />
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN"]} />}>
-              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              <Route element={<ModuleProtectedRoute moduleKey="admin" />}>
+                <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              </Route>
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["CHILD"]} />}>
-              <Route
-                path="/child/today"
-                element={<ChildTodayPage />}
-              />
+              <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+                <Route
+                  path="/child/today"
+                  element={<ChildTodayPage />}
+                />
+              </Route>
               <Route
                 path="/child/calendar"
                 element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
