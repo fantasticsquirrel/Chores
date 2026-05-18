@@ -65,11 +65,11 @@ STATUS: COMPLETE
 - [ ] Move child account create/reset actions into the Family Manager admin experience.
 
 ## Phase FM-3: Homeschool data model
-- [ ] Add household-scoped homeschool tables for semesters, subjects, attendance, day comments, subject comments, and grades.
-- [ ] Tie homeschool records to existing `children.id` so child identity is shared with Chores.
+- [x] Add first household-scoped homeschool tables for semesters, subjects, and attendance. Day comments, subject comments, and grades remain next.
+- [x] Tie homeschool attendance records to existing `children.id` so child identity is shared with Chores.
 - [ ] Add import utility for old Homeschool JSON/state files with child-name matching and manual mismatch review.
 
 ## Phase FM-4: Homeschool frontend integration
-- [ ] Port the Homeschool calendar/subjects/semester/report UI into the Vite React app.
+- [ ] Port the Homeschool calendar/subjects/semester/report UI into the Vite React app. Initial `/homeschool` page now reads API counts.
 - [ ] Replace standalone/Firebase/local-state persistence with Family Manager FastAPI endpoints.
 - [ ] Add tests for parent access, child isolation, and report generation.

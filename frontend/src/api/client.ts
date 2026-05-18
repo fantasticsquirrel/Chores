@@ -10,6 +10,9 @@ import type {
   CreateChoreRequest,
   EligibleChore,
   HealthResponse,
+  HomeschoolAttendance,
+  HomeschoolSemester,
+  HomeschoolSubject,
   LoginRequest,
   ListChoresParams,
   ListEligibleChoresParams,
@@ -119,6 +122,18 @@ export class ApiClient {
 
   async resetChildAccountEmail(childId: number, payload: ResetChildAccountEmailRequest): Promise<ChildAccount> {
     return this.patch<ChildAccount, ResetChildAccountEmailRequest>(`/children/${childId}/account-email`, payload);
+  }
+
+  async listHomeschoolSemesters(householdId: number): Promise<HomeschoolSemester[]> {
+    return this.get<HomeschoolSemester[]>("/homeschool/semesters", { household_id: householdId });
+  }
+
+  async listHomeschoolSubjects(householdId: number): Promise<HomeschoolSubject[]> {
+    return this.get<HomeschoolSubject[]>("/homeschool/subjects", { household_id: householdId });
+  }
+
+  async listHomeschoolAttendance(householdId: number, childId?: number): Promise<HomeschoolAttendance[]> {
+    return this.get<HomeschoolAttendance[]>("/homeschool/attendance", { household_id: householdId, child_id: childId });
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {
