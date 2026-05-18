@@ -39,6 +39,7 @@ class User(TimestampMixin, Base):
     __tablename__ = "users"
     __table_args__ = (
         UniqueConstraint("household_id", "email"),
+        UniqueConstraint("email", name="uq_users_email"),
         CheckConstraint(
             "(role = 'CHILD' AND child_id IS NOT NULL) OR (role IN ('PARENT_ADMIN', 'PARENT') AND child_id IS NULL)",
             name="user_role_child_link",

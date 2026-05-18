@@ -228,3 +228,84 @@ def test_patch_child_requires_positive_child_id(tmp_path: Path, monkeypatch) -> 
     assert response.status_code == 422
     details = response.json()["detail"]
     assert any(detail["loc"][-1] == "child_id" for detail in details)
+
+def test_child_account_email_must_be_globally_unique_on_create(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        first_household_id = _create_household()
+        _create_parent_user(first_household_id, email="first-parent@example.com")
+        first_csrf = _login_parent(client, email="first-parent@example.com")
+        first_child = client.post(
+            "/chore-api/children",
+            json={"household_id": first_household_id, "name": "Riley"},
+            headers={CSRF_HEADER_NAME: first_csrf},
+        ).json()
+        first_account = client.post(
+            f"/chore-api/children/{first_child['id']}/account",
+            json={"household_id": first_household_id, "email": "shared-child@example.com", "password": "password123"},
+            headers={CSRF_HEADER_NAME: first_csrf},
+        )
+        assert first_account.status_code == 201
+
+        second_household_id = _create_household()
+        _create_parent_user(second_household_id, email="second-parent@example.com")
+        second_csrf = _login_parent(client, email="second-parent@example.com")
+        second_child = client.post(
+            "/chore-api/children",
+            json={"household_id": second_household_id, "name": "Avery"},
+            headers={CSRF_HEADER_NAME: second_csrf},
+        ).json()
+        duplicate_response = client.post(
+            f"/chore-api/children/{second_child['id']}/account",
+            json={"household_id": second_household_id, "email": "shared-child@example.com", "password": "password123"},
+            headers={CSRF_HEADER_NAME: second_csrf},
+        )
+
+    assert duplicate_response.status_code == 409
+    assert duplicate_response.json()["detail"] == "Email is already in use."
+
+
+def test_child_account_email_must_be_globally_unique_on_reset(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+
+    with TestClient(app) as client:
+        first_household_id = _create_household()
+        _create_parent_user(first_household_id, email="first-parent@example.com")
+        first_csrf = _login_parent(client, email="first-parent@example.com")
+        first_child = client.post(
+            "/chore-api/children",
+            json={"household_id": first_household_id, "name": "Riley"},
+            headers={CSRF_HEADER_NAME: first_csrf},
+        ).json()
+        first_account = client.post(
+            f"/chore-api/children/{first_child['id']}/account",
+            json={"household_id": first_household_id, "email": "taken-child@example.com", "password": "password123"},
+            headers={CSRF_HEADER_NAME: first_csrf},
+        )
+        assert first_account.status_code == 201
+
+        second_household_id = _create_household()
+        _create_parent_user(second_household_id, email="second-parent@example.com")
+        second_csrf = _login_parent(client, email="second-parent@example.com")
+        second_child = client.post(
+            "/chore-api/children",
+            json={"household_id": second_household_id, "name": "Avery"},
+            headers={CSRF_HEADER_NAME: second_csrf},
+        ).json()
+        second_account = client.post(
+            f"/chore-api/children/{second_child['id']}/account",
+            json={"household_id": second_household_id, "email": "unique-child@example.com", "password": "password123"},
+            headers={CSRF_HEADER_NAME: second_csrf},
+        )
+        assert second_account.status_code == 201
+
+        duplicate_response = client.patch(
+            f"/chore-api/children/{second_child['id']}/account-email",
+            json={"household_id": second_household_id, "email": "taken-child@example.com"},
+            headers={CSRF_HEADER_NAME: second_csrf},
+        )
+
+    assert duplicate_response.status_code == 409
+    assert duplicate_response.json()["detail"] == "Email is already in use."
+
