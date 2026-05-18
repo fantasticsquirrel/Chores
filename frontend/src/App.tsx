@@ -8,6 +8,8 @@ import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
 import { AccountSecurityPage } from "./pages/AccountSecurityPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { HomeschoolPage } from "./pages/HomeschoolPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { ApiClientError, type UserRole } from "./api";
@@ -27,6 +29,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"] },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
@@ -62,7 +66,7 @@ function NotFoundPage(): ReactElement {
   return (
     <RouteCard
       title="Route Not Found"
-      description="This page is not part of the Chore Tracker shell yet."
+      description="This page is not part of the Family Manager shell yet."
     />
   );
 }
@@ -138,8 +142,8 @@ function AppShell(): ReactElement {
       <div className="background-orb orb-two" />
       <header className="top-bar glass-card">
         <div>
-          <p className="eyebrow">Chore Tracker v3</p>
-          <h2>Jewel Pop Workspace</h2>
+          <p className="eyebrow">Family Manager</p>
+          <h2>Household Workspace</h2>
         </div>
         <nav aria-label="Primary">
           {visibleNavItems.map((item) => (
@@ -194,6 +198,7 @@ export default function App(): ReactElement {
               />
               <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
               <Route path="/parent/chores" element={<ParentChoresPage />} />
+              <Route path="/homeschool" element={<HomeschoolPage />} />
               <Route
                 path="/parent/children"
                 element={<ParentChildrenPage />}
@@ -210,6 +215,9 @@ export default function App(): ReactElement {
                 path="/parent/reports"
                 element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
               />
+            </Route>
+            <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN"]} />}>
+              <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["CHILD"]} />}>
               <Route

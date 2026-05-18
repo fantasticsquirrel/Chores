@@ -15,6 +15,7 @@ import type {
   ListEligibleChoresParams,
   ListSubmissionsParams,
   ListChildrenParams,
+  MyModulesResponse,
   ReadinessResponse,
   ResetChildAccountEmailRequest,
   SubmissionItemDecisionRequest,
@@ -94,6 +95,10 @@ export class ApiClient {
 
   async changePassword(payload: ChangePasswordRequest): Promise<void> {
     await this.postNoContentWithBody("/auth/change-password", payload);
+  }
+
+  async getMyModules(): Promise<MyModulesResponse> {
+    return this.get<MyModulesResponse>("/modules/me");
   }
 
   async listChildren(params: ListChildrenParams): Promise<Child[]> {

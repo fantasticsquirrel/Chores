@@ -195,3 +195,14 @@ export interface UpdateChoreRequest {
   allowed_child_ids?: number[] | null;
   rotation_order?: number[] | null;
 }
+
+
+export interface FamilyModule {
+  key: "chores" | "homeschool" | "admin";
+  name: string;
+  description: string;
+}
+
+export interface MyModulesResponse {
+  modules: FamilyModule[];
+}

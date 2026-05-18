@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 
-from app.api import auth_router, children_router, chores_router, workflow_router
+from app.api import auth_router, children_router, chores_router, modules_router, workflow_router
 from app.config import get_settings
 from app.db import initialize_database
 from app.error_handling import CsrfProtectionMiddleware, RequestLoggingMiddleware, register_exception_handlers
@@ -28,13 +28,14 @@ async def lifespan(_: FastAPI):
 
 
 def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
-    app = FastAPI(title="Chore Tracker API", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="Family Manager API", version="0.1.0", lifespan=lifespan)
     app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     register_exception_handlers(app)
     app.include_router(auth_router, prefix=API_PREFIX)
     app.include_router(children_router, prefix=API_PREFIX)
     app.include_router(chores_router, prefix=API_PREFIX)
+    app.include_router(modules_router, prefix=API_PREFIX)
     app.include_router(workflow_router, prefix=API_PREFIX)
 
     @app.get("/health")

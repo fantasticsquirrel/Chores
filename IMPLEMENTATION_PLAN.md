@@ -42,3 +42,34 @@
 - [x] 5.5 — Mark plan complete only after all auth and functional checks pass.
 
 STATUS: COMPLETE
+
+---
+
+# Family Manager Integration Plan
+
+## Phase FM-0: Incremental shell + module scaffold (in progress)
+- [x] Rename visible app shell copy to Family Manager while keeping existing `/chore/` and `/chore-api/` deployment routes stable.
+- [x] Add role-default module registry for `chores`, `homeschool`, and `admin`.
+- [x] Add authenticated `/modules/me` endpoint so the frontend can discover default visible modules.
+- [x] Add frontend module scaffolding with `/homeschool` and `/admin/dashboard` placeholders.
+
+## Phase FM-1: Database-backed module access
+- [ ] Add Alembic migration for `modules`, `household_module_access`, and `user_module_access`.
+- [ ] Seed default modules and migrate current users to equivalent access.
+- [ ] Replace role-default-only `/modules/me` logic with persisted household/user grants.
+- [ ] Add admin APIs for granting/revoking module access.
+
+## Phase FM-2: Admin dashboard
+- [ ] Show household users and child-linked accounts in one dashboard.
+- [ ] Add module access matrix by user/child account.
+- [ ] Move child account create/reset actions into the Family Manager admin experience.
+
+## Phase FM-3: Homeschool data model
+- [ ] Add household-scoped homeschool tables for semesters, subjects, attendance, day comments, subject comments, and grades.
+- [ ] Tie homeschool records to existing `children.id` so child identity is shared with Chores.
+- [ ] Add import utility for old Homeschool JSON/state files with child-name matching and manual mismatch review.
+
+## Phase FM-4: Homeschool frontend integration
+- [ ] Port the Homeschool calendar/subjects/semester/report UI into the Vite React app.
+- [ ] Replace standalone/Firebase/local-state persistence with Family Manager FastAPI endpoints.
+- [ ] Add tests for parent access, child isolation, and report generation.
