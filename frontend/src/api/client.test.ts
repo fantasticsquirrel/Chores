@@ -645,4 +645,31 @@ describe("ApiClient", () => {
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
+
+
+  it("formats FastAPI validation error details", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        detail: [
+          { loc: ["body", "end_date"], msg: "Value error, end_date must be on or after start_date." },
+        ],
+      }), {
+        status: 422,
+        statusText: "Unprocessable Entity",
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+
+    await expect(client.createHomeschoolSemester({
+      household_id: 7,
+      name: "Bad dates",
+      start_date: "2026-12-20",
+      end_date: "2026-08-15",
+    })).rejects.toMatchObject({
+      detail: "body.end_date: Value error, end_date must be on or after start_date.",
+    });
+  });
+
 });

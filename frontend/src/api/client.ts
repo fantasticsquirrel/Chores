@@ -317,8 +317,7 @@ export class ApiClient {
     const data: unknown = hasJsonBody ? await response.json() : undefined;
 
     if (!response.ok) {
-      const errorData = isApiErrorResponse(data) ? data : undefined;
-      const detail = errorData?.detail ?? response.statusText ?? "Request failed";
+      const detail = extractErrorDetail(data, response.statusText);
       throw new ApiClientError(response.status, detail, data);
     }
 
@@ -427,14 +426,42 @@ function readCookieValue(name: string): string | null {
   return null;
 }
 
-function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
+function extractErrorDetail(data: unknown, fallback: string): string {
+  if (!isApiErrorResponse(data)) {
+    return fallback || "Request failed";
+  }
+
+  const { detail } = data;
+  if (typeof detail === "string" && detail.trim().length > 0) {
+    return detail;
+  }
+  if (Array.isArray(detail)) {
+    const messages = detail.map(formatValidationDetail).filter((message) => message.length > 0);
+    if (messages.length > 0) {
+      return messages.join(" ");
+    }
+  }
+  return fallback || "Request failed";
+}
+
+function formatValidationDetail(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
   if (typeof value !== "object" || value === null) {
-    return false;
+    return "";
   }
-
-  if (!("detail" in value)) {
-    return true;
+  const record = value as Record<string, unknown>;
+  const message = typeof record.msg === "string" ? record.msg : "";
+  const location = Array.isArray(record.loc)
+    ? record.loc.filter((part) => typeof part === "string" || typeof part === "number").join(".")
+    : "";
+  if (message.length === 0) {
+    return "";
   }
+  return location.length > 0 ? `${location}: ${message}` : message;
+}
 
-  return typeof value.detail === "string" || value.detail === undefined;
+function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
+  return typeof value === "object" && value !== null && "detail" in value;
 }
