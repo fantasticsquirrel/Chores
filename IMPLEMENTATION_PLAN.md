@@ -47,7 +47,7 @@ STATUS: COMPLETE
 
 # Family Manager Integration Plan
 
-## Phase FM-0: Incremental shell + module scaffold (in progress)
+## Phase FM-0: Incremental shell + module scaffold (done)
 - [x] Rename visible app shell copy to Family Manager while keeping existing `/chore/` and `/chore-api/` deployment routes stable.
 - [x] Add role-default module registry for `chores`, `homeschool`, and `admin`.
 - [x] Add authenticated `/modules/me` endpoint so the frontend can discover default visible modules.
@@ -60,16 +60,20 @@ STATUS: COMPLETE
 - [x] Add admin APIs for viewing users and granting/revoking module access.
 
 ## Phase FM-2: Admin dashboard
-- [ ] Show household users and child-linked accounts in one dashboard.
-- [ ] Add module access matrix by user/child account.
+- [x] Show household users and child-linked accounts in one dashboard.
+- [x] Add module access matrix by user/child account.
 - [ ] Move child account create/reset actions into the Family Manager admin experience.
 
 ## Phase FM-3: Homeschool data model
-- [x] Add first household-scoped homeschool tables for semesters, subjects, and attendance. Day comments, subject comments, and grades remain next.
+- [x] Add household-scoped homeschool tables for semesters, subjects, attendance, day comments, and grades.
 - [x] Tie homeschool attendance records to existing `children.id` so child identity is shared with Chores.
-- [ ] Add import utility for old Homeschool JSON/state files with child-name matching and manual mismatch review.
+- [x] Skip old Homeschool import utility by product decision; Jon will start Homeschool data fresh.
 
 ## Phase FM-4: Homeschool frontend integration
-- [ ] Port the Homeschool calendar/subjects/semester/report UI into the Vite React app. Initial `/homeschool` page now reads API counts.
-- [ ] Replace standalone/Firebase/local-state persistence with Family Manager FastAPI endpoints.
-- [ ] Add tests for parent access, child isolation, and report generation.
+- [x] Port core Homeschool setup, attendance calendar, comments, grades, and semester summary UI into the Vite React app.
+- [x] Replace standalone/Firebase/local-state persistence with Family Manager FastAPI endpoints for the implemented Homeschool scope.
+- [x] Add backend and frontend tests for Homeschool workflows, module access, and setup record mutations.
+- [ ] Add richer report/export generation after the first Family Manager PR.
+
+
+STATUS: READY FOR PR REVIEW — `family-manager` keeps `/chore/` and `/chore-api/` routes stable, adds persisted modules/admin access, ports core Homeschool workflows, and has passing frontend/backend gates. Do not merge without Jon approval.

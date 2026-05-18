@@ -1,12 +1,14 @@
-# chore_tracking
+# Family Manager
 
-Chore Tracker v3 monorepo with a FastAPI backend and React frontend.
+Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React frontend for household workflows. The current production route names intentionally remain `/chore/` and `/chore-api/` for deployment stability while the visible app shell and code direction move toward Family Manager.
 
 ## Current Scope
 
-- Backend API for health, child management, chore eligibility, and submission review/approval flows
-- Frontend SPA shell and major parent/child views
-- SQLite persistence with startup checks and WAL mode
+- Shared household, parent, and child accounts with role-aware route protection
+- Chores module for chore management, child eligible chores, submissions, and parent review/approval
+- Homeschool module for semesters, subjects, attendance calendar entries, day comments, and grades
+- Admin module for per-user module access management, with last-admin protection
+- SQLite persistence with Alembic migrations, startup checks, and WAL mode
 - Frontend and backend automated test coverage for implemented flows
 
 ## Prerequisites
@@ -26,13 +28,15 @@ Chore Tracker v3 monorepo with a FastAPI backend and React frontend.
 
 Assume your deployment host is `https://YOUR_DOMAIN`.
 
-SPA routes are served under `/chore/`:
+SPA routes are served under `/chore/` for this release. This is deliberate: Family Manager naming is visible in the UI, but deployment routes stay stable until a later route migration decision.
 
 - `https://YOUR_DOMAIN/chore/`
 - `https://YOUR_DOMAIN/chore/login`
 - `https://YOUR_DOMAIN/chore/parent/dashboard`
 - `https://YOUR_DOMAIN/chore/parent/children`
 - `https://YOUR_DOMAIN/chore/board`
+- `https://YOUR_DOMAIN/chore/homeschool`
+- `https://YOUR_DOMAIN/chore/admin/dashboard`
 - `https://YOUR_DOMAIN/chore/child/today`
 
 API routes are served under `/chore-api/`:
@@ -48,6 +52,19 @@ API routes are served under `/chore-api/`:
 - `GET https://YOUR_DOMAIN/chore-api/submissions?status={optional}`
 - `POST https://YOUR_DOMAIN/chore-api/submissions/{submission_id}/approve-all`
 - `POST https://YOUR_DOMAIN/chore-api/submissions/{submission_id}/items/{item_id}/decision`
+- `GET https://YOUR_DOMAIN/chore-api/modules/me`
+- `GET https://YOUR_DOMAIN/chore-api/modules/users`
+- `PUT https://YOUR_DOMAIN/chore-api/modules/users/{user_id}`
+- `GET|POST https://YOUR_DOMAIN/chore-api/homeschool/semesters`
+- `PUT|DELETE https://YOUR_DOMAIN/chore-api/homeschool/semesters/{semester_id}`
+- `GET|POST https://YOUR_DOMAIN/chore-api/homeschool/subjects`
+- `PUT|DELETE https://YOUR_DOMAIN/chore-api/homeschool/subjects/{subject_id}`
+- `GET|PUT https://YOUR_DOMAIN/chore-api/homeschool/attendance`
+- `DELETE https://YOUR_DOMAIN/chore-api/homeschool/attendance/{attendance_id}`
+- `GET|PUT https://YOUR_DOMAIN/chore-api/homeschool/day-comments`
+- `DELETE https://YOUR_DOMAIN/chore-api/homeschool/day-comments/{comment_id}`
+- `GET|PUT https://YOUR_DOMAIN/chore-api/homeschool/grades`
+- `DELETE https://YOUR_DOMAIN/chore-api/homeschool/grades/{grade_id}`
 
 Compatibility health routes also exist without `/chore-api`:
 
@@ -104,14 +121,23 @@ Set at least:
 - `LOG_LEVEL=INFO`
 - `SESSION_COOKIE_SECURE=true`
 
-2. Build frontend assets:
+2. Apply database migrations:
+
+```bash
+source .venv/bin/activate
+cd backend
+alembic upgrade head
+cd ..
+```
+
+3. Build frontend assets:
 
 ```bash
 npm ci
 npm run build
 ```
 
-3. Start API process (serves both API and built SPA):
+4. Start API process (serves both API and built SPA):
 
 ```bash
 source .venv/bin/activate
@@ -119,7 +145,7 @@ pip install -e "backend[dev]"
 uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000
 ```
 
-4. Verify runtime health:
+5. Verify runtime health:
 
 ```bash
 curl -fsS http://127.0.0.1:8000/chore-api/health/live
@@ -127,14 +153,14 @@ curl -fsS http://127.0.0.1:8000/chore-api/health/ready
 curl -I http://127.0.0.1:8000/chore/
 ```
 
-5. Daily SQLite backup:
+6. Daily SQLite backup:
 
 ```bash
 mkdir -p backups
 sqlite3 data/chore_tracking.db ".backup backups/chore_tracking-$(date +%F).db"
 ```
 
-6. Restore from backup (service stopped):
+7. Restore from backup (service stopped):
 
 ```bash
 cp backups/chore_tracking-YYYY-MM-DD.db data/chore_tracking.db
@@ -219,7 +245,7 @@ with session_factory() as session:
 PY
 ```
 
-3. Sign in through `POST /chore-api/auth/login` or `https://YOUR_DOMAIN/chore/login`, then create children from `/chore/parent/children`.
+3. Sign in through `POST /chore-api/auth/login` or `https://YOUR_DOMAIN/chore/login`, then create children from `/chore/parent/children`. Parent admins receive default access to Chores, Homeschool, and Admin modules. Parent users receive Chores and Homeschool by default; child users receive Chores by default.
 
 ## Production Test Checklist
 
@@ -233,9 +259,11 @@ Run this checklist after each deploy:
    - `curl -fsS http://127.0.0.1:8501/chore-api/health/live`
    - `curl -fsS http://127.0.0.1:8501/chore-api/health/ready`
    - `curl -I http://127.0.0.1:8501/chore/`
-3. Auth protections:
+3. Auth and module protections:
    - Anonymous `GET /chore-api/children?household_id=1` returns `401` with `Not authenticated.`
    - Child account `GET /chore-api/submissions` returns `403` with `Forbidden.`
+   - Parent/admin users with a disabled module receive `403` with `Module access denied.` on that module's backend APIs.
+   - The Admin module prevents removing the last household admin's Admin access.
 4. Deployed UI smoke flow:
    - `DATABASE_URL=sqlite:///$PWD/data/chore_tracking.db npm run test:smoke --workspace frontend`
    - Confirms login redirect, parent child-create flow, child submission flow, and parent board approval flow.
@@ -251,3 +279,4 @@ Project backpressure commands:
 Backend verification:
 
 - `.venv/bin/pytest backend/tests`
+- Fresh migration sanity is covered by `backend/tests/test_alembic_migrations.py`; operators can also run `cd backend && alembic upgrade head` against a temporary DB.
