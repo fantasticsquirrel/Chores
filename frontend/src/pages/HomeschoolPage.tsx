@@ -8,6 +8,7 @@ import { todayISO, toYearMonth } from "./homeschool/dateUtils";
 import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
 import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
+import { HomeschoolStatus } from "./homeschool/HomeschoolStatus";
 
 type HomeschoolState = {
   children: Child[];
@@ -225,8 +226,6 @@ export function HomeschoolPage(): ReactElement {
   const selectedChildGrades = state.grades.filter(
     (record) => calendarChildId !== "" && record.child_id === Number(calendarChildId),
   );
-  const subjectLookup = new Map(state.subjects.map((subject) => [subject.id, subject]));
-  const semesterLookup = new Map(state.semesters.map((semester) => [semester.id, semester]));
   const selectedSemester = state.semesters.find((semester) => semester.id.toString() === grade.semesterId) ?? state.semesters[0] ?? null;
 
   return (
@@ -322,32 +321,14 @@ export function HomeschoolPage(): ReactElement {
         subjects={state.subjects}
       />
 
-      <Card className="dashboard-panel">
-        <h2>Current Setup</h2>
-        {state.loading ? <p>Loading homeschool module data...</p> : null}
-        {!state.loading && state.error === null ? (
-          <ul className="balance-list">
-            <li className="balance-item">Children: {state.children.map((child) => child.name).join(", ") || "none yet"}</li>
-            <li className="balance-item">Semesters: {state.semesters.map((semester) => semester.name).join(", ") || "none yet"}</li>
-            <li className="balance-item">Subjects: {state.subjects.map((subject) => subject.name).join(", ") || "none yet"}</li>
-            <li className="balance-item">Day comments: {state.dayComments.length}</li>
-            <li className="balance-item">Grades: {state.grades.length}</li>
-          </ul>
-        ) : null}
-
-        {!state.loading && selectedChildGrades.length > 0 ? (
-          <ul className="balance-list">
-            {selectedChildGrades.map((record) => (
-              <li key={record.id} className="balance-item">
-                <div>
-                  <p className="balance-name">{subjectLookup.get(record.subject_id)?.name || `Subject ${record.subject_id}`}: {record.grade || "—"}</p>
-                  <p className="balance-meta">{record.semester_id ? semesterLookup.get(record.semester_id)?.name || `Semester ${record.semester_id}` : "Overall"}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </Card>
+      <HomeschoolStatus
+        loading={state.loading}
+        children={state.children}
+        semesters={state.semesters}
+        subjects={state.subjects}
+        dayComments={state.dayComments}
+        selectedChildGrades={selectedChildGrades}
+      />
     </section>
   );
 }
