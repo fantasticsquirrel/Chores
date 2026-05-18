@@ -91,6 +91,14 @@ def delete_semester(
     semester = session.get(HomeschoolSemester, semester_id)
     if semester is None or semester.household_id != household_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
+    has_grades = session.scalar(
+        select(HomeschoolGrade.id).where(
+            HomeschoolGrade.household_id == household_id,
+            HomeschoolGrade.semester_id == semester_id,
+        ).limit(1)
+    ) is not None
+    if has_grades:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Semester has grades. Clear related grades first.")
     session.delete(semester)
     session.commit()
 
@@ -140,6 +148,20 @@ def delete_subject(
     subject = session.get(HomeschoolSubject, subject_id)
     if subject is None or subject.household_id != household_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
+    has_attendance = session.scalar(
+        select(HomeschoolAttendance.id).where(
+            HomeschoolAttendance.household_id == household_id,
+            HomeschoolAttendance.subject_id == subject_id,
+        ).limit(1)
+    ) is not None
+    has_grades = session.scalar(
+        select(HomeschoolGrade.id).where(
+            HomeschoolGrade.household_id == household_id,
+            HomeschoolGrade.subject_id == subject_id,
+        ).limit(1)
+    ) is not None
+    if has_attendance or has_grades:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subject has homeschool records. Clear related attendance and grades first.")
     session.delete(subject)
     session.commit()
 

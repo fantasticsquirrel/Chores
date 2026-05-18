@@ -424,3 +424,82 @@ def test_parent_cannot_delete_other_household_subject(tmp_path: Path, monkeypatc
         )
 
     assert response.status_code == 403
+
+def test_parent_cannot_delete_semester_with_grades(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        semester_response = client.post(
+            "/chore-api/homeschool/semesters",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "name": "Fall 2026",
+                "start_date": "2026-08-15",
+                "end_date": "2026-12-20",
+            },
+        )
+        subject_response = client.post(
+            "/chore-api/homeschool/subjects",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id, "name": "Math", "color": "#ef4444"},
+        )
+        assert semester_response.status_code == 201
+        assert subject_response.status_code == 201
+        grade_response = client.put(
+            "/chore-api/homeschool/grades",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "subject_id": subject_response.json()["id"],
+                "semester_id": semester_response.json()["id"],
+                "grade": "A",
+            },
+        )
+        assert grade_response.status_code == 200
+
+        delete_response = client.delete(
+            f"/chore-api/homeschool/semesters/{semester_response.json()['id']}?household_id={user.household_id}",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+    assert delete_response.status_code == 400
+    assert delete_response.json()["detail"] == "Semester has grades. Clear related grades first."
+
+
+def test_parent_cannot_delete_subject_with_records(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        subject_response = client.post(
+            "/chore-api/homeschool/subjects",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id, "name": "Math", "color": "#ef4444"},
+        )
+        assert subject_response.status_code == 201
+        attendance_response = client.put(
+            "/chore-api/homeschool/attendance",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "subject_id": subject_response.json()["id"],
+                "date": "2026-09-01",
+                "present": True,
+                "comment": "Fractions",
+            },
+        )
+        assert attendance_response.status_code == 200
+
+        delete_response = client.delete(
+            f"/chore-api/homeschool/subjects/{subject_response.json()['id']}?household_id={user.household_id}",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+    assert delete_response.status_code == 400
+    assert delete_response.json()["detail"] == "Subject has homeschool records. Clear related attendance and grades first."

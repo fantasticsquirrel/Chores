@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
-import { apiClient } from "./api";
+import { ApiClientError, apiClient } from "./api";
 
 const children = [{ id: 1, household_id: 1, name: "Maya", active: true }];
 const semesters = [{ id: 10, household_id: 1, name: "Fall 2026", start_date: "2026-08-15", end_date: "2026-12-20", active: true }];
@@ -254,6 +254,30 @@ describe("Homeschool page", () => {
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(20, 1));
     expect(await screen.findByText("Deleted subject.")).toBeVisible();
+  });
+
+
+
+  it("shows setup delete errors from the backend", async () => {
+    mockHomeschoolApi();
+    vi.spyOn(apiClient, "deleteHomeschoolSubject").mockRejectedValue(
+      new ApiClientError(400, "Subject has homeschool records. Clear related attendance and grades first.", {
+        detail: "Subject has homeschool records. Clear related attendance and grades first.",
+      }),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const subjectList = await screen.findByRole("list", { name: "Subject entries" });
+    fireEvent.click(within(subjectList).getByRole("button", { name: "Delete" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Homeschool action failed: Subject has homeschool records. Clear related attendance and grades first.",
+    );
   });
 
 });
