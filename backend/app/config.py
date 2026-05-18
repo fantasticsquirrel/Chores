@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
 
 
 class SettingsError(ValueError):
@@ -35,13 +36,18 @@ def _default_cookie_secure(app_env: str) -> bool:
     return app_env == "production"
 
 
+def _default_database_url() -> str:
+    repo_root = Path(__file__).resolve().parents[2]
+    return f"sqlite:///{repo_root / 'data' / 'chore_tracking.db'}"
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     app_env = os.getenv("APP_ENV", "development").strip().lower()
     if app_env not in {"development", "test", "production"}:
         raise SettingsError("APP_ENV must be one of development, test, production.")
 
-    database_url = os.getenv("DATABASE_URL", "sqlite:///./data/chore_tracking.db").strip()
+    database_url = os.getenv("DATABASE_URL", _default_database_url()).strip()
     if not database_url:
         raise SettingsError("DATABASE_URL must not be empty.")
 

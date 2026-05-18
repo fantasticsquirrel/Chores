@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.config import SettingsError, get_settings
+from pathlib import Path
 import pytest
 
 
@@ -21,7 +22,8 @@ def test_get_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     settings = get_settings()
 
     assert settings.app_env == "development"
-    assert settings.database_url == "sqlite:///./data/chore_tracking.db"
+    repo_root = Path(__file__).resolve().parents[2]
+    assert settings.database_url == f"sqlite:///{repo_root / 'data' / 'chore_tracking.db'}"
     assert settings.session_cookie_secure is False
 
 
