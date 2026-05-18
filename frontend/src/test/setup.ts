@@ -14,4 +14,11 @@ beforeEach(() => {
     },
     csrf_token: null,
   });
+  vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
+    modules: [
+      { key: "chores", name: "Chores", description: "" },
+      { key: "homeschool", name: "Homeschool", description: "" },
+      { key: "admin", name: "Admin", description: "" },
+    ],
+  });
 });

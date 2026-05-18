@@ -8,9 +8,12 @@ import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
 import { AccountSecurityPage } from "./pages/AccountSecurityPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
+import { HomeschoolPage } from "./pages/HomeschoolPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { ApiClientError, type UserRole } from "./api";
+import type { FamilyModuleKey } from "./modules/registry";
 import { Button, Card, InlineNotice } from "./ui";
 
 type RouteCardProps = {
@@ -22,15 +25,18 @@ type NavItem = {
   to: string;
   label: string;
   roles: UserRole[];
+  moduleKey?: FamilyModuleKey;
 };
 
 const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
+  { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
+  { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
   { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
-  { to: "/child/today", label: "Child Today", roles: ["CHILD"] },
+  { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
 ];
 
 function getDefaultRouteForRole(role: UserRole): string {
@@ -62,7 +68,7 @@ function NotFoundPage(): ReactElement {
   return (
     <RouteCard
       title="Route Not Found"
-      description="This page is not part of the Chore Tracker shell yet."
+      description="This page is not part of the Family Manager shell yet."
     />
   );
 }
@@ -108,14 +114,38 @@ function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactEle
   return <Outlet />;
 }
 
+
+type ModuleProtectedRouteProps = {
+  moduleKey: FamilyModuleKey;
+};
+
+function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactElement {
+  const { status, moduleKeys } = useAuth();
+
+  if (status !== "authenticated") {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!moduleKeys.includes(moduleKey)) {
+    return (
+      <RouteCard
+        title="Module Not Available"
+        description="This module is not enabled for your account. Ask a household admin to update module access."
+      />
+    );
+  }
+
+  return <Outlet />;
+}
+
 function AppShell(): ReactElement {
   const navigate = useNavigate();
-  const { status, user, logout } = useAuth();
+  const { status, user, moduleKeys, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const visibleNavItems =
     status === "authenticated" && user !== null
-      ? navItems.filter((item) => item.roles.includes(user.role))
+      ? navItems.filter((item) => item.roles.includes(user.role) && (item.moduleKey === undefined || moduleKeys.includes(item.moduleKey)))
       : [];
 
   async function handleLogout(): Promise<void> {
@@ -138,8 +168,8 @@ function AppShell(): ReactElement {
       <div className="background-orb orb-two" />
       <header className="top-bar glass-card">
         <div>
-          <p className="eyebrow">Chore Tracker v3</p>
-          <h2>Jewel Pop Workspace</h2>
+          <p className="eyebrow">Family Manager</p>
+          <h2>Household Workspace</h2>
         </div>
         <nav aria-label="Primary">
           {visibleNavItems.map((item) => (
@@ -188,12 +218,17 @@ export default function App(): ReactElement {
           <Route element={<ProtectedRoute />}>
             <Route path="/chore/account/security" element={<AccountSecurityPage />} />
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
-              <Route
-                path="/board"
-                element={<ParentSubmissionReviewPage />}
-              />
               <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
-              <Route path="/parent/chores" element={<ParentChoresPage />} />
+              <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+                <Route
+                  path="/board"
+                  element={<ParentSubmissionReviewPage />}
+                />
+                <Route path="/parent/chores" element={<ParentChoresPage />} />
+              </Route>
+              <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
+                <Route path="/homeschool" element={<HomeschoolPage />} />
+              </Route>
               <Route
                 path="/parent/children"
                 element={<ParentChildrenPage />}
@@ -211,11 +246,18 @@ export default function App(): ReactElement {
                 element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
               />
             </Route>
+            <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN"]} />}>
+              <Route element={<ModuleProtectedRoute moduleKey="admin" />}>
+                <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+              </Route>
+            </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["CHILD"]} />}>
-              <Route
-                path="/child/today"
-                element={<ChildTodayPage />}
-              />
+              <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+                <Route
+                  path="/child/today"
+                  element={<ChildTodayPage />}
+                />
+              </Route>
               <Route
                 path="/child/calendar"
                 element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}

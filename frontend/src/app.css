@@ -471,3 +471,37 @@ body {
     flex-wrap: wrap;
   }
 }
+
+.dashboard-section-header {
+  grid-column: span 12;
+  padding: 0.25rem 0.2rem 0;
+}
+
+.dashboard-section-header h2 {
+  margin: 0.2rem 0 0;
+  font-size: clamp(1.25rem, 1vw + 1rem, 1.65rem);
+}
+
+.dashboard-section-header p:last-child {
+  max-width: 52rem;
+}
+
+.homeschool-form-card {
+  grid-column: span 6;
+}
+
+.homeschool-record-card {
+  grid-column: span 4;
+}
+
+.homeschool-form-card .children-form,
+.homeschool-record-card .children-form {
+  max-width: none;
+}
+
+@media (max-width: 768px) {
+  .homeschool-form-card,
+  .homeschool-record-card {
+    grid-column: span 12;
+  }
+}

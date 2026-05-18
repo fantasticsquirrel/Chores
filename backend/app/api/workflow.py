@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import Select, and_, exists, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session, require_roles
+from app.api.dependencies import get_db_session, require_module_access
 from app.models.core import (
     Child,
     Chore,
@@ -19,6 +19,7 @@ from app.models.core import (
     Transaction,
     User,
 )
+from app.modules import MODULE_CHORES
 from app.models.enums import (
     AssignmentMode,
     CompletionMode,
@@ -40,6 +41,8 @@ from app.schemas.workflow import (
 )
 
 router = APIRouter(tags=["workflow"])
+_REQUIRE_CHORES_ACCESS = require_module_access(MODULE_CHORES, UserRole.PARENT, UserRole.PARENT_ADMIN, UserRole.CHILD)
+_REQUIRE_CHORES_PARENT = require_module_access(MODULE_CHORES, UserRole.PARENT, UserRole.PARENT_ADMIN)
 
 
 @router.get("/children/me/eligible-chores", response_model=list[EligibleChoreResponse])
@@ -47,7 +50,7 @@ def list_eligible_chores(
     target_date: date = Query(alias="date"),
     child_id: int | None = Query(default=None, gt=0),
     session: Session = Depends(get_db_session),
-    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN, UserRole.CHILD)),
+    user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> list[EligibleChoreResponse]:
     child = _resolve_active_child(session, user, child_id)
     return _eligible_chores_for_child(session, child, target_date)
@@ -58,7 +61,7 @@ def create_submission(
     payload: CreateSubmissionRequest,
     child_id: int | None = Query(default=None, gt=0),
     session: Session = Depends(get_db_session),
-    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN, UserRole.CHILD)),
+    user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> SubmissionResponse:
     child = _resolve_active_child(session, user, child_id)
     eligible = _eligible_chores_for_child(session, child, payload.for_date)
@@ -105,7 +108,7 @@ def create_submission(
 def list_submissions(
     status_filter: SubmissionStatus | None = Query(default=None, alias="status"),
     session: Session = Depends(get_db_session),
-    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> list[SubmissionReviewResponse]:
     query: Select[tuple[Submission]] = (
         select(Submission)
@@ -123,7 +126,7 @@ def list_submissions(
 def approve_submission(
     submission_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> SubmissionReviewResponse:
     submission = session.get(Submission, submission_id)
     if submission is None:
@@ -181,7 +184,7 @@ def decide_submission_item(
     submission_id: int = Path(gt=0),
     item_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> SubmissionReviewResponse:
     submission = session.get(Submission, submission_id)
     if submission is None:

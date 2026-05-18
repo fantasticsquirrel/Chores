@@ -377,6 +377,224 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes family module access endpoints", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ modules: [{ key: "chores", name: "Chores", description: "" }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([{ id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [] }]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.getMyModules();
+    await client.listUserModuleAccess();
+    await client.setUserModuleAccess(2, { module_key: "homeschool", can_view: true, can_manage: false });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/chore-api/modules/me",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/modules/users",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/chore-api/modules/users/2",
+      expect.objectContaining({
+        method: "PUT",
+        credentials: "include",
+        body: JSON.stringify({ module_key: "homeschool", can_view: true, can_manage: false }),
+      }),
+    );
+  });
+
+  it("serializes homeschool list endpoints with household and optional child scope", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.listHomeschoolSemesters(7);
+    await client.listHomeschoolSubjects(7);
+    await client.listHomeschoolAttendance(7, 3);
+    await client.listHomeschoolDayComments(7, 3);
+    await client.listHomeschoolGrades(7, 3);
+    await client.deleteHomeschoolAttendance(9, 7);
+    await client.deleteHomeschoolDayComment(10, 7);
+    await client.deleteHomeschoolGrade(11, 7);
+    await client.deleteHomeschoolSemester(12, 7);
+    await client.deleteHomeschoolSubject(13, 7);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/chore-api/homeschool/semesters?household_id=7",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/homeschool/subjects?household_id=7",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/chore-api/homeschool/attendance?household_id=7&child_id=3",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "/chore-api/homeschool/day-comments?household_id=7&child_id=3",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      "/chore-api/homeschool/grades?household_id=7&child_id=3",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      6,
+      "/chore-api/homeschool/attendance/9?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      7,
+      "/chore-api/homeschool/day-comments/10?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      8,
+      "/chore-api/homeschool/grades/11?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      9,
+      "/chore-api/homeschool/semesters/12?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      10,
+      "/chore-api/homeschool/subjects/13?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+  });
+
+  it("serializes homeschool create and upsert payloads", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 1, household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20", active: true }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 2, household_id: 7, name: "Math", color: "#3b82f6", active: true }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 1, household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20", active: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 2, household_id: 7, name: "Reading", color: "#f97316", active: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 3, household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 4, household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 5, household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.createHomeschoolSemester({ household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20" });
+    await client.createHomeschoolSubject({ household_id: 7, name: "Math", color: "#3b82f6" });
+    await client.updateHomeschoolSemester(1, { household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20" });
+    await client.updateHomeschoolSubject(2, { household_id: 7, name: "Reading", color: "#f97316" });
+    await client.upsertHomeschoolAttendance({ household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" });
+    await client.upsertHomeschoolDayComment({ household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" });
+    await client.upsertHomeschoolGrade({ household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/chore-api/homeschool/semesters",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/homeschool/subjects",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ household_id: 7, name: "Math", color: "#3b82f6" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/chore-api/homeschool/semesters/1",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "/chore-api/homeschool/subjects/2",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, name: "Reading", color: "#f97316" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
+      "/chore-api/homeschool/attendance",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      6,
+      "/chore-api/homeschool/day-comments",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      7,
+      "/chore-api/homeschool/grades",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" }) }),
+    );
+  });
+
   it("supports absolute API base URLs for local development backends", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(

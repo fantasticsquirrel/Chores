@@ -8,21 +8,36 @@ import type {
   CreateChildAccountRequest,
   CreateChildRequest,
   CreateChoreRequest,
+  CreateHomeschoolSemesterRequest,
+  CreateHomeschoolSubjectRequest,
   EligibleChore,
   HealthResponse,
+  HomeschoolAttendance,
+  HomeschoolDayComment,
+  HomeschoolGrade,
+  HomeschoolSemester,
+  HomeschoolSubject,
   LoginRequest,
   ListChoresParams,
   ListEligibleChoresParams,
   ListSubmissionsParams,
   ListChildrenParams,
+  MyModulesResponse,
   ReadinessResponse,
   ResetChildAccountEmailRequest,
+  SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
+  UpdateHomeschoolSemesterRequest,
+  UpdateHomeschoolSubjectRequest,
   SubmissionReview,
   SubmissionRequest,
   SubmissionResponse,
   UpdateChildRequest,
   UpdateChoreRequest,
+  UpsertHomeschoolAttendanceRequest,
+  UpsertHomeschoolDayCommentRequest,
+  UpsertHomeschoolGradeRequest,
+  UserModuleAccess,
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "/chore-api";
@@ -96,6 +111,18 @@ export class ApiClient {
     await this.postNoContentWithBody("/auth/change-password", payload);
   }
 
+  async getMyModules(): Promise<MyModulesResponse> {
+    return this.get<MyModulesResponse>("/modules/me");
+  }
+
+  async listUserModuleAccess(): Promise<UserModuleAccess[]> {
+    return this.get<UserModuleAccess[]>("/modules/users");
+  }
+
+  async setUserModuleAccess(userId: number, payload: SetUserModuleAccessRequest): Promise<UserModuleAccess> {
+    return this.put<UserModuleAccess, SetUserModuleAccessRequest>(`/modules/users/${userId}`, payload);
+  }
+
   async listChildren(params: ListChildrenParams): Promise<Child[]> {
     return this.get<Child[]>("/children", params);
   }
@@ -114,6 +141,74 @@ export class ApiClient {
 
   async resetChildAccountEmail(childId: number, payload: ResetChildAccountEmailRequest): Promise<ChildAccount> {
     return this.patch<ChildAccount, ResetChildAccountEmailRequest>(`/children/${childId}/account-email`, payload);
+  }
+
+  async listHomeschoolSemesters(householdId: number): Promise<HomeschoolSemester[]> {
+    return this.get<HomeschoolSemester[]>("/homeschool/semesters", { household_id: householdId });
+  }
+
+  async createHomeschoolSemester(payload: CreateHomeschoolSemesterRequest): Promise<HomeschoolSemester> {
+    return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>("/homeschool/semesters", payload);
+  }
+
+  async updateHomeschoolSemester(semesterId: number, payload: UpdateHomeschoolSemesterRequest): Promise<HomeschoolSemester> {
+    return this.put<HomeschoolSemester, UpdateHomeschoolSemesterRequest>(`/homeschool/semesters/${semesterId}`, payload);
+  }
+
+  async deleteHomeschoolSemester(semesterId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/semesters/${semesterId}`, { household_id: householdId });
+  }
+
+  async listHomeschoolSubjects(householdId: number): Promise<HomeschoolSubject[]> {
+    return this.get<HomeschoolSubject[]>("/homeschool/subjects", { household_id: householdId });
+  }
+
+  async createHomeschoolSubject(payload: CreateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
+    return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>("/homeschool/subjects", payload);
+  }
+
+  async updateHomeschoolSubject(subjectId: number, payload: UpdateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
+    return this.put<HomeschoolSubject, UpdateHomeschoolSubjectRequest>(`/homeschool/subjects/${subjectId}`, payload);
+  }
+
+  async deleteHomeschoolSubject(subjectId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/subjects/${subjectId}`, { household_id: householdId });
+  }
+
+  async listHomeschoolDayComments(householdId: number, childId?: number): Promise<HomeschoolDayComment[]> {
+    return this.get<HomeschoolDayComment[]>("/homeschool/day-comments", { household_id: householdId, child_id: childId });
+  }
+
+  async upsertHomeschoolDayComment(payload: UpsertHomeschoolDayCommentRequest): Promise<HomeschoolDayComment> {
+    return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>("/homeschool/day-comments", payload);
+  }
+
+  async deleteHomeschoolDayComment(commentId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/day-comments/${commentId}`, { household_id: householdId });
+  }
+
+  async listHomeschoolGrades(householdId: number, childId?: number): Promise<HomeschoolGrade[]> {
+    return this.get<HomeschoolGrade[]>("/homeschool/grades", { household_id: householdId, child_id: childId });
+  }
+
+  async upsertHomeschoolGrade(payload: UpsertHomeschoolGradeRequest): Promise<HomeschoolGrade> {
+    return this.put<HomeschoolGrade, UpsertHomeschoolGradeRequest>("/homeschool/grades", payload);
+  }
+
+  async deleteHomeschoolGrade(gradeId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/grades/${gradeId}`, { household_id: householdId });
+  }
+
+  async listHomeschoolAttendance(householdId: number, childId?: number): Promise<HomeschoolAttendance[]> {
+    return this.get<HomeschoolAttendance[]>("/homeschool/attendance", { household_id: householdId, child_id: childId });
+  }
+
+  async upsertHomeschoolAttendance(payload: UpsertHomeschoolAttendanceRequest): Promise<HomeschoolAttendance> {
+    return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>("/homeschool/attendance", payload);
+  }
+
+  async deleteHomeschoolAttendance(attendanceId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/attendance/${attendanceId}`, { household_id: householdId });
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {
@@ -178,6 +273,14 @@ export class ApiClient {
   private async postNoContentWithBody<TBody>(path: string, body: TBody): Promise<void> {
     await this.request<void>(path, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  private async put<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+    return this.request<TResponse>(path, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });

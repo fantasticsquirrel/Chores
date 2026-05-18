@@ -195,3 +195,120 @@ export interface UpdateChoreRequest {
   allowed_child_ids?: number[] | null;
   rotation_order?: number[] | null;
 }
+
+
+export interface FamilyModule {
+  key: "chores" | "homeschool" | "admin";
+  name: string;
+  description: string;
+}
+
+export interface MyModulesResponse {
+  modules: FamilyModule[];
+}
+
+
+export interface HomeschoolSemester {
+  id: number;
+  household_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  active: boolean;
+}
+
+export interface HomeschoolSubject {
+  id: number;
+  household_id: number;
+  name: string;
+  color: string;
+  active: boolean;
+}
+
+export interface HomeschoolAttendance {
+  id: number;
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  date: string;
+  present: boolean;
+  comment: string;
+}
+
+
+export interface CreateHomeschoolSemesterRequest {
+  household_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  active?: boolean;
+}
+
+export type UpdateHomeschoolSemesterRequest = CreateHomeschoolSemesterRequest;
+
+export interface CreateHomeschoolSubjectRequest {
+  household_id: number;
+  name: string;
+  color?: string;
+  active?: boolean;
+}
+
+export type UpdateHomeschoolSubjectRequest = CreateHomeschoolSubjectRequest;
+
+export interface UpsertHomeschoolAttendanceRequest {
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  date: string;
+  present?: boolean;
+  comment?: string;
+}
+
+
+export interface HomeschoolDayComment {
+  id: number;
+  household_id: number;
+  child_id: number;
+  date: string;
+  comment: string;
+}
+
+export interface UpsertHomeschoolDayCommentRequest {
+  household_id: number;
+  child_id: number;
+  date: string;
+  comment: string;
+}
+
+export interface HomeschoolGrade {
+  id: number;
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  semester_id: number | null;
+  grade: string;
+}
+
+export interface UpsertHomeschoolGradeRequest {
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  semester_id?: number | null;
+  grade: string;
+}
+
+
+export interface UserModuleAccess {
+  id: number;
+  household_id: number;
+  email: string;
+  role: UserRole;
+  child_id?: number | null;
+  modules: FamilyModule[];
+}
+
+export interface SetUserModuleAccessRequest {
+  module_key: "chores" | "homeschool" | "admin";
+  can_view: boolean;
+  can_manage?: boolean;
+}

@@ -42,3 +42,38 @@
 - [x] 5.5 — Mark plan complete only after all auth and functional checks pass.
 
 STATUS: COMPLETE
+
+---
+
+# Family Manager Integration Plan
+
+## Phase FM-0: Incremental shell + module scaffold (done)
+- [x] Rename visible app shell copy to Family Manager while keeping existing `/chore/` and `/chore-api/` deployment routes stable.
+- [x] Add role-default module registry for `chores`, `homeschool`, and `admin`.
+- [x] Add authenticated `/modules/me` endpoint so the frontend can discover default visible modules.
+- [x] Add frontend module scaffolding with `/homeschool` and `/admin/dashboard` placeholders.
+
+## Phase FM-1: Database-backed module access
+- [x] Add Alembic migration for `modules`, `household_module_access`, and `user_module_access`.
+- [x] Seed default module catalog and preserve current role-based default access.
+- [x] Replace role-default-only `/modules/me` logic with persisted household/user grants layered over safe role defaults.
+- [x] Add admin APIs for viewing users and granting/revoking module access.
+
+## Phase FM-2: Admin dashboard
+- [x] Show household users and child-linked accounts in one dashboard.
+- [x] Add module access matrix by user/child account.
+- [ ] Move child account create/reset actions into the Family Manager admin experience.
+
+## Phase FM-3: Homeschool data model
+- [x] Add household-scoped homeschool tables for semesters, subjects, attendance, day comments, and grades.
+- [x] Tie homeschool attendance records to existing `children.id` so child identity is shared with Chores.
+- [x] Skip old Homeschool import utility by product decision; Jon will start Homeschool data fresh.
+
+## Phase FM-4: Homeschool frontend integration
+- [x] Port core Homeschool setup, attendance calendar, comments, grades, and semester summary UI into the Vite React app.
+- [x] Replace standalone/Firebase/local-state persistence with Family Manager FastAPI endpoints for the implemented Homeschool scope.
+- [x] Add backend and frontend tests for Homeschool workflows, module access, and setup record mutations.
+- [ ] Add richer report/export generation after the first Family Manager PR.
+
+
+STATUS: READY FOR PR REVIEW — `family-manager` keeps `/chore/` and `/chore-api/` routes stable, adds persisted modules/admin access, ports core Homeschool workflows, and has passing frontend/backend gates. Do not merge without Jon approval.

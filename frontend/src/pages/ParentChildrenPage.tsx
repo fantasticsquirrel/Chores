@@ -60,13 +60,13 @@ export function ParentChildrenPage(): ReactElement {
     try {
       const children = await apiClient.listChildren({ household_id: householdId });
       setState({ children, loading: false, error: null });
-      if (children.length > 0 && selectedChildId === null) {
-        setSelectedChildId(children[0].id);
+      if (children.length > 0) {
+        setSelectedChildId((current) => current ?? children[0].id);
       }
     } catch (error: unknown) {
       setState({ children: [], loading: false, error: formatLoadError(error) });
     }
-  }, [householdId, selectedChildId]);
+  }, [householdId]);
 
   useEffect(() => {
     void loadChildren();

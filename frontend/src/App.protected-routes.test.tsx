@@ -136,4 +136,47 @@ describe("Protected routes", () => {
     expect(screen.queryByRole("link", { name: "Children" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Board" })).not.toBeInTheDocument();
   });
+
+
+  it("blocks direct access to disabled parent modules without loading module data", async () => {
+    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
+      modules: [{ key: "chores", name: "Chores", description: "" }],
+    });
+    const listSemestersSpy = vi.spyOn(apiClient, "listHomeschoolSemesters");
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Module Not Available" })).toBeVisible();
+    expect(screen.getByText("This module is not enabled for your account. Ask a household admin to update module access.")).toBeVisible();
+    await waitFor(() => expect(listSemestersSpy).not.toHaveBeenCalled());
+  });
+
+  it("blocks direct access to disabled child modules without loading chores", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 15,
+        household_id: 1,
+        email: "child@example.com",
+        role: "CHILD",
+        child_id: 14,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({ modules: [] });
+    const listEligibleChoresSpy = vi.spyOn(apiClient, "listEligibleChores");
+
+    render(
+      <MemoryRouter initialEntries={["/child/today"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Module Not Available" })).toBeVisible();
+    await waitFor(() => expect(listEligibleChoresSpy).not.toHaveBeenCalled());
+  });
+
 });

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -52,7 +52,8 @@ describe("Mobile browser smoke flows", () => {
         active: true,
       }),
     );
-    expect(await screen.findByText("Leo")).toBeVisible();
+    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    expect(within(childrenList).getByText("Leo")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledTimes(2);
   });
 
