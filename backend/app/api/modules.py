@@ -3,9 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user, get_db_session, require_roles
+from app.api.dependencies import get_current_user, get_db_session, require_module_access, require_roles
 from app.models.core import User
 from app.models.enums import UserRole
+from app.modules import MODULE_ADMIN
 from app.schemas.modules import (
     ModuleResponse,
     MyModulesResponse,
@@ -16,6 +17,7 @@ from app.services.modules import ModuleService
 
 router = APIRouter(prefix="/modules", tags=["modules"])
 _service = ModuleService()
+_require_admin_module_access = require_module_access(MODULE_ADMIN, UserRole.PARENT_ADMIN)
 
 
 def _module_response(module) -> ModuleResponse:
@@ -32,7 +34,7 @@ def get_my_modules(
 
 @router.get("/users", response_model=list[UserModuleAccessResponse])
 def list_household_user_module_access(
-    current_user: User = Depends(require_roles(UserRole.PARENT_ADMIN)),
+    current_user: User = Depends(_require_admin_module_access),
     session: Session = Depends(get_db_session),
 ) -> list[UserModuleAccessResponse]:
     rows = _service.list_household_user_access(session, current_user.household_id)
@@ -53,7 +55,7 @@ def list_household_user_module_access(
 def set_user_module_access(
     user_id: int,
     payload: SetUserModuleAccessRequest,
-    current_user: User = Depends(require_roles(UserRole.PARENT_ADMIN)),
+    current_user: User = Depends(_require_admin_module_access),
     session: Session = Depends(get_db_session),
 ) -> UserModuleAccessResponse:
     target_user = session.get(User, user_id)

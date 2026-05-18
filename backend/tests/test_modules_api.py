@@ -10,6 +10,7 @@ from app.main import app
 from app.models.core import Child, Household, User
 from app.models.enums import UserRole
 from app.security import hash_password
+from app.services.modules import ModuleService
 
 
 def _configure_test_settings(tmp_path: Path, monkeypatch) -> None:
@@ -184,3 +185,42 @@ def test_parent_admin_can_remove_admin_access_when_another_admin_remains(tmp_pat
 
     assert response.status_code == 200
     assert "admin" not in [module["key"] for module in response.json()["modules"]]
+
+
+def test_parent_admin_without_admin_module_access_cannot_list_or_update_module_access(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-disabled@example.com")
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        session.add(
+            User(
+                household_id=admin.household_id,
+                email="admin-keeper@example.com",
+                password_hash=hash_password("password123"),
+                role=UserRole.PARENT_ADMIN,
+                child_id=None,
+            )
+        )
+        db_admin = session.get(User, admin.id)
+        assert db_admin is not None
+        ModuleService().set_user_access(session, target_user=db_admin, module_key="admin", can_view=False)
+        session.commit()
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        list_response = client.get("/chore-api/modules/users")
+        update_response = client.put(
+            f"/chore-api/modules/users/{admin.id}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"module_key": "homeschool", "can_view": False},
+        )
+
+    assert list_response.status_code == 403
+    assert list_response.json()["detail"] == "Module access denied."
+    assert update_response.status_code == 403
+    assert update_response.json()["detail"] == "Module access denied."
