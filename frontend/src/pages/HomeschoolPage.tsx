@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 
 import { apiClient, ApiClientError, type Child, type HomeschoolAttendance, type HomeschoolDayComment, type HomeschoolGrade, type HomeschoolSemester, type HomeschoolSubject } from "../api";
 import { useAuth } from "../auth/useAuth";
-import { Button, ButtonLink, Card, DateInput, FormField, InlineNotice, TextInput } from "../ui";
+import { ButtonLink, Card, InlineNotice } from "../ui";
 import { todayISO, toYearMonth } from "./homeschool/dateUtils";
 import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
+import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
 
 type HomeschoolState = {
   children: Child[];
@@ -17,27 +18,6 @@ type HomeschoolState = {
   grades: HomeschoolGrade[];
   loading: boolean;
   error: string | null;
-};
-
-type AttendanceFormState = {
-  childId: string;
-  subjectId: string;
-  date: string;
-  present: boolean;
-  comment: string;
-};
-
-type DayCommentFormState = {
-  childId: string;
-  date: string;
-  comment: string;
-};
-
-type GradeFormState = {
-  childId: string;
-  subjectId: string;
-  semesterId: string;
-  grade: string;
 };
 
 function formatLoadError(error: unknown): string {
@@ -290,36 +270,33 @@ export function HomeschoolPage(): ReactElement {
       {actionError !== null ? <InlineNotice variant="error">Homeschool action failed: {actionError}</InlineNotice> : null}
       {actionMessage !== null ? <InlineNotice>{actionMessage}</InlineNotice> : null}
 
-      <Card className="dashboard-panel">
-        <h2>Create Semester</h2>
-        <form className="children-form" onSubmit={(event) => void handleCreateSemester(event)}>
-          <FormField label="Semester Name">
-            <TextInput value={semesterName} onChange={(event) => setSemesterName(event.target.value)} placeholder="Fall 2026" required maxLength={255} />
-          </FormField>
-          <FormField label="Start Date">
-            <DateInput value={semesterStart} onChange={(event) => setSemesterStart(event.target.value)} required />
-          </FormField>
-          <FormField label="End Date">
-            <DateInput value={semesterEnd} onChange={(event) => setSemesterEnd(event.target.value)} required />
-          </FormField>
-          <Button type="submit" disabled={householdId === null || semesterName.trim().length === 0}>Create Semester</Button>
-        </form>
-      </Card>
-
-      <Card className="dashboard-panel">
-        <h2>Create Subject</h2>
-        <form className="children-form" onSubmit={(event) => void handleCreateSubject(event)}>
-          <FormField label="Subject Name">
-            <TextInput value={subjectName} onChange={(event) => setSubjectName(event.target.value)} placeholder="Math" required maxLength={255} />
-          </FormField>
-          <FormField label="Color">
-            <TextInput value={subjectColor} onChange={(event) => setSubjectColor(event.target.value)} placeholder="#3b82f6" required maxLength={32} />
-          </FormField>
-          <Button type="submit" disabled={householdId === null || subjectName.trim().length === 0}>Create Subject</Button>
-        </form>
-      </Card>
-
-
+      <HomeschoolForms
+        householdId={householdId}
+        children={state.children}
+        semesters={state.semesters}
+        subjects={state.subjects}
+        semesterName={semesterName}
+        semesterStart={semesterStart}
+        semesterEnd={semesterEnd}
+        subjectName={subjectName}
+        subjectColor={subjectColor}
+        attendance={attendance}
+        dayComment={dayComment}
+        grade={grade}
+        onSemesterNameChange={setSemesterName}
+        onSemesterStartChange={setSemesterStart}
+        onSemesterEndChange={setSemesterEnd}
+        onSubjectNameChange={setSubjectName}
+        onSubjectColorChange={setSubjectColor}
+        onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
+        onDayCommentChange={(patch) => setDayComment((prev) => ({ ...prev, ...patch }))}
+        onGradeChange={(patch) => setGrade((prev) => ({ ...prev, ...patch }))}
+        onCreateSemester={(event) => void handleCreateSemester(event)}
+        onCreateSubject={(event) => void handleCreateSubject(event)}
+        onSaveAttendance={(event) => void handleSaveAttendance(event)}
+        onSaveDayComment={(event) => void handleSaveDayComment(event)}
+        onSaveGrade={(event) => void handleSaveGrade(event)}
+      />
 
       <AttendanceCalendar
         calendarYearMonth={calendarYearMonth}
@@ -335,86 +312,6 @@ export function HomeschoolPage(): ReactElement {
           setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date, comment: comment || prev.comment }));
         }}
       />
-
-      <Card className="dashboard-panel">
-        <h2>Quick Attendance</h2>
-        <form className="children-form" onSubmit={(event) => void handleSaveAttendance(event)}>
-          <FormField label="Child">
-            <select className="text-input" value={attendance.childId} onChange={(event) => setAttendance((prev) => ({ ...prev, childId: event.target.value }))} required>
-              <option value="">Select child</option>
-              {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Subject">
-            <select className="text-input" value={attendance.subjectId} onChange={(event) => setAttendance((prev) => ({ ...prev, subjectId: event.target.value }))} required>
-              <option value="">Select subject</option>
-              {state.subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Date">
-            <DateInput value={attendance.date} onChange={(event) => setAttendance((prev) => ({ ...prev, date: event.target.value }))} required />
-          </FormField>
-          <label className="checkbox-row">
-            <input type="checkbox" checked={attendance.present} onChange={(event) => setAttendance((prev) => ({ ...prev, present: event.target.checked }))} />
-            Present
-          </label>
-          <FormField label="Comment">
-            <TextInput value={attendance.comment} onChange={(event) => setAttendance((prev) => ({ ...prev, comment: event.target.value }))} placeholder="Fractions, copywork, field trip..." maxLength={2000} />
-          </FormField>
-          <Button type="submit" disabled={attendance.childId === "" || attendance.subjectId === ""}>Save Attendance</Button>
-        </form>
-      </Card>
-
-
-
-      <Card className="dashboard-panel">
-        <h2>Day Comment</h2>
-        <form className="children-form" onSubmit={(event) => void handleSaveDayComment(event)}>
-          <FormField label="Child">
-            <select className="text-input" value={dayComment.childId} onChange={(event) => setDayComment((prev) => ({ ...prev, childId: event.target.value }))} required>
-              <option value="">Select child</option>
-              {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Date">
-            <DateInput value={dayComment.date} onChange={(event) => setDayComment((prev) => ({ ...prev, date: event.target.value }))} required />
-          </FormField>
-          <FormField label="Comment">
-            <TextInput value={dayComment.comment} onChange={(event) => setDayComment((prev) => ({ ...prev, comment: event.target.value }))} placeholder="Field trip, sick day, reading notes..." maxLength={4000} />
-          </FormField>
-          <Button type="submit" disabled={dayComment.childId === ""}>Save Comment</Button>
-        </form>
-      </Card>
-
-      <Card className="dashboard-panel">
-        <h2>Subject Grade</h2>
-        <form className="children-form" onSubmit={(event) => void handleSaveGrade(event)}>
-          <FormField label="Child">
-            <select className="text-input" value={grade.childId} onChange={(event) => setGrade((prev) => ({ ...prev, childId: event.target.value }))} required>
-              <option value="">Select child</option>
-              {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Subject">
-            <select className="text-input" value={grade.subjectId} onChange={(event) => setGrade((prev) => ({ ...prev, subjectId: event.target.value }))} required>
-              <option value="">Select subject</option>
-              {state.subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Semester">
-            <select className="text-input" value={grade.semesterId} onChange={(event) => setGrade((prev) => ({ ...prev, semesterId: event.target.value }))}>
-              <option value="">Overall / no semester</option>
-              {state.semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
-            </select>
-          </FormField>
-          <FormField label="Grade">
-            <TextInput value={grade.grade} onChange={(event) => setGrade((prev) => ({ ...prev, grade: event.target.value }))} placeholder="A, 95%, Complete..." maxLength={64} />
-          </FormField>
-          <Button type="submit" disabled={grade.childId === "" || grade.subjectId === ""}>Save Grade</Button>
-        </form>
-      </Card>
-
-
 
       <HomeschoolSummary
         calendarChildId={calendarChildId}
