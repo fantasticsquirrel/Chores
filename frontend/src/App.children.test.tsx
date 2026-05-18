@@ -19,7 +19,8 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Maya")).toBeVisible();
+    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    expect(within(childrenList).getByText("Maya")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 1 });
   });
 
@@ -40,7 +41,7 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Maya");
+    await screen.findByRole("list", { name: "Children list" });
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Leo" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
 
@@ -52,7 +53,8 @@ describe("Parent children page", () => {
       }),
     );
 
-    expect(await screen.findByText("Leo")).toBeVisible();
+    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    expect(within(childrenList).getByText("Leo")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledTimes(2);
   });
 
@@ -70,7 +72,7 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Maya");
+    await screen.findByRole("list", { name: "Children list" });
     fireEvent.click(screen.getByRole("button", { name: "Set Inactive" }));
 
     await waitFor(() =>
@@ -100,7 +102,7 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Maya");
+    await screen.findByRole("list", { name: "Children list" });
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Maya" } });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
 
@@ -131,7 +133,7 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText("Maya");
+    await screen.findByRole("list", { name: "Children list" });
     fireEvent.click(screen.getByRole("button", { name: "Set Inactive" }));
 
     await waitFor(() =>
@@ -180,7 +182,8 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Ari")).toBeVisible();
+    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    expect(within(childrenList).getByText("Ari")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenNthCalledWith(1, { household_id: 42 });
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Nova" } });
@@ -194,7 +197,8 @@ describe("Parent children page", () => {
       }),
     );
 
-    const ariRow = screen.getByText("Ari").closest("li");
+    const refreshedChildrenList = screen.getByRole("list", { name: "Children list" });
+    const ariRow = within(refreshedChildrenList).getByText("Ari").closest("li");
     expect(ariRow).not.toBeNull();
     fireEvent.click(within(ariRow as HTMLLIElement).getByRole("button", { name: "Set Inactive" }));
 
