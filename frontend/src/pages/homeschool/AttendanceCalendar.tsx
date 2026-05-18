@@ -15,6 +15,7 @@ type AttendanceCalendarProps = {
   onChildChange: (childId: string) => void;
   onDaySelect: (date: string, comment: string) => void;
   onClearAttendance: (attendanceId: number) => void;
+  onClearDayComment: (commentId: number) => void;
 };
 
 export function AttendanceCalendar({
@@ -28,6 +29,7 @@ export function AttendanceCalendar({
   onChildChange,
   onDaySelect,
   onClearAttendance,
+  onClearDayComment,
 }: AttendanceCalendarProps): ReactElement {
   const subjectLookup = new Map(subjects.map((subject) => [subject.id, subject]));
   const monthCells = buildMonthGrid(calendarYearMonth);
@@ -88,6 +90,20 @@ export function AttendanceCalendar({
         })}
       </div>
 
+
+      {selectedChildComments.length > 0 ? (
+        <ul className="balance-list" aria-label="Day comments">
+          {selectedChildComments.map((comment) => (
+            <li key={comment.id} className="balance-item">
+              <div>
+                <p className="balance-name">{comment.date}</p>
+                <p className="balance-meta">{comment.comment}</p>
+              </div>
+              <Button type="button" onClick={() => onClearDayComment(comment.id)}>Clear</Button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {selectedChildAttendance.length > 0 ? (
         <ul className="balance-list" aria-label="Attendance entries">
           {selectedChildAttendance.map((record) => {

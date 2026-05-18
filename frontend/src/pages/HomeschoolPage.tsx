@@ -137,6 +137,19 @@ export function HomeschoolPage(): ReactElement {
     }
   }
 
+  async function handleClearDayComment(commentId: number): Promise<void> {
+    if (householdId === null) return;
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiClient.deleteHomeschoolDayComment(commentId, householdId);
+      setActionMessage("Cleared day comment.");
+      refresh();
+    } catch (error: unknown) {
+      setActionError(formatLoadError(error));
+    }
+  }
+
   async function handleSaveDayComment(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (householdId === null || dayComment.childId === "") return;
@@ -270,6 +283,7 @@ export function HomeschoolPage(): ReactElement {
           setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date, comment: comment || prev.comment }));
         }}
         onClearAttendance={(attendanceId) => void handleClearAttendance(attendanceId)}
+        onClearDayComment={(commentId) => void handleClearDayComment(commentId)}
       />
 
       <HomeschoolSummary

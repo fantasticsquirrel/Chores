@@ -176,4 +176,24 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Cleared attendance entry.")).toBeVisible();
   });
 
+
+
+  it("clears an existing day comment", async () => {
+    mockHomeschoolApi();
+    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolDayComment").mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const comments = await screen.findByRole("list", { name: "Day comments" });
+    expect(within(comments).getByText("Good focus")).toBeVisible();
+    fireEvent.click(within(comments).getByRole("button", { name: "Clear" }));
+
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(40, 1));
+    expect(await screen.findByText("Cleared day comment.")).toBeVisible();
+  });
+
 });

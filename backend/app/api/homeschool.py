@@ -212,6 +212,21 @@ def upsert_day_comment(
     return comment
 
 
+@router.delete("/day-comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_day_comment(
+    comment_id: int,
+    household_id: int = Query(gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> None:
+    _ensure_household_access(current_user, household_id)
+    comment = session.get(HomeschoolDayComment, comment_id)
+    if comment is None or comment.household_id != household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Day comment not found.")
+    session.delete(comment)
+    session.commit()
+
+
 @router.get("/grades", response_model=list[HomeschoolGradeResponse])
 def list_grades(
     household_id: int = Query(gt=0),

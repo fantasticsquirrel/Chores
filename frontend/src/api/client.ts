@@ -165,6 +165,10 @@ export class ApiClient {
     return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>("/homeschool/day-comments", payload);
   }
 
+  async deleteHomeschoolDayComment(commentId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/day-comments/${commentId}`, { household_id: householdId });
+  }
+
   async listHomeschoolGrades(householdId: number, childId?: number): Promise<HomeschoolGrade[]> {
     return this.get<HomeschoolGrade[]>("/homeschool/grades", { household_id: householdId, child_id: childId });
   }
