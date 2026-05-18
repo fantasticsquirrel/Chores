@@ -119,18 +119,14 @@ def create_child_account(
 
     normalized_email = payload.email.strip().lower() if payload.email is not None else ""
     if normalized_email:
-        email_taken = session.scalar(
-            select(User).where(User.household_id == payload.household_id, User.email == normalized_email)
-        )
+        email_taken = session.scalar(select(User).where(User.email == normalized_email))
         if email_taken is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already in use in this household.")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already in use.")
     else:
         # Email is optional for child accounts; generate an internal login email.
         for _ in range(10):
             candidate = _generate_child_login_email(payload.household_id, child_id)
-            email_taken = session.scalar(
-                select(User).where(User.household_id == payload.household_id, User.email == candidate)
-            )
+            email_taken = session.scalar(select(User).where(User.email == candidate))
             if email_taken is None:
                 normalized_email = candidate
                 break
@@ -174,18 +170,14 @@ def reset_child_account_email(
 
     normalized_email = payload.email.strip().lower() if payload.email is not None else ""
     if normalized_email:
-        email_taken = session.scalar(
-            select(User).where(User.household_id == payload.household_id, User.email == normalized_email, User.id != account.id)
-        )
+        email_taken = session.scalar(select(User).where(User.email == normalized_email, User.id != account.id))
         if email_taken is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already in use in this household.")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already in use.")
     else:
         normalized_email = ""
         for _ in range(10):
             candidate = _generate_child_login_email(payload.household_id, child_id)
-            email_taken = session.scalar(
-                select(User).where(User.household_id == payload.household_id, User.email == candidate, User.id != account.id)
-            )
+            email_taken = session.scalar(select(User).where(User.email == candidate, User.id != account.id))
             if email_taken is None:
                 normalized_email = candidate
                 break
