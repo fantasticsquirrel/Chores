@@ -12,6 +12,7 @@ type HomeschoolStatusProps = {
   selectedChildGrades: HomeschoolGrade[];
   onClearGrade: (gradeId: number) => void;
   onDeleteSemester: (semesterId: number) => void;
+  onDeleteSubject: (subjectId: number) => void;
 };
 
 export function HomeschoolStatus({
@@ -23,6 +24,7 @@ export function HomeschoolStatus({
   selectedChildGrades,
   onClearGrade,
   onDeleteSemester,
+  onDeleteSubject,
 }: HomeschoolStatusProps): ReactElement {
   const subjectLookup = new Map(subjects.map((subject) => [subject.id, subject]));
   const semesterLookup = new Map(semesters.map((semester) => [semester.id, semester]));
@@ -35,9 +37,23 @@ export function HomeschoolStatus({
         <ul className="balance-list">
           <li className="balance-item">Children: {children.map((child) => child.name).join(", ") || "none yet"}</li>
           <li className="balance-item">Semesters: {semesters.length}</li>
-          <li className="balance-item">Subjects: {subjects.map((subject) => subject.name).join(", ") || "none yet"}</li>
+          <li className="balance-item">Subjects: {subjects.length}</li>
           <li className="balance-item">Day comments: {dayComments.length}</li>
           <li className="balance-item">Grades: {selectedChildGrades.length}</li>
+        </ul>
+      ) : null}
+
+      {!loading && subjects.length > 0 ? (
+        <ul className="balance-list" aria-label="Subject entries">
+          {subjects.map((subject) => (
+            <li key={subject.id} className="balance-item">
+              <div>
+                <p className="balance-name">{subject.name}</p>
+                <p className="balance-meta">{subject.color}</p>
+              </div>
+              <Button type="button" onClick={() => onDeleteSubject(subject.id)}>Delete</Button>
+            </li>
+          ))}
         </ul>
       ) : null}
 

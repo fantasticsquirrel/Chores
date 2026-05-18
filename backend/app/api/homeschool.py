@@ -129,6 +129,21 @@ def create_subject(
     return subject
 
 
+@router.delete("/subjects/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_subject(
+    subject_id: int,
+    household_id: int = Query(gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> None:
+    _ensure_household_access(current_user, household_id)
+    subject = session.get(HomeschoolSubject, subject_id)
+    if subject is None or subject.household_id != household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
+    session.delete(subject)
+    session.commit()
+
+
 @router.get("/attendance", response_model=list[HomeschoolAttendanceResponse])
 def list_attendance(
     household_id: int = Query(gt=0),

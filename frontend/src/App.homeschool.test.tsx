@@ -42,7 +42,7 @@ describe("Homeschool page", () => {
 
     expect(await screen.findByRole("heading", { name: "Homeschool" })).toBeVisible();
     expect(await screen.findByText("Children: Maya")).toBeVisible();
-    expect(screen.getByText("Subjects: Math")).toBeVisible();
+    expect(screen.getByText("Subjects: 1")).toBeVisible();
     expect(await screen.findByText("Fall 2026 · 2026-08-15 to 2026-12-20")).toBeVisible();
     expect(screen.getByText("Grade: A")).toBeVisible();
     expect(apiClient.listHomeschoolAttendance).toHaveBeenCalledWith(1);
@@ -234,6 +234,26 @@ describe("Homeschool page", () => {
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(10, 1));
     expect(await screen.findByText("Deleted semester.")).toBeVisible();
+  });
+
+
+
+  it("deletes an existing subject", async () => {
+    mockHomeschoolApi();
+    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSubject").mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const subjectList = await screen.findByRole("list", { name: "Subject entries" });
+    expect(within(subjectList).getByText("Math")).toBeVisible();
+    fireEvent.click(within(subjectList).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(20, 1));
+    expect(await screen.findByText("Deleted subject.")).toBeVisible();
   });
 
 });
