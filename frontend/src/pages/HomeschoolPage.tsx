@@ -1,7 +1,7 @@
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
-import { apiClient, ApiClientError, type Child, type HomeschoolAttendance, type HomeschoolSemester, type HomeschoolSubject } from "../api";
+import { apiClient, ApiClientError, type Child, type HomeschoolAttendance, type HomeschoolDayComment, type HomeschoolGrade, type HomeschoolSemester, type HomeschoolSubject } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { Button, ButtonLink, Card, DateInput, FormField, InlineNotice, TextInput } from "../ui";
 
@@ -10,6 +10,8 @@ type HomeschoolState = {
   semesters: HomeschoolSemester[];
   subjects: HomeschoolSubject[];
   attendanceRecords: HomeschoolAttendance[];
+  dayComments: HomeschoolDayComment[];
+  grades: HomeschoolGrade[];
   loading: boolean;
   error: string | null;
 };
@@ -20,6 +22,19 @@ type AttendanceFormState = {
   date: string;
   present: boolean;
   comment: string;
+};
+
+type DayCommentFormState = {
+  childId: string;
+  date: string;
+  comment: string;
+};
+
+type GradeFormState = {
+  childId: string;
+  subjectId: string;
+  semesterId: string;
+  grade: string;
 };
 
 function formatLoadError(error: unknown): string {
@@ -44,6 +59,8 @@ export function HomeschoolPage(): ReactElement {
     semesters: [],
     subjects: [],
     attendanceRecords: [],
+    dayComments: [],
+    grades: [],
     loading: true,
     error: null,
   });
@@ -54,6 +71,17 @@ export function HomeschoolPage(): ReactElement {
   const [subjectColor, setSubjectColor] = useState("#3b82f6");
   const [calendarYearMonth, setCalendarYearMonth] = useState(toYearMonth(todayISO()));
   const [calendarChildId, setCalendarChildId] = useState("");
+  const [dayComment, setDayComment] = useState<DayCommentFormState>({
+    childId: "",
+    date: todayISO(),
+    comment: "",
+  });
+  const [grade, setGrade] = useState<GradeFormState>({
+    childId: "",
+    subjectId: "",
+    semesterId: "",
+    grade: "",
+  });
   const [attendance, setAttendance] = useState<AttendanceFormState>({
     childId: "",
     subjectId: "",
@@ -66,7 +94,7 @@ export function HomeschoolPage(): ReactElement {
 
   function refresh(): void {
     if (householdId === null) {
-      setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], loading: false, error: "Could not determine household scope." });
+      setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], dayComments: [], grades: [], loading: false, error: "Could not determine household scope." });
       return;
     }
 
@@ -76,18 +104,27 @@ export function HomeschoolPage(): ReactElement {
       apiClient.listHomeschoolSemesters(householdId),
       apiClient.listHomeschoolSubjects(householdId),
       apiClient.listHomeschoolAttendance(householdId),
+      apiClient.listHomeschoolDayComments(householdId),
+      apiClient.listHomeschoolGrades(householdId),
     ])
-      .then(([children, semesters, subjects, attendanceRecords]) => {
-        setState({ children, semesters, subjects, attendanceRecords, loading: false, error: null });
+      .then(([children, semesters, subjects, attendanceRecords, dayComments, grades]) => {
+        setState({ children, semesters, subjects, attendanceRecords, dayComments, grades, loading: false, error: null });
         setAttendance((prev) => ({
           ...prev,
           childId: prev.childId || children[0]?.id.toString() || "",
           subjectId: prev.subjectId || subjects[0]?.id.toString() || "",
         }));
         setCalendarChildId((prev) => prev || children[0]?.id.toString() || "");
+        setDayComment((prev) => ({ ...prev, childId: prev.childId || children[0]?.id.toString() || "" }));
+        setGrade((prev) => ({
+          ...prev,
+          childId: prev.childId || children[0]?.id.toString() || "",
+          subjectId: prev.subjectId || subjects[0]?.id.toString() || "",
+          semesterId: prev.semesterId || semesters[0]?.id.toString() || "",
+        }));
       })
       .catch((error: unknown) => {
-        setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], loading: false, error: formatLoadError(error) });
+        setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], dayComments: [], grades: [], loading: false, error: formatLoadError(error) });
       });
   }
 
@@ -159,10 +196,58 @@ export function HomeschoolPage(): ReactElement {
   }
 
 
+
+
+  async function handleSaveDayComment(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (householdId === null || dayComment.childId === "") return;
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiClient.upsertHomeschoolDayComment({
+        household_id: householdId,
+        child_id: Number(dayComment.childId),
+        date: dayComment.date,
+        comment: dayComment.comment,
+      });
+      setActionMessage("Saved day comment.");
+      refresh();
+    } catch (error: unknown) {
+      setActionError(formatLoadError(error));
+    }
+  }
+
+  async function handleSaveGrade(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (householdId === null || grade.childId === "" || grade.subjectId === "") return;
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiClient.upsertHomeschoolGrade({
+        household_id: householdId,
+        child_id: Number(grade.childId),
+        subject_id: Number(grade.subjectId),
+        semester_id: grade.semesterId === "" ? null : Number(grade.semesterId),
+        grade: grade.grade,
+      });
+      setActionMessage("Saved grade.");
+      refresh();
+    } catch (error: unknown) {
+      setActionError(formatLoadError(error));
+    }
+  }
+
   const selectedChildAttendance = state.attendanceRecords.filter(
     (record) => calendarChildId !== "" && record.child_id === Number(calendarChildId),
   );
+  const selectedChildComments = state.dayComments.filter(
+    (comment) => calendarChildId !== "" && comment.child_id === Number(calendarChildId),
+  );
+  const selectedChildGrades = state.grades.filter(
+    (record) => calendarChildId !== "" && record.child_id === Number(calendarChildId),
+  );
   const subjectLookup = new Map(state.subjects.map((subject) => [subject.id, subject]));
+  const semesterLookup = new Map(state.semesters.map((semester) => [semester.id, semester]));
   const monthCells = buildMonthGrid(calendarYearMonth);
   const calendarLabel = formatYearMonth(calendarYearMonth);
 
@@ -260,6 +345,7 @@ export function HomeschoolPage(): ReactElement {
           ))}
           {monthCells.map((cell) => {
             const records = selectedChildAttendance.filter((record) => record.date === cell.iso && record.present);
+            const comment = selectedChildComments.find((entry) => entry.date === cell.iso);
             return (
               <button
                 key={cell.iso}
@@ -274,9 +360,12 @@ export function HomeschoolPage(): ReactElement {
                   gap: 4,
                   alignItems: "flex-start",
                 }}
-                onClick={() => setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date: cell.iso }))}
+                onClick={() => {
+                  setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date: cell.iso }));
+                  setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date: cell.iso, comment: comment?.comment || prev.comment }));
+                }}
               >
-                <strong>{cell.day}</strong>
+                <strong>{cell.day}{comment?.comment ? " ★" : ""}</strong>
                 {records.slice(0, 3).map((record) => {
                   const subject = subjectLookup.get(record.subject_id);
                   return (
@@ -321,6 +410,55 @@ export function HomeschoolPage(): ReactElement {
         </form>
       </Card>
 
+
+
+      <Card className="dashboard-panel">
+        <h2>Day Comment</h2>
+        <form className="children-form" onSubmit={(event) => void handleSaveDayComment(event)}>
+          <FormField label="Child">
+            <select className="text-input" value={dayComment.childId} onChange={(event) => setDayComment((prev) => ({ ...prev, childId: event.target.value }))} required>
+              <option value="">Select child</option>
+              {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Date">
+            <DateInput value={dayComment.date} onChange={(event) => setDayComment((prev) => ({ ...prev, date: event.target.value }))} required />
+          </FormField>
+          <FormField label="Comment">
+            <TextInput value={dayComment.comment} onChange={(event) => setDayComment((prev) => ({ ...prev, comment: event.target.value }))} placeholder="Field trip, sick day, reading notes..." maxLength={4000} />
+          </FormField>
+          <Button type="submit" disabled={dayComment.childId === ""}>Save Comment</Button>
+        </form>
+      </Card>
+
+      <Card className="dashboard-panel">
+        <h2>Subject Grade</h2>
+        <form className="children-form" onSubmit={(event) => void handleSaveGrade(event)}>
+          <FormField label="Child">
+            <select className="text-input" value={grade.childId} onChange={(event) => setGrade((prev) => ({ ...prev, childId: event.target.value }))} required>
+              <option value="">Select child</option>
+              {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Subject">
+            <select className="text-input" value={grade.subjectId} onChange={(event) => setGrade((prev) => ({ ...prev, subjectId: event.target.value }))} required>
+              <option value="">Select subject</option>
+              {state.subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Semester">
+            <select className="text-input" value={grade.semesterId} onChange={(event) => setGrade((prev) => ({ ...prev, semesterId: event.target.value }))}>
+              <option value="">Overall / no semester</option>
+              {state.semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
+            </select>
+          </FormField>
+          <FormField label="Grade">
+            <TextInput value={grade.grade} onChange={(event) => setGrade((prev) => ({ ...prev, grade: event.target.value }))} placeholder="A, 95%, Complete..." maxLength={64} />
+          </FormField>
+          <Button type="submit" disabled={grade.childId === "" || grade.subjectId === ""}>Save Grade</Button>
+        </form>
+      </Card>
+
       <Card className="dashboard-panel">
         <h2>Current Setup</h2>
         {state.loading ? <p>Loading homeschool module data...</p> : null}
@@ -329,6 +467,21 @@ export function HomeschoolPage(): ReactElement {
             <li className="balance-item">Children: {state.children.map((child) => child.name).join(", ") || "none yet"}</li>
             <li className="balance-item">Semesters: {state.semesters.map((semester) => semester.name).join(", ") || "none yet"}</li>
             <li className="balance-item">Subjects: {state.subjects.map((subject) => subject.name).join(", ") || "none yet"}</li>
+            <li className="balance-item">Day comments: {state.dayComments.length}</li>
+            <li className="balance-item">Grades: {state.grades.length}</li>
+          </ul>
+        ) : null}
+
+        {!state.loading && selectedChildGrades.length > 0 ? (
+          <ul className="balance-list">
+            {selectedChildGrades.map((record) => (
+              <li key={record.id} className="balance-item">
+                <div>
+                  <p className="balance-name">{subjectLookup.get(record.subject_id)?.name || `Subject ${record.subject_id}`}: {record.grade || "—"}</p>
+                  <p className="balance-meta">{record.semester_id ? semesterLookup.get(record.semester_id)?.name || `Semester ${record.semester_id}` : "Overall"}</p>
+                </div>
+              </li>
+            ))}
           </ul>
         ) : null}
       </Card>
