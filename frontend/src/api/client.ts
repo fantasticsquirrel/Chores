@@ -27,6 +27,8 @@ import type {
   ResetChildAccountEmailRequest,
   SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
+  UpdateHomeschoolSemesterRequest,
+  UpdateHomeschoolSubjectRequest,
   SubmissionReview,
   SubmissionRequest,
   SubmissionResponse,
@@ -149,6 +151,10 @@ export class ApiClient {
     return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>("/homeschool/semesters", payload);
   }
 
+  async updateHomeschoolSemester(semesterId: number, payload: UpdateHomeschoolSemesterRequest): Promise<HomeschoolSemester> {
+    return this.put<HomeschoolSemester, UpdateHomeschoolSemesterRequest>(`/homeschool/semesters/${semesterId}`, payload);
+  }
+
   async deleteHomeschoolSemester(semesterId: number, householdId: number): Promise<void> {
     return this.delete(`/homeschool/semesters/${semesterId}`, { household_id: householdId });
   }
@@ -159,6 +165,10 @@ export class ApiClient {
 
   async createHomeschoolSubject(payload: CreateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
     return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>("/homeschool/subjects", payload);
+  }
+
+  async updateHomeschoolSubject(subjectId: number, payload: UpdateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
+    return this.put<HomeschoolSubject, UpdateHomeschoolSubjectRequest>(`/homeschool/subjects/${subjectId}`, payload);
   }
 
   async deleteHomeschoolSubject(subjectId: number, householdId: number): Promise<void> {

@@ -191,6 +191,71 @@ def test_parent_can_upsert_day_comment_and_grade(tmp_path: Path, monkeypatch) ->
     assert len(grades_list.json()) == 1
 
 
+
+def test_parent_can_update_semester_and_subject(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        semester_response = client.post(
+            "/chore-api/homeschool/semesters",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "name": "Fall 2026",
+                "start_date": "2026-08-15",
+                "end_date": "2026-12-20",
+            },
+        )
+        subject_response = client.post(
+            "/chore-api/homeschool/subjects",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id, "name": "Math", "color": "#ef4444"},
+        )
+        assert semester_response.status_code == 201
+        assert subject_response.status_code == 201
+
+        update_semester_response = client.put(
+            f"/chore-api/homeschool/semesters/{semester_response.json()['id']}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "name": "Spring 2027",
+                "start_date": "2027-01-10",
+                "end_date": "2027-05-20",
+                "active": True,
+            },
+        )
+        update_subject_response = client.put(
+            f"/chore-api/homeschool/subjects/{subject_response.json()['id']}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id, "name": "Reading", "color": "#3b82f6", "active": True},
+        )
+
+    assert update_semester_response.status_code == 200
+    assert update_semester_response.json()["name"] == "Spring 2027"
+    assert update_semester_response.json()["start_date"] == "2027-01-10"
+    assert update_subject_response.status_code == 200
+    assert update_subject_response.json()["name"] == "Reading"
+    assert update_subject_response.json()["color"] == "#3b82f6"
+
+
+def test_parent_cannot_update_other_household_homeschool_setup(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        response = client.put(
+            "/chore-api/homeschool/subjects/999",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id + 1, "name": "Reading", "color": "#3b82f6"},
+        )
+
+    assert response.status_code == 403
+
+
 def test_parent_can_delete_attendance_entry(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     user, child, password = _create_parent_fixture()

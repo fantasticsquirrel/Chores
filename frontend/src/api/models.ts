@@ -244,12 +244,16 @@ export interface CreateHomeschoolSemesterRequest {
   active?: boolean;
 }
 
+export type UpdateHomeschoolSemesterRequest = CreateHomeschoolSemesterRequest;
+
 export interface CreateHomeschoolSubjectRequest {
   household_id: number;
   name: string;
   color?: string;
   active?: boolean;
 }
+
+export type UpdateHomeschoolSubjectRequest = CreateHomeschoolSubjectRequest;
 
 export interface UpsertHomeschoolAttendanceRequest {
   household_id: number;

@@ -11,7 +11,9 @@ type HomeschoolStatusProps = {
   dayComments: HomeschoolDayComment[];
   selectedChildGrades: HomeschoolGrade[];
   onClearGrade: (gradeId: number) => void;
+  onEditSemester: (semester: HomeschoolSemester) => void;
   onDeleteSemester: (semesterId: number) => void;
+  onEditSubject: (subject: HomeschoolSubject) => void;
   onDeleteSubject: (subjectId: number) => void;
 };
 
@@ -23,7 +25,9 @@ export function HomeschoolStatus({
   dayComments,
   selectedChildGrades,
   onClearGrade,
+  onEditSemester,
   onDeleteSemester,
+  onEditSubject,
   onDeleteSubject,
 }: HomeschoolStatusProps): ReactElement {
   const subjectLookup = new Map(subjects.map((subject) => [subject.id, subject]));
@@ -51,7 +55,10 @@ export function HomeschoolStatus({
                 <p className="balance-name">{subject.name}</p>
                 <p className="balance-meta">{subject.color}</p>
               </div>
-              <Button type="button" onClick={() => onDeleteSubject(subject.id)}>Delete</Button>
+              <div className="item-actions">
+                <Button type="button" onClick={() => onEditSubject(subject)}>Edit</Button>
+                <Button type="button" onClick={() => onDeleteSubject(subject.id)}>Delete</Button>
+              </div>
             </li>
           ))}
         </ul>
@@ -65,7 +72,10 @@ export function HomeschoolStatus({
                 <p className="balance-name">{semester.name}</p>
                 <p className="balance-meta">{semester.start_date} to {semester.end_date}</p>
               </div>
-              <Button type="button" onClick={() => onDeleteSemester(semester.id)}>Delete</Button>
+              <div className="item-actions">
+                <Button type="button" onClick={() => onEditSemester(semester)}>Edit</Button>
+                <Button type="button" onClick={() => onDeleteSemester(semester.id)}>Delete</Button>
+              </div>
             </li>
           ))}
         </ul>

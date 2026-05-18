@@ -17,6 +17,8 @@ from app.schemas.homeschool import (
     HomeschoolGradeResponse,
     HomeschoolSemesterResponse,
     HomeschoolSubjectResponse,
+    UpdateHomeschoolSemesterRequest,
+    UpdateHomeschoolSubjectRequest,
     UpsertHomeschoolAttendanceRequest,
     UpsertHomeschoolDayCommentRequest,
     UpsertHomeschoolGradeRequest,
@@ -82,6 +84,26 @@ def create_semester(
     return semester
 
 
+@router.put("/semesters/{semester_id}", response_model=HomeschoolSemesterResponse)
+def update_semester(
+    semester_id: int,
+    payload: UpdateHomeschoolSemesterRequest,
+    current_user: User = Depends(_require_homeschool_access),
+    session: Session = Depends(get_db_session),
+) -> HomeschoolSemester:
+    _ensure_household_access(current_user, payload.household_id)
+    semester = session.get(HomeschoolSemester, semester_id)
+    if semester is None or semester.household_id != payload.household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
+    semester.name = payload.name
+    semester.start_date = payload.start_date
+    semester.end_date = payload.end_date
+    semester.active = payload.active
+    session.commit()
+    session.refresh(semester)
+    return semester
+
+
 @router.delete("/semesters/{semester_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_semester(
     semester_id: int,
@@ -130,6 +152,29 @@ def create_subject(
     _ensure_household_access(current_user, payload.household_id)
     subject = HomeschoolSubject(**payload.model_dump())
     session.add(subject)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subject already exists.") from exc
+    session.refresh(subject)
+    return subject
+
+
+@router.put("/subjects/{subject_id}", response_model=HomeschoolSubjectResponse)
+def update_subject(
+    subject_id: int,
+    payload: UpdateHomeschoolSubjectRequest,
+    current_user: User = Depends(_require_homeschool_access),
+    session: Session = Depends(get_db_session),
+) -> HomeschoolSubject:
+    _ensure_household_access(current_user, payload.household_id)
+    subject = session.get(HomeschoolSubject, subject_id)
+    if subject is None or subject.household_id != payload.household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
+    subject.name = payload.name
+    subject.color = payload.color
+    subject.active = payload.active
     try:
         session.commit()
     except IntegrityError as exc:

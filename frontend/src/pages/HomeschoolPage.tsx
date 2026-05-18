@@ -1,7 +1,7 @@
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
-import { apiClient } from "../api";
+import { apiClient, type HomeschoolSemester, type HomeschoolSubject } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { ButtonLink, Card, InlineNotice } from "../ui";
 import { todayISO, toYearMonth } from "./homeschool/dateUtils";
@@ -24,6 +24,8 @@ export function HomeschoolPage(): ReactElement {
   const [semesterEnd, setSemesterEnd] = useState(todayISO());
   const [subjectName, setSubjectName] = useState("");
   const [subjectColor, setSubjectColor] = useState("#3b82f6");
+  const [editingSemesterId, setEditingSemesterId] = useState<number | null>(null);
+  const [editingSubjectId, setEditingSubjectId] = useState<number | null>(null);
   const [calendarYearMonth, setCalendarYearMonth] = useState(toYearMonth(todayISO()));
   const [calendarChildId, setCalendarChildId] = useState("");
   const [dayComment, setDayComment] = useState<DayCommentFormState>({
@@ -63,24 +65,41 @@ export function HomeschoolPage(): ReactElement {
     }));
   }, [state.children, state.semesters, state.subjects]);
 
-  async function handleCreateSemester(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSaveSemester(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (householdId === null) return;
     setActionError(null);
     setActionMessage(null);
     try {
-      const created = await apiClient.createHomeschoolSemester({
+      const payload = {
         household_id: householdId,
         name: semesterName,
         start_date: semesterStart,
         end_date: semesterEnd,
-      });
-      setSemesterName("");
-      setActionMessage(`Created semester ${created.name}.`);
+      };
+      const saved = editingSemesterId === null
+        ? await apiClient.createHomeschoolSemester(payload)
+        : await apiClient.updateHomeschoolSemester(editingSemesterId, payload);
+      clearSemesterEdit();
+      setActionMessage(`${editingSemesterId === null ? "Created" : "Updated"} semester ${saved.name}.`);
       refresh();
     } catch (error: unknown) {
       setActionError(formatLoadError(error));
     }
+  }
+
+  function startSemesterEdit(semester: HomeschoolSemester): void {
+    setEditingSemesterId(semester.id);
+    setSemesterName(semester.name);
+    setSemesterStart(semester.start_date);
+    setSemesterEnd(semester.end_date);
+  }
+
+  function clearSemesterEdit(): void {
+    setEditingSemesterId(null);
+    setSemesterName("");
+    setSemesterStart(todayISO());
+    setSemesterEnd(todayISO());
   }
 
   async function handleDeleteSemester(semesterId: number): Promise<void> {
@@ -89,6 +108,7 @@ export function HomeschoolPage(): ReactElement {
     setActionMessage(null);
     try {
       await apiClient.deleteHomeschoolSemester(semesterId, householdId);
+      if (editingSemesterId === semesterId) clearSemesterEdit();
       setActionMessage("Deleted semester.");
       refresh();
     } catch (error: unknown) {
@@ -96,23 +116,38 @@ export function HomeschoolPage(): ReactElement {
     }
   }
 
-  async function handleCreateSubject(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSaveSubject(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (householdId === null) return;
     setActionError(null);
     setActionMessage(null);
     try {
-      const created = await apiClient.createHomeschoolSubject({
+      const payload = {
         household_id: householdId,
         name: subjectName,
         color: subjectColor,
-      });
-      setSubjectName("");
-      setActionMessage(`Created subject ${created.name}.`);
+      };
+      const saved = editingSubjectId === null
+        ? await apiClient.createHomeschoolSubject(payload)
+        : await apiClient.updateHomeschoolSubject(editingSubjectId, payload);
+      clearSubjectEdit();
+      setActionMessage(`${editingSubjectId === null ? "Created" : "Updated"} subject ${saved.name}.`);
       refresh();
     } catch (error: unknown) {
       setActionError(formatLoadError(error));
     }
+  }
+
+  function startSubjectEdit(subject: HomeschoolSubject): void {
+    setEditingSubjectId(subject.id);
+    setSubjectName(subject.name);
+    setSubjectColor(subject.color);
+  }
+
+  function clearSubjectEdit(): void {
+    setEditingSubjectId(null);
+    setSubjectName("");
+    setSubjectColor("#3b82f6");
   }
 
   async function handleDeleteSubject(subjectId: number): Promise<void> {
@@ -121,6 +156,7 @@ export function HomeschoolPage(): ReactElement {
     setActionMessage(null);
     try {
       await apiClient.deleteHomeschoolSubject(subjectId, householdId);
+      if (editingSubjectId === subjectId) clearSubjectEdit();
       setActionMessage("Deleted subject.");
       refresh();
     } catch (error: unknown) {
@@ -290,6 +326,8 @@ export function HomeschoolPage(): ReactElement {
         semesterEnd={semesterEnd}
         subjectName={subjectName}
         subjectColor={subjectColor}
+        editingSemesterId={editingSemesterId}
+        editingSubjectId={editingSubjectId}
         attendance={attendance}
         dayComment={dayComment}
         grade={grade}
@@ -301,8 +339,10 @@ export function HomeschoolPage(): ReactElement {
         onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
         onDayCommentChange={(patch) => setDayComment((prev) => ({ ...prev, ...patch }))}
         onGradeChange={(patch) => setGrade((prev) => ({ ...prev, ...patch }))}
-        onCreateSemester={(event) => void handleCreateSemester(event)}
-        onCreateSubject={(event) => void handleCreateSubject(event)}
+        onCancelSemesterEdit={clearSemesterEdit}
+        onCancelSubjectEdit={clearSubjectEdit}
+        onCreateSemester={(event) => void handleSaveSemester(event)}
+        onCreateSubject={(event) => void handleSaveSubject(event)}
         onSaveAttendance={(event) => void handleSaveAttendance(event)}
         onSaveDayComment={(event) => void handleSaveDayComment(event)}
         onSaveGrade={(event) => void handleSaveGrade(event)}
@@ -342,7 +382,9 @@ export function HomeschoolPage(): ReactElement {
         dayComments={state.dayComments}
         selectedChildGrades={selectedChildGrades}
         onClearGrade={(gradeId) => void handleClearGrade(gradeId)}
+        onEditSemester={startSemesterEdit}
         onDeleteSemester={(semesterId) => void handleDeleteSemester(semesterId)}
+        onEditSubject={startSubjectEdit}
         onDeleteSubject={(subjectId) => void handleDeleteSubject(subjectId)}
       />
     </section>

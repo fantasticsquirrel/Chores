@@ -157,6 +157,63 @@ describe("Homeschool page", () => {
     }));
   });
 
+
+  it("edits existing semester and subject setup records", async () => {
+    mockHomeschoolApi();
+    const updateSemesterSpy = vi.spyOn(apiClient, "updateHomeschoolSemester").mockResolvedValue({
+      id: 10,
+      household_id: 1,
+      name: "Spring 2027",
+      start_date: "2027-01-10",
+      end_date: "2027-05-20",
+      active: true,
+    });
+    const updateSubjectSpy = vi.spyOn(apiClient, "updateHomeschoolSubject").mockResolvedValue({
+      id: 20,
+      household_id: 1,
+      name: "Reading",
+      color: "#3b82f6",
+      active: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const semesterList = await screen.findByRole("list", { name: "Semester entries" });
+    fireEvent.click(within(semesterList).getByRole("button", { name: "Edit" }));
+    const semesterPanel = screen.getByRole("heading", { name: "Edit Semester" }).closest("article");
+    expect(semesterPanel).not.toBeNull();
+    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("Semester Name"), { target: { value: "Spring 2027" } });
+    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("Start Date"), { target: { value: "2027-01-10" } });
+    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("End Date"), { target: { value: "2027-05-20" } });
+    fireEvent.click(within(semesterPanel as HTMLElement).getByRole("button", { name: "Update Semester" }));
+
+    await waitFor(() => expect(updateSemesterSpy).toHaveBeenCalledWith(10, {
+      household_id: 1,
+      name: "Spring 2027",
+      start_date: "2027-01-10",
+      end_date: "2027-05-20",
+    }));
+
+    const subjectList = await screen.findByRole("list", { name: "Subject entries" });
+    fireEvent.click(within(subjectList).getByRole("button", { name: "Edit" }));
+    const subjectPanel = screen.getByRole("heading", { name: "Edit Subject" }).closest("article");
+    expect(subjectPanel).not.toBeNull();
+    fireEvent.change(within(subjectPanel as HTMLElement).getByLabelText("Subject Name"), { target: { value: "Reading" } });
+    fireEvent.change(within(subjectPanel as HTMLElement).getByLabelText("Color"), { target: { value: "#3b82f6" } });
+    fireEvent.click(within(subjectPanel as HTMLElement).getByRole("button", { name: "Update Subject" }));
+
+    await waitFor(() => expect(updateSubjectSpy).toHaveBeenCalledWith(20, {
+      household_id: 1,
+      name: "Reading",
+      color: "#3b82f6",
+    }));
+  });
+
+
   it("clears an existing attendance entry", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);

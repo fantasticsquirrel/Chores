@@ -34,6 +34,8 @@ type HomeschoolFormsProps = {
   semesterEnd: string;
   subjectName: string;
   subjectColor: string;
+  editingSemesterId: number | null;
+  editingSubjectId: number | null;
   attendance: AttendanceFormState;
   dayComment: DayCommentFormState;
   grade: GradeFormState;
@@ -45,6 +47,8 @@ type HomeschoolFormsProps = {
   onAttendanceChange: (patch: Partial<AttendanceFormState>) => void;
   onDayCommentChange: (patch: Partial<DayCommentFormState>) => void;
   onGradeChange: (patch: Partial<GradeFormState>) => void;
+  onCancelSemesterEdit: () => void;
+  onCancelSubjectEdit: () => void;
   onCreateSemester: (event: FormEvent<HTMLFormElement>) => void;
   onCreateSubject: (event: FormEvent<HTMLFormElement>) => void;
   onSaveAttendance: (event: FormEvent<HTMLFormElement>) => void;
@@ -62,6 +66,8 @@ export function HomeschoolForms({
   semesterEnd,
   subjectName,
   subjectColor,
+  editingSemesterId,
+  editingSubjectId,
   attendance,
   dayComment,
   grade,
@@ -73,6 +79,8 @@ export function HomeschoolForms({
   onAttendanceChange,
   onDayCommentChange,
   onGradeChange,
+  onCancelSemesterEdit,
+  onCancelSubjectEdit,
   onCreateSemester,
   onCreateSubject,
   onSaveAttendance,
@@ -82,7 +90,7 @@ export function HomeschoolForms({
   return (
     <>
       <Card className="dashboard-panel">
-        <h2>Create Semester</h2>
+        <h2>{editingSemesterId === null ? "Create Semester" : "Edit Semester"}</h2>
         <form className="children-form" onSubmit={onCreateSemester}>
           <FormField label="Semester Name">
             <TextInput value={semesterName} onChange={(event) => onSemesterNameChange(event.target.value)} placeholder="Fall 2026" required maxLength={255} />
@@ -93,12 +101,15 @@ export function HomeschoolForms({
           <FormField label="End Date">
             <DateInput value={semesterEnd} onChange={(event) => onSemesterEndChange(event.target.value)} required />
           </FormField>
-          <Button type="submit" disabled={householdId === null || semesterName.trim().length === 0}>Create Semester</Button>
+          <div className="item-actions">
+            <Button type="submit" disabled={householdId === null || semesterName.trim().length === 0}>{editingSemesterId === null ? "Create Semester" : "Update Semester"}</Button>
+            {editingSemesterId !== null ? <Button type="button" onClick={onCancelSemesterEdit}>Cancel</Button> : null}
+          </div>
         </form>
       </Card>
 
       <Card className="dashboard-panel">
-        <h2>Create Subject</h2>
+        <h2>{editingSubjectId === null ? "Create Subject" : "Edit Subject"}</h2>
         <form className="children-form" onSubmit={onCreateSubject}>
           <FormField label="Subject Name">
             <TextInput value={subjectName} onChange={(event) => onSubjectNameChange(event.target.value)} placeholder="Math" required maxLength={255} />
@@ -106,7 +117,10 @@ export function HomeschoolForms({
           <FormField label="Color">
             <TextInput value={subjectColor} onChange={(event) => onSubjectColorChange(event.target.value)} placeholder="#3b82f6" required maxLength={32} />
           </FormField>
-          <Button type="submit" disabled={householdId === null || subjectName.trim().length === 0}>Create Subject</Button>
+          <div className="item-actions">
+            <Button type="submit" disabled={householdId === null || subjectName.trim().length === 0}>{editingSubjectId === null ? "Create Subject" : "Update Subject"}</Button>
+            {editingSubjectId !== null ? <Button type="button" onClick={onCancelSubjectEdit}>Cancel</Button> : null}
+          </div>
         </form>
       </Card>
 

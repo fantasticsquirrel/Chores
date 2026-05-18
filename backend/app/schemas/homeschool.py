@@ -32,6 +32,22 @@ class CreateHomeschoolSemesterRequest(BaseModel):
         return self
 
 
+class UpdateHomeschoolSemesterRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    name: str = Field(min_length=1, max_length=255)
+    start_date: date
+    end_date: date
+    active: bool = True
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> "UpdateHomeschoolSemesterRequest":
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must be on or after start_date.")
+        return self
+
+
 class HomeschoolSubjectResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,6 +59,15 @@ class HomeschoolSubjectResponse(BaseModel):
 
 
 class CreateHomeschoolSubjectRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    name: str = Field(min_length=1, max_length=255)
+    color: str = Field(default="#3b82f6", min_length=1, max_length=32)
+    active: bool = True
+
+
+class UpdateHomeschoolSubjectRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     household_id: int = Field(gt=0)

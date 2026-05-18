@@ -519,6 +519,18 @@ describe("ApiClient", () => {
         }),
       )
       .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 1, household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20", active: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 2, household_id: 7, name: "Reading", color: "#f97316", active: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
         new Response(JSON.stringify({ id: 3, household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" }), {
           status: 200,
           headers: { "Content-Type": "application/json" },
@@ -540,6 +552,8 @@ describe("ApiClient", () => {
     const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
     await client.createHomeschoolSemester({ household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20" });
     await client.createHomeschoolSubject({ household_id: 7, name: "Math", color: "#3b82f6" });
+    await client.updateHomeschoolSemester(1, { household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20" });
+    await client.updateHomeschoolSubject(2, { household_id: 7, name: "Reading", color: "#f97316" });
     await client.upsertHomeschoolAttendance({ household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" });
     await client.upsertHomeschoolDayComment({ household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" });
     await client.upsertHomeschoolGrade({ household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" });
@@ -556,16 +570,26 @@ describe("ApiClient", () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
+      "/chore-api/homeschool/semesters/1",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "/chore-api/homeschool/subjects/2",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, name: "Reading", color: "#f97316" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      5,
       "/chore-api/homeschool/attendance",
       expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" }) }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
-      4,
+      6,
       "/chore-api/homeschool/day-comments",
       expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" }) }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
-      5,
+      7,
       "/chore-api/homeschool/grades",
       expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" }) }),
     );
