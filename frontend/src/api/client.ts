@@ -8,6 +8,8 @@ import type {
   CreateChildAccountRequest,
   CreateChildRequest,
   CreateChoreRequest,
+  CreateHomeschoolSemesterRequest,
+  CreateHomeschoolSubjectRequest,
   EligibleChore,
   HealthResponse,
   HomeschoolAttendance,
@@ -27,6 +29,7 @@ import type {
   SubmissionResponse,
   UpdateChildRequest,
   UpdateChoreRequest,
+  UpsertHomeschoolAttendanceRequest,
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "/chore-api";
@@ -128,12 +131,24 @@ export class ApiClient {
     return this.get<HomeschoolSemester[]>("/homeschool/semesters", { household_id: householdId });
   }
 
+  async createHomeschoolSemester(payload: CreateHomeschoolSemesterRequest): Promise<HomeschoolSemester> {
+    return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>("/homeschool/semesters", payload);
+  }
+
   async listHomeschoolSubjects(householdId: number): Promise<HomeschoolSubject[]> {
     return this.get<HomeschoolSubject[]>("/homeschool/subjects", { household_id: householdId });
   }
 
+  async createHomeschoolSubject(payload: CreateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
+    return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>("/homeschool/subjects", payload);
+  }
+
   async listHomeschoolAttendance(householdId: number, childId?: number): Promise<HomeschoolAttendance[]> {
     return this.get<HomeschoolAttendance[]>("/homeschool/attendance", { household_id: householdId, child_id: childId });
+  }
+
+  async upsertHomeschoolAttendance(payload: UpsertHomeschoolAttendanceRequest): Promise<HomeschoolAttendance> {
+    return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>("/homeschool/attendance", payload);
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {
@@ -198,6 +213,14 @@ export class ApiClient {
   private async postNoContentWithBody<TBody>(path: string, body: TBody): Promise<void> {
     await this.request<void>(path, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  private async put<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+    return this.request<TResponse>(path, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });

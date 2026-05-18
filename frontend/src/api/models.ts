@@ -234,3 +234,28 @@ export interface HomeschoolAttendance {
   present: boolean;
   comment: string;
 }
+
+
+export interface CreateHomeschoolSemesterRequest {
+  household_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  active?: boolean;
+}
+
+export interface CreateHomeschoolSubjectRequest {
+  household_id: number;
+  name: string;
+  color?: string;
+  active?: boolean;
+}
+
+export interface UpsertHomeschoolAttendanceRequest {
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  date: string;
+  present?: boolean;
+  comment?: string;
+}

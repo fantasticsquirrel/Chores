@@ -12,6 +12,8 @@ export type {
   CreateChildAccountRequest,
   CreateChildRequest,
   CreateChoreRequest,
+  CreateHomeschoolSemesterRequest,
+  CreateHomeschoolSubjectRequest,
   EligibleChore,
   FamilyModule,
   HealthResponse,
@@ -35,5 +37,6 @@ export type {
   SubmissionResponse,
   UpdateChildRequest,
   UpdateChoreRequest,
+  UpsertHomeschoolAttendanceRequest,
   UserRole,
 } from "./models";
