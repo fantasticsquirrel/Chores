@@ -24,13 +24,14 @@ type NavItem = {
   to: string;
   label: string;
   roles: UserRole[];
+  moduleKey?: string;
 };
 
 const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"] },
+  { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
+  { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
+  { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
@@ -114,12 +115,12 @@ function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactEle
 
 function AppShell(): ReactElement {
   const navigate = useNavigate();
-  const { status, user, logout } = useAuth();
+  const { status, user, moduleKeys, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const visibleNavItems =
     status === "authenticated" && user !== null
-      ? navItems.filter((item) => item.roles.includes(user.role))
+      ? navItems.filter((item) => item.roles.includes(user.role) && (item.moduleKey === undefined || moduleKeys.includes(item.moduleKey)))
       : [];
 
   async function handleLogout(): Promise<void> {

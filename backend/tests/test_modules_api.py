@@ -87,3 +87,48 @@ def test_modules_me_requires_session(tmp_path: Path, monkeypatch) -> None:
         response = client.get("/chore-api/modules/me")
 
     assert response.status_code == 401
+
+
+def test_parent_admin_can_list_household_user_module_access(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-list@example.com")
+
+    with TestClient(app) as client:
+        _login(client, admin, password)
+        response = client.get("/chore-api/modules/users")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload) == 1
+    assert payload[0]["email"] == admin.email
+    assert [module["key"] for module in payload[0]["modules"]] == ["chores", "homeschool", "admin"]
+
+
+def test_parent_admin_can_override_user_module_access(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-override@example.com")
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        response = client.put(
+            f"/chore-api/modules/users/{admin.id}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"module_key": "homeschool", "can_view": False},
+        )
+
+    assert response.status_code == 200
+    assert [module["key"] for module in response.json()["modules"]] == ["chores", "admin"]
+
+
+def test_parent_cannot_list_module_access_admin_endpoint(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(UserRole.PARENT, email="parent-modules@example.com")
+
+    with TestClient(app) as client:
+        _login(client, parent, password)
+        response = client.get("/chore-api/modules/users")
+
+    assert response.status_code == 403

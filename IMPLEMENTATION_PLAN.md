@@ -54,10 +54,10 @@ STATUS: COMPLETE
 - [x] Add frontend module scaffolding with `/homeschool` and `/admin/dashboard` placeholders.
 
 ## Phase FM-1: Database-backed module access
-- [ ] Add Alembic migration for `modules`, `household_module_access`, and `user_module_access`.
-- [ ] Seed default modules and migrate current users to equivalent access.
-- [ ] Replace role-default-only `/modules/me` logic with persisted household/user grants.
-- [ ] Add admin APIs for granting/revoking module access.
+- [x] Add Alembic migration for `modules`, `household_module_access`, and `user_module_access`.
+- [x] Seed default module catalog and preserve current role-based default access.
+- [x] Replace role-default-only `/modules/me` logic with persisted household/user grants layered over safe role defaults.
+- [x] Add admin APIs for viewing users and granting/revoking module access.
 
 ## Phase FM-2: Admin dashboard
 - [ ] Show household users and child-linked accounts in one dashboard.
