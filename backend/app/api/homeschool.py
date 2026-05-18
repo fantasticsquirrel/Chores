@@ -5,9 +5,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session, require_roles
+from app.api.dependencies import get_db_session, require_module_access
 from app.models.core import Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolGrade, HomeschoolSemester, HomeschoolSubject, User
 from app.models.enums import UserRole
+from app.modules import MODULE_HOMESCHOOL
 from app.schemas.homeschool import (
     CreateHomeschoolSemesterRequest,
     CreateHomeschoolSubjectRequest,
@@ -23,6 +24,7 @@ from app.schemas.homeschool import (
 
 router = APIRouter(prefix="/homeschool", tags=["homeschool"])
 _PARENT_ROLES = (UserRole.PARENT_ADMIN, UserRole.PARENT)
+_require_homeschool_access = require_module_access(MODULE_HOMESCHOOL, *_PARENT_ROLES)
 
 
 def _ensure_household_access(user: User, household_id: int) -> None:
@@ -53,7 +55,7 @@ def _ensure_semester_in_household(session: Session, semester_id: int | None, hou
 @router.get("/semesters", response_model=list[HomeschoolSemesterResponse])
 def list_semesters(
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolSemester]:
     _ensure_household_access(current_user, household_id)
@@ -69,7 +71,7 @@ def list_semesters(
 @router.post("/semesters", response_model=HomeschoolSemesterResponse, status_code=status.HTTP_201_CREATED)
 def create_semester(
     payload: CreateHomeschoolSemesterRequest,
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolSemester:
     _ensure_household_access(current_user, payload.household_id)
@@ -84,7 +86,7 @@ def create_semester(
 def delete_semester(
     semester_id: int,
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
     _ensure_household_access(current_user, household_id)
@@ -106,7 +108,7 @@ def delete_semester(
 @router.get("/subjects", response_model=list[HomeschoolSubjectResponse])
 def list_subjects(
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolSubject]:
     _ensure_household_access(current_user, household_id)
@@ -122,7 +124,7 @@ def list_subjects(
 @router.post("/subjects", response_model=HomeschoolSubjectResponse, status_code=status.HTTP_201_CREATED)
 def create_subject(
     payload: CreateHomeschoolSubjectRequest,
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolSubject:
     _ensure_household_access(current_user, payload.household_id)
@@ -141,7 +143,7 @@ def create_subject(
 def delete_subject(
     subject_id: int,
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
     _ensure_household_access(current_user, household_id)
@@ -170,7 +172,7 @@ def delete_subject(
 def list_attendance(
     household_id: int = Query(gt=0),
     child_id: int | None = Query(default=None, gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolAttendance]:
     _ensure_household_access(current_user, household_id)
@@ -184,7 +186,7 @@ def list_attendance(
 @router.put("/attendance", response_model=HomeschoolAttendanceResponse)
 def upsert_attendance(
     payload: UpsertHomeschoolAttendanceRequest,
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolAttendance:
     _ensure_household_access(current_user, payload.household_id)
@@ -213,7 +215,7 @@ def upsert_attendance(
 def delete_attendance(
     attendance_id: int,
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
     _ensure_household_access(current_user, household_id)
@@ -228,7 +230,7 @@ def delete_attendance(
 def list_day_comments(
     household_id: int = Query(gt=0),
     child_id: int | None = Query(default=None, gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolDayComment]:
     _ensure_household_access(current_user, household_id)
@@ -242,7 +244,7 @@ def list_day_comments(
 @router.put("/day-comments", response_model=HomeschoolDayCommentResponse)
 def upsert_day_comment(
     payload: UpsertHomeschoolDayCommentRequest,
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolDayComment:
     _ensure_household_access(current_user, payload.household_id)
@@ -268,7 +270,7 @@ def upsert_day_comment(
 def delete_day_comment(
     comment_id: int,
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
     _ensure_household_access(current_user, household_id)
@@ -283,7 +285,7 @@ def delete_day_comment(
 def list_grades(
     household_id: int = Query(gt=0),
     child_id: int | None = Query(default=None, gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolGrade]:
     _ensure_household_access(current_user, household_id)
@@ -297,7 +299,7 @@ def list_grades(
 @router.put("/grades", response_model=HomeschoolGradeResponse)
 def upsert_grade(
     payload: UpsertHomeschoolGradeRequest,
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolGrade:
     _ensure_household_access(current_user, payload.household_id)
@@ -326,7 +328,7 @@ def upsert_grade(
 def delete_grade(
     grade_id: int,
     household_id: int = Query(gt=0),
-    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
     _ensure_household_access(current_user, household_id)

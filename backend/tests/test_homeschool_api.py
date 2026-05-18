@@ -10,6 +10,7 @@ from app.main import app
 from app.models.core import Child, Household, User
 from app.models.enums import UserRole
 from app.security import hash_password
+from app.services.modules import ModuleService
 
 
 def _configure_test_settings(tmp_path: Path, monkeypatch) -> None:
@@ -503,3 +504,23 @@ def test_parent_cannot_delete_subject_with_records(tmp_path: Path, monkeypatch) 
 
     assert delete_response.status_code == 400
     assert delete_response.json()["detail"] == "Subject has homeschool records. Clear related attendance and grades first."
+
+
+def test_parent_without_homeschool_module_access_is_forbidden(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        db_user = session.get(User, user.id)
+        assert db_user is not None
+        ModuleService().set_user_access(session, target_user=db_user, module_key="homeschool", can_view=False)
+        session.commit()
+
+    with TestClient(app) as client:
+        _login(client, user, password)
+        response = client.get(f"/chore-api/homeschool/semesters?household_id={user.household_id}")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Module access denied."

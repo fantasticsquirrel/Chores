@@ -11,8 +11,10 @@ from app.models.core import User
 from app.models.enums import UserRole
 from app.security.sessions import SESSION_COOKIE_NAME, parse_session_token
 from app.services.auth import AuthService
+from app.services.modules import ModuleService, module_keys
 
 _auth_service = AuthService()
+_module_service = ModuleService()
 
 
 def get_db_session() -> Generator[Session, None, None]:
@@ -48,3 +50,15 @@ def require_roles(*allowed_roles: UserRole) -> Callable[[User], User]:
         return user
 
     return _require_roles
+
+
+def require_module_access(module_key: str, *allowed_roles: UserRole) -> Callable[[User, Session], User]:
+    def _require_module_access(
+        user: User = Depends(require_roles(*allowed_roles)),
+        session: Session = Depends(get_db_session),
+    ) -> User:
+        if module_key not in module_keys(_module_service.list_effective_modules(session, user)):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Module access denied.")
+        return user
+
+    return _require_module_access
