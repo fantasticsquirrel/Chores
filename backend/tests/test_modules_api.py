@@ -224,3 +224,43 @@ def test_parent_admin_without_admin_module_access_cannot_list_or_update_module_a
     assert list_response.json()["detail"] == "Module access denied."
     assert update_response.status_code == 403
     assert update_response.json()["detail"] == "Module access denied."
+
+
+def test_parent_without_chores_module_access_cannot_use_chore_management_api(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(UserRole.PARENT, email="parent-no-chores@example.com")
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        db_parent = session.get(User, parent.id)
+        assert db_parent is not None
+        ModuleService().set_user_access(session, target_user=db_parent, module_key="chores", can_view=False)
+        session.commit()
+
+    with TestClient(app) as client:
+        _login(client, parent, password)
+        response = client.get(f"/chore-api/chores?household_id={parent.household_id}")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Module access denied."
+
+
+def test_child_without_chores_module_access_cannot_use_child_workflow_api(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    child, password = _create_user(UserRole.CHILD, email="child-no-chores@example.com")
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        db_child = session.get(User, child.id)
+        assert db_child is not None
+        ModuleService().set_user_access(session, target_user=db_child, module_key="chores", can_view=False)
+        session.commit()
+
+    with TestClient(app) as client:
+        _login(client, child, password)
+        response = client.get("/chore-api/children/me/eligible-chores?date=2026-02-23")
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Module access denied."

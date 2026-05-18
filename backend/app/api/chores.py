@@ -6,12 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session, require_roles
+from app.api.dependencies import get_db_session, require_module_access
 from app.models.core import Child, Chore, ChoreAllowedChild, ChoreRotationMember, ChoreRotationState, User
 from app.models.enums import AssignmentMode, UserRole
+from app.modules import MODULE_CHORES
 from app.schemas.chores import ChoreResponse, CreateChoreRequest, UpdateChoreRequest
 
 router = APIRouter(prefix="/chores", tags=["chores"])
+_REQUIRE_CHORES_PARENT = require_module_access(MODULE_CHORES, UserRole.PARENT, UserRole.PARENT_ADMIN)
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +88,7 @@ def list_chores(
     household_id: int = Query(gt=0),
     active_only: bool = Query(default=True),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> list[ChoreResponse]:
     if household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -101,7 +103,7 @@ def list_chores(
 def create_chore(
     payload: CreateChoreRequest,
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> ChoreResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -144,7 +146,7 @@ def update_chore(
     payload: UpdateChoreRequest,
     chore_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> ChoreResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -194,7 +196,7 @@ def archive_chore(
     chore_id: int = Path(gt=0),
     household_id: int = Query(gt=0),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_PARENT),
 ) -> None:
     if household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
