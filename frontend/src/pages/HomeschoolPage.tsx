@@ -1,7 +1,7 @@
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
-import { apiClient, ApiClientError, type Child, type HomeschoolAttendance, type HomeschoolDayComment, type HomeschoolGrade, type HomeschoolSemester, type HomeschoolSubject } from "../api";
+import { apiClient } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { ButtonLink, Card, InlineNotice } from "../ui";
 import { todayISO, toYearMonth } from "./homeschool/dateUtils";
@@ -9,41 +9,13 @@ import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
 import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
 import { HomeschoolStatus } from "./homeschool/HomeschoolStatus";
+import { formatLoadError, useHomeschoolData } from "./homeschool/useHomeschoolData";
 
-type HomeschoolState = {
-  children: Child[];
-  semesters: HomeschoolSemester[];
-  subjects: HomeschoolSubject[];
-  attendanceRecords: HomeschoolAttendance[];
-  dayComments: HomeschoolDayComment[];
-  grades: HomeschoolGrade[];
-  loading: boolean;
-  error: string | null;
-};
-
-function formatLoadError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "Request failed.";
-}
 
 export function HomeschoolPage(): ReactElement {
   const { user } = useAuth();
   const householdId = user?.household_id ?? null;
-  const [state, setState] = useState<HomeschoolState>({
-    children: [],
-    semesters: [],
-    subjects: [],
-    attendanceRecords: [],
-    dayComments: [],
-    grades: [],
-    loading: true,
-    error: null,
-  });
+  const { data: state, refresh } = useHomeschoolData(householdId);
   const [semesterName, setSemesterName] = useState("");
   const [semesterStart, setSemesterStart] = useState(todayISO());
   const [semesterEnd, setSemesterEnd] = useState(todayISO());
@@ -72,47 +44,21 @@ export function HomeschoolPage(): ReactElement {
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  function refresh(): void {
-    if (householdId === null) {
-      setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], dayComments: [], grades: [], loading: false, error: "Could not determine household scope." });
-      return;
-    }
-
-    setState((prev) => ({ ...prev, loading: true, error: null }));
-    Promise.all([
-      apiClient.listChildren({ household_id: householdId }),
-      apiClient.listHomeschoolSemesters(householdId),
-      apiClient.listHomeschoolSubjects(householdId),
-      apiClient.listHomeschoolAttendance(householdId),
-      apiClient.listHomeschoolDayComments(householdId),
-      apiClient.listHomeschoolGrades(householdId),
-    ])
-      .then(([children, semesters, subjects, attendanceRecords, dayComments, grades]) => {
-        setState({ children, semesters, subjects, attendanceRecords, dayComments, grades, loading: false, error: null });
-        setAttendance((prev) => ({
-          ...prev,
-          childId: prev.childId || children[0]?.id.toString() || "",
-          subjectId: prev.subjectId || subjects[0]?.id.toString() || "",
-        }));
-        setCalendarChildId((prev) => prev || children[0]?.id.toString() || "");
-        setDayComment((prev) => ({ ...prev, childId: prev.childId || children[0]?.id.toString() || "" }));
-        setGrade((prev) => ({
-          ...prev,
-          childId: prev.childId || children[0]?.id.toString() || "",
-          subjectId: prev.subjectId || subjects[0]?.id.toString() || "",
-          semesterId: prev.semesterId || semesters[0]?.id.toString() || "",
-        }));
-      })
-      .catch((error: unknown) => {
-        setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], dayComments: [], grades: [], loading: false, error: formatLoadError(error) });
-      });
-  }
-
   useEffect(() => {
-    refresh();
-    // refresh intentionally depends on householdId only; defining it inline keeps page state local.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [householdId]);
+    setAttendance((prev) => ({
+      ...prev,
+      childId: prev.childId || state.children[0]?.id.toString() || "",
+      subjectId: prev.subjectId || state.subjects[0]?.id.toString() || "",
+    }));
+    setCalendarChildId((prev) => prev || state.children[0]?.id.toString() || "");
+    setDayComment((prev) => ({ ...prev, childId: prev.childId || state.children[0]?.id.toString() || "" }));
+    setGrade((prev) => ({
+      ...prev,
+      childId: prev.childId || state.children[0]?.id.toString() || "",
+      subjectId: prev.subjectId || state.subjects[0]?.id.toString() || "",
+      semesterId: prev.semesterId || state.semesters[0]?.id.toString() || "",
+    }));
+  }, [state.children, state.semesters, state.subjects]);
 
   async function handleCreateSemester(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
