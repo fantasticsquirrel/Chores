@@ -80,6 +80,19 @@ export function HomeschoolPage(): ReactElement {
     }
   }
 
+  async function handleDeleteSemester(semesterId: number): Promise<void> {
+    if (householdId === null) return;
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiClient.deleteHomeschoolSemester(semesterId, householdId);
+      setActionMessage("Deleted semester.");
+      refresh();
+    } catch (error: unknown) {
+      setActionError(formatLoadError(error));
+    }
+  }
+
   async function handleCreateSubject(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (householdId === null) return;
@@ -316,6 +329,7 @@ export function HomeschoolPage(): ReactElement {
         dayComments={state.dayComments}
         selectedChildGrades={selectedChildGrades}
         onClearGrade={(gradeId) => void handleClearGrade(gradeId)}
+        onDeleteSemester={(semesterId) => void handleDeleteSemester(semesterId)}
       />
     </section>
   );

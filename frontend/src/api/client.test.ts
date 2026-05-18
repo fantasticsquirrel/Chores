@@ -435,6 +435,7 @@ describe("ApiClient", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
@@ -446,6 +447,7 @@ describe("ApiClient", () => {
     await client.deleteHomeschoolAttendance(9, 7);
     await client.deleteHomeschoolDayComment(10, 7);
     await client.deleteHomeschoolGrade(11, 7);
+    await client.deleteHomeschoolSemester(12, 7);
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -485,6 +487,11 @@ describe("ApiClient", () => {
     expect(fetchMock).toHaveBeenNthCalledWith(
       8,
       "/chore-api/homeschool/grades/11?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      9,
+      "/chore-api/homeschool/semesters/12?household_id=7",
       expect.objectContaining({ method: "DELETE", credentials: "include" }),
     );
   });

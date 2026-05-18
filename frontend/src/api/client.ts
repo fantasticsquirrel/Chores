@@ -149,6 +149,10 @@ export class ApiClient {
     return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>("/homeschool/semesters", payload);
   }
 
+  async deleteHomeschoolSemester(semesterId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/semesters/${semesterId}`, { household_id: householdId });
+  }
+
   async listHomeschoolSubjects(householdId: number): Promise<HomeschoolSubject[]> {
     return this.get<HomeschoolSubject[]>("/homeschool/subjects", { household_id: householdId });
   }

@@ -216,4 +216,24 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Cleared grade.")).toBeVisible();
   });
 
+
+
+  it("deletes an existing semester", async () => {
+    mockHomeschoolApi();
+    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSemester").mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const semesterList = await screen.findByRole("list", { name: "Semester entries" });
+    expect(within(semesterList).getByText("Fall 2026")).toBeVisible();
+    fireEvent.click(within(semesterList).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(10, 1));
+    expect(await screen.findByText("Deleted semester.")).toBeVisible();
+  });
+
 });

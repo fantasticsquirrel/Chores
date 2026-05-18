@@ -341,3 +341,47 @@ def test_parent_cannot_delete_other_household_grade(tmp_path: Path, monkeypatch)
         )
 
     assert response.status_code == 403
+
+
+def test_parent_can_delete_semester(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        create_response = client.post(
+            "/chore-api/homeschool/semesters",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "name": "Fall 2026",
+                "start_date": "2026-08-15",
+                "end_date": "2026-12-20",
+            },
+        )
+        assert create_response.status_code == 201
+        semester_id = create_response.json()["id"]
+
+        delete_response = client.delete(
+            f"/chore-api/homeschool/semesters/{semester_id}?household_id={user.household_id}",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+        list_response = client.get(f"/chore-api/homeschool/semesters?household_id={user.household_id}")
+
+    assert delete_response.status_code == 204
+    assert list_response.status_code == 200
+    assert list_response.json() == []
+
+
+def test_parent_cannot_delete_other_household_semester(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        response = client.delete(
+            f"/chore-api/homeschool/semesters/999?household_id={user.household_id + 1}",
+            headers={"X-CSRF-Token": csrf_token},
+        )
+
+    assert response.status_code == 403

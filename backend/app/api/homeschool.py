@@ -80,6 +80,21 @@ def create_semester(
     return semester
 
 
+@router.delete("/semesters/{semester_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_semester(
+    semester_id: int,
+    household_id: int = Query(gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> None:
+    _ensure_household_access(current_user, household_id)
+    semester = session.get(HomeschoolSemester, semester_id)
+    if semester is None or semester.household_id != household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
+    session.delete(semester)
+    session.commit()
+
+
 @router.get("/subjects", response_model=list[HomeschoolSubjectResponse])
 def list_subjects(
     household_id: int = Query(gt=0),
