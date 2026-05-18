@@ -268,3 +268,18 @@ def upsert_grade(
     session.commit()
     session.refresh(grade)
     return grade
+
+
+@router.delete("/grades/{grade_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_grade(
+    grade_id: int,
+    household_id: int = Query(gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> None:
+    _ensure_household_access(current_user, household_id)
+    grade = session.get(HomeschoolGrade, grade_id)
+    if grade is None or grade.household_id != household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grade not found.")
+    session.delete(grade)
+    session.commit()

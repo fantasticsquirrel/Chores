@@ -169,6 +169,19 @@ export function HomeschoolPage(): ReactElement {
     }
   }
 
+  async function handleClearGrade(gradeId: number): Promise<void> {
+    if (householdId === null) return;
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      await apiClient.deleteHomeschoolGrade(gradeId, householdId);
+      setActionMessage("Cleared grade.");
+      refresh();
+    } catch (error: unknown) {
+      setActionError(formatLoadError(error));
+    }
+  }
+
   async function handleSaveGrade(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (householdId === null || grade.childId === "" || grade.subjectId === "") return;
@@ -302,6 +315,7 @@ export function HomeschoolPage(): ReactElement {
         subjects={state.subjects}
         dayComments={state.dayComments}
         selectedChildGrades={selectedChildGrades}
+        onClearGrade={(gradeId) => void handleClearGrade(gradeId)}
       />
     </section>
   );
