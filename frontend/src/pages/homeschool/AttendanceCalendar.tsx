@@ -52,9 +52,9 @@ export function AttendanceCalendar({
         </select>
       </FormField>
       <h3>{calendarLabel}</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}>
+      <div className="calendar-grid">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="eyebrow" style={{ textAlign: "center" }}>{day}</div>
+          <div key={day} className="eyebrow calendar-weekday">{day}</div>
         ))}
         {monthCells.map((cell) => {
           const records = selectedChildAttendance.filter((record) => record.date === cell.iso && record.present);
@@ -63,16 +63,7 @@ export function AttendanceCalendar({
             <button
               key={cell.iso}
               type="button"
-              className="glass-card button-reset"
-              style={{
-                minHeight: 84,
-                padding: 8,
-                opacity: cell.inMonth ? 1 : 0.35,
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                alignItems: "flex-start",
-              }}
+              className={`glass-card button-reset calendar-day${cell.inMonth ? "" : " muted"}`}
               onClick={() => onDaySelect(cell.iso, comment?.comment || "")}
             >
               <strong>{cell.day}{comment?.comment ? " ★" : ""}</strong>
