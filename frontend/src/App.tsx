@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
   { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
-  { to: "/chore/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
+  { to: "/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
   { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
 ];
 
@@ -216,7 +216,8 @@ export default function App(): ReactElement {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/chore/account/security" element={<AccountSecurityPage />} />
+            <Route path="/account/security" element={<AccountSecurityPage />} />
+            <Route path="/chore/account/security" element={<Navigate to="/account/security" replace />} />
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
               <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
               <Route element={<ModuleProtectedRoute moduleKey="chores" />}>

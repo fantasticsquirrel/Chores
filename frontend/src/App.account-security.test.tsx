@@ -41,7 +41,7 @@ describe("Account security page", () => {
     const changePasswordSpy = vi.spyOn(apiClient, "changePassword");
 
     render(
-      <MemoryRouter initialEntries={["/chore/account/security"]}>
+      <MemoryRouter initialEntries={["/account/security"]}>
         <App />
       </MemoryRouter>,
     );
@@ -65,7 +65,7 @@ describe("Account security page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/chore/account/security"]}>
+      <MemoryRouter initialEntries={["/account/security"]}>
         <App />
       </MemoryRouter>,
     );
@@ -78,5 +78,28 @@ describe("Account security page", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not change password: Current password is incorrect.",
     );
+  });
+
+
+  it("redirects legacy account security route to the clean route", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 8,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: null,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/chore/account/security"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Account Security" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Account Security" })).toHaveAttribute("href", "/account/security");
   });
 });
