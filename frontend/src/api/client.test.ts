@@ -377,6 +377,54 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes family module access endpoints", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ modules: [{ key: "chores", name: "Chores", description: "" }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([{ id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [] }]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.getMyModules();
+    await client.listUserModuleAccess();
+    await client.setUserModuleAccess(2, { module_key: "homeschool", can_view: true, can_manage: false });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/chore-api/modules/me",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/modules/users",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/chore-api/modules/users/2",
+      expect.objectContaining({
+        method: "PUT",
+        credentials: "include",
+        body: JSON.stringify({ module_key: "homeschool", can_view: true, can_manage: false }),
+      }),
+    );
+  });
+
   it("serializes homeschool list endpoints with household and optional child scope", async () => {
     const fetchMock = vi.fn();
     fetchMock
