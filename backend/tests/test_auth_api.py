@@ -166,6 +166,26 @@ def test_login_sets_expected_cookie_attributes(tmp_path: Path, monkeypatch) -> N
     assert f"Max-Age={SESSION_COOKIE_MAX_AGE_SECONDS}" in csrf_cookie_header
 
 
+
+
+def test_login_sets_secure_cookies_for_forwarded_https(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user()
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/login",
+            headers={"X-Forwarded-Proto": "https"},
+            json={"email": user.email, "password": password},
+        )
+
+    assert response.status_code == 200
+    set_cookie_headers = response.headers.get_list("set-cookie")
+    session_cookie_header = next(header for header in set_cookie_headers if header.startswith("chore_tracker_session="))
+    csrf_cookie_header = next(header for header in set_cookie_headers if header.startswith(f"{CSRF_COOKIE_NAME}="))
+    assert "Secure" in session_cookie_header
+    assert "Secure" in csrf_cookie_header
+
 def test_me_rejects_tampered_session_cookie(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     user, password = _create_parent_user()

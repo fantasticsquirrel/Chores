@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db_session
@@ -23,8 +23,15 @@ def _build_session_response(user: object, *, csrf_token: str | None = None) -> A
     return AuthSessionResponse(user=AuthUserResponse.model_validate(user), csrf_token=csrf_token)
 
 
+def _request_uses_https(request: Request) -> bool:
+    forwarded_proto = request.headers.get("x-forwarded-proto", "")
+    if forwarded_proto.split(",", 1)[0].strip().lower() == "https":
+        return True
+    return request.url.scheme == "https"
+
+
 @router.post("/login", response_model=AuthSessionResponse)
-def login(payload: LoginRequest, response: Response, session: Session = Depends(get_db_session)) -> AuthSessionResponse:
+def login(payload: LoginRequest, request: Request, response: Response, session: Session = Depends(get_db_session)) -> AuthSessionResponse:
     user = _service.authenticate(session, payload.email, payload.password)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
@@ -32,12 +39,13 @@ def login(payload: LoginRequest, response: Response, session: Session = Depends(
     settings = get_settings()
     token = create_session_token(settings.secret_key, user.id)
     csrf_token = create_csrf_token()
+    secure_cookie = settings.session_cookie_secure or _request_uses_https(request)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
         value=token,
         httponly=True,
         samesite="lax",
-        secure=settings.session_cookie_secure,
+        secure=secure_cookie,
         max_age=SESSION_COOKIE_MAX_AGE_SECONDS,
         path="/",
     )
@@ -46,7 +54,7 @@ def login(payload: LoginRequest, response: Response, session: Session = Depends(
         value=csrf_token,
         httponly=False,
         samesite="lax",
-        secure=settings.session_cookie_secure,
+        secure=secure_cookie,
         max_age=SESSION_COOKIE_MAX_AGE_SECONDS,
         path="/",
     )

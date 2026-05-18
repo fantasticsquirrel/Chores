@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 
@@ -29,6 +29,17 @@ async def lifespan(_: FastAPI):
 
 def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
     app = FastAPI(title="Family Manager API", version="0.1.0", lifespan=lifespan)
+
+    @app.middleware("http")
+    async def add_security_headers(request: Request, call_next) -> Response:
+        response: Response = await call_next(request)
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        if request.headers.get("x-forwarded-proto", "").split(",", 1)[0].strip().lower() == "https" or request.url.scheme == "https":
+            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        return response
+
     app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     register_exception_handlers(app)

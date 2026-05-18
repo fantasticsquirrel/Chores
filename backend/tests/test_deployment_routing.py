@@ -55,3 +55,20 @@ def test_chore_path_serves_frontend_assets_and_spa_fallback(tmp_path: Path, monk
     assert "chore app" in route_response.text
     assert asset_response.status_code == 200
     assert "console.log('ok');" in asset_response.text
+
+def test_security_headers_are_added_for_forwarded_https(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    dist_dir = tmp_path / "dist"
+    dist_dir.mkdir()
+    (dist_dir / "index.html").write_text("<html>Family Manager</html>", encoding="utf-8")
+    app = create_app(frontend_dist_dir=dist_dir)
+
+    with TestClient(app) as client:
+        response = client.get("/chore/", headers={"X-Forwarded-Proto": "https"})
+
+    assert response.status_code == 200
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "same-origin"
+    assert response.headers["Strict-Transport-Security"] == "max-age=31536000; includeSubDomains"
+
