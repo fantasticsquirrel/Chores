@@ -25,6 +25,7 @@ import type {
   MyModulesResponse,
   ReadinessResponse,
   ResetChildAccountEmailRequest,
+  SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
   SubmissionReview,
   SubmissionRequest,
@@ -34,6 +35,7 @@ import type {
   UpsertHomeschoolAttendanceRequest,
   UpsertHomeschoolDayCommentRequest,
   UpsertHomeschoolGradeRequest,
+  UserModuleAccess,
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "/chore-api";
@@ -109,6 +111,14 @@ export class ApiClient {
 
   async getMyModules(): Promise<MyModulesResponse> {
     return this.get<MyModulesResponse>("/modules/me");
+  }
+
+  async listUserModuleAccess(): Promise<UserModuleAccess[]> {
+    return this.get<UserModuleAccess[]>("/modules/users");
+  }
+
+  async setUserModuleAccess(userId: number, payload: SetUserModuleAccessRequest): Promise<UserModuleAccess> {
+    return this.put<UserModuleAccess, SetUserModuleAccessRequest>(`/modules/users/${userId}`, payload);
   }
 
   async listChildren(params: ListChildrenParams): Promise<Child[]> {

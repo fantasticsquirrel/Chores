@@ -292,3 +292,19 @@ export interface UpsertHomeschoolGradeRequest {
   semester_id?: number | null;
   grade: string;
 }
+
+
+export interface UserModuleAccess {
+  id: number;
+  household_id: number;
+  email: string;
+  role: UserRole;
+  child_id?: number | null;
+  modules: FamilyModule[];
+}
+
+export interface SetUserModuleAccessRequest {
+  module_key: "chores" | "homeschool" | "admin";
+  can_view: boolean;
+  can_manage?: boolean;
+}

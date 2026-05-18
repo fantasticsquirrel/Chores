@@ -32,6 +32,7 @@ export type {
   ResetChildAccountEmailRequest,
   ScheduleMode,
   ScheduleUnit,
+  SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
   SubmissionReview,
   SubmissionReviewItem,
@@ -42,5 +43,6 @@ export type {
   UpsertHomeschoolAttendanceRequest,
   UpsertHomeschoolDayCommentRequest,
   UpsertHomeschoolGradeRequest,
+  UserModuleAccess,
   UserRole,
 } from "./models";
