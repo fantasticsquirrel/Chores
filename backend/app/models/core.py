@@ -211,6 +211,29 @@ class HomeschoolAttendance(TimestampMixin, Base):
     comment: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
 
 
+class HomeschoolDayComment(TimestampMixin, Base):
+    __tablename__ = "homeschool_day_comments"
+    __table_args__ = (UniqueConstraint("child_id", "date"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False, index=True)
+    date: Mapped[date] = mapped_column(Date, nullable=False)
+    comment: Mapped[str] = mapped_column(String(4000), nullable=False, default="")
+
+
+class HomeschoolGrade(TimestampMixin, Base):
+    __tablename__ = "homeschool_grades"
+    __table_args__ = (UniqueConstraint("child_id", "subject_id", "semester_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject_id: Mapped[int] = mapped_column(ForeignKey("homeschool_subjects.id", ondelete="CASCADE"), nullable=False, index=True)
+    semester_id: Mapped[int | None] = mapped_column(ForeignKey("homeschool_semesters.id", ondelete="CASCADE"), nullable=True, index=True)
+    grade: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
 class QuickTemplate(TimestampMixin, Base):
     __tablename__ = "quick_templates"
 
@@ -240,5 +263,7 @@ ALL_MODELS = (
     HomeschoolSemester,
     HomeschoolSubject,
     HomeschoolAttendance,
+    HomeschoolDayComment,
+    HomeschoolGrade,
     QuickTemplate,
 )

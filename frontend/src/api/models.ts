@@ -259,3 +259,36 @@ export interface UpsertHomeschoolAttendanceRequest {
   present?: boolean;
   comment?: string;
 }
+
+
+export interface HomeschoolDayComment {
+  id: number;
+  household_id: number;
+  child_id: number;
+  date: string;
+  comment: string;
+}
+
+export interface UpsertHomeschoolDayCommentRequest {
+  household_id: number;
+  child_id: number;
+  date: string;
+  comment: string;
+}
+
+export interface HomeschoolGrade {
+  id: number;
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  semester_id: number | null;
+  grade: string;
+}
+
+export interface UpsertHomeschoolGradeRequest {
+  household_id: number;
+  child_id: number;
+  subject_id: number;
+  semester_id?: number | null;
+  grade: string;
+}

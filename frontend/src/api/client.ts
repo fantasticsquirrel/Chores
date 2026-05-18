@@ -13,6 +13,8 @@ import type {
   EligibleChore,
   HealthResponse,
   HomeschoolAttendance,
+  HomeschoolDayComment,
+  HomeschoolGrade,
   HomeschoolSemester,
   HomeschoolSubject,
   LoginRequest,
@@ -30,6 +32,8 @@ import type {
   UpdateChildRequest,
   UpdateChoreRequest,
   UpsertHomeschoolAttendanceRequest,
+  UpsertHomeschoolDayCommentRequest,
+  UpsertHomeschoolGradeRequest,
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "/chore-api";
@@ -141,6 +145,22 @@ export class ApiClient {
 
   async createHomeschoolSubject(payload: CreateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
     return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>("/homeschool/subjects", payload);
+  }
+
+  async listHomeschoolDayComments(householdId: number, childId?: number): Promise<HomeschoolDayComment[]> {
+    return this.get<HomeschoolDayComment[]>("/homeschool/day-comments", { household_id: householdId, child_id: childId });
+  }
+
+  async upsertHomeschoolDayComment(payload: UpsertHomeschoolDayCommentRequest): Promise<HomeschoolDayComment> {
+    return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>("/homeschool/day-comments", payload);
+  }
+
+  async listHomeschoolGrades(householdId: number, childId?: number): Promise<HomeschoolGrade[]> {
+    return this.get<HomeschoolGrade[]>("/homeschool/grades", { household_id: householdId, child_id: childId });
+  }
+
+  async upsertHomeschoolGrade(payload: UpsertHomeschoolGradeRequest): Promise<HomeschoolGrade> {
+    return this.put<HomeschoolGrade, UpsertHomeschoolGradeRequest>("/homeschool/grades", payload);
   }
 
   async listHomeschoolAttendance(householdId: number, childId?: number): Promise<HomeschoolAttendance[]> {

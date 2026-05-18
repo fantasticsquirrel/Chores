@@ -139,3 +139,52 @@ def test_child_role_cannot_access_parent_homeschool_endpoints(tmp_path: Path, mo
         response = client.get(f"/chore-api/homeschool/semesters?household_id={parent.household_id}")
 
     assert response.status_code == 403
+
+
+def test_parent_can_upsert_day_comment_and_grade(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        subject_response = client.post(
+            "/chore-api/homeschool/subjects",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id, "name": "Reading", "color": "#3b82f6"},
+        )
+        assert subject_response.status_code == 201
+        subject_id = subject_response.json()["id"]
+
+        comment_response = client.put(
+            "/chore-api/homeschool/day-comments",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "date": "2026-09-02",
+                "comment": "Read two chapters aloud.",
+            },
+        )
+        grade_response = client.put(
+            "/chore-api/homeschool/grades",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "subject_id": subject_id,
+                "grade": "A",
+            },
+        )
+        comments_list = client.get(
+            f"/chore-api/homeschool/day-comments?household_id={user.household_id}&child_id={child.id}"
+        )
+        grades_list = client.get(f"/chore-api/homeschool/grades?household_id={user.household_id}&child_id={child.id}")
+
+    assert comment_response.status_code == 200
+    assert comment_response.json()["comment"] == "Read two chapters aloud."
+    assert grade_response.status_code == 200
+    assert grade_response.json()["grade"] == "A"
+    assert comments_list.status_code == 200
+    assert len(comments_list.json()) == 1
+    assert grades_list.status_code == 200
+    assert len(grades_list.json()) == 1

@@ -18,6 +18,8 @@ export type {
   FamilyModule,
   HealthResponse,
   HomeschoolAttendance,
+  HomeschoolDayComment,
+  HomeschoolGrade,
   HomeschoolSemester,
   HomeschoolSubject,
   LoginRequest,
@@ -38,5 +40,7 @@ export type {
   UpdateChildRequest,
   UpdateChoreRequest,
   UpsertHomeschoolAttendanceRequest,
+  UpsertHomeschoolDayCommentRequest,
+  UpsertHomeschoolGradeRequest,
   UserRole,
 } from "./models";

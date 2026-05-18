@@ -6,15 +6,19 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_roles
-from app.models.core import Child, HomeschoolAttendance, HomeschoolSemester, HomeschoolSubject, User
+from app.models.core import Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolGrade, HomeschoolSemester, HomeschoolSubject, User
 from app.models.enums import UserRole
 from app.schemas.homeschool import (
     CreateHomeschoolSemesterRequest,
     CreateHomeschoolSubjectRequest,
     HomeschoolAttendanceResponse,
+    HomeschoolDayCommentResponse,
+    HomeschoolGradeResponse,
     HomeschoolSemesterResponse,
     HomeschoolSubjectResponse,
     UpsertHomeschoolAttendanceRequest,
+    UpsertHomeschoolDayCommentRequest,
+    UpsertHomeschoolGradeRequest,
 )
 
 router = APIRouter(prefix="/homeschool", tags=["homeschool"])
@@ -36,6 +40,14 @@ def _ensure_subject_in_household(session: Session, subject_id: int, household_id
     subject = session.get(HomeschoolSubject, subject_id)
     if subject is None or subject.household_id != household_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
+
+
+def _ensure_semester_in_household(session: Session, semester_id: int | None, household_id: int) -> None:
+    if semester_id is None:
+        return
+    semester = session.get(HomeschoolSemester, semester_id)
+    if semester is None or semester.household_id != household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
 
 
 @router.get("/semesters", response_model=list[HomeschoolSemesterResponse])
@@ -143,3 +155,86 @@ def upsert_attendance(
     session.commit()
     session.refresh(attendance)
     return attendance
+
+
+@router.get("/day-comments", response_model=list[HomeschoolDayCommentResponse])
+def list_day_comments(
+    household_id: int = Query(gt=0),
+    child_id: int | None = Query(default=None, gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> list[HomeschoolDayComment]:
+    _ensure_household_access(current_user, household_id)
+    stmt = select(HomeschoolDayComment).where(HomeschoolDayComment.household_id == household_id)
+    if child_id is not None:
+        _ensure_child_in_household(session, child_id, household_id)
+        stmt = stmt.where(HomeschoolDayComment.child_id == child_id)
+    return list(session.scalars(stmt.order_by(HomeschoolDayComment.date.desc(), HomeschoolDayComment.id.desc())))
+
+
+@router.put("/day-comments", response_model=HomeschoolDayCommentResponse)
+def upsert_day_comment(
+    payload: UpsertHomeschoolDayCommentRequest,
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> HomeschoolDayComment:
+    _ensure_household_access(current_user, payload.household_id)
+    _ensure_child_in_household(session, payload.child_id, payload.household_id)
+
+    comment = session.scalar(
+        select(HomeschoolDayComment).where(
+            HomeschoolDayComment.child_id == payload.child_id,
+            HomeschoolDayComment.date == payload.date,
+        )
+    )
+    if comment is None:
+        comment = HomeschoolDayComment(**payload.model_dump())
+        session.add(comment)
+    else:
+        comment.comment = payload.comment
+    session.commit()
+    session.refresh(comment)
+    return comment
+
+
+@router.get("/grades", response_model=list[HomeschoolGradeResponse])
+def list_grades(
+    household_id: int = Query(gt=0),
+    child_id: int | None = Query(default=None, gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> list[HomeschoolGrade]:
+    _ensure_household_access(current_user, household_id)
+    stmt = select(HomeschoolGrade).where(HomeschoolGrade.household_id == household_id)
+    if child_id is not None:
+        _ensure_child_in_household(session, child_id, household_id)
+        stmt = stmt.where(HomeschoolGrade.child_id == child_id)
+    return list(session.scalars(stmt.order_by(HomeschoolGrade.id.desc())))
+
+
+@router.put("/grades", response_model=HomeschoolGradeResponse)
+def upsert_grade(
+    payload: UpsertHomeschoolGradeRequest,
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> HomeschoolGrade:
+    _ensure_household_access(current_user, payload.household_id)
+    _ensure_child_in_household(session, payload.child_id, payload.household_id)
+    _ensure_subject_in_household(session, payload.subject_id, payload.household_id)
+    _ensure_semester_in_household(session, payload.semester_id, payload.household_id)
+
+    grade = session.scalar(
+        select(HomeschoolGrade).where(
+            HomeschoolGrade.child_id == payload.child_id,
+            HomeschoolGrade.subject_id == payload.subject_id,
+            HomeschoolGrade.semester_id == payload.semester_id,
+        )
+    )
+    if grade is None:
+        grade = HomeschoolGrade(**payload.model_dump())
+        session.add(grade)
+    else:
+        grade.grade = payload.grade
+    session.commit()
+    session.refresh(grade)
+    return grade

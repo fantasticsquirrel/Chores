@@ -72,3 +72,43 @@ class UpsertHomeschoolAttendanceRequest(BaseModel):
     date: date
     present: bool = True
     comment: str = Field(default="", max_length=2000)
+
+
+class HomeschoolDayCommentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    household_id: int
+    child_id: int
+    date: date
+    comment: str
+
+
+class UpsertHomeschoolDayCommentRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    child_id: int = Field(gt=0)
+    date: date
+    comment: str = Field(default="", max_length=4000)
+
+
+class HomeschoolGradeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    household_id: int
+    child_id: int
+    subject_id: int
+    semester_id: int | None
+    grade: str
+
+
+class UpsertHomeschoolGradeRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    child_id: int = Field(gt=0)
+    subject_id: int = Field(gt=0)
+    semester_id: int | None = Field(default=None, gt=0)
+    grade: str = Field(default="", max_length=64)
