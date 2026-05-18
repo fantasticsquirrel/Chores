@@ -1,7 +1,7 @@
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
-import { apiClient, ApiClientError, type Child, type HomeschoolSemester, type HomeschoolSubject } from "../api";
+import { apiClient, ApiClientError, type Child, type HomeschoolAttendance, type HomeschoolSemester, type HomeschoolSubject } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { Button, ButtonLink, Card, DateInput, FormField, InlineNotice, TextInput } from "../ui";
 
@@ -9,6 +9,7 @@ type HomeschoolState = {
   children: Child[];
   semesters: HomeschoolSemester[];
   subjects: HomeschoolSubject[];
+  attendanceRecords: HomeschoolAttendance[];
   loading: boolean;
   error: string | null;
 };
@@ -42,6 +43,7 @@ export function HomeschoolPage(): ReactElement {
     children: [],
     semesters: [],
     subjects: [],
+    attendanceRecords: [],
     loading: true,
     error: null,
   });
@@ -50,6 +52,8 @@ export function HomeschoolPage(): ReactElement {
   const [semesterEnd, setSemesterEnd] = useState(todayISO());
   const [subjectName, setSubjectName] = useState("");
   const [subjectColor, setSubjectColor] = useState("#3b82f6");
+  const [calendarYearMonth, setCalendarYearMonth] = useState(toYearMonth(todayISO()));
+  const [calendarChildId, setCalendarChildId] = useState("");
   const [attendance, setAttendance] = useState<AttendanceFormState>({
     childId: "",
     subjectId: "",
@@ -62,7 +66,7 @@ export function HomeschoolPage(): ReactElement {
 
   function refresh(): void {
     if (householdId === null) {
-      setState({ children: [], semesters: [], subjects: [], loading: false, error: "Could not determine household scope." });
+      setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], loading: false, error: "Could not determine household scope." });
       return;
     }
 
@@ -71,17 +75,19 @@ export function HomeschoolPage(): ReactElement {
       apiClient.listChildren({ household_id: householdId }),
       apiClient.listHomeschoolSemesters(householdId),
       apiClient.listHomeschoolSubjects(householdId),
+      apiClient.listHomeschoolAttendance(householdId),
     ])
-      .then(([children, semesters, subjects]) => {
-        setState({ children, semesters, subjects, loading: false, error: null });
+      .then(([children, semesters, subjects, attendanceRecords]) => {
+        setState({ children, semesters, subjects, attendanceRecords, loading: false, error: null });
         setAttendance((prev) => ({
           ...prev,
           childId: prev.childId || children[0]?.id.toString() || "",
           subjectId: prev.subjectId || subjects[0]?.id.toString() || "",
         }));
+        setCalendarChildId((prev) => prev || children[0]?.id.toString() || "");
       })
       .catch((error: unknown) => {
-        setState({ children: [], semesters: [], subjects: [], loading: false, error: formatLoadError(error) });
+        setState({ children: [], semesters: [], subjects: [], attendanceRecords: [], loading: false, error: formatLoadError(error) });
       });
   }
 
@@ -146,10 +152,19 @@ export function HomeschoolPage(): ReactElement {
       });
       setAttendance((prev) => ({ ...prev, comment: "" }));
       setActionMessage("Saved attendance.");
+      refresh();
     } catch (error: unknown) {
       setActionError(formatLoadError(error));
     }
   }
+
+
+  const selectedChildAttendance = state.attendanceRecords.filter(
+    (record) => calendarChildId !== "" && record.child_id === Number(calendarChildId),
+  );
+  const subjectLookup = new Map(state.subjects.map((subject) => [subject.id, subject]));
+  const monthCells = buildMonthGrid(calendarYearMonth);
+  const calendarLabel = formatYearMonth(calendarYearMonth);
 
   return (
     <section className="dashboard-grid" aria-label="Homeschool module">
@@ -221,6 +236,62 @@ export function HomeschoolPage(): ReactElement {
         </form>
       </Card>
 
+
+
+      <Card className="dashboard-panel">
+        <div className="panel-header-row">
+          <h2>Attendance Calendar</h2>
+          <div className="quick-actions">
+            <Button type="button" onClick={() => setCalendarYearMonth(shiftYearMonth(calendarYearMonth, -1))}>Previous</Button>
+            <Button type="button" onClick={() => setCalendarYearMonth(toYearMonth(todayISO()))}>Today</Button>
+            <Button type="button" onClick={() => setCalendarYearMonth(shiftYearMonth(calendarYearMonth, 1))}>Next</Button>
+          </div>
+        </div>
+        <FormField label="Child">
+          <select className="text-input" value={calendarChildId} onChange={(event) => setCalendarChildId(event.target.value)}>
+            <option value="">Select child</option>
+            {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
+          </select>
+        </FormField>
+        <h3>{calendarLabel}</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}>
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            <div key={day} className="eyebrow" style={{ textAlign: "center" }}>{day}</div>
+          ))}
+          {monthCells.map((cell) => {
+            const records = selectedChildAttendance.filter((record) => record.date === cell.iso && record.present);
+            return (
+              <button
+                key={cell.iso}
+                type="button"
+                className="glass-card button-reset"
+                style={{
+                  minHeight: 84,
+                  padding: 8,
+                  opacity: cell.inMonth ? 1 : 0.35,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  alignItems: "flex-start",
+                }}
+                onClick={() => setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date: cell.iso }))}
+              >
+                <strong>{cell.day}</strong>
+                {records.slice(0, 3).map((record) => {
+                  const subject = subjectLookup.get(record.subject_id);
+                  return (
+                    <span key={record.id} className="balance-pill" style={{ background: subject?.color || undefined }}>
+                      {subject?.name || `Subject ${record.subject_id}`}
+                    </span>
+                  );
+                })}
+                {records.length > 3 ? <span className="eyebrow">+{records.length - 3} more</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
       <Card className="dashboard-panel">
         <h2>Quick Attendance</h2>
         <form className="children-form" onSubmit={(event) => void handleSaveAttendance(event)}>
@@ -263,4 +334,52 @@ export function HomeschoolPage(): ReactElement {
       </Card>
     </section>
   );
+}
+
+
+type MonthCell = { iso: string; day: number; inMonth: boolean };
+
+function toYearMonth(iso: string): string {
+  return iso.slice(0, 7);
+}
+
+function shiftYearMonth(yearMonth: string, delta: number): string {
+  const [year, month] = yearMonth.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return date.toISOString().slice(0, 7);
+}
+
+function formatYearMonth(yearMonth: string): string {
+  const [year, month] = yearMonth.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleString(undefined, { month: "long", year: "numeric" });
+}
+
+function isoFromParts(year: number, month: number, day: number): string {
+  return new Date(Date.UTC(year, month - 1, day)).toISOString().slice(0, 10);
+}
+
+function buildMonthGrid(yearMonth: string): MonthCell[] {
+  const [year, month] = yearMonth.split("-").map(Number);
+  const first = new Date(Date.UTC(year, month - 1, 1));
+  const startDay = first.getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const prevDays = new Date(Date.UTC(year, month - 1, 0)).getUTCDate();
+  const cells: MonthCell[] = [];
+
+  for (let index = startDay - 1; index >= 0; index -= 1) {
+    const day = prevDays - index;
+    cells.push({ iso: isoFromParts(year, month - 1, day), day, inMonth: false });
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push({ iso: isoFromParts(year, month, day), day, inMonth: true });
+  }
+
+  let nextDay = 1;
+  while (cells.length < 42) {
+    cells.push({ iso: isoFromParts(year, month + 1, nextDay), day: nextDay, inMonth: false });
+    nextDay += 1;
+  }
+
+  return cells;
 }
