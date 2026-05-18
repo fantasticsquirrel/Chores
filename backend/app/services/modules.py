@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.models.core import HouseholdModuleAccess, Module, User, UserModuleAccess
 from app.models.enums import UserRole
-from app.modules import AVAILABLE_MODULES, DEFAULT_ROLE_MODULES, AppModule
+from app.modules import AVAILABLE_MODULES, DEFAULT_ROLE_MODULES, MODULE_ADMIN, AppModule
 
 
 class ModuleService:
@@ -59,6 +59,8 @@ class ModuleService:
         self.ensure_catalog(session)
         if module_key not in {module.key for module in AVAILABLE_MODULES}:
             raise ValueError("Unknown module key.")
+        if module_key == MODULE_ADMIN and not can_view and self._is_last_admin_user(session, target_user):
+            raise ValueError("Cannot remove admin module access from the last household admin.")
         access = session.get(UserModuleAccess, {"user_id": target_user.id, "module_key": module_key})
         if access is None:
             access = UserModuleAccess(user_id=target_user.id, module_key=module_key, can_view=can_view, can_manage=can_manage)
@@ -68,6 +70,16 @@ class ModuleService:
             access.can_manage = can_manage
         session.flush()
         return access
+
+    def _is_last_admin_user(self, session: Session, target_user: User) -> bool:
+        admin_users = session.scalars(
+            select(User).where(
+                User.household_id == target_user.household_id,
+                User.role == UserRole.PARENT_ADMIN,
+            )
+        ).all()
+        admin_users_with_access = [user for user in admin_users if MODULE_ADMIN in module_keys(self.list_effective_modules(session, user))]
+        return len(admin_users_with_access) == 1 and admin_users_with_access[0].id == target_user.id
 
 
 def module_keys(modules: list[AppModule]) -> list[str]:

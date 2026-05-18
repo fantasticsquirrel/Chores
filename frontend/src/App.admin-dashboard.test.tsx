@@ -66,6 +66,29 @@ describe("Admin dashboard module access", () => {
     expect(await screen.findByText("parent@example.com can now access homeschool.")).toBeVisible();
   });
 
+
+  it("prevents disabling the only visible admin access in the UI", async () => {
+    mockAdminSession();
+    const setAccessSpy = vi.spyOn(apiClient, "setUserModuleAccess");
+    vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([
+      { id: 1, household_id: 1, email: "admin@example.com", role: "PARENT_ADMIN", child_id: null, modules: allModules },
+      { id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [allModules[0], allModules[1]] },
+    ]);
+
+    render(
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const adminControls = await screen.findByLabelText("Module access for admin@example.com");
+    const adminButton = within(adminControls).getByRole("button", { name: "✓ Admin" });
+    expect(adminButton).toBeDisabled();
+    fireEvent.click(adminButton);
+
+    expect(setAccessSpy).not.toHaveBeenCalled();
+  });
+
   it("shows module access update errors without mutating the list", async () => {
     mockAdminSession();
     vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([

@@ -25,6 +25,13 @@ function hasModule(user: UserModuleAccess, moduleKey: FamilyModuleKey): boolean 
   return user.modules.some((module) => module.key === moduleKey);
 }
 
+function isLastAdminAccess(users: UserModuleAccess[], user: UserModuleAccess, moduleKey: FamilyModuleKey): boolean {
+  if (moduleKey !== "admin" || !hasModule(user, "admin")) {
+    return false;
+  }
+  return users.filter((row) => row.role === "PARENT_ADMIN" && hasModule(row, "admin")).length === 1;
+}
+
 export function AdminDashboardPage(): ReactElement {
   const [state, setState] = useState<AdminState>({ users: [], loading: true, error: null });
   const [actionError, setActionError] = useState<string | null>(null);
@@ -96,11 +103,14 @@ export function AdminDashboardPage(): ReactElement {
                 <div className="quick-actions" aria-label={`Module access for ${user.email}`}>
                   {familyModules.map((module) => {
                     const enabled = hasModule(user, module.key);
+                    const disabled = isLastAdminAccess(state.users, user, module.key);
                     return (
                       <button
                         key={module.key}
                         type="button"
                         className={`jewel-button button-reset${enabled ? "" : " danger-button"}`}
+                        disabled={disabled}
+                        title={disabled ? "At least one admin must keep Admin access." : undefined}
                         onClick={() => void toggleAccess(user, module.key)}
                       >
                         {enabled ? "✓" : "—"} {module.label}

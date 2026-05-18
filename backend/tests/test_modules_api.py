@@ -132,3 +132,55 @@ def test_parent_cannot_list_module_access_admin_endpoint(tmp_path: Path, monkeyp
         response = client.get("/chore-api/modules/users")
 
     assert response.status_code == 403
+
+
+def test_parent_admin_cannot_remove_last_admin_module_access(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-last@example.com")
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        response = client.put(
+            f"/chore-api/modules/users/{admin.id}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"module_key": "admin", "can_view": False},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot remove admin module access from the last household admin."
+
+
+def test_parent_admin_can_remove_admin_access_when_another_admin_remains(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-primary@example.com")
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        session.add(
+            User(
+                household_id=admin.household_id,
+                email="admin-secondary@example.com",
+                password_hash=hash_password("password123"),
+                role=UserRole.PARENT_ADMIN,
+                child_id=None,
+            )
+        )
+        session.commit()
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        response = client.put(
+            f"/chore-api/modules/users/{admin.id}",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"module_key": "admin", "can_view": False},
+        )
+
+    assert response.status_code == 200
+    assert "admin" not in [module["key"] for module in response.json()["modules"]]
