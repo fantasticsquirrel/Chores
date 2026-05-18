@@ -432,7 +432,8 @@ describe("ApiClient", () => {
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
       .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }));
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
     const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
     await client.listHomeschoolSemesters(7);
@@ -440,6 +441,7 @@ describe("ApiClient", () => {
     await client.listHomeschoolAttendance(7, 3);
     await client.listHomeschoolDayComments(7, 3);
     await client.listHomeschoolGrades(7, 3);
+    await client.deleteHomeschoolAttendance(9, 7);
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -465,6 +467,11 @@ describe("ApiClient", () => {
       5,
       "/chore-api/homeschool/grades?household_id=7&child_id=3",
       expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      6,
+      "/chore-api/homeschool/attendance/9?household_id=7",
+      expect.objectContaining({ method: "DELETE", credentials: "include" }),
     );
   });
 

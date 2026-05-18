@@ -156,4 +156,24 @@ describe("Homeschool page", () => {
       grade: "A+",
     }));
   });
+
+
+  it("clears an existing attendance entry", async () => {
+    mockHomeschoolApi();
+    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolAttendance").mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const attendanceEntries = await screen.findByRole("list", { name: "Attendance entries" });
+    expect(within(attendanceEntries).getByText("2026-09-01 · Math")).toBeVisible();
+    fireEvent.click(within(attendanceEntries).getByRole("button", { name: "Clear" }));
+
+    await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(30, 1));
+    expect(await screen.findByText("Cleared attendance entry.")).toBeVisible();
+  });
+
 });

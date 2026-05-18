@@ -181,6 +181,10 @@ export class ApiClient {
     return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>("/homeschool/attendance", payload);
   }
 
+  async deleteHomeschoolAttendance(attendanceId: number, householdId: number): Promise<void> {
+    return this.delete(`/homeschool/attendance/${attendanceId}`, { household_id: householdId });
+  }
+
   async listChores(params: ListChoresParams): Promise<Chore[]> {
     return this.get<Chore[]>("/chores", params);
   }

@@ -14,6 +14,7 @@ type AttendanceCalendarProps = {
   onMonthChange: (yearMonth: string) => void;
   onChildChange: (childId: string) => void;
   onDaySelect: (date: string, comment: string) => void;
+  onClearAttendance: (attendanceId: number) => void;
 };
 
 export function AttendanceCalendar({
@@ -26,6 +27,7 @@ export function AttendanceCalendar({
   onMonthChange,
   onChildChange,
   onDaySelect,
+  onClearAttendance,
 }: AttendanceCalendarProps): ReactElement {
   const subjectLookup = new Map(subjects.map((subject) => [subject.id, subject]));
   const monthCells = buildMonthGrid(calendarYearMonth);
@@ -85,6 +87,23 @@ export function AttendanceCalendar({
           );
         })}
       </div>
+
+      {selectedChildAttendance.length > 0 ? (
+        <ul className="balance-list" aria-label="Attendance entries">
+          {selectedChildAttendance.map((record) => {
+            const subject = subjectLookup.get(record.subject_id);
+            return (
+              <li key={record.id} className="balance-item">
+                <div>
+                  <p className="balance-name">{record.date} · {subject?.name || `Subject ${record.subject_id}`}</p>
+                  <p className="balance-meta">{record.comment || "No comment"}</p>
+                </div>
+                <Button type="button" onClick={() => onClearAttendance(record.id)}>Clear</Button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
     </Card>
   );
 }

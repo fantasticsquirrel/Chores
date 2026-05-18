@@ -157,6 +157,21 @@ def upsert_attendance(
     return attendance
 
 
+@router.delete("/attendance/{attendance_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_attendance(
+    attendance_id: int,
+    household_id: int = Query(gt=0),
+    current_user: User = Depends(require_roles(*_PARENT_ROLES)),
+    session: Session = Depends(get_db_session),
+) -> None:
+    _ensure_household_access(current_user, household_id)
+    attendance = session.get(HomeschoolAttendance, attendance_id)
+    if attendance is None or attendance.household_id != household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attendance not found.")
+    session.delete(attendance)
+    session.commit()
+
+
 @router.get("/day-comments", response_model=list[HomeschoolDayCommentResponse])
 def list_day_comments(
     household_id: int = Query(gt=0),
