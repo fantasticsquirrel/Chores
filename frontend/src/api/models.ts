@@ -1,5 +1,5 @@
 export interface ApiErrorResponse {
-  detail?: string;
+  detail?: unknown;
 }
 
 export type UserRole = "PARENT_ADMIN" | "PARENT" | "CHILD";
