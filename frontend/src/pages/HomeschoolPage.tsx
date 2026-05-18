@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { apiClient, ApiClientError, type Child, type HomeschoolAttendance, type HomeschoolDayComment, type HomeschoolGrade, type HomeschoolSemester, type HomeschoolSubject } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { Button, ButtonLink, Card, DateInput, FormField, InlineNotice, TextInput } from "../ui";
-import { buildMonthGrid, formatYearMonth, shiftYearMonth, todayISO, toYearMonth } from "./homeschool/dateUtils";
+import { todayISO, toYearMonth } from "./homeschool/dateUtils";
+import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
 
 type HomeschoolState = {
@@ -246,8 +247,6 @@ export function HomeschoolPage(): ReactElement {
   );
   const subjectLookup = new Map(state.subjects.map((subject) => [subject.id, subject]));
   const semesterLookup = new Map(state.semesters.map((semester) => [semester.id, semester]));
-  const monthCells = buildMonthGrid(calendarYearMonth);
-  const calendarLabel = formatYearMonth(calendarYearMonth);
   const selectedSemester = state.semesters.find((semester) => semester.id.toString() === grade.semesterId) ?? state.semesters[0] ?? null;
 
   return (
@@ -322,63 +321,20 @@ export function HomeschoolPage(): ReactElement {
 
 
 
-      <Card className="dashboard-panel">
-        <div className="panel-header-row">
-          <h2>Attendance Calendar</h2>
-          <div className="quick-actions">
-            <Button type="button" onClick={() => setCalendarYearMonth(shiftYearMonth(calendarYearMonth, -1))}>Previous</Button>
-            <Button type="button" onClick={() => setCalendarYearMonth(toYearMonth(todayISO()))}>Today</Button>
-            <Button type="button" onClick={() => setCalendarYearMonth(shiftYearMonth(calendarYearMonth, 1))}>Next</Button>
-          </div>
-        </div>
-        <FormField label="Child">
-          <select className="text-input" value={calendarChildId} onChange={(event) => setCalendarChildId(event.target.value)}>
-            <option value="">Select child</option>
-            {state.children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
-          </select>
-        </FormField>
-        <h3>{calendarLabel}</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 6 }}>
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-            <div key={day} className="eyebrow" style={{ textAlign: "center" }}>{day}</div>
-          ))}
-          {monthCells.map((cell) => {
-            const records = selectedChildAttendance.filter((record) => record.date === cell.iso && record.present);
-            const comment = selectedChildComments.find((entry) => entry.date === cell.iso);
-            return (
-              <button
-                key={cell.iso}
-                type="button"
-                className="glass-card button-reset"
-                style={{
-                  minHeight: 84,
-                  padding: 8,
-                  opacity: cell.inMonth ? 1 : 0.35,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 4,
-                  alignItems: "flex-start",
-                }}
-                onClick={() => {
-                  setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date: cell.iso }));
-                  setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date: cell.iso, comment: comment?.comment || prev.comment }));
-                }}
-              >
-                <strong>{cell.day}{comment?.comment ? " ★" : ""}</strong>
-                {records.slice(0, 3).map((record) => {
-                  const subject = subjectLookup.get(record.subject_id);
-                  return (
-                    <span key={record.id} className="balance-pill" style={{ background: subject?.color || undefined }}>
-                      {subject?.name || `Subject ${record.subject_id}`}
-                    </span>
-                  );
-                })}
-                {records.length > 3 ? <span className="eyebrow">+{records.length - 3} more</span> : null}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
+      <AttendanceCalendar
+        calendarYearMonth={calendarYearMonth}
+        calendarChildId={calendarChildId}
+        children={state.children}
+        selectedChildAttendance={selectedChildAttendance}
+        selectedChildComments={selectedChildComments}
+        subjects={state.subjects}
+        onMonthChange={setCalendarYearMonth}
+        onChildChange={setCalendarChildId}
+        onDaySelect={(date, comment) => {
+          setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date }));
+          setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date, comment: comment || prev.comment }));
+        }}
+      />
 
       <Card className="dashboard-panel">
         <h2>Quick Attendance</h2>
