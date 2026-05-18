@@ -11,6 +11,9 @@ import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, ty
 import { HomeschoolStatus } from "./homeschool/HomeschoolStatus";
 import { formatLoadError, useHomeschoolData } from "./homeschool/useHomeschoolData";
 
+function confirmDestructiveAction(message: string): boolean {
+  return window.confirm(message);
+}
 
 export function HomeschoolPage(): ReactElement {
   const { user } = useAuth();
@@ -81,7 +84,7 @@ export function HomeschoolPage(): ReactElement {
   }
 
   async function handleDeleteSemester(semesterId: number): Promise<void> {
-    if (householdId === null) return;
+    if (householdId === null || !confirmDestructiveAction("Delete this semester?")) return;
     setActionError(null);
     setActionMessage(null);
     try {
@@ -113,7 +116,7 @@ export function HomeschoolPage(): ReactElement {
   }
 
   async function handleDeleteSubject(subjectId: number): Promise<void> {
-    if (householdId === null) return;
+    if (householdId === null || !confirmDestructiveAction("Delete this subject?")) return;
     setActionError(null);
     setActionMessage(null);
     try {
@@ -147,11 +150,8 @@ export function HomeschoolPage(): ReactElement {
     }
   }
 
-
-
-
   async function handleClearAttendance(attendanceId: number): Promise<void> {
-    if (householdId === null) return;
+    if (householdId === null || !confirmDestructiveAction("Clear this attendance entry?")) return;
     setActionError(null);
     setActionMessage(null);
     try {
@@ -164,7 +164,7 @@ export function HomeschoolPage(): ReactElement {
   }
 
   async function handleClearDayComment(commentId: number): Promise<void> {
-    if (householdId === null) return;
+    if (householdId === null || !confirmDestructiveAction("Clear this day comment?")) return;
     setActionError(null);
     setActionMessage(null);
     try {
@@ -196,7 +196,7 @@ export function HomeschoolPage(): ReactElement {
   }
 
   async function handleClearGrade(gradeId: number): Promise<void> {
-    if (householdId === null) return;
+    if (householdId === null || !confirmDestructiveAction("Clear this grade?")) return;
     setActionError(null);
     setActionMessage(null);
     try {

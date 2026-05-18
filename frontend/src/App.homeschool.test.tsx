@@ -157,9 +157,9 @@ describe("Homeschool page", () => {
     }));
   });
 
-
   it("clears an existing attendance entry", async () => {
     mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolAttendance").mockResolvedValue(undefined);
 
     render(
@@ -176,10 +176,9 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Cleared attendance entry.")).toBeVisible();
   });
 
-
-
   it("clears an existing day comment", async () => {
     mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolDayComment").mockResolvedValue(undefined);
 
     render(
@@ -196,10 +195,9 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Cleared day comment.")).toBeVisible();
   });
 
-
-
   it("clears an existing grade", async () => {
     mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolGrade").mockResolvedValue(undefined);
 
     render(
@@ -216,10 +214,9 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Cleared grade.")).toBeVisible();
   });
 
-
-
   it("deletes an existing semester", async () => {
     mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSemester").mockResolvedValue(undefined);
 
     render(
@@ -236,10 +233,9 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Deleted semester.")).toBeVisible();
   });
 
-
-
   it("deletes an existing subject", async () => {
     mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSubject").mockResolvedValue(undefined);
 
     render(
@@ -256,10 +252,27 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Deleted subject.")).toBeVisible();
   });
 
+  it("does not clear a grade when confirmation is cancelled", async () => {
+    mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolGrade").mockResolvedValue(undefined);
 
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const gradesList = await screen.findByRole("list", { name: "Grade entries" });
+    fireEvent.click(within(gradesList).getByRole("button", { name: "Clear" }));
+
+    expect(window.confirm).toHaveBeenCalledWith("Clear this grade?");
+    expect(deleteSpy).not.toHaveBeenCalled();
+  });
 
   it("shows setup delete errors from the backend", async () => {
     mockHomeschoolApi();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(apiClient, "deleteHomeschoolSubject").mockRejectedValue(
       new ApiClientError(400, "Subject has homeschool records. Clear related attendance and grades first.", {
         detail: "Subject has homeschool records. Clear related attendance and grades first.",
