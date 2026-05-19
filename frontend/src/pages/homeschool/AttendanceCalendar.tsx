@@ -79,7 +79,6 @@ export function AttendanceCalendar({
             >
               <strong className="calendar-day-number">{cell.day}{comment?.comment ? " ★" : ""}</strong>
               <div className="calendar-subject-bars" aria-label={`${cell.iso} subject attendance`}>
-                {records.length === 0 ? <span className="calendar-empty-bar" /> : null}
                 {records.slice(0, 6).map((record) => {
                   const subject = subjectLookup.get(record.subject_id);
                   return (
@@ -92,7 +91,8 @@ export function AttendanceCalendar({
                   );
                 })}
               </div>
-              <div className="calendar-subject-labels">
+              {records.length > 0 ? (
+                <div className="calendar-subject-labels">
                 {records.slice(0, 3).map((record) => {
                   const subject = subjectLookup.get(record.subject_id);
                   return (
@@ -101,8 +101,9 @@ export function AttendanceCalendar({
                     </span>
                   );
                 })}
-                {records.length > 3 ? <span className="eyebrow">+{records.length - 3}</span> : null}
-              </div>
+                  {records.length > 3 ? <span className="eyebrow">+{records.length - 3}</span> : null}
+                </div>
+              ) : null}
             </button>
           );
         })}
