@@ -78,19 +78,6 @@ export function AttendanceCalendar({
               onClick={() => onDaySelect(cell.iso, comment?.comment || "")}
             >
               <strong className="calendar-day-number">{cell.day}{comment?.comment ? " ★" : ""}</strong>
-              <div className="calendar-subject-bars" aria-label={`${cell.iso} subject attendance`}>
-                {records.slice(0, 6).map((record) => {
-                  const subject = subjectLookup.get(record.subject_id);
-                  return (
-                    <span
-                      key={record.id}
-                      className="calendar-subject-bar"
-                      title={subject?.name || `Subject ${record.subject_id}`}
-                      style={{ background: subject?.color || undefined }}
-                    />
-                  );
-                })}
-              </div>
               {records.length > 0 ? (
                 <div className="calendar-subject-labels">
                 {records.slice(0, 3).map((record) => {
