@@ -65,6 +65,17 @@ export function HomeschoolPage(): ReactElement {
     }));
   }, [state.children, state.semesters, state.subjects]);
 
+  useEffect(() => {
+    const selectedChild = calendarChildId || state.children[0]?.id.toString() || "";
+    const childAttendance = state.attendanceRecords
+      .filter((record) => selectedChild !== "" && record.child_id === Number(selectedChild))
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const preferredDate = childAttendance[0]?.date ?? state.semesters[0]?.start_date;
+    if (preferredDate !== undefined) {
+      setCalendarYearMonth(toYearMonth(preferredDate));
+    }
+  }, [calendarChildId, state.attendanceRecords, state.children, state.semesters]);
+
   async function handleSaveSemester(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     if (householdId === null) return;
