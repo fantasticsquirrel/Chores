@@ -34,6 +34,17 @@ export function AttendanceCalendar({
   const subjectLookup = new Map(subjects.map((subject) => [subject.id, subject]));
   const monthCells = buildMonthGrid(calendarYearMonth);
   const calendarLabel = formatYearMonth(calendarYearMonth);
+  const selectedMonthRecords = selectedChildAttendance.filter(
+    (record) => record.present && record.date.startsWith(calendarYearMonth),
+  );
+  const subjectRows = subjects.map((subject) => ({
+    subject,
+    days: new Set(
+      selectedMonthRecords.filter((record) => record.subject_id === subject.id).map((record) => record.date),
+    ).size,
+    entries: selectedMonthRecords.filter((record) => record.subject_id === subject.id).length,
+  }));
+  const activeSubjectRows = subjectRows.filter((row) => row.entries > 0);
 
   return (
     <Card className="dashboard-panel">
@@ -66,21 +77,50 @@ export function AttendanceCalendar({
               className={`glass-card button-reset calendar-day${cell.inMonth ? "" : " muted"}`}
               onClick={() => onDaySelect(cell.iso, comment?.comment || "")}
             >
-              <strong>{cell.day}{comment?.comment ? " ★" : ""}</strong>
-              {records.slice(0, 3).map((record) => {
-                const subject = subjectLookup.get(record.subject_id);
-                return (
-                  <span key={record.id} className="balance-pill" style={{ background: subject?.color || undefined }}>
-                    {subject?.name || `Subject ${record.subject_id}`}
-                  </span>
-                );
-              })}
-              {records.length > 3 ? <span className="eyebrow">+{records.length - 3} more</span> : null}
+              <strong className="calendar-day-number">{cell.day}{comment?.comment ? " ★" : ""}</strong>
+              <div className="calendar-subject-bars" aria-label={`${cell.iso} subject attendance`}>
+                {records.length === 0 ? <span className="calendar-empty-bar" /> : null}
+                {records.slice(0, 6).map((record) => {
+                  const subject = subjectLookup.get(record.subject_id);
+                  return (
+                    <span
+                      key={record.id}
+                      className="calendar-subject-bar"
+                      title={subject?.name || `Subject ${record.subject_id}`}
+                      style={{ background: subject?.color || undefined }}
+                    />
+                  );
+                })}
+              </div>
+              <div className="calendar-subject-labels">
+                {records.slice(0, 3).map((record) => {
+                  const subject = subjectLookup.get(record.subject_id);
+                  return (
+                    <span key={record.id} className="calendar-subject-initial" style={{ borderColor: subject?.color || undefined }}>
+                      {(subject?.name || `S${record.subject_id}`).slice(0, 1).toUpperCase()}
+                    </span>
+                  );
+                })}
+                {records.length > 3 ? <span className="eyebrow">+{records.length - 3}</span> : null}
+              </div>
             </button>
           );
         })}
       </div>
 
+      {activeSubjectRows.length > 0 ? (
+        <div className="subject-attendance-strip" aria-label="Subject attendance totals">
+          {activeSubjectRows.map((row) => (
+            <div key={row.subject.id} className="subject-attendance-card">
+              <span className="subject-attendance-color" style={{ background: row.subject.color }} />
+              <div>
+                <p className="balance-name">{row.subject.name}</p>
+                <p className="balance-meta">{row.days} day{row.days === 1 ? "" : "s"} · {row.entries} entr{row.entries === 1 ? "y" : "ies"}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {selectedChildComments.length > 0 ? (
         <ul className="balance-list" aria-label="Day comments">
