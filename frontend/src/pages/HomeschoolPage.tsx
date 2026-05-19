@@ -317,44 +317,6 @@ export function HomeschoolPage(): ReactElement {
       {actionMessage !== null ? <InlineNotice>{actionMessage}</InlineNotice> : null}
 
       <div className="dashboard-section-header">
-        <p className="eyebrow">Daily tools</p>
-        <h2>Setup & Records</h2>
-        <p>Create the reusable school structure, then log daily work without bouncing around the page.</p>
-      </div>
-
-      <HomeschoolForms
-        householdId={householdId}
-        children={state.children}
-        semesters={state.semesters}
-        subjects={state.subjects}
-        semesterName={semesterName}
-        semesterStart={semesterStart}
-        semesterEnd={semesterEnd}
-        subjectName={subjectName}
-        subjectColor={subjectColor}
-        editingSemesterId={editingSemesterId}
-        editingSubjectId={editingSubjectId}
-        attendance={attendance}
-        dayComment={dayComment}
-        grade={grade}
-        onSemesterNameChange={setSemesterName}
-        onSemesterStartChange={setSemesterStart}
-        onSemesterEndChange={setSemesterEnd}
-        onSubjectNameChange={setSubjectName}
-        onSubjectColorChange={setSubjectColor}
-        onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
-        onDayCommentChange={(patch) => setDayComment((prev) => ({ ...prev, ...patch }))}
-        onGradeChange={(patch) => setGrade((prev) => ({ ...prev, ...patch }))}
-        onCancelSemesterEdit={clearSemesterEdit}
-        onCancelSubjectEdit={clearSubjectEdit}
-        onCreateSemester={(event) => void handleSaveSemester(event)}
-        onCreateSubject={(event) => void handleSaveSubject(event)}
-        onSaveAttendance={(event) => void handleSaveAttendance(event)}
-        onSaveDayComment={(event) => void handleSaveDayComment(event)}
-        onSaveGrade={(event) => void handleSaveGrade(event)}
-      />
-
-      <div className="dashboard-section-header">
         <p className="eyebrow">Review</p>
         <h2>Calendar & Progress</h2>
         <p>Review logged attendance, notes, grades, and setup records for the selected child.</p>
@@ -398,6 +360,44 @@ export function HomeschoolPage(): ReactElement {
         onDeleteSemester={(semesterId) => void handleDeleteSemester(semesterId)}
         onEditSubject={startSubjectEdit}
         onDeleteSubject={(subjectId) => void handleDeleteSubject(subjectId)}
+      />
+
+      <div className="dashboard-section-header">
+        <p className="eyebrow">Daily tools</p>
+        <h2>Setup & Records</h2>
+        <p>Create the reusable school structure, then log daily work without bouncing around the page.</p>
+      </div>
+
+      <HomeschoolForms
+        householdId={householdId}
+        children={state.children}
+        semesters={state.semesters}
+        subjects={state.subjects}
+        semesterName={semesterName}
+        semesterStart={semesterStart}
+        semesterEnd={semesterEnd}
+        subjectName={subjectName}
+        subjectColor={subjectColor}
+        editingSemesterId={editingSemesterId}
+        editingSubjectId={editingSubjectId}
+        attendance={attendance}
+        dayComment={dayComment}
+        grade={grade}
+        onSemesterNameChange={setSemesterName}
+        onSemesterStartChange={setSemesterStart}
+        onSemesterEndChange={setSemesterEnd}
+        onSubjectNameChange={setSubjectName}
+        onSubjectColorChange={setSubjectColor}
+        onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
+        onDayCommentChange={(patch) => setDayComment((prev) => ({ ...prev, ...patch }))}
+        onGradeChange={(patch) => setGrade((prev) => ({ ...prev, ...patch }))}
+        onCancelSemesterEdit={clearSemesterEdit}
+        onCancelSubjectEdit={clearSubjectEdit}
+        onCreateSemester={(event) => void handleSaveSemester(event)}
+        onCreateSubject={(event) => void handleSaveSubject(event)}
+        onSaveAttendance={(event) => void handleSaveAttendance(event)}
+        onSaveDayComment={(event) => void handleSaveDayComment(event)}
+        onSaveGrade={(event) => void handleSaveGrade(event)}
       />
     </section>
   );
