@@ -95,11 +95,6 @@ class UpdateChoreRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_at_least_one(self) -> "UpdateChoreRequest":
-        fields = [
-            self.name, self.reward_cents, self.start_date, self.schedule_mode,
-            self.completion_mode, self.assignment_mode, self.allowed_child_ids,
-            self.rotation_order,
-        ]
-        if all(f is None for f in fields):
+        if self.model_fields_set <= {"household_id"}:
             raise ValueError("At least one field must be provided for update.")
         return self

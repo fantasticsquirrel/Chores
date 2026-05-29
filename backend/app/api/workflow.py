@@ -133,6 +133,8 @@ def approve_submission(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found.")
     if submission.household_id != user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+    if submission.status != SubmissionStatus.PENDING:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission was already processed.")
 
     items = list(session.scalars(select(SubmissionItem).where(SubmissionItem.submission_id == submission_id)).all())
     if not items:
@@ -148,6 +150,11 @@ def approve_submission(
         if item.status != SubmissionStatus.PENDING:
             continue
 
+        chore = chore_map.get(item.chore_id)
+        if chore is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chore not found for submission item.")
+        occurrence_date = _approval_occurrence_or_409(session, submission, chore)
+
         item.status = SubmissionStatus.APPROVED
         session.add(
             CompletionRecord(
@@ -162,14 +169,13 @@ def approve_submission(
             Transaction(
                 household_id=submission.household_id,
                 child_id=submission.child_id,
-                amount_cents=chore_map.get(item.chore_id).reward_cents if chore_map.get(item.chore_id) else 0,
+                amount_cents=chore.reward_cents,
                 type=TransactionType.CHORE_APPROVAL,
             )
         )
 
-        chore = chore_map.get(item.chore_id)
-        if chore is not None and chore.id not in processed_rotation_chores:
-            _advance_rotation_state_if_needed(session, chore, submission.for_date)
+        if chore.id not in processed_rotation_chores:
+            _advance_rotation_state_if_needed(session, chore, occurrence_date)
             processed_rotation_chores.add(chore.id)
 
     submission.status = SubmissionStatus.APPROVED
@@ -210,6 +216,7 @@ def decide_submission_item(
         chore = session.get(Chore, item.chore_id)
         if chore is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chore not found for submission item.")
+        occurrence_date = _approval_occurrence_or_409(session, submission, chore)
         session.add(
             CompletionRecord(
                 household_id=submission.household_id,
@@ -227,7 +234,7 @@ def decide_submission_item(
                 type=TransactionType.CHORE_APPROVAL,
             )
         )
-        _advance_rotation_state_if_needed(session, chore, submission.for_date)
+        _advance_rotation_state_if_needed(session, chore, occurrence_date)
 
     submission_items = list(
         session.scalars(
@@ -294,6 +301,9 @@ def _eligible_chores_for_child(session: Session, child: Child, target_date: date
         if _has_approved_completion_for_occurrence(session, chore, child, occurrence_date):
             continue
 
+        if _has_pending_submission_for_occurrence(session, chore, child, occurrence_date):
+            continue
+
         expires_on: date | None = None
         if chore.timeout_days is not None:
             expires_on = occurrence_date + timedelta(days=chore.timeout_days)
@@ -350,7 +360,7 @@ def _scheduled_occurrence_for_target(session: Session, chore: Chore, child: Chil
         return None
 
     if chore.schedule_mode == ScheduleMode.NONE:
-        return chore.start_date
+        return target_date
 
     if chore.schedule_mode == ScheduleMode.ONCE:
         return chore.start_date if target_date == chore.start_date else None
@@ -403,6 +413,55 @@ def _has_approved_completion_for_occurrence(session: Session, chore: Chore, chil
             )
         ))
     return bool(session.scalar(query))
+
+
+def _has_pending_submission_for_occurrence(session: Session, chore: Chore, child: Child, occurrence_date: date) -> bool:
+    query = (
+        select(Submission)
+        .join(SubmissionItem, SubmissionItem.submission_id == Submission.id)
+        .where(
+            Submission.household_id == child.household_id,
+            Submission.status == SubmissionStatus.PENDING,
+            SubmissionItem.chore_id == chore.id,
+            SubmissionItem.status == SubmissionStatus.PENDING,
+        )
+    )
+    if chore.completion_mode == CompletionMode.PER_CHILD:
+        query = query.where(Submission.child_id == child.id)
+
+    pending_submissions = list(session.scalars(query).all())
+    for submission in pending_submissions:
+        pending_child = child if submission.child_id == child.id else session.get(Child, submission.child_id)
+        if pending_child is None:
+            continue
+        pending_occurrence = _scheduled_occurrence_for_target(session, chore, pending_child, submission.for_date)
+        if pending_occurrence == occurrence_date:
+            return True
+
+    return False
+
+
+def _approval_occurrence_or_409(session: Session, submission: Submission, chore: Chore) -> date:
+    child = session.get(Child, submission.child_id)
+    if child is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found for submission.")
+
+    occurrence_date = _scheduled_occurrence_for_target(session, chore, child, submission.for_date)
+    if occurrence_date is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore is no longer eligible for this date.")
+
+    if chore.assignment_mode == AssignmentMode.ROTATING and not _is_child_rotation_assignee(
+        session, chore, child.id, occurrence_date
+    ):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore is no longer assigned to this child.")
+
+    if chore.timeout_days is not None and submission.for_date > occurrence_date + timedelta(days=chore.timeout_days):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Submission window has closed.")
+
+    if _has_approved_completion_for_occurrence(session, chore, child, occurrence_date):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore already has an approved completion.")
+
+    return occurrence_date
 
 
 def _is_child_rotation_assignee(session: Session, chore: Chore, child_id: int, occurrence_date: date) -> bool:

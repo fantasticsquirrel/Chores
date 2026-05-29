@@ -53,6 +53,19 @@ def _seed_household_with_users() -> dict[str, int | str]:
         )
         session.add(chore)
         session.flush()
+        available_chore = Chore(
+            household_id=household.id,
+            name="Sweep",
+            reward_cents=200,
+            start_date=target_date,
+            schedule_mode=ScheduleMode.NONE,
+            schedule_interval=None,
+            schedule_unit=None,
+            completion_mode=CompletionMode.PER_CHILD,
+            assignment_mode=AssignmentMode.STATIC,
+        )
+        session.add(available_chore)
+        session.flush()
 
         parent_user = User(
             household_id=household.id,
@@ -101,6 +114,7 @@ def _seed_household_with_users() -> dict[str, int | str]:
             "first_child_id": first_child.id,
             "second_child_id": second_child.id,
             "chore_id": chore.id,
+            "available_chore_id": available_chore.id,
             "submission_id": submission.id,
             "submission_item_id": submission_item.id,
         }
@@ -184,7 +198,7 @@ def test_child_role_can_access_child_endpoints_for_own_identity_only(tmp_path: P
         )
         own_submit_response = client.post(
             "/chore-api/submissions",
-            json={"for_date": data["target_date"], "chore_ids": [data["chore_id"]]},
+            json={"for_date": data["target_date"], "chore_ids": [data["available_chore_id"]]},
             headers={CSRF_HEADER_NAME: child_csrf_token},
         )
         other_child_submit_response = client.post(

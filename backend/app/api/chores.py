@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
 from app.models.core import Child, Chore, ChoreAllowedChild, ChoreRotationMember, ChoreRotationState, User
-from app.models.enums import AssignmentMode, UserRole
+from app.models.enums import AssignmentMode, ScheduleMode, UserRole
 from app.modules import MODULE_CHORES
 from app.schemas.chores import ChoreResponse, CreateChoreRequest, UpdateChoreRequest
 
@@ -77,6 +77,80 @@ def _chore_to_response(session: Session, chore: Chore) -> ChoreResponse:
     resp.allowed_child_ids = allowed
     resp.rotation_order = rotation
     return resp
+
+
+def _required_update_value(value, field_name: str):
+    if value is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"{field_name} cannot be null.",
+        )
+    return value
+
+
+def _validate_effective_schedule(chore: Chore, payload: UpdateChoreRequest) -> None:
+    recurring_modes = {ScheduleMode.EVERY, ScheduleMode.AFTER_COMPLETION}
+    if chore.schedule_mode in recurring_modes:
+        if chore.schedule_interval is None or chore.schedule_unit is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="schedule_interval and schedule_unit are required for recurring schedules.",
+            )
+        return
+
+    if payload.schedule_interval is not None or payload.schedule_unit is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="schedule_interval and schedule_unit must be null unless the schedule is recurring.",
+        )
+
+    chore.schedule_interval = None
+    chore.schedule_unit = None
+
+
+def _sync_effective_assignment(session: Session, chore: Chore, payload: UpdateChoreRequest) -> None:
+    fields = payload.model_fields_set
+    if chore.assignment_mode == AssignmentMode.ROTATING:
+        if "allowed_child_ids" in fields and payload.allowed_child_ids is not None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Use rotation_order to choose children for rotating chores.",
+            )
+
+        if "rotation_order" in fields:
+            rotation_order = payload.rotation_order or []
+            if len(rotation_order) < 2:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="rotation_order must contain at least 2 children when assignment_mode is ROTATING.",
+                )
+            _validate_child_ids(session, rotation_order, chore.household_id)
+            _sync_rotation_members(session, chore.id, rotation_order)
+            _sync_allowed_children(session, chore.id, rotation_order)
+            return
+
+        existing_allowed, existing_rotation = _load_eligibility(session, chore.id)
+        if len(existing_rotation) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="rotation_order must contain at least 2 children when assignment_mode is ROTATING.",
+            )
+        if existing_allowed != existing_rotation:
+            _sync_allowed_children(session, chore.id, existing_rotation)
+        return
+
+    if "rotation_order" in fields and payload.rotation_order is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="rotation_order can only be set when assignment_mode is ROTATING.",
+        )
+
+    session.execute(delete(ChoreRotationMember).where(ChoreRotationMember.chore_id == chore.id))
+    session.execute(delete(ChoreRotationState).where(ChoreRotationState.chore_id == chore.id))
+
+    if "allowed_child_ids" in fields and payload.allowed_child_ids is not None:
+        _validate_child_ids(session, payload.allowed_child_ids, chore.household_id)
+        _sync_allowed_children(session, chore.id, payload.allowed_child_ids)
 
 
 # ---------------------------------------------------------------------------
@@ -152,39 +226,30 @@ def update_chore(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
     chore = _get_chore_or_404(session, chore_id, payload.household_id)
 
-    if payload.name is not None:
-        chore.name = payload.name
-    if payload.reward_cents is not None:
-        chore.reward_cents = payload.reward_cents
-    if payload.start_date is not None:
-        chore.start_date = payload.start_date
-    if payload.expires_at is not None:
+    fields = payload.model_fields_set
+    if "name" in fields:
+        chore.name = _required_update_value(payload.name, "name")
+    if "reward_cents" in fields:
+        chore.reward_cents = _required_update_value(payload.reward_cents, "reward_cents")
+    if "start_date" in fields:
+        chore.start_date = _required_update_value(payload.start_date, "start_date")
+    if "expires_at" in fields:
         chore.expires_at = payload.expires_at
-    if payload.timeout_days is not None:
+    if "timeout_days" in fields:
         chore.timeout_days = payload.timeout_days
-    if payload.schedule_mode is not None:
-        chore.schedule_mode = payload.schedule_mode
-    if payload.schedule_interval is not None:
+    if "schedule_mode" in fields:
+        chore.schedule_mode = _required_update_value(payload.schedule_mode, "schedule_mode")
+    if "schedule_interval" in fields:
         chore.schedule_interval = payload.schedule_interval
-    if payload.schedule_unit is not None:
+    if "schedule_unit" in fields:
         chore.schedule_unit = payload.schedule_unit
-    if payload.completion_mode is not None:
-        chore.completion_mode = payload.completion_mode
-    if payload.assignment_mode is not None:
-        chore.assignment_mode = payload.assignment_mode
+    if "completion_mode" in fields:
+        chore.completion_mode = _required_update_value(payload.completion_mode, "completion_mode")
+    if "assignment_mode" in fields:
+        chore.assignment_mode = _required_update_value(payload.assignment_mode, "assignment_mode")
 
-    # Resolve effective assignment mode (may have just been updated)
-    effective_mode = payload.assignment_mode if payload.assignment_mode is not None else chore.assignment_mode
-
-    if payload.rotation_order is not None:
-        _validate_child_ids(session, payload.rotation_order, payload.household_id)
-        _sync_rotation_members(session, chore_id, payload.rotation_order)
-        if effective_mode == AssignmentMode.ROTATING:
-            _sync_allowed_children(session, chore_id, payload.rotation_order)
-
-    if payload.allowed_child_ids is not None and effective_mode != AssignmentMode.ROTATING:
-        _validate_child_ids(session, payload.allowed_child_ids, payload.household_id)
-        _sync_allowed_children(session, chore_id, payload.allowed_child_ids)
+    _validate_effective_schedule(chore, payload)
+    _sync_effective_assignment(session, chore, payload)
 
     session.commit()
     session.refresh(chore)
