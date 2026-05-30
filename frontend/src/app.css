@@ -57,7 +57,12 @@ body {
   height: 16rem;
   top: -4rem;
   right: -3rem;
-  background: radial-gradient(circle, #ff79b9 0%, #fb5f6a33 70%, transparent 100%);
+  background: radial-gradient(
+    circle,
+    #ff79b9 0%,
+    #fb5f6a33 70%,
+    transparent 100%
+  );
 }
 
 .orb-two {
@@ -66,7 +71,12 @@ body {
   left: -6rem;
   bottom: -7rem;
   animation-delay: 0.5s;
-  background: radial-gradient(circle, #4fc8ff 0%, #6f8fff30 68%, transparent 100%);
+  background: radial-gradient(
+    circle,
+    #4fc8ff 0%,
+    #6f8fff30 68%,
+    transparent 100%
+  );
 }
 
 .glass-card {
@@ -81,7 +91,9 @@ body {
 
 .lift-tilt {
   transform-origin: center;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease;
 }
 
 .lift-tilt:hover {
@@ -125,7 +137,9 @@ body {
   border-radius: var(--radius-pill);
   padding: 0.35rem 0.8rem;
   background: #ffffff14;
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .nav-chip:hover {
@@ -134,7 +148,11 @@ body {
 }
 
 .nav-chip.active {
-  background: linear-gradient(120deg, var(--accent-cyan) 0%, var(--accent-pink) 100%);
+  background: linear-gradient(
+    120deg,
+    var(--accent-cyan) 0%,
+    var(--accent-pink) 100%
+  );
   border-color: transparent;
 }
 
@@ -270,9 +288,16 @@ body {
   font: inherit;
   border-radius: var(--radius-button);
   padding: 0.6rem 0.9rem;
-  background: linear-gradient(125deg, var(--accent-cyan) 0%, var(--accent-sky) 48%, var(--accent-pink) 100%);
+  background: linear-gradient(
+    125deg,
+    var(--accent-cyan) 0%,
+    var(--accent-sky) 48%,
+    var(--accent-pink) 100%
+  );
   box-shadow: 0 10px 20px #13072f70;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .jewel-button:hover {
@@ -287,7 +312,12 @@ body {
 }
 
 .danger-button {
-  background: linear-gradient(125deg, var(--accent-danger-a) 0%, #ff638f 45%, var(--accent-danger-b) 100%);
+  background: linear-gradient(
+    125deg,
+    var(--accent-danger-a) 0%,
+    #ff638f 45%,
+    var(--accent-danger-b) 100%
+  );
 }
 
 .children-form {
@@ -305,6 +335,7 @@ body {
 }
 
 .children-form input[type="text"],
+.children-form input[type="number"],
 .auth-form input[type="email"],
 .auth-form input[type="password"],
 .children-form input[type="date"] {
@@ -321,10 +352,12 @@ body {
 }
 
 .children-form input[type="text"]:focus-visible,
+.children-form input[type="number"]:focus-visible,
 .auth-form input[type="email"]:focus-visible,
 .auth-form input[type="password"]:focus-visible,
 .children-form input[type="date"]:focus-visible,
 .children-form input[type="checkbox"]:focus-visible,
+.children-form select:focus-visible,
 .jewel-button:focus-visible,
 .nav-chip:focus-visible {
   outline: 2px solid var(--ring-focus);
@@ -398,6 +431,91 @@ body {
   display: grid;
 }
 
+.stacked-control-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.muted-inline {
+  display: inline-flex;
+  width: fit-content;
+  margin-left: 0.45rem;
+  border: 1px solid #ffffff33;
+  border-radius: var(--radius-pill);
+  padding: 0.08rem 0.45rem;
+  color: #f2e8ffcf;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.rotation-order-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.rotation-order-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.parent-child-chore-card {
+  grid-column: span 6;
+  padding: 1rem;
+}
+
+.chore-button-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.chore-submit-button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  text-align: left;
+}
+
+.chore-submit-button small {
+  grid-column: 1 / -1;
+  color: #f2e8ffcf;
+}
+
+.chore-management-form {
+  max-width: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.chore-management-form .plain-fieldset,
+.chore-management-form .quick-actions,
+.chore-management-form .inline-toast {
+  grid-column: 1 / -1;
+}
+
+.inline-field-row {
+  display: grid;
+  grid-template-columns: minmax(5rem, 1fr) minmax(8rem, 1fr);
+  gap: 0.6rem;
+}
+
+.plain-fieldset {
+  border: 1px solid #ffffff2f;
+  border-radius: 0.75rem;
+  padding: 0.8rem;
+}
+
+.plain-fieldset legend {
+  padding: 0 0.35rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
 .inline-toast {
   margin-top: 0.85rem;
   border: 1px solid #ffffff3a;
@@ -461,6 +579,15 @@ body {
   .balance-item {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .parent-child-chore-card {
+    grid-column: span 12;
+  }
+
+  .chore-management-form,
+  .inline-field-row {
+    grid-template-columns: 1fr;
   }
 
   .today-controls {

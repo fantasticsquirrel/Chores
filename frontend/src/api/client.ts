@@ -91,14 +91,18 @@ export class ApiClient {
   }
 
   async login(payload: LoginRequest): Promise<AuthSessionResponse> {
-    const session = await this.post<AuthSessionResponse, LoginRequest>("/auth/login", payload);
+    const session = await this.post<AuthSessionResponse, LoginRequest>(
+      "/auth/login",
+      payload,
+    );
     this.csrfToken = session.csrf_token ?? readCookieValue(CSRF_COOKIE_NAME);
     return session;
   }
 
   async getCurrentSession(): Promise<AuthSessionResponse> {
     const session = await this.get<AuthSessionResponse>("/auth/me");
-    this.csrfToken = session.csrf_token ?? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME);
+    this.csrfToken =
+      session.csrf_token ?? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME);
     return session;
   }
 
@@ -119,8 +123,14 @@ export class ApiClient {
     return this.get<UserModuleAccess[]>("/modules/users");
   }
 
-  async setUserModuleAccess(userId: number, payload: SetUserModuleAccessRequest): Promise<UserModuleAccess> {
-    return this.put<UserModuleAccess, SetUserModuleAccessRequest>(`/modules/users/${userId}`, payload);
+  async setUserModuleAccess(
+    userId: number,
+    payload: SetUserModuleAccessRequest,
+  ): Promise<UserModuleAccess> {
+    return this.put<UserModuleAccess, SetUserModuleAccessRequest>(
+      `/modules/users/${userId}`,
+      payload,
+    );
   }
 
   async listChildren(params: ListChildrenParams): Promise<Child[]> {
@@ -131,84 +141,190 @@ export class ApiClient {
     return this.post<Child, CreateChildRequest>("/children", payload);
   }
 
-  async updateChild(childId: number, payload: UpdateChildRequest): Promise<Child> {
-    return this.patch<Child, UpdateChildRequest>(`/children/${childId}`, payload);
+  async updateChild(
+    childId: number,
+    payload: UpdateChildRequest,
+  ): Promise<Child> {
+    return this.patch<Child, UpdateChildRequest>(
+      `/children/${childId}`,
+      payload,
+    );
   }
 
-  async createChildAccount(childId: number, payload: CreateChildAccountRequest): Promise<ChildAccount> {
-    return this.post<ChildAccount, CreateChildAccountRequest>(`/children/${childId}/account`, payload);
+  async createChildAccount(
+    childId: number,
+    payload: CreateChildAccountRequest,
+  ): Promise<ChildAccount> {
+    return this.post<ChildAccount, CreateChildAccountRequest>(
+      `/children/${childId}/account`,
+      payload,
+    );
   }
 
-  async resetChildAccountEmail(childId: number, payload: ResetChildAccountEmailRequest): Promise<ChildAccount> {
-    return this.patch<ChildAccount, ResetChildAccountEmailRequest>(`/children/${childId}/account-email`, payload);
+  async resetChildAccountEmail(
+    childId: number,
+    payload: ResetChildAccountEmailRequest,
+  ): Promise<ChildAccount> {
+    return this.patch<ChildAccount, ResetChildAccountEmailRequest>(
+      `/children/${childId}/account-email`,
+      payload,
+    );
   }
 
-  async listHomeschoolSemesters(householdId: number): Promise<HomeschoolSemester[]> {
-    return this.get<HomeschoolSemester[]>("/homeschool/semesters", { household_id: householdId });
+  async listHomeschoolSemesters(
+    householdId: number,
+  ): Promise<HomeschoolSemester[]> {
+    return this.get<HomeschoolSemester[]>("/homeschool/semesters", {
+      household_id: householdId,
+    });
   }
 
-  async createHomeschoolSemester(payload: CreateHomeschoolSemesterRequest): Promise<HomeschoolSemester> {
-    return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>("/homeschool/semesters", payload);
+  async createHomeschoolSemester(
+    payload: CreateHomeschoolSemesterRequest,
+  ): Promise<HomeschoolSemester> {
+    return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>(
+      "/homeschool/semesters",
+      payload,
+    );
   }
 
-  async updateHomeschoolSemester(semesterId: number, payload: UpdateHomeschoolSemesterRequest): Promise<HomeschoolSemester> {
-    return this.put<HomeschoolSemester, UpdateHomeschoolSemesterRequest>(`/homeschool/semesters/${semesterId}`, payload);
+  async updateHomeschoolSemester(
+    semesterId: number,
+    payload: UpdateHomeschoolSemesterRequest,
+  ): Promise<HomeschoolSemester> {
+    return this.put<HomeschoolSemester, UpdateHomeschoolSemesterRequest>(
+      `/homeschool/semesters/${semesterId}`,
+      payload,
+    );
   }
 
-  async deleteHomeschoolSemester(semesterId: number, householdId: number): Promise<void> {
-    return this.delete(`/homeschool/semesters/${semesterId}`, { household_id: householdId });
+  async deleteHomeschoolSemester(
+    semesterId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/semesters/${semesterId}`, {
+      household_id: householdId,
+    });
   }
 
-  async listHomeschoolSubjects(householdId: number): Promise<HomeschoolSubject[]> {
-    return this.get<HomeschoolSubject[]>("/homeschool/subjects", { household_id: householdId });
+  async listHomeschoolSubjects(
+    householdId: number,
+  ): Promise<HomeschoolSubject[]> {
+    return this.get<HomeschoolSubject[]>("/homeschool/subjects", {
+      household_id: householdId,
+    });
   }
 
-  async createHomeschoolSubject(payload: CreateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
-    return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>("/homeschool/subjects", payload);
+  async createHomeschoolSubject(
+    payload: CreateHomeschoolSubjectRequest,
+  ): Promise<HomeschoolSubject> {
+    return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>(
+      "/homeschool/subjects",
+      payload,
+    );
   }
 
-  async updateHomeschoolSubject(subjectId: number, payload: UpdateHomeschoolSubjectRequest): Promise<HomeschoolSubject> {
-    return this.put<HomeschoolSubject, UpdateHomeschoolSubjectRequest>(`/homeschool/subjects/${subjectId}`, payload);
+  async updateHomeschoolSubject(
+    subjectId: number,
+    payload: UpdateHomeschoolSubjectRequest,
+  ): Promise<HomeschoolSubject> {
+    return this.put<HomeschoolSubject, UpdateHomeschoolSubjectRequest>(
+      `/homeschool/subjects/${subjectId}`,
+      payload,
+    );
   }
 
-  async deleteHomeschoolSubject(subjectId: number, householdId: number): Promise<void> {
-    return this.delete(`/homeschool/subjects/${subjectId}`, { household_id: householdId });
+  async deleteHomeschoolSubject(
+    subjectId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/subjects/${subjectId}`, {
+      household_id: householdId,
+    });
   }
 
-  async listHomeschoolDayComments(householdId: number, childId?: number): Promise<HomeschoolDayComment[]> {
-    return this.get<HomeschoolDayComment[]>("/homeschool/day-comments", { household_id: householdId, child_id: childId });
+  async listHomeschoolDayComments(
+    householdId: number,
+    childId?: number,
+  ): Promise<HomeschoolDayComment[]> {
+    return this.get<HomeschoolDayComment[]>("/homeschool/day-comments", {
+      household_id: householdId,
+      child_id: childId,
+    });
   }
 
-  async upsertHomeschoolDayComment(payload: UpsertHomeschoolDayCommentRequest): Promise<HomeschoolDayComment> {
-    return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>("/homeschool/day-comments", payload);
+  async upsertHomeschoolDayComment(
+    payload: UpsertHomeschoolDayCommentRequest,
+  ): Promise<HomeschoolDayComment> {
+    return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>(
+      "/homeschool/day-comments",
+      payload,
+    );
   }
 
-  async deleteHomeschoolDayComment(commentId: number, householdId: number): Promise<void> {
-    return this.delete(`/homeschool/day-comments/${commentId}`, { household_id: householdId });
+  async deleteHomeschoolDayComment(
+    commentId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/day-comments/${commentId}`, {
+      household_id: householdId,
+    });
   }
 
-  async listHomeschoolGrades(householdId: number, childId?: number): Promise<HomeschoolGrade[]> {
-    return this.get<HomeschoolGrade[]>("/homeschool/grades", { household_id: householdId, child_id: childId });
+  async listHomeschoolGrades(
+    householdId: number,
+    childId?: number,
+  ): Promise<HomeschoolGrade[]> {
+    return this.get<HomeschoolGrade[]>("/homeschool/grades", {
+      household_id: householdId,
+      child_id: childId,
+    });
   }
 
-  async upsertHomeschoolGrade(payload: UpsertHomeschoolGradeRequest): Promise<HomeschoolGrade> {
-    return this.put<HomeschoolGrade, UpsertHomeschoolGradeRequest>("/homeschool/grades", payload);
+  async upsertHomeschoolGrade(
+    payload: UpsertHomeschoolGradeRequest,
+  ): Promise<HomeschoolGrade> {
+    return this.put<HomeschoolGrade, UpsertHomeschoolGradeRequest>(
+      "/homeschool/grades",
+      payload,
+    );
   }
 
-  async deleteHomeschoolGrade(gradeId: number, householdId: number): Promise<void> {
-    return this.delete(`/homeschool/grades/${gradeId}`, { household_id: householdId });
+  async deleteHomeschoolGrade(
+    gradeId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/grades/${gradeId}`, {
+      household_id: householdId,
+    });
   }
 
-  async listHomeschoolAttendance(householdId: number, childId?: number): Promise<HomeschoolAttendance[]> {
-    return this.get<HomeschoolAttendance[]>("/homeschool/attendance", { household_id: householdId, child_id: childId });
+  async listHomeschoolAttendance(
+    householdId: number,
+    childId?: number,
+  ): Promise<HomeschoolAttendance[]> {
+    return this.get<HomeschoolAttendance[]>("/homeschool/attendance", {
+      household_id: householdId,
+      child_id: childId,
+    });
   }
 
-  async upsertHomeschoolAttendance(payload: UpsertHomeschoolAttendanceRequest): Promise<HomeschoolAttendance> {
-    return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>("/homeschool/attendance", payload);
+  async upsertHomeschoolAttendance(
+    payload: UpsertHomeschoolAttendanceRequest,
+  ): Promise<HomeschoolAttendance> {
+    return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>(
+      "/homeschool/attendance",
+      payload,
+    );
   }
 
-  async deleteHomeschoolAttendance(attendanceId: number, householdId: number): Promise<void> {
-    return this.delete(`/homeschool/attendance/${attendanceId}`, { household_id: householdId });
+  async deleteHomeschoolAttendance(
+    attendanceId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/attendance/${attendanceId}`, {
+      household_id: householdId,
+    });
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {
@@ -219,7 +335,10 @@ export class ApiClient {
     return this.post<Chore, CreateChoreRequest>("/chores", payload);
   }
 
-  async updateChore(choreId: number, payload: UpdateChoreRequest): Promise<Chore> {
+  async updateChore(
+    choreId: number,
+    payload: UpdateChoreRequest,
+  ): Promise<Chore> {
     return this.patch<Chore, UpdateChoreRequest>(`/chores/${choreId}`, payload);
   }
 
@@ -227,20 +346,34 @@ export class ApiClient {
     return this.delete(`/chores/${choreId}`, { household_id: householdId });
   }
 
-  async listEligibleChores(params: ListEligibleChoresParams): Promise<EligibleChore[]> {
+  async listEligibleChores(
+    params: ListEligibleChoresParams,
+  ): Promise<EligibleChore[]> {
     return this.get<EligibleChore[]>("/children/me/eligible-chores", params);
   }
 
-  async createSubmission(payload: SubmissionRequest): Promise<SubmissionResponse> {
-    return this.post<SubmissionResponse, SubmissionRequest>("/submissions", payload);
+  async createSubmission(
+    payload: SubmissionRequest,
+    params: { child_id?: number } = {},
+  ): Promise<SubmissionResponse> {
+    return this.post<SubmissionResponse, SubmissionRequest>(
+      "/submissions",
+      payload,
+      params,
+    );
   }
 
-  async listSubmissions(params: ListSubmissionsParams = {}): Promise<SubmissionReview[]> {
+  async listSubmissions(
+    params: ListSubmissionsParams = {},
+  ): Promise<SubmissionReview[]> {
     return this.get<SubmissionReview[]>("/submissions", params);
   }
 
   async approveSubmission(submissionId: number): Promise<SubmissionReview> {
-    return this.post<SubmissionReview, Record<string, never>>(`/submissions/${submissionId}/approve-all`, {});
+    return this.post<SubmissionReview, Record<string, never>>(
+      `/submissions/${submissionId}/approve-all`,
+      {},
+    );
   }
 
   async decideSubmissionItem(
@@ -254,23 +387,37 @@ export class ApiClient {
     );
   }
 
-  private async get<TResponse>(path: string, query?: RequestQuery): Promise<TResponse> {
+  private async get<TResponse>(
+    path: string,
+    query?: RequestQuery,
+  ): Promise<TResponse> {
     return this.request<TResponse>(path, { method: "GET" }, query);
   }
 
-  private async post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
-    return this.request<TResponse>(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+  private async post<TResponse, TBody>(
+    path: string,
+    body: TBody,
+    query?: RequestQuery,
+  ): Promise<TResponse> {
+    return this.request<TResponse>(
+      path,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+      query,
+    );
   }
 
   private async postNoContent(path: string): Promise<void> {
     await this.request<void>(path, { method: "POST" });
   }
 
-  private async postNoContentWithBody<TBody>(path: string, body: TBody): Promise<void> {
+  private async postNoContentWithBody<TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<void> {
     await this.request<void>(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -278,7 +425,10 @@ export class ApiClient {
     });
   }
 
-  private async put<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+  private async put<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -286,7 +436,10 @@ export class ApiClient {
     });
   }
 
-  private async patch<TResponse, TBody>(path: string, body: TBody): Promise<TResponse> {
+  private async patch<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -298,8 +451,14 @@ export class ApiClient {
     await this.request<void>(path, { method: "DELETE" }, query);
   }
 
-  private async request<TResponse>(path: string, init: RequestInit, query?: RequestQuery): Promise<TResponse> {
-    const csrfToken = requiresCsrfToken(init.method) ? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME) : null;
+  private async request<TResponse>(
+    path: string,
+    init: RequestInit,
+    query?: RequestQuery,
+  ): Promise<TResponse> {
+    const csrfToken = requiresCsrfToken(init.method)
+      ? (this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME))
+      : null;
 
     const response = await this.fetchImpl(buildUrl(this.baseUrl, path, query), {
       ...init,
@@ -313,7 +472,10 @@ export class ApiClient {
 
     const contentType = response.headers.get("content-type");
     const noBody = response.status === 204 || response.status === 205;
-    const hasJsonBody = !noBody && contentType !== null && contentType.includes("application/json");
+    const hasJsonBody =
+      !noBody &&
+      contentType !== null &&
+      contentType.includes("application/json");
     const data: unknown = hasJsonBody ? await response.json() : undefined;
 
     if (!response.ok) {
@@ -329,7 +491,9 @@ export function createApiClient(config: ApiClientConfig = {}): ApiClient {
   return new ApiClient(config);
 }
 
-export const apiClient = createApiClient({ baseUrl: import.meta.env.VITE_API_BASE_URL });
+export const apiClient = createApiClient({
+  baseUrl: import.meta.env.VITE_API_BASE_URL,
+});
 
 export function resolveApiBaseUrl(): string {
   const rawValue = import.meta.env.VITE_API_BASE_URL;
@@ -373,7 +537,10 @@ function buildUrl(baseUrl: string, path: string, query?: RequestQuery): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   if (isAbsoluteHttpUrl(baseUrl)) {
-    const absoluteUrl = new URL(normalizedPath.replace(/^\/+/, ""), `${baseUrl}/`);
+    const absoluteUrl = new URL(
+      normalizedPath.replace(/^\/+/, ""),
+      `${baseUrl}/`,
+    );
     appendQueryParams(absoluteUrl.searchParams, query);
     return absoluteUrl.toString();
   }
@@ -389,7 +556,10 @@ function buildUrl(baseUrl: string, path: string, query?: RequestQuery): string {
   return serialized.length > 0 ? `${relativeUrl}?${serialized}` : relativeUrl;
 }
 
-function appendQueryParams(searchParams: URLSearchParams, query?: RequestQuery): void {
+function appendQueryParams(
+  searchParams: URLSearchParams,
+  query?: RequestQuery,
+): void {
   if (query === undefined) {
     return;
   }
@@ -406,7 +576,12 @@ function isAbsoluteHttpUrl(value: string): boolean {
 }
 
 function requiresCsrfToken(method?: string): boolean {
-  return method !== undefined && method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+  return (
+    method !== undefined &&
+    method !== "GET" &&
+    method !== "HEAD" &&
+    method !== "OPTIONS"
+  );
 }
 
 function readCookieValue(name: string): string | null {
@@ -436,7 +611,9 @@ function extractErrorDetail(data: unknown, fallback: string): string {
     return detail;
   }
   if (Array.isArray(detail)) {
-    const messages = detail.map(formatValidationDetail).filter((message) => message.length > 0);
+    const messages = detail
+      .map(formatValidationDetail)
+      .filter((message) => message.length > 0);
     if (messages.length > 0) {
       return messages.join(" ");
     }
@@ -454,7 +631,9 @@ function formatValidationDetail(value: unknown): string {
   const record = value as Record<string, unknown>;
   const message = typeof record.msg === "string" ? record.msg : "";
   const location = Array.isArray(record.loc)
-    ? record.loc.filter((part) => typeof part === "string" || typeof part === "number").join(".")
+    ? record.loc
+        .filter((part) => typeof part === "string" || typeof part === "number")
+        .join(".")
     : "";
   if (message.length === 0) {
     return "";

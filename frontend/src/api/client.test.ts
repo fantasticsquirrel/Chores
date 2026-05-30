@@ -1,19 +1,37 @@
-import { ApiClient, ApiClientError, CSRF_HEADER_NAME, DEFAULT_API_BASE_URL, resolveApiBaseUrl } from "./client";
+import {
+  ApiClient,
+  ApiClientError,
+  CSRF_HEADER_NAME,
+  DEFAULT_API_BASE_URL,
+  resolveApiBaseUrl,
+} from "./client";
 
 describe("ApiClient", () => {
   it("calls /chore-api children list endpoint with typed query params", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify([{ id: 1, household_id: 2, name: "Maya", active: true }]), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
+      new Response(
+        JSON.stringify([
+          { id: 1, household_id: 2, name: "Maya", active: true },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
-    const children = await client.listChildren({ household_id: 2, active_only: true });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    const children = await client.listChildren({
+      household_id: 2,
+      active_only: true,
+    });
 
-    expect(children).toEqual([{ id: 1, household_id: 2, name: "Maya", active: true }]);
+    expect(children).toEqual([
+      { id: 1, household_id: 2, name: "Maya", active: true },
+    ]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
       "/chore-api/children?household_id=2&active_only=true",
@@ -24,13 +42,18 @@ describe("ApiClient", () => {
   it("serializes typed create child payload for POST requests", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ id: 3, household_id: 9, name: "Leo", active: true }), {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
-      }),
+      new Response(
+        JSON.stringify({ id: 3, household_id: 9, name: "Leo", active: true }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     await client.createChild({ household_id: 9, name: "Leo", active: true });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -68,8 +91,13 @@ describe("ApiClient", () => {
       ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
-    await client.login({ email: "parent@example.com", password: "password123" });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.login({
+      email: "parent@example.com",
+      password: "password123",
+    });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/chore-api/auth/login",
@@ -80,7 +108,10 @@ describe("ApiClient", () => {
           Accept: "application/json",
           "Content-Type": "application/json",
         }),
-        body: JSON.stringify({ email: "parent@example.com", password: "password123" }),
+        body: JSON.stringify({
+          email: "parent@example.com",
+          password: "password123",
+        }),
       }),
     );
   });
@@ -106,7 +137,9 @@ describe("ApiClient", () => {
       ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     await client.getCurrentSession();
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -141,8 +174,13 @@ describe("ApiClient", () => {
       )
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
-    await client.login({ email: "parent@example.com", password: "password123" });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.login({
+      email: "parent@example.com",
+      password: "password123",
+    });
     await client.logout();
 
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -182,8 +220,13 @@ describe("ApiClient", () => {
       )
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
-    await client.login({ email: "parent@example.com", password: "password123" });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.login({
+      email: "parent@example.com",
+      password: "password123",
+    });
     await client.changePassword({
       current_password: "password123",
       new_password: "new-password-456",
@@ -217,9 +260,13 @@ describe("ApiClient", () => {
       }),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
 
-    await expect(client.updateChild(11, { household_id: 2, active: false })).rejects.toMatchObject<ApiClientError>({
+    await expect(
+      client.updateChild(11, { household_id: 2, active: false }),
+    ).rejects.toMatchObject<ApiClientError>({
       name: "ApiClientError",
       status: 404,
       detail: "Child not found.",
@@ -229,18 +276,57 @@ describe("ApiClient", () => {
   it("calls eligible chores endpoint with date query param", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify([{ chore_id: 12, name: "Dishes", reward_cents: 300, occurrence_date: "2026-02-23" }]), {
+      new Response(
+        JSON.stringify([
+          {
+            chore_id: 12,
+            name: "Dishes",
+            reward_cents: 300,
+            occurrence_date: "2026-02-23",
+          },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    const chores = await client.listEligibleChores({ date: "2026-02-23" });
+
+    expect(chores).toEqual([
+      {
+        chore_id: 12,
+        name: "Dishes",
+        reward_cents: 300,
+        occurrence_date: "2026-02-23",
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/children/me/eligible-chores?date=2026-02-23",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+  });
+
+  it("calls eligible chores endpoint with parent child scope", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify([]), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
-    const chores = await client.listEligibleChores({ date: "2026-02-23" });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.listEligibleChores({ date: "2026-02-23", child_id: 9 });
 
-    expect(chores).toEqual([{ chore_id: 12, name: "Dishes", reward_cents: 300, occurrence_date: "2026-02-23" }]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/chore-api/children/me/eligible-chores?date=2026-02-23",
+      "/chore-api/children/me/eligible-chores?date=2026-02-23&child_id=9",
       expect.objectContaining({ method: "GET", credentials: "include" }),
     );
   });
@@ -263,7 +349,9 @@ describe("ApiClient", () => {
       ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     await client.createSubmission({ for_date: "2026-02-23", chore_ids: [12] });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -275,6 +363,42 @@ describe("ApiClient", () => {
           Accept: "application/json",
           "Content-Type": "application/json",
         }),
+        body: JSON.stringify({ for_date: "2026-02-23", chore_ids: [12] }),
+      }),
+    );
+  });
+
+  it("serializes parent-scoped submission requests with child id query", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 6,
+          child_id: 9,
+          for_date: "2026-02-23",
+          status: "PENDING",
+          items: [{ chore_id: 12, status: "PENDING" }],
+        }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.createSubmission(
+      { for_date: "2026-02-23", chore_ids: [12] },
+      { child_id: 9 },
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/submissions?child_id=9",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
         body: JSON.stringify({ for_date: "2026-02-23", chore_ids: [12] }),
       }),
     );
@@ -309,7 +433,9 @@ describe("ApiClient", () => {
       ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     const submissions = await client.listSubmissions({ status: "PENDING" });
 
     expect(submissions[0]?.child_name).toBe("Maya");
@@ -355,7 +481,9 @@ describe("ApiClient", () => {
         ),
       );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     await client.approveSubmission(8);
     await client.decideSubmissionItem(8, 21, { status: "REJECTED" });
 
@@ -381,28 +509,61 @@ describe("ApiClient", () => {
     const fetchMock = vi.fn();
     fetchMock
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ modules: [{ key: "chores", name: "Chores", description: "" }] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            modules: [{ key: "chores", name: "Chores", description: "" }],
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify([{ id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [] }]), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify([
+            {
+              id: 2,
+              household_id: 1,
+              email: "parent@example.com",
+              role: "PARENT",
+              child_id: null,
+              modules: [],
+            },
+          ]),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 2, household_id: 1, email: "parent@example.com", role: "PARENT", child_id: null, modules: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 2,
+            household_id: 1,
+            email: "parent@example.com",
+            role: "PARENT",
+            child_id: null,
+            modules: [],
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     await client.getMyModules();
     await client.listUserModuleAccess();
-    await client.setUserModuleAccess(2, { module_key: "homeschool", can_view: true, can_manage: false });
+    await client.setUserModuleAccess(2, {
+      module_key: "homeschool",
+      can_view: true,
+      can_manage: false,
+    });
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -420,7 +581,11 @@ describe("ApiClient", () => {
       expect.objectContaining({
         method: "PUT",
         credentials: "include",
-        body: JSON.stringify({ module_key: "homeschool", can_view: true, can_manage: false }),
+        body: JSON.stringify({
+          module_key: "homeschool",
+          can_view: true,
+          can_manage: false,
+        }),
       }),
     );
   });
@@ -428,18 +593,45 @@ describe("ApiClient", () => {
   it("serializes homeschool list endpoints with household and optional child scope", async () => {
     const fetchMock = vi.fn();
     fetchMock
-      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
-      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify([]), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
     await client.listHomeschoolSemesters(7);
     await client.listHomeschoolSubjects(7);
     await client.listHomeschoolAttendance(7, 3);
@@ -507,101 +699,269 @@ describe("ApiClient", () => {
     const fetchMock = vi.fn();
     fetchMock
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 1, household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20", active: true }), {
-          status: 201,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 1,
+            household_id: 7,
+            name: "Fall",
+            start_date: "2026-08-15",
+            end_date: "2026-12-20",
+            active: true,
+          }),
+          {
+            status: 201,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 2, household_id: 7, name: "Math", color: "#3b82f6", active: true }), {
-          status: 201,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 2,
+            household_id: 7,
+            name: "Math",
+            color: "#3b82f6",
+            active: true,
+          }),
+          {
+            status: 201,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 1, household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20", active: true }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 1,
+            household_id: 7,
+            name: "Spring",
+            start_date: "2027-01-10",
+            end_date: "2027-05-20",
+            active: true,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 2, household_id: 7, name: "Reading", color: "#f97316", active: true }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 2,
+            household_id: 7,
+            name: "Reading",
+            color: "#f97316",
+            active: true,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 3, household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 3,
+            household_id: 7,
+            child_id: 4,
+            subject_id: 2,
+            date: "2026-09-01",
+            present: true,
+            comment: "Fractions",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 4, household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 4,
+            household_id: 7,
+            child_id: 4,
+            date: "2026-09-01",
+            comment: "Good focus",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       )
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ id: 5, household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
+        new Response(
+          JSON.stringify({
+            id: 5,
+            household_id: 7,
+            child_id: 4,
+            subject_id: 2,
+            semester_id: 1,
+            grade: "A",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
       );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
-    await client.createHomeschoolSemester({ household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20" });
-    await client.createHomeschoolSubject({ household_id: 7, name: "Math", color: "#3b82f6" });
-    await client.updateHomeschoolSemester(1, { household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20" });
-    await client.updateHomeschoolSubject(2, { household_id: 7, name: "Reading", color: "#f97316" });
-    await client.upsertHomeschoolAttendance({ household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" });
-    await client.upsertHomeschoolDayComment({ household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" });
-    await client.upsertHomeschoolGrade({ household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.createHomeschoolSemester({
+      household_id: 7,
+      name: "Fall",
+      start_date: "2026-08-15",
+      end_date: "2026-12-20",
+    });
+    await client.createHomeschoolSubject({
+      household_id: 7,
+      name: "Math",
+      color: "#3b82f6",
+    });
+    await client.updateHomeschoolSemester(1, {
+      household_id: 7,
+      name: "Spring",
+      start_date: "2027-01-10",
+      end_date: "2027-05-20",
+    });
+    await client.updateHomeschoolSubject(2, {
+      household_id: 7,
+      name: "Reading",
+      color: "#f97316",
+    });
+    await client.upsertHomeschoolAttendance({
+      household_id: 7,
+      child_id: 4,
+      subject_id: 2,
+      date: "2026-09-01",
+      present: true,
+      comment: "Fractions",
+    });
+    await client.upsertHomeschoolDayComment({
+      household_id: 7,
+      child_id: 4,
+      date: "2026-09-01",
+      comment: "Good focus",
+    });
+    await client.upsertHomeschoolGrade({
+      household_id: 7,
+      child_id: 4,
+      subject_id: 2,
+      semester_id: 1,
+      grade: "A",
+    });
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "/chore-api/homeschool/semesters",
-      expect.objectContaining({ method: "POST", body: JSON.stringify({ household_id: 7, name: "Fall", start_date: "2026-08-15", end_date: "2026-12-20" }) }),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          household_id: 7,
+          name: "Fall",
+          start_date: "2026-08-15",
+          end_date: "2026-12-20",
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       "/chore-api/homeschool/subjects",
-      expect.objectContaining({ method: "POST", body: JSON.stringify({ household_id: 7, name: "Math", color: "#3b82f6" }) }),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          household_id: 7,
+          name: "Math",
+          color: "#3b82f6",
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
       "/chore-api/homeschool/semesters/1",
-      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, name: "Spring", start_date: "2027-01-10", end_date: "2027-05-20" }) }),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          household_id: 7,
+          name: "Spring",
+          start_date: "2027-01-10",
+          end_date: "2027-05-20",
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       4,
       "/chore-api/homeschool/subjects/2",
-      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, name: "Reading", color: "#f97316" }) }),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          household_id: 7,
+          name: "Reading",
+          color: "#f97316",
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       5,
       "/chore-api/homeschool/attendance",
-      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, subject_id: 2, date: "2026-09-01", present: true, comment: "Fractions" }) }),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          household_id: 7,
+          child_id: 4,
+          subject_id: 2,
+          date: "2026-09-01",
+          present: true,
+          comment: "Fractions",
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       6,
       "/chore-api/homeschool/day-comments",
-      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, date: "2026-09-01", comment: "Good focus" }) }),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          household_id: 7,
+          child_id: 4,
+          date: "2026-09-01",
+          comment: "Good focus",
+        }),
+      }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       7,
       "/chore-api/homeschool/grades",
-      expect.objectContaining({ method: "PUT", body: JSON.stringify({ household_id: 7, child_id: 4, subject_id: 2, semester_id: 1, grade: "A" }) }),
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          household_id: 7,
+          child_id: 4,
+          subject_id: 2,
+          semester_id: 1,
+          grade: "A",
+        }),
+      }),
     );
   });
 
   it("supports absolute API base URLs for local development backends", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify([{ id: 1, household_id: 2, name: "Maya", active: true }]), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
+      new Response(
+        JSON.stringify([
+          { id: 1, household_id: 2, name: "Maya", active: true },
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
 
     const client = new ApiClient({
@@ -623,20 +983,27 @@ describe("ApiClient", () => {
   });
 
   it("binds global fetch to avoid illegal invocation errors", async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(function (this: unknown) {
-        if (this !== globalThis) {
-          throw new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation");
-        }
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(function (
+      this: unknown,
+    ) {
+      if (this !== globalThis) {
+        throw new TypeError(
+          "Failed to execute 'fetch' on 'Window': Illegal invocation",
+        );
+      }
 
-        return Promise.resolve(
-          new Response(JSON.stringify([{ id: 1, household_id: 2, name: "Maya", active: true }]), {
+      return Promise.resolve(
+        new Response(
+          JSON.stringify([
+            { id: 1, household_id: 2, name: "Maya", active: true },
+          ]),
+          {
             status: 200,
             headers: { "Content-Type": "application/json" },
-          }),
-        );
-      } as typeof fetch);
+          },
+        ),
+      );
+    } as typeof fetch);
 
     const client = new ApiClient();
     await expect(client.listChildren({ household_id: 2 })).resolves.toEqual([
@@ -646,30 +1013,39 @@ describe("ApiClient", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
-
   it("formats FastAPI validation error details", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({
-        detail: [
-          { loc: ["body", "end_date"], msg: "Value error, end_date must be on or after start_date." },
-        ],
-      }), {
-        status: 422,
-        statusText: "Unprocessable Entity",
-        headers: { "Content-Type": "application/json" },
-      }),
+      new Response(
+        JSON.stringify({
+          detail: [
+            {
+              loc: ["body", "end_date"],
+              msg: "Value error, end_date must be on or after start_date.",
+            },
+          ],
+        }),
+        {
+          status: 422,
+          statusText: "Unprocessable Entity",
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
 
-    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
 
-    await expect(client.createHomeschoolSemester({
-      household_id: 7,
-      name: "Bad dates",
-      start_date: "2026-12-20",
-      end_date: "2026-08-15",
-    })).rejects.toMatchObject({
-      detail: "body.end_date: Value error, end_date must be on or after start_date.",
+    await expect(
+      client.createHomeschoolSemester({
+        household_id: 7,
+        name: "Bad dates",
+        start_date: "2026-12-20",
+        end_date: "2026-08-15",
+      }),
+    ).rejects.toMatchObject({
+      detail:
+        "body.end_date: Value error, end_date must be on or after start_date.",
     });
   });
-
 });
