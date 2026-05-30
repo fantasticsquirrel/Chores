@@ -48,3 +48,17 @@ class TransactionType(str, Enum):
     BONUS = "BONUS"
     PAYMENT = "PAYMENT"
     ADJUSTMENT = "ADJUSTMENT"
+
+
+class HomeschoolSubjectArea(str, Enum):
+    MATH = "math"
+    SCIENCE = "science"
+    GRAMMAR = "grammar"
+    VOCABULARY = "vocabulary"
+
+
+class HomeschoolProgressStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    NEEDS_REVIEW = "needs_review"

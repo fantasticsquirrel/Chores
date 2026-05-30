@@ -10,6 +10,8 @@ from app.models.enums import (
     AssignmentMode,
     CompletionMode,
     CompletionStatus,
+    HomeschoolProgressStatus,
+    HomeschoolSubjectArea,
     ScheduleMode,
     ScheduleUnit,
     SubmissionStatus,
@@ -235,6 +237,73 @@ class HomeschoolGrade(TimestampMixin, Base):
     grade: Mapped[str] = mapped_column(String(64), nullable=False, default="")
 
 
+class HomeschoolCourse(TimestampMixin, Base):
+    __tablename__ = "homeschool_courses"
+    __table_args__ = (
+        CheckConstraint("grade_level >= 1 AND grade_level <= 5", name="homeschool_course_grade_level_range"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject_area: Mapped[HomeschoolSubjectArea] = mapped_column(Enum(HomeschoolSubjectArea, native_enum=False), nullable=False, index=True)
+    grade_level: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(String(3000), nullable=False, default="")
+    color: Mapped[str] = mapped_column(String(32), nullable=False, default="#3b82f6")
+    icon: Mapped[str] = mapped_column(String(64), nullable=False, default="book-open")
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class HomeschoolCourseAssignment(Base):
+    __tablename__ = "homeschool_course_assignments"
+
+    course_id: Mapped[int] = mapped_column(ForeignKey("homeschool_courses.id", ondelete="CASCADE"), primary_key=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), primary_key=True)
+
+
+class HomeschoolLesson(TimestampMixin, Base):
+    __tablename__ = "homeschool_lessons"
+    __table_args__ = (
+        UniqueConstraint("course_id", "sequence_order"),
+        CheckConstraint("sequence_order > 0", name="homeschool_lesson_positive_sequence"),
+        CheckConstraint("estimated_minutes IS NULL OR estimated_minutes > 0", name="homeschool_lesson_positive_minutes"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("homeschool_courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    overview: Mapped[str] = mapped_column(String(5000), nullable=False, default="")
+    sequence_order: Mapped[int] = mapped_column(Integer, nullable=False)
+    estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    activity_prompt: Mapped[str] = mapped_column(String(5000), nullable=False, default="")
+    answer_key: Mapped[str] = mapped_column(String(5000), nullable=False, default="")
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class HomeschoolLessonProgress(TimestampMixin, Base):
+    __tablename__ = "homeschool_lesson_progress"
+    __table_args__ = (
+        UniqueConstraint("child_id", "lesson_id"),
+        CheckConstraint("score_percent IS NULL OR (score_percent >= 0 AND score_percent <= 100)", name="homeschool_progress_score_range"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    child_id: Mapped[int] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id: Mapped[int] = mapped_column(ForeignKey("homeschool_courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    lesson_id: Mapped[int] = mapped_column(ForeignKey("homeschool_lessons.id", ondelete="CASCADE"), nullable=False, index=True)
+    status: Mapped[HomeschoolProgressStatus] = mapped_column(
+        Enum(HomeschoolProgressStatus, native_enum=False),
+        nullable=False,
+        default=HomeschoolProgressStatus.NOT_STARTED,
+    )
+    score_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    notes: Mapped[str] = mapped_column(String(3000), nullable=False, default="")
+
+
 class QuickTemplate(TimestampMixin, Base):
     __tablename__ = "quick_templates"
 
@@ -266,5 +335,9 @@ ALL_MODELS = (
     HomeschoolAttendance,
     HomeschoolDayComment,
     HomeschoolGrade,
+    HomeschoolCourse,
+    HomeschoolCourseAssignment,
+    HomeschoolLesson,
+    HomeschoolLessonProgress,
     QuickTemplate,
 )

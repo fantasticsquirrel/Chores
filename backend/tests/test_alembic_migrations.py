@@ -43,6 +43,10 @@ def test_alembic_upgrade_head_creates_family_manager_schema(tmp_path: Path, monk
         "homeschool_attendance",
         "homeschool_day_comments",
         "homeschool_grades",
+        "homeschool_courses",
+        "homeschool_course_assignments",
+        "homeschool_lessons",
+        "homeschool_lesson_progress",
     }.issubset(table_names)
 
 

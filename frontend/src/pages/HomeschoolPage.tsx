@@ -8,6 +8,7 @@ import { todayISO, toYearMonth } from "./homeschool/dateUtils";
 import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
 import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
+import { HomeschoolLearningPlatform } from "./homeschool/HomeschoolLearningPlatform";
 import { HomeschoolStatus } from "./homeschool/HomeschoolStatus";
 import { formatLoadError, useHomeschoolData } from "./homeschool/useHomeschoolData";
 
@@ -296,8 +297,8 @@ export function HomeschoolPage(): ReactElement {
           </div>
         </div>
         <p>
-          Homeschool now shares Family Manager children and accounts. This slice adds basic semester, subject, and
-          attendance entry before the full calendar UI comes over.
+          Homeschool now combines course planning, built-in math curriculum, progress tracking, attendance, notes, and
+          grades for the children already managed in Family Manager.
         </p>
         <div className="quick-actions">
           <ButtonLink to="/parent/children">Review Linked Children</ButtonLink>
@@ -326,6 +327,8 @@ export function HomeschoolPage(): ReactElement {
       {state.error !== null ? <InlineNotice variant="error">Could not load homeschool data: {state.error}</InlineNotice> : null}
       {actionError !== null ? <InlineNotice variant="error">Homeschool action failed: {actionError}</InlineNotice> : null}
       {actionMessage !== null ? <InlineNotice>{actionMessage}</InlineNotice> : null}
+
+      <HomeschoolLearningPlatform householdId={householdId} children={state.children} />
 
       <div className="dashboard-section-header">
         <p className="eyebrow">Review</p>

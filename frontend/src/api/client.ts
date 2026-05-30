@@ -1,6 +1,7 @@
 import type {
   ApiErrorResponse,
   AuthSessionResponse,
+  BuiltInMathCourse,
   ChangePasswordRequest,
   Child,
   ChildAccount,
@@ -8,19 +9,27 @@ import type {
   CreateChildAccountRequest,
   CreateChildRequest,
   CreateChoreRequest,
+  CreateHomeschoolCourseRequest,
+  CreateHomeschoolLessonRequest,
   CreateHomeschoolSemesterRequest,
   CreateHomeschoolSubjectRequest,
   CreateParentUserRequest,
   EligibleChore,
   HealthResponse,
   HomeschoolAttendance,
+  HomeschoolCourse,
   HomeschoolDayComment,
   HomeschoolGrade,
+  HomeschoolLearningSummary,
+  HomeschoolLesson,
+  HomeschoolProgress,
   HomeschoolSemester,
   HomeschoolSubject,
+  ImportBuiltInMathCourseRequest,
   LoginRequest,
   ListChoresParams,
   ListEligibleChoresParams,
+  ListHomeschoolCoursesParams,
   ListSubmissionsParams,
   ListChildrenParams,
   MyModulesResponse,
@@ -28,6 +37,8 @@ import type {
   ResetChildAccountEmailRequest,
   SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
+  UpdateHomeschoolCourseRequest,
+  UpdateHomeschoolLessonRequest,
   UpdateHomeschoolSemesterRequest,
   UpdateHomeschoolSubjectRequest,
   SubmissionReview,
@@ -38,6 +49,7 @@ import type {
   UpsertHomeschoolAttendanceRequest,
   UpsertHomeschoolDayCommentRequest,
   UpsertHomeschoolGradeRequest,
+  UpsertHomeschoolProgressRequest,
   UserModuleAccess,
 } from "./models";
 
@@ -335,6 +347,111 @@ export class ApiClient {
     return this.delete(`/homeschool/attendance/${attendanceId}`, {
       household_id: householdId,
     });
+  }
+
+  async getHomeschoolLearningSummary(
+    householdId: number,
+  ): Promise<HomeschoolLearningSummary> {
+    return this.get<HomeschoolLearningSummary>("/homeschool/learning-summary", {
+      household_id: householdId,
+    });
+  }
+
+  async listHomeschoolCourses(
+    params: ListHomeschoolCoursesParams,
+  ): Promise<HomeschoolCourse[]> {
+    return this.get<HomeschoolCourse[]>("/homeschool/courses", params);
+  }
+
+  async createHomeschoolCourse(
+    payload: CreateHomeschoolCourseRequest,
+  ): Promise<HomeschoolCourse> {
+    return this.post<HomeschoolCourse, CreateHomeschoolCourseRequest>(
+      "/homeschool/courses",
+      payload,
+    );
+  }
+
+  async updateHomeschoolCourse(
+    courseId: number,
+    payload: UpdateHomeschoolCourseRequest,
+  ): Promise<HomeschoolCourse> {
+    return this.put<HomeschoolCourse, UpdateHomeschoolCourseRequest>(
+      `/homeschool/courses/${courseId}`,
+      payload,
+    );
+  }
+
+  async archiveHomeschoolCourse(
+    courseId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/courses/${courseId}`, {
+      household_id: householdId,
+    });
+  }
+
+  async listHomeschoolLessons(
+    courseId: number,
+    householdId: number,
+  ): Promise<HomeschoolLesson[]> {
+    return this.get<HomeschoolLesson[]>(
+      `/homeschool/courses/${courseId}/lessons`,
+      {
+        household_id: householdId,
+      },
+    );
+  }
+
+  async createHomeschoolLesson(
+    courseId: number,
+    payload: CreateHomeschoolLessonRequest,
+  ): Promise<HomeschoolLesson> {
+    return this.post<HomeschoolLesson, CreateHomeschoolLessonRequest>(
+      `/homeschool/courses/${courseId}/lessons`,
+      payload,
+    );
+  }
+
+  async updateHomeschoolLesson(
+    lessonId: number,
+    payload: UpdateHomeschoolLessonRequest,
+  ): Promise<HomeschoolLesson> {
+    return this.put<HomeschoolLesson, UpdateHomeschoolLessonRequest>(
+      `/homeschool/lessons/${lessonId}`,
+      payload,
+    );
+  }
+
+  async archiveHomeschoolLesson(
+    lessonId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/lessons/${lessonId}`, {
+      household_id: householdId,
+    });
+  }
+
+  async upsertHomeschoolProgress(
+    payload: UpsertHomeschoolProgressRequest,
+  ): Promise<HomeschoolProgress> {
+    return this.put<HomeschoolProgress, UpsertHomeschoolProgressRequest>(
+      "/homeschool/progress",
+      payload,
+    );
+  }
+
+  async listBuiltInMathCurriculum(): Promise<BuiltInMathCourse[]> {
+    return this.get<BuiltInMathCourse[]>("/homeschool/math-curriculum");
+  }
+
+  async importBuiltInMathCourse(
+    payload: ImportBuiltInMathCourseRequest,
+  ): Promise<HomeschoolCourse> {
+    return this.post<HomeschoolCourse, ImportBuiltInMathCourseRequest>(
+      "/homeschool/math-curriculum/import",
+      payload,
+    );
   }
 
   async listChores(params: ListChoresParams): Promise<Chore[]> {

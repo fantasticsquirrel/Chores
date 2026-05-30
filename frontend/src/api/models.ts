@@ -294,6 +294,157 @@ export interface UpsertHomeschoolGradeRequest {
   grade: string;
 }
 
+export type HomeschoolSubjectArea =
+  | "math"
+  | "science"
+  | "grammar"
+  | "vocabulary";
+
+export type HomeschoolProgressStatus =
+  | "not_started"
+  | "in_progress"
+  | "completed"
+  | "needs_review";
+
+export interface HomeschoolCourseStudentSummary {
+  child_id: number;
+  child_name: string;
+  lesson_count: number;
+  completed_count: number;
+  in_progress_count: number;
+  needs_review_count: number;
+  completion_percent: number;
+}
+
+export interface HomeschoolCourse {
+  id: number;
+  household_id: number;
+  subject_area: HomeschoolSubjectArea;
+  grade_level: number;
+  title: string;
+  description: string;
+  color: string;
+  icon: string;
+  active: boolean;
+  archived_at: string | null;
+  assigned_child_ids: number[];
+  lesson_count: number;
+  completed_count: number;
+  in_progress_count: number;
+  needs_review_count: number;
+  completion_percent: number;
+  student_summaries: HomeschoolCourseStudentSummary[];
+}
+
+export interface CreateHomeschoolCourseRequest {
+  household_id: number;
+  subject_area: HomeschoolSubjectArea;
+  grade_level: number;
+  title: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  active?: boolean;
+  assigned_child_ids: number[];
+}
+
+export type UpdateHomeschoolCourseRequest = CreateHomeschoolCourseRequest;
+
+export interface ListHomeschoolCoursesParams {
+  household_id: number;
+  subject_area?: HomeschoolSubjectArea;
+  active_only?: boolean;
+}
+
+export interface HomeschoolLesson {
+  id: number;
+  household_id: number;
+  course_id: number;
+  title: string;
+  overview: string;
+  sequence_order: number;
+  estimated_minutes: number | null;
+  activity_prompt: string;
+  answer_key: string;
+  archived_at: string | null;
+}
+
+export interface CreateHomeschoolLessonRequest {
+  household_id: number;
+  title: string;
+  overview?: string;
+  sequence_order: number;
+  estimated_minutes?: number | null;
+  activity_prompt?: string;
+  answer_key?: string;
+}
+
+export type UpdateHomeschoolLessonRequest = CreateHomeschoolLessonRequest;
+
+export interface HomeschoolProgress {
+  id: number;
+  household_id: number;
+  child_id: number;
+  course_id: number;
+  lesson_id: number;
+  status: HomeschoolProgressStatus;
+  score_percent: number | null;
+  completed_at: string | null;
+  notes: string;
+}
+
+export interface UpsertHomeschoolProgressRequest {
+  household_id: number;
+  child_id: number;
+  lesson_id: number;
+  status: HomeschoolProgressStatus;
+  score_percent?: number | null;
+  completed_at?: string | null;
+  notes?: string;
+}
+
+export interface HomeschoolStudentLearningSummary {
+  child_id: number;
+  child_name: string;
+  active: boolean;
+  assigned_course_count: number;
+  lesson_count: number;
+  completed_count: number;
+  needs_review_count: number;
+  completion_percent: number;
+}
+
+export interface HomeschoolLearningSummary {
+  students: HomeschoolStudentLearningSummary[];
+  courses: HomeschoolCourse[];
+  progress_records: HomeschoolProgress[];
+}
+
+export interface BuiltInMathLesson {
+  sequence_order: number;
+  title: string;
+  overview: string;
+  estimated_minutes: number;
+  activity_prompt: string;
+  answer_key: string;
+}
+
+export interface BuiltInMathCourse {
+  grade_level: number;
+  title: string;
+  description: string;
+  color: string;
+  icon: string;
+  topics: string[];
+  lessons: BuiltInMathLesson[];
+}
+
+export interface ImportBuiltInMathCourseRequest {
+  household_id: number;
+  grade_level: number;
+  assigned_child_ids: number[];
+}
+
 export interface UserModuleAccess {
   id: number;
   household_id: number;

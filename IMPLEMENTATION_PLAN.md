@@ -77,3 +77,12 @@ STATUS: COMPLETE
 
 
 STATUS: READY FOR PR REVIEW — `family-manager` keeps `/chore/` and `/chore-api/` routes stable, adds persisted modules/admin access, ports core Homeschool workflows, and has passing frontend/backend gates. Do not merge without Jon approval.
+
+---
+
+# Homeschool Learning Platform Plan
+
+## Phase HLP-1: Course, lesson, progress, and built-in math experience
+- [x] Add household-scoped homeschool courses, lessons, assignments, lesson progress, built-in grade 1-5 math curriculum import, and a richer parent learning dashboard/editor UI with backend and frontend regression coverage.
+
+STATUS: COMPLETE — `feature/homeschool-learning-platform` adds a practical homeschool learning platform inside the existing Family Manager Homeschool module while preserving `/chore/` and `/chore-api/` deployment routes, parent-only module access, household boundaries, and CSRF/auth patterns.

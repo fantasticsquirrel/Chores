@@ -10,6 +10,101 @@ const subjects = [{ id: 20, household_id: 1, name: "Math", color: "#ef4444", act
 const attendanceRecords = [{ id: 30, household_id: 1, child_id: 1, subject_id: 20, date: "2026-09-01", present: true, comment: "Fractions" }];
 const dayComments = [{ id: 40, household_id: 1, child_id: 1, date: "2026-09-01", comment: "Good focus" }];
 const grades = [{ id: 50, household_id: 1, child_id: 1, subject_id: 20, semester_id: 10, grade: "A" }];
+const learningCourse = {
+  id: 60,
+  household_id: 1,
+  subject_area: "math" as const,
+  grade_level: 3,
+  title: "Grade 3 Math Foundations",
+  description: "Multiplication, division, fractions, and geometry.",
+  color: "#20d3ff",
+  icon: "abacus",
+  active: true,
+  archived_at: null,
+  assigned_child_ids: [1],
+  lesson_count: 2,
+  completed_count: 1,
+  in_progress_count: 0,
+  needs_review_count: 0,
+  completion_percent: 50,
+  student_summaries: [
+    {
+      child_id: 1,
+      child_name: "Maya",
+      lesson_count: 2,
+      completed_count: 1,
+      in_progress_count: 0,
+      needs_review_count: 0,
+      completion_percent: 50,
+    },
+  ],
+};
+const lessons = [
+  {
+    id: 70,
+    household_id: 1,
+    course_id: 60,
+    title: "Multiplication as Equal Groups",
+    overview: "Connect arrays and repeated addition.",
+    sequence_order: 1,
+    estimated_minutes: 30,
+    activity_prompt: "Build arrays.",
+    answer_key: "4 x 6 = 24.",
+    archived_at: null,
+  },
+  {
+    id: 71,
+    household_id: 1,
+    course_id: 60,
+    title: "Fractions on a Number Line",
+    overview: "Partition number lines into equal parts.",
+    sequence_order: 2,
+    estimated_minutes: 30,
+    activity_prompt: "Mark halves and thirds.",
+    answer_key: "Equal partitions.",
+    archived_at: null,
+  },
+];
+const progressRecords = [
+  {
+    id: 80,
+    household_id: 1,
+    child_id: 1,
+    course_id: 60,
+    lesson_id: 70,
+    status: "completed" as const,
+    score_percent: 95,
+    completed_at: "2026-09-03T12:00:00Z",
+    notes: "Strong fact fluency.",
+  },
+];
+const learningSummary = {
+  students: [
+    {
+      child_id: 1,
+      child_name: "Maya",
+      active: true,
+      assigned_course_count: 1,
+      lesson_count: 2,
+      completed_count: 1,
+      needs_review_count: 0,
+      completion_percent: 50,
+    },
+  ],
+  courses: [learningCourse],
+  progress_records: progressRecords,
+};
+const mathCurriculum = [
+  {
+    grade_level: 3,
+    title: "Grade 3 Math Foundations",
+    description: "A third grade course for multiplication, division, fractions, area, and data.",
+    color: "#ff4f9e",
+    icon: "times",
+    topics: ["multiplication facts", "division", "fractions"],
+    lessons,
+  },
+];
 
 function mockHomeschoolApi(): void {
   vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
@@ -24,6 +119,9 @@ function mockHomeschoolApi(): void {
   vi.spyOn(apiClient, "listHomeschoolAttendance").mockResolvedValue(attendanceRecords);
   vi.spyOn(apiClient, "listHomeschoolDayComments").mockResolvedValue(dayComments);
   vi.spyOn(apiClient, "listHomeschoolGrades").mockResolvedValue(grades);
+  vi.spyOn(apiClient, "getHomeschoolLearningSummary").mockResolvedValue(learningSummary);
+  vi.spyOn(apiClient, "listBuiltInMathCurriculum").mockResolvedValue(mathCurriculum);
+  vi.spyOn(apiClient, "listHomeschoolLessons").mockResolvedValue(lessons);
 }
 
 describe("Homeschool page", () => {
@@ -48,6 +146,140 @@ describe("Homeschool page", () => {
     expect(await screen.findByText("Fall 2026 · 2026-08-15 to 2026-12-20")).toBeVisible();
     expect(screen.getByText("Grade: A")).toBeVisible();
     expect(apiClient.listHomeschoolAttendance).toHaveBeenCalledWith(1);
+  });
+
+  it("renders the homeschool learning dashboard and built-in math program", async () => {
+    mockHomeschoolApi();
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Learning Dashboard" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Homeschool Learning" })).toBeVisible();
+    expect((await screen.findAllByText("Grade 3 Math Foundations")).length).toBeGreaterThan(0);
+    expect(await screen.findByText("Maya: 50%")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Grade 1-5 Math Program" })).toBeVisible();
+    expect(screen.getByText("multiplication facts")).toBeVisible();
+    expect(screen.getAllByText("Fractions on a Number Line").length).toBeGreaterThan(0);
+  });
+
+  it("creates learning courses and lessons through the homeschool APIs", async () => {
+    mockHomeschoolApi();
+    const createCourseSpy = vi.spyOn(apiClient, "createHomeschoolCourse").mockResolvedValue({
+      ...learningCourse,
+      id: 61,
+      subject_area: "science",
+      grade_level: 4,
+      title: "Life Science Lab",
+      description: "Plants, habitats, and observation notebooks.",
+    });
+    const createLessonSpy = vi.spyOn(apiClient, "createHomeschoolLesson").mockResolvedValue({
+      id: 72,
+      household_id: 1,
+      course_id: 60,
+      title: "Food Chains",
+      overview: "Trace energy through an ecosystem.",
+      sequence_order: 3,
+      estimated_minutes: 35,
+      activity_prompt: "Draw a local food chain.",
+      answer_key: "Producer, consumer, decomposer roles are identified.",
+      archived_at: null,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Children: Maya");
+
+    const coursePanel = screen.getByRole("heading", { name: "Create Course" }).closest("article");
+    expect(coursePanel).not.toBeNull();
+    fireEvent.change(within(coursePanel as HTMLElement).getByLabelText("Course Title"), { target: { value: "Life Science Lab" } });
+    fireEvent.change(within(coursePanel as HTMLElement).getByLabelText("Subject Area"), { target: { value: "science" } });
+    fireEvent.change(within(coursePanel as HTMLElement).getByLabelText("Grade Level"), { target: { value: "4" } });
+    fireEvent.change(within(coursePanel as HTMLElement).getByLabelText("Description"), { target: { value: "Plants, habitats, and observation notebooks." } });
+    fireEvent.click(within(coursePanel as HTMLElement).getByRole("button", { name: "Create Course" }));
+
+    await waitFor(() => expect(createCourseSpy).toHaveBeenCalledWith({
+      household_id: 1,
+      subject_area: "science",
+      grade_level: 4,
+      title: "Life Science Lab",
+      description: "Plants, habitats, and observation notebooks.",
+      color: "#20d3ff",
+      icon: "abacus",
+      active: true,
+      assigned_child_ids: [1],
+    }));
+
+    const lessonPanel = screen.getByRole("heading", { name: "Lesson Builder" }).closest("article");
+    expect(lessonPanel).not.toBeNull();
+    fireEvent.change(within(lessonPanel as HTMLElement).getByLabelText("Lesson Title"), { target: { value: "Food Chains" } });
+    fireEvent.change(within(lessonPanel as HTMLElement).getByLabelText("Sequence Order"), { target: { value: "3" } });
+    fireEvent.change(within(lessonPanel as HTMLElement).getByLabelText("Estimated Minutes"), { target: { value: "35" } });
+    fireEvent.change(within(lessonPanel as HTMLElement).getByLabelText("Overview"), { target: { value: "Trace energy through an ecosystem." } });
+    fireEvent.change(within(lessonPanel as HTMLElement).getByLabelText("Activity Prompt"), { target: { value: "Draw a local food chain." } });
+    fireEvent.change(within(lessonPanel as HTMLElement).getByLabelText("Answer Key / Teacher Notes"), { target: { value: "Producer, consumer, decomposer roles are identified." } });
+    fireEvent.click(within(lessonPanel as HTMLElement).getByRole("button", { name: "Create Lesson" }));
+
+    await waitFor(() => expect(createLessonSpy).toHaveBeenCalledWith(60, {
+      household_id: 1,
+      title: "Food Chains",
+      overview: "Trace energy through an ecosystem.",
+      sequence_order: 3,
+      estimated_minutes: 35,
+      activity_prompt: "Draw a local food chain.",
+      answer_key: "Producer, consumer, decomposer roles are identified.",
+    }));
+  });
+
+  it("updates learning progress and imports built-in math courses", async () => {
+    mockHomeschoolApi();
+    const progressSpy = vi.spyOn(apiClient, "upsertHomeschoolProgress").mockResolvedValue({
+      ...progressRecords[0],
+      status: "needs_review",
+      score_percent: 82,
+      completed_at: null,
+      notes: "Review factor pairs.",
+    });
+    const importSpy = vi.spyOn(apiClient, "importBuiltInMathCourse").mockResolvedValue(learningCourse);
+
+    render(
+      <MemoryRouter initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("heading", { name: "Mark Lesson Progress" });
+    const progressPanel = screen.getByRole("heading", { name: "Mark Lesson Progress" }).closest("article");
+    expect(progressPanel).not.toBeNull();
+    fireEvent.change(within(progressPanel as HTMLElement).getByLabelText("Lesson"), { target: { value: "71" } });
+    fireEvent.change(within(progressPanel as HTMLElement).getByLabelText("Status"), { target: { value: "needs_review" } });
+    fireEvent.change(within(progressPanel as HTMLElement).getByLabelText("Score"), { target: { value: "82" } });
+    fireEvent.change(within(progressPanel as HTMLElement).getByLabelText("Notes"), { target: { value: "Review factor pairs." } });
+    fireEvent.click(within(progressPanel as HTMLElement).getByRole("button", { name: "Save Progress" }));
+
+    await waitFor(() => expect(progressSpy).toHaveBeenCalledWith({
+      household_id: 1,
+      child_id: 1,
+      lesson_id: 71,
+      status: "needs_review",
+      score_percent: 82,
+      notes: "Review factor pairs.",
+    }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Import Grade 3 Math" }));
+
+    await waitFor(() => expect(importSpy).toHaveBeenCalledWith({
+      household_id: 1,
+      grade_level: 3,
+      assigned_child_ids: [1],
+    }));
   });
 
   it("creates semesters and subjects through the Family Manager APIs", async () => {
