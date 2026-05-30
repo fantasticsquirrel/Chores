@@ -55,6 +55,12 @@ from app.services.homeschool_curriculum import get_builtin_math_course, list_bui
 router = APIRouter(prefix="/homeschool", tags=["homeschool"])
 _PARENT_ROLES = (UserRole.PARENT_ADMIN, UserRole.PARENT)
 _require_homeschool_access = require_module_access(MODULE_HOMESCHOOL, *_PARENT_ROLES)
+_LEARNING_SUBJECT_NAMES: dict[HomeschoolSubjectArea, str] = {
+    HomeschoolSubjectArea.MATH: "Math",
+    HomeschoolSubjectArea.SCIENCE: "Science",
+    HomeschoolSubjectArea.GRAMMAR: "Grammar",
+    HomeschoolSubjectArea.VOCABULARY: "Vocabulary",
+}
 
 
 def _ensure_household_access(user: User, household_id: int) -> None:
@@ -113,6 +119,59 @@ def _replace_course_assignments(session: Session, course_id: int, child_ids: lis
         session.delete(assignment)
     for child_id in child_ids:
         session.add(HomeschoolCourseAssignment(course_id=course_id, child_id=child_id))
+
+
+def _resolve_or_create_learning_subject(session: Session, course: HomeschoolCourse) -> HomeschoolSubject:
+    subject_name = _LEARNING_SUBJECT_NAMES[course.subject_area]
+    subject = session.scalar(
+        select(HomeschoolSubject).where(
+            HomeschoolSubject.household_id == course.household_id,
+            HomeschoolSubject.name == subject_name,
+        )
+    )
+    if subject is not None:
+        return subject
+
+    subject = HomeschoolSubject(
+        household_id=course.household_id,
+        name=subject_name,
+        color=course.color,
+        active=True,
+    )
+    session.add(subject)
+    session.flush()
+    return subject
+
+
+def _record_completed_learning_attendance(
+    session: Session,
+    *,
+    course: HomeschoolCourse,
+    child_id: int,
+    completed_at: datetime,
+) -> None:
+    subject = _resolve_or_create_learning_subject(session, course)
+    attendance_date = completed_at.date()
+    attendance = session.scalar(
+        select(HomeschoolAttendance).where(
+            HomeschoolAttendance.child_id == child_id,
+            HomeschoolAttendance.subject_id == subject.id,
+            HomeschoolAttendance.date == attendance_date,
+        )
+    )
+    if attendance is not None:
+        return
+
+    session.add(
+        HomeschoolAttendance(
+            household_id=course.household_id,
+            child_id=child_id,
+            subject_id=subject.id,
+            date=attendance_date,
+            present=True,
+            comment="",
+        )
+    )
 
 
 def _build_course_responses(session: Session, courses: list[HomeschoolCourse]) -> list[HomeschoolCourseResponse]:
@@ -864,6 +923,13 @@ def upsert_progress(
         progress.score_percent = payload.score_percent
         progress.completed_at = completed_at
         progress.notes = payload.notes
+    if payload.status == HomeschoolProgressStatus.COMPLETED and completed_at is not None:
+        _record_completed_learning_attendance(
+            session,
+            course=course,
+            child_id=payload.child_id,
+            completed_at=completed_at,
+        )
     session.commit()
     session.refresh(progress)
     return progress

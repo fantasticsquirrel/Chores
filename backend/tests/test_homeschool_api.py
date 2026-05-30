@@ -56,6 +56,45 @@ def _login(client: TestClient, user: User, password: str) -> str:
     return token
 
 
+def _create_learning_course_and_lesson(
+    client: TestClient,
+    csrf_token: str,
+    user: User,
+    child: Child,
+    *,
+    subject_area: str,
+) -> tuple[int, int]:
+    course_response = client.post(
+        "/chore-api/homeschool/courses",
+        headers={"X-CSRF-Token": csrf_token},
+        json={
+            "household_id": user.household_id,
+            "subject_area": subject_area,
+            "grade_level": 3,
+            "title": f"{subject_area.title()} Lab",
+            "description": "Focused learning activities.",
+            "color": "#20d3ff",
+            "icon": "book-open",
+            "assigned_child_ids": [child.id],
+        },
+    )
+    assert course_response.status_code == 201
+    course_id = course_response.json()["id"]
+
+    lesson_response = client.post(
+        f"/chore-api/homeschool/courses/{course_id}/lessons",
+        headers={"X-CSRF-Token": csrf_token},
+        json={
+            "household_id": user.household_id,
+            "title": "Lesson One",
+            "overview": "Complete the first activity.",
+            "sequence_order": 1,
+        },
+    )
+    assert lesson_response.status_code == 201
+    return course_id, lesson_response.json()["id"]
+
+
 def test_parent_can_create_and_list_homeschool_semester(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     user, _child, password = _create_parent_fixture()
@@ -755,6 +794,191 @@ def test_parent_can_manage_lessons_and_record_progress_summary(tmp_path: Path, m
     assert summary_response.json()["courses"][0]["completion_percent"] == 50
     assert archive_lesson_response.status_code == 204
     assert [lesson["title"] for lesson in lessons_after_archive_response.json()] == ["Prefixes re-, un-, and pre-"]
+
+
+def test_completed_learning_progress_creates_subject_and_attendance(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        _course_id, lesson_id = _create_learning_course_and_lesson(
+            client,
+            csrf_token,
+            user,
+            child,
+            subject_area="science",
+        )
+        progress_response = client.put(
+            "/chore-api/homeschool/progress",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "lesson_id": lesson_id,
+                "status": "completed",
+                "completed_at": "2026-10-05T14:30:00+00:00",
+            },
+        )
+        subjects_response = client.get(f"/chore-api/homeschool/subjects?household_id={user.household_id}")
+        attendance_response = client.get(
+            f"/chore-api/homeschool/attendance?household_id={user.household_id}&child_id={child.id}"
+        )
+
+    assert progress_response.status_code == 200
+    assert progress_response.json()["status"] == "completed"
+    assert subjects_response.status_code == 200
+    assert [subject["name"] for subject in subjects_response.json()] == ["Science"]
+    subject_id = subjects_response.json()[0]["id"]
+    assert attendance_response.status_code == 200
+    assert attendance_response.json() == [
+        {
+            "id": attendance_response.json()[0]["id"],
+            "household_id": user.household_id,
+            "child_id": child.id,
+            "subject_id": subject_id,
+            "date": "2026-10-05",
+            "present": True,
+            "comment": "",
+        }
+    ]
+
+
+def test_completed_learning_progress_preserves_manual_attendance_and_is_idempotent(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        subject_response = client.post(
+            "/chore-api/homeschool/subjects",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"household_id": user.household_id, "name": "Math", "color": "#ef4444"},
+        )
+        assert subject_response.status_code == 201
+        subject_id = subject_response.json()["id"]
+        attendance_response = client.put(
+            "/chore-api/homeschool/attendance",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "subject_id": subject_id,
+                "date": "2026-10-06",
+                "present": True,
+                "comment": "Manual skip-counting note.",
+            },
+        )
+        assert attendance_response.status_code == 200
+        manual_attendance_id = attendance_response.json()["id"]
+
+        _course_id, lesson_id = _create_learning_course_and_lesson(
+            client,
+            csrf_token,
+            user,
+            child,
+            subject_area="math",
+        )
+        progress_payload = {
+            "household_id": user.household_id,
+            "child_id": child.id,
+            "lesson_id": lesson_id,
+            "status": "completed",
+            "completed_at": "2026-10-06T09:15:00+00:00",
+        }
+        first_progress_response = client.put(
+            "/chore-api/homeschool/progress",
+            headers={"X-CSRF-Token": csrf_token},
+            json=progress_payload,
+        )
+        second_progress_response = client.put(
+            "/chore-api/homeschool/progress",
+            headers={"X-CSRF-Token": csrf_token},
+            json={**progress_payload, "notes": "Saved again."},
+        )
+        needs_review_response = client.put(
+            "/chore-api/homeschool/progress",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "lesson_id": lesson_id,
+                "status": "needs_review",
+            },
+        )
+        subjects_response = client.get(f"/chore-api/homeschool/subjects?household_id={user.household_id}")
+        attendance_list_response = client.get(
+            f"/chore-api/homeschool/attendance?household_id={user.household_id}&child_id={child.id}"
+        )
+
+    assert first_progress_response.status_code == 200
+    assert second_progress_response.status_code == 200
+    assert needs_review_response.status_code == 200
+    assert [subject["name"] for subject in subjects_response.json()] == ["Math"]
+    assert attendance_list_response.status_code == 200
+    assert attendance_list_response.json() == [
+        {
+            "id": manual_attendance_id,
+            "household_id": user.household_id,
+            "child_id": child.id,
+            "subject_id": subject_id,
+            "date": "2026-10-06",
+            "present": True,
+            "comment": "Manual skip-counting note.",
+        }
+    ]
+
+
+def test_learning_progress_does_not_log_attendance_until_completed(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, child, password = _create_parent_fixture()
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        _course_id, lesson_id = _create_learning_course_and_lesson(
+            client,
+            csrf_token,
+            user,
+            child,
+            subject_area="grammar",
+        )
+        in_progress_response = client.put(
+            "/chore-api/homeschool/progress",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "lesson_id": lesson_id,
+                "status": "in_progress",
+            },
+        )
+        needs_review_response = client.put(
+            "/chore-api/homeschool/progress",
+            headers={"X-CSRF-Token": csrf_token},
+            json={
+                "household_id": user.household_id,
+                "child_id": child.id,
+                "lesson_id": lesson_id,
+                "status": "needs_review",
+                "completed_at": "2026-10-07T10:00:00+00:00",
+            },
+        )
+        subjects_response = client.get(f"/chore-api/homeschool/subjects?household_id={user.household_id}")
+        attendance_response = client.get(
+            f"/chore-api/homeschool/attendance?household_id={user.household_id}&child_id={child.id}"
+        )
+
+    assert in_progress_response.status_code == 200
+    assert in_progress_response.json()["completed_at"] is None
+    assert needs_review_response.status_code == 200
+    assert needs_review_response.json()["completed_at"] is None
+    assert subjects_response.status_code == 200
+    assert subjects_response.json() == []
+    assert attendance_response.status_code == 200
+    assert attendance_response.json() == []
 
 
 def test_progress_rejects_unassigned_student(tmp_path: Path, monkeypatch) -> None:
