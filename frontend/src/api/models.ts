@@ -366,6 +366,15 @@ export interface HomeschoolLesson {
   estimated_minutes: number | null;
   activity_prompt: string;
   answer_key: string;
+  learning_objectives: string;
+  materials: string;
+  warm_up: string;
+  direct_instruction: string;
+  guided_practice: string;
+  independent_practice: string;
+  assessment: string;
+  extension: string;
+  remediation: string;
   archived_at: string | null;
 }
 
@@ -377,6 +386,15 @@ export interface CreateHomeschoolLessonRequest {
   estimated_minutes?: number | null;
   activity_prompt?: string;
   answer_key?: string;
+  learning_objectives?: string;
+  materials?: string;
+  warm_up?: string;
+  direct_instruction?: string;
+  guided_practice?: string;
+  independent_practice?: string;
+  assessment?: string;
+  extension?: string;
+  remediation?: string;
 }
 
 export type UpdateHomeschoolLessonRequest = CreateHomeschoolLessonRequest;
@@ -427,6 +445,15 @@ export interface BuiltInMathLesson {
   estimated_minutes: number;
   activity_prompt: string;
   answer_key: string;
+  learning_objectives: string;
+  materials: string;
+  warm_up: string;
+  direct_instruction: string;
+  guided_practice: string;
+  independent_practice: string;
+  assessment: string;
+  extension: string;
+  remediation: string;
 }
 
 export interface BuiltInMathCourse {

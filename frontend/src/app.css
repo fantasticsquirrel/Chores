@@ -977,6 +977,43 @@ body {
   color: var(--text-muted);
 }
 
+.lesson-plan-details {
+  margin-top: 0.65rem;
+}
+
+.lesson-plan-details summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--accent-cyan);
+}
+
+.lesson-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+}
+
+.lesson-plan-section {
+  border: 1px solid #ffffff24;
+  border-radius: 0.75rem;
+  padding: 0.7rem;
+  background: #0000001f;
+}
+
+.lesson-plan-section h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  color: var(--text-main);
+}
+
+.lesson-plan-section p {
+  margin: 0;
+  white-space: pre-line;
+  color: var(--text-muted);
+}
+
 .import-student-picker {
   min-width: min(100%, 18rem);
 }

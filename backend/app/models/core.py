@@ -279,6 +279,15 @@ class HomeschoolLesson(TimestampMixin, Base):
     estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     activity_prompt: Mapped[str] = mapped_column(String(5000), nullable=False, default="")
     answer_key: Mapped[str] = mapped_column(String(5000), nullable=False, default="")
+    learning_objectives: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    materials: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    warm_up: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    direct_instruction: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    guided_practice: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    independent_practice: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    assessment: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    extension: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
+    remediation: Mapped[str] = mapped_column(String(12000), nullable=False, default="")
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 

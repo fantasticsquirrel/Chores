@@ -39,6 +39,28 @@ const learningCourse = {
     },
   ],
 };
+const lessonPlanFields = {
+  learning_objectives: "- Understand the lesson target.",
+  materials: "Pencils and notebook.",
+  warm_up: "Review the prerequisite skill.",
+  direct_instruction: "Model the strategy step by step.",
+  guided_practice: "Solve two examples together.",
+  independent_practice: "Complete a short practice set.",
+  assessment: "Complete one exit ticket problem.",
+  extension: "Try a challenge problem.",
+  remediation: "Return to concrete models.",
+};
+const emptyLessonPlanRequest = {
+  learning_objectives: "",
+  materials: "",
+  warm_up: "",
+  direct_instruction: "",
+  guided_practice: "",
+  independent_practice: "",
+  assessment: "",
+  extension: "",
+  remediation: "",
+};
 const lessons = [
   {
     id: 70,
@@ -50,6 +72,7 @@ const lessons = [
     estimated_minutes: 30,
     activity_prompt: "Build arrays.",
     answer_key: "4 x 6 = 24.",
+    ...lessonPlanFields,
     archived_at: null,
   },
   {
@@ -62,6 +85,7 @@ const lessons = [
     estimated_minutes: 30,
     activity_prompt: "Mark halves and thirds.",
     answer_key: "Equal partitions.",
+    ...lessonPlanFields,
     archived_at: null,
   },
 ];
@@ -186,6 +210,7 @@ describe("Homeschool page", () => {
       estimated_minutes: 35,
       activity_prompt: "Draw a local food chain.",
       answer_key: "Producer, consumer, decomposer roles are identified.",
+      ...lessonPlanFields,
       archived_at: null,
     });
 
@@ -235,6 +260,7 @@ describe("Homeschool page", () => {
       estimated_minutes: 35,
       activity_prompt: "Draw a local food chain.",
       answer_key: "Producer, consumer, decomposer roles are identified.",
+      ...emptyLessonPlanRequest,
     }));
   });
 

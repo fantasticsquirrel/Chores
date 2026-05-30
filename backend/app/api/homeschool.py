@@ -61,6 +61,17 @@ _LEARNING_SUBJECT_NAMES: dict[HomeschoolSubjectArea, str] = {
     HomeschoolSubjectArea.GRAMMAR: "Grammar",
     HomeschoolSubjectArea.VOCABULARY: "Vocabulary",
 }
+_LESSON_PLAN_FIELD_NAMES = (
+    "learning_objectives",
+    "materials",
+    "warm_up",
+    "direct_instruction",
+    "guided_practice",
+    "independent_practice",
+    "assessment",
+    "extension",
+    "remediation",
+)
 
 
 def _ensure_household_access(user: User, household_id: int) -> None:
@@ -836,6 +847,8 @@ def update_lesson(
     lesson.estimated_minutes = payload.estimated_minutes
     lesson.activity_prompt = payload.activity_prompt
     lesson.answer_key = payload.answer_key
+    for field_name in _LESSON_PLAN_FIELD_NAMES:
+        setattr(lesson, field_name, getattr(payload, field_name))
     try:
         session.commit()
     except IntegrityError as exc:
@@ -979,6 +992,7 @@ def import_math_curriculum(
                 estimated_minutes=lesson_payload["estimated_minutes"],
                 activity_prompt=lesson_payload["activity_prompt"],
                 answer_key=lesson_payload["answer_key"],
+                **{field_name: lesson_payload[field_name] for field_name in _LESSON_PLAN_FIELD_NAMES},
             )
         )
     session.commit()

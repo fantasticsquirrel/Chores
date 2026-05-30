@@ -37,6 +37,15 @@ type LessonFormState = {
   estimatedMinutes: string;
   activityPrompt: string;
   answerKey: string;
+  learningObjectives: string;
+  materials: string;
+  warmUp: string;
+  directInstruction: string;
+  guidedPractice: string;
+  independentPractice: string;
+  assessment: string;
+  extension: string;
+  remediation: string;
 };
 
 type ProgressFormState = {
@@ -86,6 +95,15 @@ const emptyLessonForm: LessonFormState = {
   estimatedMinutes: "25",
   activityPrompt: "",
   answerKey: "",
+  learningObjectives: "",
+  materials: "",
+  warmUp: "",
+  directInstruction: "",
+  guidedPractice: "",
+  independentPractice: "",
+  assessment: "",
+  extension: "",
+  remediation: "",
 };
 
 const emptyProgressForm: ProgressFormState = {
@@ -260,6 +278,15 @@ export function HomeschoolLearningPlatform({ householdId, children }: Homeschool
       estimatedMinutes: lesson.estimated_minutes?.toString() ?? "",
       activityPrompt: lesson.activity_prompt,
       answerKey: lesson.answer_key,
+      learningObjectives: lesson.learning_objectives,
+      materials: lesson.materials,
+      warmUp: lesson.warm_up,
+      directInstruction: lesson.direct_instruction,
+      guidedPractice: lesson.guided_practice,
+      independentPractice: lesson.independent_practice,
+      assessment: lesson.assessment,
+      extension: lesson.extension,
+      remediation: lesson.remediation,
     });
   }
 
@@ -321,6 +348,15 @@ export function HomeschoolLearningPlatform({ householdId, children }: Homeschool
       estimated_minutes: lessonForm.estimatedMinutes === "" ? null : Number(lessonForm.estimatedMinutes),
       activity_prompt: lessonForm.activityPrompt,
       answer_key: lessonForm.answerKey,
+      learning_objectives: lessonForm.learningObjectives,
+      materials: lessonForm.materials,
+      warm_up: lessonForm.warmUp,
+      direct_instruction: lessonForm.directInstruction,
+      guided_practice: lessonForm.guidedPractice,
+      independent_practice: lessonForm.independentPractice,
+      assessment: lessonForm.assessment,
+      extension: lessonForm.extension,
+      remediation: lessonForm.remediation,
     };
     try {
       const savedLesson = editingLessonId === null
@@ -572,6 +608,33 @@ export function HomeschoolLearningPlatform({ householdId, children }: Homeschool
               <FormField label="Answer Key / Teacher Notes" className="full-width-field">
                 <textarea value={lessonForm.answerKey} onChange={(event) => setLessonForm((previous) => ({ ...previous, answerKey: event.target.value }))} />
               </FormField>
+              <FormField label="Learning Objectives" className="full-width-field">
+                <textarea value={lessonForm.learningObjectives} onChange={(event) => setLessonForm((previous) => ({ ...previous, learningObjectives: event.target.value }))} />
+              </FormField>
+              <FormField label="Materials" className="full-width-field">
+                <textarea value={lessonForm.materials} onChange={(event) => setLessonForm((previous) => ({ ...previous, materials: event.target.value }))} />
+              </FormField>
+              <FormField label="Warm-Up" className="full-width-field">
+                <textarea value={lessonForm.warmUp} onChange={(event) => setLessonForm((previous) => ({ ...previous, warmUp: event.target.value }))} />
+              </FormField>
+              <FormField label="Direct Instruction" className="full-width-field">
+                <textarea value={lessonForm.directInstruction} onChange={(event) => setLessonForm((previous) => ({ ...previous, directInstruction: event.target.value }))} />
+              </FormField>
+              <FormField label="Guided Practice" className="full-width-field">
+                <textarea value={lessonForm.guidedPractice} onChange={(event) => setLessonForm((previous) => ({ ...previous, guidedPractice: event.target.value }))} />
+              </FormField>
+              <FormField label="Independent Practice" className="full-width-field">
+                <textarea value={lessonForm.independentPractice} onChange={(event) => setLessonForm((previous) => ({ ...previous, independentPractice: event.target.value }))} />
+              </FormField>
+              <FormField label="Assessment" className="full-width-field">
+                <textarea value={lessonForm.assessment} onChange={(event) => setLessonForm((previous) => ({ ...previous, assessment: event.target.value }))} />
+              </FormField>
+              <FormField label="Extension" className="full-width-field">
+                <textarea value={lessonForm.extension} onChange={(event) => setLessonForm((previous) => ({ ...previous, extension: event.target.value }))} />
+              </FormField>
+              <FormField label="Remediation" className="full-width-field">
+                <textarea value={lessonForm.remediation} onChange={(event) => setLessonForm((previous) => ({ ...previous, remediation: event.target.value }))} />
+              </FormField>
               <div className="quick-actions full-width-field">
                 <Button type="submit">{editingLessonId === null ? "Create Lesson" : "Update Lesson"}</Button>
                 {editingLessonId !== null ? <Button type="button" onClick={clearLessonForm}>Cancel Lesson Edit</Button> : null}
@@ -660,6 +723,7 @@ export function HomeschoolLearningPlatform({ householdId, children }: Homeschool
                     <li key={lesson.sequence_order}>
                       <strong>{lesson.title}</strong>
                       <span>{lesson.overview}</span>
+                      <LessonPlanDetails lesson={lesson} />
                     </li>
                   ))}
                 </ol>
@@ -671,6 +735,20 @@ export function HomeschoolLearningPlatform({ householdId, children }: Homeschool
     </>
   );
 }
+
+type LessonPlanContent = {
+  learning_objectives: string;
+  materials: string;
+  warm_up: string;
+  direct_instruction: string;
+  guided_practice: string;
+  independent_practice: string;
+  assessment: string;
+  extension: string;
+  remediation: string;
+  activity_prompt: string;
+  answer_key: string;
+};
 
 function Metric({ label, value }: { label: string; value: string }): ReactElement {
   return (
@@ -715,6 +793,7 @@ function LessonList({
           <div>
             <strong>{lesson.sequence_order}. {lesson.title}</strong>
             <p>{lesson.estimated_minutes ?? "-"} min · {lesson.overview || "No overview yet."}</p>
+            <LessonPlanDetails lesson={lesson} />
           </div>
           <div className="item-actions">
             <Button type="button" className="compact-button" onClick={() => onEdit(lesson)}>Edit Lesson</Button>
@@ -723,6 +802,39 @@ function LessonList({
         </li>
       ))}
     </ol>
+  );
+}
+
+function LessonPlanDetails({ lesson }: { lesson: LessonPlanContent }): ReactElement {
+  const sections = [
+    ["Objectives", lesson.learning_objectives],
+    ["Materials", lesson.materials],
+    ["Warm-Up", lesson.warm_up],
+    ["Direct Instruction", lesson.direct_instruction],
+    ["Guided Practice", lesson.guided_practice],
+    ["Independent Practice", lesson.independent_practice],
+    ["Assessment", lesson.assessment],
+    ["Extension", lesson.extension],
+    ["Remediation", lesson.remediation],
+    ["Answer Key", lesson.answer_key],
+  ].filter(([, value]) => value.trim().length > 0);
+
+  if (sections.length === 0) {
+    return null;
+  }
+
+  return (
+    <details className="lesson-plan-details">
+      <summary>Full lesson plan</summary>
+      <div className="lesson-plan-grid">
+        {sections.map(([label, value]) => (
+          <section key={label} className="lesson-plan-section">
+            <h4>{label}</h4>
+            <p>{value}</p>
+          </section>
+        ))}
+      </div>
+    </details>
   );
 }
 

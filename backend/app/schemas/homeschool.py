@@ -209,6 +209,15 @@ class HomeschoolLessonResponse(BaseModel):
     estimated_minutes: int | None
     activity_prompt: str
     answer_key: str
+    learning_objectives: str
+    materials: str
+    warm_up: str
+    direct_instruction: str
+    guided_practice: str
+    independent_practice: str
+    assessment: str
+    extension: str
+    remediation: str
     archived_at: datetime | None
 
 
@@ -222,6 +231,15 @@ class CreateHomeschoolLessonRequest(BaseModel):
     estimated_minutes: int | None = Field(default=None, gt=0)
     activity_prompt: str = Field(default="", max_length=5000)
     answer_key: str = Field(default="", max_length=5000)
+    learning_objectives: str = Field(default="", max_length=12000)
+    materials: str = Field(default="", max_length=12000)
+    warm_up: str = Field(default="", max_length=12000)
+    direct_instruction: str = Field(default="", max_length=12000)
+    guided_practice: str = Field(default="", max_length=12000)
+    independent_practice: str = Field(default="", max_length=12000)
+    assessment: str = Field(default="", max_length=12000)
+    extension: str = Field(default="", max_length=12000)
+    remediation: str = Field(default="", max_length=12000)
 
 
 class UpdateHomeschoolLessonRequest(CreateHomeschoolLessonRequest):
@@ -278,6 +296,15 @@ class BuiltInMathLessonResponse(BaseModel):
     estimated_minutes: int
     activity_prompt: str
     answer_key: str
+    learning_objectives: str
+    materials: str
+    warm_up: str
+    direct_instruction: str
+    guided_practice: str
+    independent_practice: str
+    assessment: str
+    extension: str
+    remediation: str
 
 
 class BuiltInMathCourseResponse(BaseModel):
