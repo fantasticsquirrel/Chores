@@ -38,6 +38,8 @@ describe("Parent submission review page", () => {
 
     expect(await screen.findByText("Maya")).toBeVisible();
     expect(screen.getByText("Dishes")).toBeVisible();
+    expect(screen.queryByText(/Potential/u)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$/u)).not.toBeInTheDocument();
     expect(listSubmissionsSpy).toHaveBeenCalledWith({ status: "PENDING" });
   });
 
@@ -83,7 +85,9 @@ describe("Parent submission review page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Approve All" }));
 
     await waitFor(() => expect(approveSubmissionSpy).toHaveBeenCalledWith(8));
-    expect(await screen.findByText("No pending submissions right now.")).toBeVisible();
+    expect(
+      await screen.findByText("No pending submissions right now."),
+    ).toBeVisible();
     expect(listSubmissionsSpy).toHaveBeenCalledTimes(2);
   });
 
@@ -175,7 +179,9 @@ describe("Parent submission review page", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load submissions: Service unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load submissions: Service unavailable",
+    );
   });
 
   it("shows an error message when approve-all action fails", async () => {

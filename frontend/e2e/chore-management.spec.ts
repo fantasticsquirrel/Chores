@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import path from "node:path";
@@ -21,11 +21,14 @@ type ChoreFixture = {
 function seedChoreFixture(): ChoreFixture {
   const rootDir = path.resolve(__dirname, "../../");
   const fixturePath = path.join(rootDir, ".ralph/chore-mgmt-fixture.json");
-  const seedScript = path.join(rootDir, "backend/scripts/seed_chore_mgmt_smoke.py");
+  const seedScript = path.join(
+    rootDir,
+    "backend/scripts/seed_chore_mgmt_smoke.py",
+  );
 
   const output = execSync(
     `DATABASE_URL="sqlite:///${rootDir}/data/chore_tracking.db" "${rootDir}/.venv/bin/python" "${seedScript}"`,
-    { encoding: "utf-8" }
+    { encoding: "utf-8" },
   );
   const fixture = JSON.parse(output.trim()) as ChoreFixture;
   writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
@@ -36,7 +39,11 @@ function seedChoreFixture(): ChoreFixture {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function signIn(page: Page, email: string, password: string): Promise<void> {
+async function signIn(
+  page: Page,
+  email: string,
+  password: string,
+): Promise<void> {
   await page.goto("/chore/login");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
@@ -45,8 +52,24 @@ async function signIn(page: Page, email: string, password: string): Promise<void
 }
 
 async function goToChores(page: Page): Promise<void> {
-  await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Chores", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Primary" })
+    .getByRole("link", { name: "Chores", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/chore\/parent\/chores$/);
+}
+
+async function openNewChoreForm(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Add Chore" }).first().click();
+  await expect(page.getByRole("heading", { name: "New Chore" })).toBeVisible();
+}
+
+function choreManagementRow(page: Page, choreName: string): Locator {
+  return page
+    .getByRole("list", { name: "Chores list" })
+    .locator("li.balance-item")
+    .filter({ hasText: choreName })
+    .first();
 }
 
 // ---------------------------------------------------------------------------
@@ -64,69 +87,85 @@ test.describe("Chore management UI", () => {
     await signIn(page, fixture.parent_email, fixture.parent_password);
     await goToChores(page);
 
-    await page.getByRole("button", { name: "+ Add Chore" }).click();
-    await expect(page.getByRole("heading", { name: "New Chore" })).toBeVisible();
-
+    await openNewChoreForm(page);
     await page.getByLabel("Name").fill("Feed the dog");
-    await page.getByLabel("Reward ($)").fill("0.50");
 
     // Leave child picker empty = all children
     await page.getByRole("button", { name: "Create Chore" }).click();
 
     // Should appear in list
-    await expect(page.locator("li.balance-item").filter({ hasText: "Feed the dog" })).toBeVisible();
+    const row = choreManagementRow(page, "Feed the dog");
+    await expect(row).toBeVisible();
     // Should show "All children"
-    await expect(page.locator("li.balance-item").filter({ hasText: "Feed the dog" }).getByText("All children")).toBeVisible();
+    await expect(row.getByText("All children")).toBeVisible();
   });
 
   test("can create a chore restricted to one child", async ({ page }) => {
     await signIn(page, fixture.parent_email, fixture.parent_password);
     await goToChores(page);
 
-    await page.getByRole("button", { name: "+ Add Chore" }).click();
+    await openNewChoreForm(page);
     await page.getByLabel("Name").fill("Wash dishes");
-    await page.getByLabel("Reward ($)").fill("1.00");
 
     // Select only child one — scope to the fieldset to avoid label-wrap ambiguity
-    await page.getByRole("group", { name: /Who can complete/i }).getByRole("checkbox", { name: fixture.child_one_name }).check();
+    await page
+      .getByRole("group", { name: /Who can complete/i })
+      .getByRole("checkbox", { name: fixture.child_one_name })
+      .check();
 
     await page.getByRole("button", { name: "Create Chore" }).click();
 
-    const row = page.locator("li.balance-item").filter({ hasText: "Wash dishes" });
+    const row = choreManagementRow(page, "Wash dishes");
     await expect(row).toBeVisible();
     // Should show child one's name, not "All children"
     await expect(row.getByText(fixture.child_one_name)).toBeVisible();
   });
 
-  test("can create a rotating chore with ordered children", async ({ page }) => {
+  test("can create a rotating chore with ordered children", async ({
+    page,
+  }) => {
     await signIn(page, fixture.parent_email, fixture.parent_password);
     await goToChores(page);
 
-    await page.getByRole("button", { name: "+ Add Chore" }).click();
+    await openNewChoreForm(page);
     await page.getByLabel("Name").fill("Take out trash");
-    await page.getByLabel("Reward ($)").fill("1.50");
 
     // Switch to rotating FIRST (before schedule, so interval field is stable)
     await page.getByLabel("Assignment").selectOption("ROTATING");
 
     await page.getByLabel("Schedule").selectOption("EVERY");
-    // Use exact placeholder to avoid matching reward ($) field which has placeholder "1.00"
-    await page.getByPlaceholder("1", { exact: true }).fill("1");
+    await page.locator(".inline-field-row input[type='number']").fill("1");
 
     // Both children should appear as checkboxes in rotation list
-    await expect(page.getByRole("group", { name: "Rotation Order" })).toBeVisible();
+    await expect(
+      page.getByRole("group", { name: "Rotation Order" }),
+    ).toBeVisible();
     // Scope to the rotation fieldset to avoid strict mode violations
     const rotationGroup = page.getByRole("group", { name: "Rotation Order" });
-    await rotationGroup.getByRole("checkbox", { name: fixture.child_one_name }).check();
-    await rotationGroup.getByRole("checkbox", { name: fixture.child_two_name }).check();
+    await rotationGroup
+      .getByRole("checkbox", { name: fixture.child_one_name })
+      .check();
+    await rotationGroup
+      .getByRole("checkbox", { name: fixture.child_two_name })
+      .check();
 
     // Verify ordered list shows both
-    await expect(page.getByRole("listitem").filter({ hasText: fixture.child_one_name }).first()).toBeVisible();
-    await expect(page.getByRole("listitem").filter({ hasText: fixture.child_two_name }).first()).toBeVisible();
+    await expect(
+      page
+        .getByRole("listitem")
+        .filter({ hasText: fixture.child_one_name })
+        .first(),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole("listitem")
+        .filter({ hasText: fixture.child_two_name })
+        .first(),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "Create Chore" }).click();
 
-    const row = page.locator("li.balance-item").filter({ hasText: "Take out trash" });
+    const row = choreManagementRow(page, "Take out trash");
     await expect(row).toBeVisible();
     // Should show "Rotation:" label
     await expect(row.getByText(/Rotation:/)).toBeVisible();
@@ -137,23 +176,35 @@ test.describe("Chore management UI", () => {
     await goToChores(page);
 
     // First create a chore for all children
-    await page.getByRole("button", { name: "+ Add Chore" }).click();
+    await openNewChoreForm(page);
     await page.getByLabel("Name").fill("Vacuum living room");
-    await page.getByLabel("Reward ($)").fill("2.00");
     await page.getByRole("button", { name: "Create Chore" }).click();
-    await expect(page.locator("li.balance-item").filter({ hasText: "Vacuum living room" })).toBeVisible();
+    await expect(choreManagementRow(page, "Vacuum living room")).toBeVisible();
 
     // Now edit it to restrict to child two only
-    await page.locator("li.balance-item").filter({ hasText: "Vacuum living room" }).getByRole("button", { name: "Edit" }).click();
-    await expect(page.getByRole("heading", { name: "Edit Chore" })).toBeVisible();
+    await choreManagementRow(page, "Vacuum living room")
+      .getByRole("button", { name: "Edit" })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Edit Chore" }),
+    ).toBeVisible();
     await expect(page.getByLabel("Name")).toHaveValue("Vacuum living room");
 
     // Wait for the child checklist fieldset to appear (proves allChildren loaded)
-    const eligibilityGroup = page.getByRole("group", { name: /Who can complete/i });
-    await eligibilityGroup.locator("input[type='checkbox']").first().waitFor({ state: "visible", timeout: 10000 });
+    const eligibilityGroup = page.getByRole("group", {
+      name: /Who can complete/i,
+    });
+    await eligibilityGroup
+      .locator("input[type='checkbox']")
+      .first()
+      .waitFor({ state: "visible", timeout: 10000 });
 
-    const childTwoCheckbox = eligibilityGroup.getByRole("checkbox", { name: fixture.child_two_name });
-    const childOneCheckbox = eligibilityGroup.getByRole("checkbox", { name: fixture.child_one_name });
+    const childTwoCheckbox = eligibilityGroup.getByRole("checkbox", {
+      name: fixture.child_two_name,
+    });
+    const childOneCheckbox = eligibilityGroup.getByRole("checkbox", {
+      name: fixture.child_one_name,
+    });
     if (!(await childTwoCheckbox.isChecked())) {
       await childTwoCheckbox.check();
     }
@@ -163,7 +214,7 @@ test.describe("Chore management UI", () => {
 
     await page.getByRole("button", { name: "Save Changes" }).click();
 
-    const row = page.locator("li.balance-item").filter({ hasText: "Vacuum living room" });
+    const row = choreManagementRow(page, "Vacuum living room");
     await expect(row).toBeVisible();
     await expect(row.getByText(fixture.child_two_name)).toBeVisible();
   });
@@ -173,19 +224,24 @@ test.describe("Chore management UI", () => {
     await goToChores(page);
 
     // Create a chore to archive
-    await page.getByRole("button", { name: "+ Add Chore" }).click();
+    await openNewChoreForm(page);
     await page.getByLabel("Name").fill("Temporary chore to archive");
-    await page.getByLabel("Reward ($)").fill("0.25");
     await page.getByRole("button", { name: "Create Chore" }).click();
-    await expect(page.locator("li.balance-item").filter({ hasText: "Temporary chore to archive" })).toBeVisible();
+    await expect(
+      choreManagementRow(page, "Temporary chore to archive"),
+    ).toBeVisible();
 
     // Archive it — handle the confirm() dialog
     page.once("dialog", (dialog) => void dialog.accept());
-    await page.locator("li.balance-item").filter({ hasText: "Temporary chore to archive" }).getByRole("button", { name: "Archive" }).click();
+    await choreManagementRow(page, "Temporary chore to archive")
+      .getByRole("button", { name: "Archive" })
+      .click();
 
     // Should show archived label (span with text "archived")
     await expect(
-      page.locator("li.balance-item").filter({ hasText: "Temporary chore to archive" }).locator("span").filter({ hasText: "archived" })
+      choreManagementRow(page, "Temporary chore to archive")
+        .locator("span")
+        .filter({ hasText: "archived" }),
     ).toBeVisible();
   });
 });

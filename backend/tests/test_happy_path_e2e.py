@@ -224,6 +224,54 @@ def test_happy_path_create_submit_approve_updates_balance(tmp_path: Path, monkey
         assert transaction is not None
 
 
+def test_zero_reward_approve_all_creates_completion_without_transaction(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 2, 23)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
+        child_id = _create_child(client, household_id, csrf_token, "Riley")
+        chore_id = _create_chore(household_id, target_date, reward_cents=0)
+
+        submit_response = client.post(
+            f"/chore-api/submissions?child_id={child_id}",
+            json={"for_date": target_date.isoformat(), "chore_ids": [chore_id]},
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert submit_response.status_code == 201
+        submission_id = submit_response.json()["id"]
+
+        approve_response = client.post(
+            f"/chore-api/submissions/{submission_id}/approve-all",
+            headers={CSRF_HEADER_NAME: csrf_token},
+        )
+        assert approve_response.status_code == 200
+        assert approve_response.json()["status"] == "APPROVED"
+
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        completion_record = session.scalars(
+            select(CompletionRecord).where(
+                CompletionRecord.child_id == child_id,
+                CompletionRecord.chore_id == chore_id,
+                CompletionRecord.date == target_date,
+                CompletionRecord.status == CompletionStatus.APPROVED,
+            )
+        ).one_or_none()
+        assert completion_record is not None
+
+        transaction_count = session.scalar(
+            select(func.count()).select_from(Transaction).where(
+                Transaction.child_id == child_id,
+                Transaction.type == TransactionType.CHORE_APPROVAL,
+            )
+        )
+        assert transaction_count == 0
+
+
 def test_shared_chore_pending_submission_blocks_other_child_for_same_occurrence(
     tmp_path: Path,
     monkeypatch,

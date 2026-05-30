@@ -165,14 +165,15 @@ def approve_submission(
                 status=CompletionStatus.APPROVED,
             )
         )
-        session.add(
-            Transaction(
-                household_id=submission.household_id,
-                child_id=submission.child_id,
-                amount_cents=chore.reward_cents,
-                type=TransactionType.CHORE_APPROVAL,
+        if chore.reward_cents != 0:
+            session.add(
+                Transaction(
+                    household_id=submission.household_id,
+                    child_id=submission.child_id,
+                    amount_cents=chore.reward_cents,
+                    type=TransactionType.CHORE_APPROVAL,
+                )
             )
-        )
 
         if chore.id not in processed_rotation_chores:
             _advance_rotation_state_if_needed(session, chore, occurrence_date)
@@ -226,14 +227,15 @@ def decide_submission_item(
                 status=CompletionStatus.APPROVED,
             )
         )
-        session.add(
-            Transaction(
-                household_id=submission.household_id,
-                child_id=submission.child_id,
-                amount_cents=chore.reward_cents,
-                type=TransactionType.CHORE_APPROVAL,
+        if chore.reward_cents != 0:
+            session.add(
+                Transaction(
+                    household_id=submission.household_id,
+                    child_id=submission.child_id,
+                    amount_cents=chore.reward_cents,
+                    type=TransactionType.CHORE_APPROVAL,
+                )
             )
-        )
         _advance_rotation_state_if_needed(session, chore, occurrence_date)
 
     submission_items = list(

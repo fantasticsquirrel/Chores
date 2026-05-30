@@ -89,6 +89,7 @@ export interface EligibleChore {
 
 export interface ListEligibleChoresParams {
   date: string;
+  child_id?: number;
 }
 
 export interface SubmissionRequest {
@@ -196,7 +197,6 @@ export interface UpdateChoreRequest {
   rotation_order?: number[] | null;
 }
 
-
 export interface FamilyModule {
   key: "chores" | "homeschool" | "admin";
   name: string;
@@ -206,7 +206,6 @@ export interface FamilyModule {
 export interface MyModulesResponse {
   modules: FamilyModule[];
 }
-
 
 export interface HomeschoolSemester {
   id: number;
@@ -235,7 +234,6 @@ export interface HomeschoolAttendance {
   comment: string;
 }
 
-
 export interface CreateHomeschoolSemesterRequest {
   household_id: number;
   name: string;
@@ -263,7 +261,6 @@ export interface UpsertHomeschoolAttendanceRequest {
   present?: boolean;
   comment?: string;
 }
-
 
 export interface HomeschoolDayComment {
   id: number;
@@ -296,7 +293,6 @@ export interface UpsertHomeschoolGradeRequest {
   semester_id?: number | null;
   grade: string;
 }
-
 
 export interface UserModuleAccess {
   id: number;

@@ -1,7 +1,12 @@
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { ApiClientError, apiClient, type SubmissionItemDecisionRequest, type SubmissionReview } from "../api";
+import {
+  ApiClientError,
+  apiClient,
+  type SubmissionItemDecisionRequest,
+  type SubmissionReview,
+} from "../api";
 import { Badge, Button, Card, InlineNotice } from "../ui";
 
 type PageState = {
@@ -22,19 +27,6 @@ function formatApiError(error: unknown): string {
   return "Request failed.";
 }
 
-function toUsd(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(cents / 100);
-}
-
-function computeSubmissionTotal(submission: SubmissionReview): number {
-  return submission.items
-    .filter((item) => item.status !== "REJECTED")
-    .reduce((total, item) => total + item.chore_reward_cents, 0);
-}
-
 export function ParentSubmissionReviewPage(): ReactElement {
   const [state, setState] = useState<PageState>({
     submissions: [],
@@ -48,10 +40,16 @@ export function ParentSubmissionReviewPage(): ReactElement {
     setState((previous) => ({ ...previous, loading: true, error: null }));
 
     try {
-      const submissions = await apiClient.listSubmissions({ status: "PENDING" });
+      const submissions = await apiClient.listSubmissions({
+        status: "PENDING",
+      });
       setState({ submissions, loading: false, error: null });
     } catch (error: unknown) {
-      setState({ submissions: [], loading: false, error: formatApiError(error) });
+      setState({
+        submissions: [],
+        loading: false,
+        error: formatApiError(error),
+      });
     }
   }
 
@@ -60,7 +58,13 @@ export function ParentSubmissionReviewPage(): ReactElement {
   }, []);
 
   const pendingItemsCount = useMemo(
-    () => state.submissions.reduce((count, submission) => count + submission.items.filter((item) => item.status === "PENDING").length, 0),
+    () =>
+      state.submissions.reduce(
+        (count, submission) =>
+          count +
+          submission.items.filter((item) => item.status === "PENDING").length,
+        0,
+      ),
     [state.submissions],
   );
 
@@ -103,7 +107,9 @@ export function ParentSubmissionReviewPage(): ReactElement {
           <h1>Submission Review</h1>
           <Badge>{pendingItemsCount} pending item(s)</Badge>
         </div>
-        <p>Approve all chores in a submission or decide each item individually.</p>
+        <p>
+          Approve all chores in a submission or decide each item individually.
+        </p>
       </Card>
 
       <Card className="dashboard-panel">
@@ -113,17 +119,24 @@ export function ParentSubmissionReviewPage(): ReactElement {
 
         {state.loading ? <p>Loading pending submissions...</p> : null}
         {!state.loading && state.error !== null ? (
-          <InlineNotice variant="error">Could not load submissions: {state.error}</InlineNotice>
+          <InlineNotice variant="error">
+            Could not load submissions: {state.error}
+          </InlineNotice>
         ) : null}
 
-        {!state.loading && state.error === null && state.submissions.length === 0 ? (
+        {!state.loading &&
+        state.error === null &&
+        state.submissions.length === 0 ? (
           <p>No pending submissions right now.</p>
         ) : null}
 
-        {!state.loading && state.error === null && state.submissions.length > 0 ? (
+        {!state.loading &&
+        state.error === null &&
+        state.submissions.length > 0 ? (
           <ul className="submission-list" aria-label="Pending submissions list">
             {state.submissions.map((submission) => {
-              const approvingAll = submittingKey === `approve-all-${submission.id}`;
+              const approvingAll =
+                submittingKey === `approve-all-${submission.id}`;
 
               return (
                 <li key={submission.id} className="submission-item">
@@ -131,45 +144,73 @@ export function ParentSubmissionReviewPage(): ReactElement {
                     <div>
                       <p className="balance-name">{submission.child_name}</p>
                       <p className="balance-meta">
-                        For {submission.for_date} • {submission.items.length} item(s) • Potential {toUsd(computeSubmissionTotal(submission))}
+                        For {submission.for_date} • {submission.items.length}{" "}
+                        item(s)
                       </p>
                     </div>
-                    <Button onClick={() => void handleApproveAll(submission.id)} disabled={submittingKey !== null}>
+                    <Button
+                      onClick={() => void handleApproveAll(submission.id)}
+                      disabled={submittingKey !== null}
+                    >
                       {approvingAll ? "Approving..." : "Approve All"}
                     </Button>
                   </div>
 
-                  <ul className="balance-list" aria-label={`Submission ${submission.id} items`}>
+                  <ul
+                    className="balance-list"
+                    aria-label={`Submission ${submission.id} items`}
+                  >
                     {submission.items.map((item) => {
-                      const itemActionPending = submittingKey === `item-${item.id}`;
-                      const itemStatusClass = item.status === "APPROVED" ? "item-status approved" : item.status === "REJECTED" ? "item-status rejected" : "item-status";
+                      const itemActionPending =
+                        submittingKey === `item-${item.id}`;
+                      const itemStatusClass =
+                        item.status === "APPROVED"
+                          ? "item-status approved"
+                          : item.status === "REJECTED"
+                            ? "item-status rejected"
+                            : "item-status";
 
                       return (
                         <li key={item.id} className="balance-item">
                           <div>
                             <p className="balance-name">{item.chore_name}</p>
-                            <p className="balance-meta">{toUsd(item.chore_reward_cents)}</p>
                           </div>
                           <div className="item-actions">
-                            <span className={itemStatusClass}>{item.status}</span>
+                            <span className={itemStatusClass}>
+                              {item.status}
+                            </span>
                             <Button
                               onClick={() =>
-                                void handleItemDecision(submission.id, item.id, {
-                                  status: "APPROVED",
-                                })
+                                void handleItemDecision(
+                                  submission.id,
+                                  item.id,
+                                  {
+                                    status: "APPROVED",
+                                  },
+                                )
                               }
-                              disabled={submittingKey !== null || item.status === "APPROVED"}
+                              disabled={
+                                submittingKey !== null ||
+                                item.status === "APPROVED"
+                              }
                             >
                               {itemActionPending ? "Saving..." : "Approve"}
                             </Button>
                             <Button
                               variant="danger"
                               onClick={() =>
-                                void handleItemDecision(submission.id, item.id, {
-                                  status: "REJECTED",
-                                })
+                                void handleItemDecision(
+                                  submission.id,
+                                  item.id,
+                                  {
+                                    status: "REJECTED",
+                                  },
+                                )
                               }
-                              disabled={submittingKey !== null || item.status === "REJECTED"}
+                              disabled={
+                                submittingKey !== null ||
+                                item.status === "REJECTED"
+                              }
                             >
                               {itemActionPending ? "Saving..." : "Reject"}
                             </Button>
@@ -185,7 +226,9 @@ export function ParentSubmissionReviewPage(): ReactElement {
         ) : null}
 
         {actionError !== null ? (
-          <InlineNotice variant="error">Could not update submission decision: {actionError}</InlineNotice>
+          <InlineNotice variant="error">
+            Could not update submission decision: {actionError}
+          </InlineNotice>
         ) : null}
       </Card>
     </section>
