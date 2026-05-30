@@ -105,6 +105,94 @@ def test_parent_admin_can_list_household_user_module_access(tmp_path: Path, monk
     assert [module["key"] for module in payload[0]["modules"]] == ["chores", "homeschool", "admin"]
 
 
+def test_parent_admin_can_create_additional_parent_user(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-create-parent@example.com")
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        create_response = client.post(
+            "/chore-api/modules/users",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": "Second.Parent@Example.com", "password": "password456", "role": "PARENT"},
+        )
+        assert create_response.status_code == 201
+        payload = create_response.json()
+        assert payload["household_id"] == admin.household_id
+        assert payload["email"] == "second.parent@example.com"
+        assert payload["role"] == "PARENT"
+        assert payload["child_id"] is None
+        assert [module["key"] for module in payload["modules"]] == ["chores", "homeschool"]
+
+        client.post("/chore-api/auth/logout", headers={"X-CSRF-Token": csrf_token})
+        login_created_response = client.post(
+            "/chore-api/auth/login",
+            json={"email": "second.parent@example.com", "password": "password456"},
+        )
+        assert login_created_response.status_code == 200
+        assert login_created_response.json()["user"]["household_id"] == admin.household_id
+
+
+def test_parent_admin_can_create_additional_parent_admin_user(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-create-admin@example.com")
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        create_response = client.post(
+            "/chore-api/modules/users",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": "other.admin@example.com", "password": "password456", "role": "PARENT_ADMIN"},
+        )
+
+    assert create_response.status_code == 201
+    assert create_response.json()["role"] == "PARENT_ADMIN"
+    assert [module["key"] for module in create_response.json()["modules"]] == ["chores", "homeschool", "admin"]
+
+
+def test_parent_admin_cannot_create_duplicate_parent_email(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-create-duplicate@example.com")
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": admin.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        response = client.post(
+            "/chore-api/modules/users",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": admin.email.upper(), "password": "password456", "role": "PARENT"},
+        )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Email is already in use."
+
+
+def test_parent_cannot_create_parent_user(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(UserRole.PARENT, email="parent-create-parent@example.com")
+
+    with TestClient(app) as client:
+        login_response = client.post("/chore-api/auth/login", json={"email": parent.email, "password": password})
+        assert login_response.status_code == 200
+        csrf_token = login_response.json()["csrf_token"]
+
+        response = client.post(
+            "/chore-api/modules/users",
+            headers={"X-CSRF-Token": csrf_token},
+            json={"email": "blocked@example.com", "password": "password456", "role": "PARENT"},
+        )
+
+    assert response.status_code == 403
+
+
 def test_parent_admin_can_override_user_module_access(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-override@example.com")

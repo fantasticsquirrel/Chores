@@ -303,6 +303,12 @@ export interface UserModuleAccess {
   modules: FamilyModule[];
 }
 
+export interface CreateParentUserRequest {
+  email: string;
+  password: string;
+  role: "PARENT" | "PARENT_ADMIN";
+}
+
 export interface SetUserModuleAccessRequest {
   module_key: "chores" | "homeschool" | "admin";
   can_view: boolean;

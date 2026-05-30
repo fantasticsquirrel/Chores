@@ -590,6 +590,48 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes parent user creation endpoint", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 3,
+          household_id: 1,
+          email: "second.parent@example.com",
+          role: "PARENT",
+          child_id: null,
+          modules: [],
+        }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.createParentUser({
+      email: "second.parent@example.com",
+      password: "password456",
+      role: "PARENT",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/modules/users",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify({
+          email: "second.parent@example.com",
+          password: "password456",
+          role: "PARENT",
+        }),
+      }),
+    );
+  });
+
   it("serializes homeschool list endpoints with household and optional child scope", async () => {
     const fetchMock = vi.fn();
     fetchMock

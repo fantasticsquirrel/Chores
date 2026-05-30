@@ -10,6 +10,7 @@ import type {
   CreateChoreRequest,
   CreateHomeschoolSemesterRequest,
   CreateHomeschoolSubjectRequest,
+  CreateParentUserRequest,
   EligibleChore,
   HealthResponse,
   HomeschoolAttendance,
@@ -121,6 +122,15 @@ export class ApiClient {
 
   async listUserModuleAccess(): Promise<UserModuleAccess[]> {
     return this.get<UserModuleAccess[]>("/modules/users");
+  }
+
+  async createParentUser(
+    payload: CreateParentUserRequest,
+  ): Promise<UserModuleAccess> {
+    return this.post<UserModuleAccess, CreateParentUserRequest>(
+      "/modules/users",
+      payload,
+    );
   }
 
   async setUserModuleAccess(

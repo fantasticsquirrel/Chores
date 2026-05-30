@@ -336,6 +336,8 @@ body {
 
 .children-form input[type="text"],
 .children-form input[type="number"],
+.children-form input[type="email"],
+.children-form input[type="password"],
 .auth-form input[type="email"],
 .auth-form input[type="password"],
 .children-form input[type="date"] {
@@ -353,6 +355,8 @@ body {
 
 .children-form input[type="text"]:focus-visible,
 .children-form input[type="number"]:focus-visible,
+.children-form input[type="email"]:focus-visible,
+.children-form input[type="password"]:focus-visible,
 .auth-form input[type="email"]:focus-visible,
 .auth-form input[type="password"]:focus-visible,
 .children-form input[type="date"]:focus-visible,

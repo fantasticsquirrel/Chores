@@ -1,4 +1,10 @@
-export { ApiClient, ApiClientError, apiClient, createApiClient, CSRF_HEADER_NAME } from "./client";
+export {
+  ApiClient,
+  ApiClientError,
+  apiClient,
+  createApiClient,
+  CSRF_HEADER_NAME,
+} from "./client";
 export type {
   ApiErrorResponse,
   AssignmentMode,
@@ -14,6 +20,7 @@ export type {
   CreateChoreRequest,
   CreateHomeschoolSemesterRequest,
   CreateHomeschoolSubjectRequest,
+  CreateParentUserRequest,
   EligibleChore,
   FamilyModule,
   HealthResponse,

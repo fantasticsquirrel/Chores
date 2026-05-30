@@ -1,18 +1,22 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user, get_db_session, require_module_access, require_roles
+from app.api.dependencies import get_current_user, get_db_session, require_module_access
 from app.models.core import User
 from app.models.enums import UserRole
 from app.modules import MODULE_ADMIN
 from app.schemas.modules import (
+    CreateParentUserRequest,
     ModuleResponse,
     MyModulesResponse,
     SetUserModuleAccessRequest,
     UserModuleAccessResponse,
 )
+from app.security import hash_password
 from app.services.modules import ModuleService
 
 router = APIRouter(prefix="/modules", tags=["modules"])
@@ -49,6 +53,44 @@ def list_household_user_module_access(
         )
         for user, modules in rows
     ]
+
+
+@router.post("/users", response_model=UserModuleAccessResponse, status_code=status.HTTP_201_CREATED)
+def create_parent_user(
+    payload: CreateParentUserRequest,
+    current_user: User = Depends(_require_admin_module_access),
+    session: Session = Depends(get_db_session),
+) -> UserModuleAccessResponse:
+    normalized_email = payload.email.strip().lower()
+    email_taken = session.scalar(select(User).where(User.email == normalized_email))
+    if email_taken is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email is already in use.")
+
+    user = User(
+        household_id=current_user.household_id,
+        email=normalized_email,
+        password_hash=hash_password(payload.password),
+        role=payload.role,
+        child_id=None,
+    )
+    session.add(user)
+
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not create parent account.") from exc
+
+    session.refresh(user)
+    modules = _service.list_effective_modules(session, user)
+    return UserModuleAccessResponse(
+        id=user.id,
+        household_id=user.household_id,
+        email=user.email,
+        role=user.role,
+        child_id=user.child_id,
+        modules=[_module_response(module) for module in modules],
+    )
 
 
 @router.put("/users/{user_id}", response_model=UserModuleAccessResponse)
