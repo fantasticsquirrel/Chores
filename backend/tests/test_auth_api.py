@@ -71,6 +71,7 @@ def test_login_and_me_flow(tmp_path: Path, monkeypatch) -> None:
         me_response = client.get("/chore-api/auth/me")
         assert me_response.status_code == 200
         assert me_response.json()["user"]["id"] == user.id
+        assert me_response.json()["csrf_token"] == login_response.cookies[CSRF_COOKIE_NAME]
 
 
 def test_login_rejects_invalid_credentials(tmp_path: Path, monkeypatch) -> None:

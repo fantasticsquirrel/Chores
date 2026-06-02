@@ -21,6 +21,7 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 
 - `backend/`: FastAPI service, SQLAlchemy models, tests
 - `frontend/`: React + TypeScript SPA
+- `mobile/`: Expo + React Native TypeScript app for Android and iPhone
 - `specs/`: product and feature specifications
 - `IMPLEMENTATION_PLAN.md`: checklist-driven delivery plan
 
@@ -88,6 +89,32 @@ Run dev server:
 ```bash
 npm run dev --workspace frontend
 ```
+
+### Mobile
+
+The Expo app uses `EXPO_PUBLIC_API_BASE_URL` and expects the backend API prefix to stay `/chore-api`.
+
+```bash
+npm install
+npm run mobile:typecheck
+npm run mobile:start
+```
+
+Useful run targets:
+
+```bash
+npm run mobile:android
+npm run mobile:ios
+```
+
+API base URL examples:
+
+- Android emulator: `http://10.0.2.2:8000/chore-api`
+- iOS simulator: `http://127.0.0.1:8000/chore-api`
+- Physical device: `http://YOUR_LAN_IP:8000/chore-api`
+- Production: `https://YOUR_DOMAIN/chore-api`
+
+iOS simulator runs and local iOS builds require macOS/Xcode or EAS.
 
 ### Backend
 

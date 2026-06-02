@@ -72,9 +72,10 @@ def logout(response: Response) -> Response:
 
 @router.get("/me", response_model=AuthSessionResponse)
 def get_current_session(
+    request: Request,
     user: User = Depends(get_current_user),
 ) -> AuthSessionResponse:
-    return _build_session_response(user)
+    return _build_session_response(user, csrf_token=request.cookies.get(CSRF_COOKIE_NAME))
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
