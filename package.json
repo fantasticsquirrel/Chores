@@ -18,7 +18,12 @@
     "mobile:start": "npm run start --workspace mobile",
     "mobile:android": "npm run android --workspace mobile",
     "mobile:ios": "npm run ios --workspace mobile",
-    "mobile:typecheck": "npm run typecheck --workspace mobile"
+    "mobile:typecheck": "npm run typecheck --workspace mobile",
+    "mobile:apk": "npm run apk --workspace mobile",
+    "mobile:apk:local": "npm run apk:local --workspace mobile",
+    "mobile:eas:init": "npm run eas:init --workspace mobile",
+    "mobile:eas:set-api": "npm run eas:set-api --workspace mobile --",
+    "mobile:eas:whoami": "npm run eas:whoami --workspace mobile"
   },
   "devDependencies": {
     "vitest": "^4.1.8"

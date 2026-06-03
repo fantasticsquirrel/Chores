@@ -105,6 +105,7 @@ Useful run targets:
 ```bash
 npm run mobile:android
 npm run mobile:ios
+npm run mobile:apk
 ```
 
 API base URL examples:
@@ -113,6 +114,23 @@ API base URL examples:
 - iOS simulator: `http://127.0.0.1:8000/chore-api`
 - Physical device: `http://YOUR_LAN_IP:8000/chore-api`
 - Production: `https://YOUR_DOMAIN/chore-api`
+
+Android APK builds use the EAS `apk` profile in `mobile/eas.json`.
+One-time setup:
+
+```bash
+npm run mobile:eas:init
+npm run mobile:eas:set-api -- https://YOUR_DOMAIN/chore-api
+```
+
+Then build:
+
+```bash
+npm run mobile:apk
+```
+
+See `docs/mobile-apk-build.md` for the full repeatable workflow, including
+local APK builds on machines with Java and an Android SDK.
 
 iOS simulator runs and local iOS builds require macOS/Xcode or EAS.
 

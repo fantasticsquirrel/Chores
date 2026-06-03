@@ -30,6 +30,29 @@ npm run ios --workspace mobile
 npm run typecheck --workspace mobile
 ```
 
+## Build an Android APK
+
+Use the repeatable workflow documented in `../docs/mobile-apk-build.md`.
+
+One-time setup from the repository root:
+
+```bash
+npm run mobile:eas:init
+npm run mobile:eas:set-api -- https://YOUR_DOMAIN/chore-api
+```
+
+Build an installable Android APK:
+
+```bash
+npm run mobile:apk
+```
+
+For a local build on a machine with Java and an Android SDK:
+
+```bash
+EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN/chore-api npm run mobile:apk:local
+```
+
 ## API Base URL
 
 The app reads `EXPO_PUBLIC_API_BASE_URL`. Keep the `/chore-api` suffix.

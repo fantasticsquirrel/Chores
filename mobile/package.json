@@ -20,7 +20,12 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "apk": "bash ./scripts/build-apk.sh",
+    "apk:local": "bash ./scripts/build-apk.sh --local",
+    "eas:init": "npx --yes eas-cli@20.0.0 project:init",
+    "eas:set-api": "bash ./scripts/set-eas-api-url.sh",
+    "eas:whoami": "npx --yes eas-cli@20.0.0 whoami"
   },
   "private": true
 }
