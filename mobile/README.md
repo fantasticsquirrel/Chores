@@ -38,7 +38,7 @@ One-time setup from the repository root:
 
 ```bash
 npm run mobile:eas:init
-npm run mobile:eas:set-api -- https://YOUR_DOMAIN/chore-api
+npm run mobile:eas:set-api -- https://family.multihost.ing/chore-api
 ```
 
 Build an installable Android APK:
@@ -50,7 +50,7 @@ npm run mobile:apk
 For a local build on a machine with Java and an Android SDK:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN/chore-api npm run mobile:apk:local
+EXPO_PUBLIC_API_BASE_URL=https://family.multihost.ing/chore-api npm run mobile:apk:local
 ```
 
 ## API Base URL
@@ -78,7 +78,7 @@ EXPO_PUBLIC_API_BASE_URL=http://YOUR_LAN_IP:8000/chore-api npm run mobile:start
 Production:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN/chore-api npm run mobile:start
+EXPO_PUBLIC_API_BASE_URL=https://family.multihost.ing/chore-api npm run mobile:start
 ```
 
 Real phones should use HTTPS/TLS in production. Plain HTTP may be blocked or limited by device and network security settings.

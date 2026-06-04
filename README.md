@@ -27,51 +27,51 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 
 ## Exact Production URLs
 
-Assume your deployment host is `https://YOUR_DOMAIN`.
+Current production host: `https://family.multihost.ing`.
 
 SPA routes are served under `/chore/` for this release. This is deliberate: Family Manager naming is visible in the UI, but deployment routes stay stable until a later route migration decision.
 
-- `https://YOUR_DOMAIN/chore/`
-- `https://YOUR_DOMAIN/chore/login`
-- `https://YOUR_DOMAIN/chore/parent/dashboard`
-- `https://YOUR_DOMAIN/chore/parent/children`
-- `https://YOUR_DOMAIN/chore/board`
-- `https://YOUR_DOMAIN/chore/homeschool`
-- `https://YOUR_DOMAIN/chore/admin/dashboard`
-- `https://YOUR_DOMAIN/chore/child/today`
+- `https://family.multihost.ing/chore/`
+- `https://family.multihost.ing/chore/login`
+- `https://family.multihost.ing/chore/parent/dashboard`
+- `https://family.multihost.ing/chore/parent/children`
+- `https://family.multihost.ing/chore/board`
+- `https://family.multihost.ing/chore/homeschool`
+- `https://family.multihost.ing/chore/admin/dashboard`
+- `https://family.multihost.ing/chore/child/today`
 
 API routes are served under `/chore-api/`:
 
-- `GET https://YOUR_DOMAIN/chore-api/health`
-- `GET https://YOUR_DOMAIN/chore-api/health/live`
-- `GET https://YOUR_DOMAIN/chore-api/health/ready`
-- `GET https://YOUR_DOMAIN/chore-api/children?household_id={id}&active_only={true|false}`
-- `POST https://YOUR_DOMAIN/chore-api/children`
-- `PATCH https://YOUR_DOMAIN/chore-api/children/{child_id}`
-- `GET https://YOUR_DOMAIN/chore-api/children/me/eligible-chores?date=YYYY-MM-DD&child_id={optional}`
-- `POST https://YOUR_DOMAIN/chore-api/submissions?child_id={optional}`
-- `GET https://YOUR_DOMAIN/chore-api/submissions?status={optional}`
-- `POST https://YOUR_DOMAIN/chore-api/submissions/{submission_id}/approve-all`
-- `POST https://YOUR_DOMAIN/chore-api/submissions/{submission_id}/items/{item_id}/decision`
-- `GET https://YOUR_DOMAIN/chore-api/modules/me`
-- `GET https://YOUR_DOMAIN/chore-api/modules/users`
-- `PUT https://YOUR_DOMAIN/chore-api/modules/users/{user_id}`
-- `GET|POST https://YOUR_DOMAIN/chore-api/homeschool/semesters`
-- `PUT|DELETE https://YOUR_DOMAIN/chore-api/homeschool/semesters/{semester_id}`
-- `GET|POST https://YOUR_DOMAIN/chore-api/homeschool/subjects`
-- `PUT|DELETE https://YOUR_DOMAIN/chore-api/homeschool/subjects/{subject_id}`
-- `GET|PUT https://YOUR_DOMAIN/chore-api/homeschool/attendance`
-- `DELETE https://YOUR_DOMAIN/chore-api/homeschool/attendance/{attendance_id}`
-- `GET|PUT https://YOUR_DOMAIN/chore-api/homeschool/day-comments`
-- `DELETE https://YOUR_DOMAIN/chore-api/homeschool/day-comments/{comment_id}`
-- `GET|PUT https://YOUR_DOMAIN/chore-api/homeschool/grades`
-- `DELETE https://YOUR_DOMAIN/chore-api/homeschool/grades/{grade_id}`
+- `GET https://family.multihost.ing/chore-api/health`
+- `GET https://family.multihost.ing/chore-api/health/live`
+- `GET https://family.multihost.ing/chore-api/health/ready`
+- `GET https://family.multihost.ing/chore-api/children?household_id={id}&active_only={true|false}`
+- `POST https://family.multihost.ing/chore-api/children`
+- `PATCH https://family.multihost.ing/chore-api/children/{child_id}`
+- `GET https://family.multihost.ing/chore-api/children/me/eligible-chores?date=YYYY-MM-DD&child_id={optional}`
+- `POST https://family.multihost.ing/chore-api/submissions?child_id={optional}`
+- `GET https://family.multihost.ing/chore-api/submissions?status={optional}`
+- `POST https://family.multihost.ing/chore-api/submissions/{submission_id}/approve-all`
+- `POST https://family.multihost.ing/chore-api/submissions/{submission_id}/items/{item_id}/decision`
+- `GET https://family.multihost.ing/chore-api/modules/me`
+- `GET https://family.multihost.ing/chore-api/modules/users`
+- `PUT https://family.multihost.ing/chore-api/modules/users/{user_id}`
+- `GET|POST https://family.multihost.ing/chore-api/homeschool/semesters`
+- `PUT|DELETE https://family.multihost.ing/chore-api/homeschool/semesters/{semester_id}`
+- `GET|POST https://family.multihost.ing/chore-api/homeschool/subjects`
+- `PUT|DELETE https://family.multihost.ing/chore-api/homeschool/subjects/{subject_id}`
+- `GET|PUT https://family.multihost.ing/chore-api/homeschool/attendance`
+- `DELETE https://family.multihost.ing/chore-api/homeschool/attendance/{attendance_id}`
+- `GET|PUT https://family.multihost.ing/chore-api/homeschool/day-comments`
+- `DELETE https://family.multihost.ing/chore-api/homeschool/day-comments/{comment_id}`
+- `GET|PUT https://family.multihost.ing/chore-api/homeschool/grades`
+- `DELETE https://family.multihost.ing/chore-api/homeschool/grades/{grade_id}`
 
 Compatibility health routes also exist without `/chore-api`:
 
-- `GET https://YOUR_DOMAIN/health`
-- `GET https://YOUR_DOMAIN/health/live`
-- `GET https://YOUR_DOMAIN/health/ready`
+- `GET https://family.multihost.ing/health`
+- `GET https://family.multihost.ing/health/live`
+- `GET https://family.multihost.ing/health/ready`
 
 ## Local Setup
 
@@ -113,14 +113,14 @@ API base URL examples:
 - Android emulator: `http://10.0.2.2:8000/chore-api`
 - iOS simulator: `http://127.0.0.1:8000/chore-api`
 - Physical device: `http://YOUR_LAN_IP:8000/chore-api`
-- Production: `https://YOUR_DOMAIN/chore-api`
+- Production: `https://family.multihost.ing/chore-api`
 
 Android APK builds use the EAS `apk` profile in `mobile/eas.json`.
 One-time setup:
 
 ```bash
 npm run mobile:eas:init
-npm run mobile:eas:set-api -- https://YOUR_DOMAIN/chore-api
+npm run mobile:eas:set-api -- https://family.multihost.ing/chore-api
 ```
 
 Then build:
@@ -290,7 +290,7 @@ with session_factory() as session:
 PY
 ```
 
-3. Sign in through `POST /chore-api/auth/login` or `https://YOUR_DOMAIN/chore/login`, then create children from `/chore/parent/children`. Parent admins receive default access to Chores, Homeschool, and Admin modules. Parent users receive Chores and Homeschool by default; child users receive Chores by default.
+3. Sign in through `POST /chore-api/auth/login` or `https://family.multihost.ing/chore/login`, then create children from `/chore/parent/children`. Parent admins receive default access to Chores, Homeschool, and Admin modules. Parent users receive Chores and Homeschool by default; child users receive Chores by default.
 
 ## Production Test Checklist
 

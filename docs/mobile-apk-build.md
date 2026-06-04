@@ -24,7 +24,7 @@ URL ending in `/chore-api`.
 3. Set the preview API URL used by the APK profile:
 
    ```bash
-   npm run mobile:eas:set-api -- https://YOUR_DOMAIN/chore-api
+   npm run mobile:eas:set-api -- https://family.multihost.ing/chore-api
    ```
 
 ## Build an installable APK
@@ -47,7 +47,7 @@ When EAS finishes, it prints a download URL for the `.apk`.
 To update the API URL and build in one command:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN/chore-api npm run mobile:apk
+EXPO_PUBLIC_API_BASE_URL=https://family.multihost.ing/chore-api npm run mobile:apk
 ```
 
 ## Local APK build
@@ -55,7 +55,7 @@ EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN/chore-api npm run mobile:apk
 Local EAS builds are useful on a machine with Java and an Android SDK installed:
 
 ```bash
-EXPO_PUBLIC_API_BASE_URL=https://YOUR_DOMAIN/chore-api npm run mobile:apk:local
+EXPO_PUBLIC_API_BASE_URL=https://family.multihost.ing/chore-api npm run mobile:apk:local
 ```
 
 The local output path is:
