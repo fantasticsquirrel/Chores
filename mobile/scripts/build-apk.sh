@@ -42,6 +42,24 @@ mobile_dir="$(cd "$script_dir/.." && pwd)"
 repo_root="$(cd "$mobile_dir/.." && pwd)"
 cd "$mobile_dir"
 
+add_git_safe_directory() {
+  local safe_path="$1"
+
+  if git config --global --get-all safe.directory 2>/dev/null | grep -Fxq "$safe_path"; then
+    return
+  fi
+
+  git config --global --add safe.directory "$safe_path"
+}
+
+# EAS CLI clones the local repo through a file:// URL before uploading it.
+# Mixed service/root ownership on the server can otherwise trip Git's
+# "dubious ownership" check during that internal clone.
+if [[ -d "$repo_root/.git" ]]; then
+  add_git_safe_directory "$repo_root"
+  add_git_safe_directory "$repo_root/.git"
+fi
+
 api_base_url="${EXPO_PUBLIC_API_BASE_URL:-}"
 if [[ -n "$api_base_url" && ! "$api_base_url" =~ ^https://.+/chore-api/?$ ]]; then
   echo "EXPO_PUBLIC_API_BASE_URL must be an HTTPS URL ending in /chore-api." >&2

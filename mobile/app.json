@@ -22,6 +22,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "53bf095d-ad94-4ad4-a619-609c57026257"
+      }
+    },
+    "owner": "cabbageman2"
   }
 }
