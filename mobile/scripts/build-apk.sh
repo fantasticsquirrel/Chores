@@ -65,6 +65,10 @@ if [[ -n "$api_base_url" && ! "$api_base_url" =~ ^https://.+/chore-api/?$ ]]; th
   echo "EXPO_PUBLIC_API_BASE_URL must be an HTTPS URL ending in /chore-api." >&2
   exit 2
 fi
+if [[ "$api_base_url" =~ YOUR_|example\.com ]]; then
+  echo "EXPO_PUBLIC_API_BASE_URL must use the real production domain, not a placeholder." >&2
+  exit 2
+fi
 
 npm run typecheck
 

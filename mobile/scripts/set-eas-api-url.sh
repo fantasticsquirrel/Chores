@@ -22,6 +22,14 @@ ERROR
   exit 2
 fi
 
+if [[ "$api_base_url" =~ YOUR_|example\.com ]]; then
+  cat >&2 <<'ERROR'
+EXPO_PUBLIC_API_BASE_URL must use the real production domain, not a placeholder.
+Example: https://family.multihost.ing/chore-api
+ERROR
+  exit 2
+fi
+
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mobile_dir="$(cd "$script_dir/.." && pwd)"
 cd "$mobile_dir"
