@@ -52,7 +52,8 @@ Implemented in the APK:
 - Parent home summary: active children, pending reviews, enabled modules
 - Child today: choose eligible chores by date and submit
 - Parent review: pending submissions, approve all, approve/reject item
-- Homeschool read-only summary: counts, active semesters, recent comments
+- Homeschool compact workflows: overview, calendar/detail review, setup CRUD,
+  attendance upsert/delete, day comment upsert/delete, and grade upsert/delete
 - Account read-only profile/modules/logout
 
 Missing from mobile compared with the current website:
@@ -62,8 +63,6 @@ Missing from mobile compared with the current website:
 - Child login creation and email reset
 - Full parent chores page: daily board by child, submit on behalf, create/edit/
   archive chores, scheduling, assignment, rotation
-- Full homeschool CRUD: semester/subject creation, attendance logging, day
-  comments, grade entry, delete/edit actions, calendar detail workflow
 - Admin dashboard: create parent user, module access matrix
 - Parent dashboard quick-action flow and richer child list
 - Role/module-aware tab visibility for admin-only screens beyond the current
@@ -268,14 +267,20 @@ Completed in this pass:
   quick submit on behalf, selected child multi-submit, all-chores list,
   create/edit/archive chore flow, scheduling, completion windows, static
   assignment, and rotating assignment order.
+- Phase 4: Replaced the read-only homeschool mobile summary with module-gated,
+  phone-first workflows for overview/selected-child summary, calendar/detail
+  review, semester and subject setup CRUD with color swatches, attendance
+  upsert/delete, day comment upsert/delete, and grade upsert/delete.
+- Phase 4: Added render-independent homeschool mobile tests for month-grid
+  generation, semester validation, color normalization, and summary-row logic.
 - Phase 5: Added a compact admin screen for parent user creation and module
   access toggles because the current API already supports those workflows.
 
 Remaining after this pass:
 
-- Phase 4: Homeschool remains read-only on mobile. CRUD methods exist in the
-  client now, but phone-first semester/subject/attendance/comment/grade workflows
-  still need dedicated screens.
 - Phase 6 product gaps still require API/web work before mobile parity can be
   completed: ledger balances, bonus/payment/adjustment flows, reports, tags,
   quick templates, and child calendar/history.
+- Mobile homeschool should still receive manual device smoke coverage against a
+  deployed API before an installable release, especially destructive delete
+  paths that depend on existing attendance/grade relationships.
