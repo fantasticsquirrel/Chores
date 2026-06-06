@@ -72,6 +72,18 @@ fi
 
 npm run typecheck
 
+node <<'NODE'
+const { expo } = require("./app.json");
+const versionCode = expo && expo.android && expo.android.versionCode;
+
+if (!Number.isInteger(versionCode) || versionCode < 1) {
+  console.error(
+    "mobile/app.json must define expo.android.versionCode as a positive integer before building an APK.",
+  );
+  process.exit(2);
+}
+NODE
+
 if [[ "$mode" == "cloud" ]]; then
   if [[ -n "$api_base_url" ]]; then
     "$script_dir/set-eas-api-url.sh" "$api_base_url"

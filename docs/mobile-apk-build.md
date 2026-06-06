@@ -50,6 +50,33 @@ To update the API URL and build in one command:
 EXPO_PUBLIC_API_BASE_URL=https://family.multihost.ing/chore-api npm run mobile:apk
 ```
 
+Before cutting a new Android APK, bump both:
+
+- `mobile/app.json` `expo.version`
+- `mobile/app.json` `expo.android.versionCode`
+
+Android uses `versionCode` for APK upgrade/install decisions. Reusing an old
+version code can produce a generic "something went wrong" install failure on a
+phone.
+
+If Android still refuses the APK, remove any old build with the same package
+name before installing the new one:
+
+```bash
+adb uninstall com.fantasticsquirrel.familymanager
+adb install -r path/to/family-manager.apk
+```
+
+If that still fails, capture the exact package-manager reason with:
+
+```bash
+adb install -r path/to/family-manager.apk
+```
+
+Common failures are `INSTALL_FAILED_UPDATE_INCOMPATIBLE` for a signing-key
+conflict, `INSTALL_FAILED_VERSION_DOWNGRADE` for version code problems, and
+`INSTALL_FAILED_OLDER_SDK` if the phone is below Android 7.0.
+
 ## Local APK build
 
 Local EAS builds are useful on a machine with Java and an Android SDK installed:
