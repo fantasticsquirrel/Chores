@@ -19,6 +19,8 @@
     "mobile:android": "npm run android --workspace mobile",
     "mobile:ios": "npm run ios --workspace mobile",
     "mobile:typecheck": "npm run typecheck --workspace mobile",
+    "mobile:test": "npm run test --workspace mobile",
+    "mobile:gate": "npm run mobile:typecheck && npm run mobile:test && cd mobile && npx expo install --check",
     "mobile:apk": "npm run apk --workspace mobile",
     "mobile:apk:local": "npm run apk:local --workspace mobile",
     "mobile:eas:init": "npm run eas:init --workspace mobile",

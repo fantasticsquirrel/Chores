@@ -1,22 +1,42 @@
 import type {
   ApiErrorResponse,
   AuthSessionResponse,
+  ChangePasswordRequest,
   Child,
+  ChildAccount,
+  Chore,
+  CreateChildAccountRequest,
+  CreateChildRequest,
+  CreateChoreRequest,
+  CreateHomeschoolSemesterRequest,
+  CreateHomeschoolSubjectRequest,
+  CreateParentUserRequest,
   EligibleChore,
   HomeschoolAttendance,
   HomeschoolDayComment,
   HomeschoolGrade,
   HomeschoolSemester,
   HomeschoolSubject,
+  ListChoresParams,
   ListChildrenParams,
   ListEligibleChoresParams,
   ListSubmissionsParams,
   LoginRequest,
   MyModulesResponse,
+  ResetChildAccountEmailRequest,
+  SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
   SubmissionRequest,
   SubmissionResponse,
   SubmissionReview,
+  UpdateChildRequest,
+  UpdateChoreRequest,
+  UpdateHomeschoolSemesterRequest,
+  UpdateHomeschoolSubjectRequest,
+  UpsertHomeschoolAttendanceRequest,
+  UpsertHomeschoolDayCommentRequest,
+  UpsertHomeschoolGradeRequest,
+  UserModuleAccess,
 } from "./models";
 
 export const DEFAULT_API_BASE_URL = "http://10.0.2.2:8000/chore-api";
@@ -75,12 +95,39 @@ export class ApiClient {
   }
 
   async logout(): Promise<void> {
-    await this.request<void>("/auth/logout", { method: "POST" });
+    await this.postNoContent("/auth/logout");
     this.csrfToken = null;
+  }
+
+  async changePassword(payload: ChangePasswordRequest): Promise<void> {
+    await this.postNoContentWithBody("/auth/change-password", payload);
   }
 
   async getMyModules(): Promise<MyModulesResponse> {
     return this.get<MyModulesResponse>("/modules/me");
+  }
+
+  async listUserModuleAccess(): Promise<UserModuleAccess[]> {
+    return this.get<UserModuleAccess[]>("/modules/users");
+  }
+
+  async createParentUser(
+    payload: CreateParentUserRequest,
+  ): Promise<UserModuleAccess> {
+    return this.post<UserModuleAccess, CreateParentUserRequest>(
+      "/modules/users",
+      payload,
+    );
+  }
+
+  async setUserModuleAccess(
+    userId: number,
+    payload: SetUserModuleAccessRequest,
+  ): Promise<UserModuleAccess> {
+    return this.put<UserModuleAccess, SetUserModuleAccessRequest>(
+      `/modules/users/${userId}`,
+      payload,
+    );
   }
 
   async listChildren(params: ListChildrenParams): Promise<Child[]> {
@@ -88,6 +135,40 @@ export class ApiClient {
       household_id: params.household_id,
       active_only: params.active_only,
     });
+  }
+
+  async createChild(payload: CreateChildRequest): Promise<Child> {
+    return this.post<Child, CreateChildRequest>("/children", payload);
+  }
+
+  async updateChild(
+    childId: number,
+    payload: UpdateChildRequest,
+  ): Promise<Child> {
+    return this.patch<Child, UpdateChildRequest>(
+      `/children/${childId}`,
+      payload,
+    );
+  }
+
+  async createChildAccount(
+    childId: number,
+    payload: CreateChildAccountRequest,
+  ): Promise<ChildAccount> {
+    return this.post<ChildAccount, CreateChildAccountRequest>(
+      `/children/${childId}/account`,
+      payload,
+    );
+  }
+
+  async resetChildAccountEmail(
+    childId: number,
+    payload: ResetChildAccountEmailRequest,
+  ): Promise<ChildAccount> {
+    return this.patch<ChildAccount, ResetChildAccountEmailRequest>(
+      `/children/${childId}/account-email`,
+      payload,
+    );
   }
 
   async listEligibleChores(
@@ -144,10 +225,66 @@ export class ApiClient {
     });
   }
 
+  async createHomeschoolSemester(
+    payload: CreateHomeschoolSemesterRequest,
+  ): Promise<HomeschoolSemester> {
+    return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>(
+      "/homeschool/semesters",
+      payload,
+    );
+  }
+
+  async updateHomeschoolSemester(
+    semesterId: number,
+    payload: UpdateHomeschoolSemesterRequest,
+  ): Promise<HomeschoolSemester> {
+    return this.put<HomeschoolSemester, UpdateHomeschoolSemesterRequest>(
+      `/homeschool/semesters/${semesterId}`,
+      payload,
+    );
+  }
+
+  async deleteHomeschoolSemester(
+    semesterId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/semesters/${semesterId}`, {
+      household_id: householdId,
+    });
+  }
+
   async listHomeschoolSubjects(
     householdId: number,
   ): Promise<HomeschoolSubject[]> {
     return this.get<HomeschoolSubject[]>("/homeschool/subjects", {
+      household_id: householdId,
+    });
+  }
+
+  async createHomeschoolSubject(
+    payload: CreateHomeschoolSubjectRequest,
+  ): Promise<HomeschoolSubject> {
+    return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>(
+      "/homeschool/subjects",
+      payload,
+    );
+  }
+
+  async updateHomeschoolSubject(
+    subjectId: number,
+    payload: UpdateHomeschoolSubjectRequest,
+  ): Promise<HomeschoolSubject> {
+    return this.put<HomeschoolSubject, UpdateHomeschoolSubjectRequest>(
+      `/homeschool/subjects/${subjectId}`,
+      payload,
+    );
+  }
+
+  async deleteHomeschoolSubject(
+    subjectId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/subjects/${subjectId}`, {
       household_id: householdId,
     });
   }
@@ -162,6 +299,24 @@ export class ApiClient {
     });
   }
 
+  async upsertHomeschoolAttendance(
+    payload: UpsertHomeschoolAttendanceRequest,
+  ): Promise<HomeschoolAttendance> {
+    return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>(
+      "/homeschool/attendance",
+      payload,
+    );
+  }
+
+  async deleteHomeschoolAttendance(
+    attendanceId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/attendance/${attendanceId}`, {
+      household_id: householdId,
+    });
+  }
+
   async listHomeschoolDayComments(
     householdId: number,
     childId?: number,
@@ -169,6 +324,24 @@ export class ApiClient {
     return this.get<HomeschoolDayComment[]>("/homeschool/day-comments", {
       household_id: householdId,
       child_id: childId,
+    });
+  }
+
+  async upsertHomeschoolDayComment(
+    payload: UpsertHomeschoolDayCommentRequest,
+  ): Promise<HomeschoolDayComment> {
+    return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>(
+      "/homeschool/day-comments",
+      payload,
+    );
+  }
+
+  async deleteHomeschoolDayComment(
+    commentId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/day-comments/${commentId}`, {
+      household_id: householdId,
     });
   }
 
@@ -180,6 +353,46 @@ export class ApiClient {
       household_id: householdId,
       child_id: childId,
     });
+  }
+
+  async upsertHomeschoolGrade(
+    payload: UpsertHomeschoolGradeRequest,
+  ): Promise<HomeschoolGrade> {
+    return this.put<HomeschoolGrade, UpsertHomeschoolGradeRequest>(
+      "/homeschool/grades",
+      payload,
+    );
+  }
+
+  async deleteHomeschoolGrade(
+    gradeId: number,
+    householdId: number,
+  ): Promise<void> {
+    return this.delete(`/homeschool/grades/${gradeId}`, {
+      household_id: householdId,
+    });
+  }
+
+  async listChores(params: ListChoresParams): Promise<Chore[]> {
+    return this.get<Chore[]>("/chores", {
+      household_id: params.household_id,
+      active_only: params.active_only,
+    });
+  }
+
+  async createChore(payload: CreateChoreRequest): Promise<Chore> {
+    return this.post<Chore, CreateChoreRequest>("/chores", payload);
+  }
+
+  async updateChore(
+    choreId: number,
+    payload: UpdateChoreRequest,
+  ): Promise<Chore> {
+    return this.patch<Chore, UpdateChoreRequest>(`/chores/${choreId}`, payload);
+  }
+
+  async archiveChore(choreId: number, householdId: number): Promise<void> {
+    return this.delete(`/chores/${choreId}`, { household_id: householdId });
   }
 
   private async get<TResponse>(
@@ -203,6 +416,47 @@ export class ApiClient {
       },
       query,
     );
+  }
+
+  private async postNoContent(path: string): Promise<void> {
+    await this.request<void>(path, { method: "POST" });
+  }
+
+  private async postNoContentWithBody<TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<void> {
+    await this.request<void>(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  private async put<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse> {
+    return this.request<TResponse>(path, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  private async patch<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse> {
+    return this.request<TResponse>(path, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  private async delete(path: string, query?: RequestQuery): Promise<void> {
+    await this.request<void>(path, { method: "DELETE" }, query);
   }
 
   private async request<TResponse>(

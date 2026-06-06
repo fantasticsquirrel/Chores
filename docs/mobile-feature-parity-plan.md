@@ -244,3 +244,38 @@ For each phase:
 Before shipping mobile feature milestones, install on a real Android device and
 run through parent and child accounts. The current server cannot run a useful
 Android emulator because KVM is unavailable.
+
+## Progress - 2026-06-06 Mobile Parity Pass
+
+Completed in this pass:
+
+- Phase 0: Split `mobile/App.tsx` into a clean `mobile/src` structure with
+  shared components, hooks, navigation helpers, screens, styles, and utilities.
+- Phase 0: Expanded the mobile API client/model surface to match current
+  website/API endpoints for password change, modules/admin access, children,
+  child accounts, chores, submissions, and homeschool CRUD methods.
+- Phase 0: Added mobile tests for API URL/CSRF behavior and role/module tab
+  derivation.
+- Phase 0: Added root `npm run mobile:gate` for typecheck, mobile tests, and
+  Expo dependency checks.
+- Phase 1: Added account security password change in the mobile Account screen.
+- Phase 1: Replaced hardcoded tabs with role/module-aware mobile navigation,
+  including admin-only tab visibility for parent admins with admin module
+  access.
+- Phase 2: Added parent children management for list, create, active toggle,
+  child login creation, and child login email reset.
+- Phase 3: Added parent chores mobile parity for daily board by child/date,
+  quick submit on behalf, selected child multi-submit, all-chores list,
+  create/edit/archive chore flow, scheduling, completion windows, static
+  assignment, and rotating assignment order.
+- Phase 5: Added a compact admin screen for parent user creation and module
+  access toggles because the current API already supports those workflows.
+
+Remaining after this pass:
+
+- Phase 4: Homeschool remains read-only on mobile. CRUD methods exist in the
+  client now, but phone-first semester/subject/attendance/comment/grade workflows
+  still need dedicated screens.
+- Phase 6 product gaps still require API/web work before mobile parity can be
+  completed: ledger balances, bonus/payment/adjustment flows, reports, tags,
+  quick templates, and child calendar/history.
