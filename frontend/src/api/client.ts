@@ -4,6 +4,7 @@ import type {
   ChangePasswordRequest,
   Child,
   ChildAccount,
+  ChildLoginRequest,
   Chore,
   CreateChildAccountRequest,
   CreateChildRequest,
@@ -95,6 +96,15 @@ export class ApiClient {
   async login(payload: LoginRequest): Promise<AuthSessionResponse> {
     const session = await this.post<AuthSessionResponse, LoginRequest>(
       "/auth/login",
+      payload,
+    );
+    this.csrfToken = session.csrf_token ?? readCookieValue(CSRF_COOKIE_NAME);
+    return session;
+  }
+
+  async childLogin(payload: ChildLoginRequest): Promise<AuthSessionResponse> {
+    const session = await this.post<AuthSessionResponse, ChildLoginRequest>(
+      "/auth/child-login",
       payload,
     );
     this.csrfToken = session.csrf_token ?? readCookieValue(CSRF_COOKIE_NAME);

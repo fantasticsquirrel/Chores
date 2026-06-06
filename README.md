@@ -216,6 +216,7 @@ cp backups/chore_tracking-YYYY-MM-DD.db data/chore_tracking.db
 Auth endpoints:
 
 - `POST /chore-api/auth/login`
+- `POST /chore-api/auth/child-login`
 - `POST /chore-api/auth/logout`
 - `GET /chore-api/auth/me`
 
@@ -224,7 +225,11 @@ Login sets two cookies:
 - `chore_tracker_session` (HttpOnly session cookie)
 - `chore_tracker_csrf` (CSRF cookie)
 
-All authenticated write requests to `/chore-api/*` (except login) must include:
+Child login accepts `parent_email`, `child_name`, and `password`, then signs in
+the linked active child account. Existing email/password login remains
+available for parent accounts and legacy child login emails.
+
+All authenticated write requests to `/chore-api/*` (except login endpoints) must include:
 
 - Header `X-CSRF-Token: <chore_tracker_csrf cookie value>`
 

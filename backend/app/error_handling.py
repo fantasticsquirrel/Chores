@@ -35,13 +35,14 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
 class CsrfProtectionMiddleware(BaseHTTPMiddleware):
     _unsafe_methods = {"POST", "PUT", "PATCH", "DELETE"}
+    _exempt_paths = {"/chore-api/auth/login", "/chore-api/auth/child-login"}
 
     async def dispatch(self, request: Request, call_next: Callable):  # type: ignore[override]
         if request.method not in self._unsafe_methods:
             return await call_next(request)
 
         path = request.url.path
-        if not path.startswith("/chore-api") or path == "/chore-api/auth/login":
+        if not path.startswith("/chore-api") or path in self._exempt_paths:
             return await call_next(request)
 
         session_token = request.cookies.get(SESSION_COOKIE_NAME)

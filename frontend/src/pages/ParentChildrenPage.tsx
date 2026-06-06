@@ -190,7 +190,7 @@ export function ParentChildrenPage(): ReactElement {
       const childName =
         state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
       setLinkAccountSuccess(
-        `Linked login created for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+        `Linked login created for ${childName}. Child can sign in with a parent login email, ${childName}, and the child password. Legacy email ${account.email} still works for email/password sign-in.`,
       );
       setChildEmail("");
       setChildPassword("");
@@ -227,7 +227,7 @@ export function ParentChildrenPage(): ReactElement {
       const childName =
         state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
       setResetEmailSuccess(
-        `Updated login email for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+        `Updated legacy login email for ${childName}. Parent email + child name + child password is recommended; ${account.email} still works for email/password sign-in.`,
       );
       setResetEmailInput("");
     } catch (error: unknown) {
@@ -275,7 +275,7 @@ export function ParentChildrenPage(): ReactElement {
       const childName =
         state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
       setResetPasswordSuccess(
-        `Updated password for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+        `Updated password for ${childName}. Child can sign in with a parent login email, ${childName}, and the new child password. Legacy email ${account.email} still works.`,
       );
       setResetPasswordInput("");
       setResetPasswordConfirm("");
@@ -294,8 +294,10 @@ export function ParentChildrenPage(): ReactElement {
           <Badge>Household {householdId ?? "Unknown"}</Badge>
         </div>
         <p>
-          Create child profiles and manage child login accounts. Children sign
-          in with their login email and password.
+          Create child profiles and manage child login accounts. Children can
+          sign in with a parent login email, their child name, and child
+          password. Optional legacy login emails still work for email/password
+          sign-in.
         </p>
       </Card>
 
@@ -365,7 +367,7 @@ export function ParentChildrenPage(): ReactElement {
               ))}
             </select>
           </FormField>
-          <FormField label="Login Email (optional, leave blank to auto-generate)">
+          <FormField label="Legacy Login Email (optional, leave blank to auto-generate)">
             <TextInput
               type="email"
               value={childEmail}
@@ -402,7 +404,7 @@ export function ParentChildrenPage(): ReactElement {
 
       <Card className="dashboard-panel">
         <div className="panel-header-row">
-          <h2>Reset Child Login Email</h2>
+          <h2>Reset Legacy Login Email</h2>
         </div>
         <form
           className="children-form"
@@ -431,7 +433,7 @@ export function ParentChildrenPage(): ReactElement {
               ))}
             </select>
           </FormField>
-          <FormField label="New Login Email (optional, leave blank to auto-generate)">
+          <FormField label="New Legacy Login Email (optional, leave blank to auto-generate)">
             <TextInput
               type="email"
               value={resetEmailInput}

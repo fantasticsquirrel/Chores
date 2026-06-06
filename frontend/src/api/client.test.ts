@@ -116,6 +116,54 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes child login payload for auth endpoint", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          user: {
+            id: 12,
+            household_id: 2,
+            email: "generated-ava@example.com",
+            role: "CHILD",
+            child_id: 4,
+          },
+          csrf_token: "child-csrf-token",
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.childLogin({
+      parent_email: "parent@example.com",
+      child_name: "Ava",
+      password: "kid-password-123",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/chore-api/auth/child-login",
+      expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          parent_email: "parent@example.com",
+          child_name: "Ava",
+          password: "kid-password-123",
+        }),
+      }),
+    );
+  });
+
   it("loads current session from /auth/me", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(

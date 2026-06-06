@@ -32,8 +32,9 @@ export function AppShell() {
     activeTab,
     bootstrapping,
     bootstrapError,
-    handleLogin,
+    handleChildLogin,
     handleLogout,
+    handleParentLogin,
     session,
     setActiveTab,
   } = useSessionBootstrap({ loadModules, setModules });
@@ -49,7 +50,9 @@ export function AppShell() {
     }
     if (!tabs.some((tab) => tab.key === activeTab)) {
       const defaultTab = defaultTabForRole(session.user.role);
-      setActiveTab(tabs.some((tab) => tab.key === defaultTab) ? defaultTab : tabs[0].key);
+      setActiveTab(
+        tabs.some((tab) => tab.key === defaultTab) ? defaultTab : tabs[0].key,
+      );
     }
   }, [activeTab, session, setActiveTab, tabs]);
 
@@ -70,7 +73,8 @@ export function AppShell() {
       <LoginScreen
         apiBaseUrl={apiClient.apiBaseUrl}
         bootstrapError={bootstrapError}
-        onLogin={handleLogin}
+        onChildLogin={handleChildLogin}
+        onParentLogin={handleParentLogin}
       />
     );
   }

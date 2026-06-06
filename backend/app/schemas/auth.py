@@ -12,6 +12,14 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=1024)
 
 
+class ChildLoginRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    parent_email: str = Field(min_length=3, max_length=320)
+    child_name: str = Field(min_length=1, max_length=255)
+    password: str = Field(min_length=1, max_length=1024)
+
+
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=1024)
     new_password: str = Field(min_length=8, max_length=1024)

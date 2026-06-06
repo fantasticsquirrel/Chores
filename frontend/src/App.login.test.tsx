@@ -49,6 +49,55 @@ describe("Login page", () => {
     ).toBeVisible();
   });
 
+  it("submits parent email, child name, and child password then navigates to child today", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(
+      new Promise<never>(() => undefined),
+    );
+    const loginSpy = vi.spyOn(apiClient, "login");
+    const childLoginSpy = vi.spyOn(apiClient, "childLogin");
+    childLoginSpy.mockResolvedValue({
+      user: {
+        id: 7,
+        household_id: 1,
+        email: "generated-ava@example.com",
+        role: "CHILD",
+        child_id: 4,
+      },
+      csrf_token: "child-csrf-token",
+    });
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Child" }));
+    fireEvent.change(screen.getByLabelText("Parent Login Email"), {
+      target: { value: " parent@example.com " },
+    });
+    fireEvent.change(screen.getByLabelText("Child Name"), {
+      target: { value: " Ava " },
+    });
+    fireEvent.change(screen.getByLabelText("Child Password"), {
+      target: { value: "kid-password-123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+    await waitFor(() =>
+      expect(childLoginSpy).toHaveBeenCalledWith({
+        parent_email: "parent@example.com",
+        child_name: "Ava",
+        password: "kid-password-123",
+      }),
+    );
+    expect(loginSpy).not.toHaveBeenCalled();
+    expect(
+      await screen.findByRole("heading", { name: "Child Today" }),
+    ).toBeVisible();
+  });
+
   it("shows inline error when login request fails", async () => {
     const loginSpy = vi.spyOn(apiClient, "login");
     loginSpy.mockRejectedValue(
@@ -74,6 +123,46 @@ describe("Login page", () => {
     await waitFor(() => expect(loginSpy).toHaveBeenCalledTimes(1));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not sign in: Invalid email or password.",
+    );
+  });
+
+  it("shows inline error when child login request fails", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(
+      new Promise<never>(() => undefined),
+    );
+    const childLoginSpy = vi.spyOn(apiClient, "childLogin");
+    childLoginSpy.mockRejectedValue(
+      new ApiClientError(
+        409,
+        "Multiple children have that name. Ask a parent to use a unique child name.",
+        {
+          detail:
+            "Multiple children have that name. Ask a parent to use a unique child name.",
+        },
+      ),
+    );
+
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Child" }));
+    fireEvent.change(screen.getByLabelText("Parent Login Email"), {
+      target: { value: "parent@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Child Name"), {
+      target: { value: "Ava" },
+    });
+    fireEvent.change(screen.getByLabelText("Child Password"), {
+      target: { value: "wrong-pass" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+    await waitFor(() => expect(childLoginSpy).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not sign in: Multiple children have that name. Ask a parent to use a unique child name.",
     );
   });
 

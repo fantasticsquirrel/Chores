@@ -339,6 +339,7 @@ body {
 .children-form input[type="email"],
 .children-form input[type="password"],
 .auth-form input[type="email"],
+.auth-form input[type="text"],
 .auth-form input[type="password"],
 .children-form input[type="date"] {
   border: 1px solid #ffffff44;
@@ -358,6 +359,7 @@ body {
 .children-form input[type="email"]:focus-visible,
 .children-form input[type="password"]:focus-visible,
 .auth-form input[type="email"]:focus-visible,
+.auth-form input[type="text"]:focus-visible,
 .auth-form input[type="password"]:focus-visible,
 .children-form input[type="date"]:focus-visible,
 .children-form input[type="checkbox"]:focus-visible,
@@ -373,6 +375,48 @@ body {
   display: grid;
   gap: 0.75rem;
   max-width: 22rem;
+}
+
+.auth-mode-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem;
+  margin-top: 1rem;
+  max-width: 22rem;
+  padding: 0.25rem;
+  border: 1px solid #ffffff38;
+  border-radius: var(--radius-button);
+  background: #ffffff12;
+}
+
+.auth-mode-switch button {
+  border: 0;
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  font: inherit;
+  font-weight: 800;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.auth-mode-switch button.active {
+  color: var(--text-main);
+  background: linear-gradient(
+    120deg,
+    var(--accent-cyan) 0%,
+    var(--accent-pink) 100%
+  );
+}
+
+.auth-mode-switch button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.auth-mode-switch button:focus-visible {
+  outline: 2px solid var(--ring-focus);
+  outline-offset: 2px;
 }
 
 .checkbox-row {

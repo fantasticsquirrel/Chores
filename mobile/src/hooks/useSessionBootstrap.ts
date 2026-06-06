@@ -6,6 +6,17 @@ import { defaultTabForRole } from "../navigation/tabs";
 import type { AppTab } from "../navigation/types";
 import { formatError, isUnauthorized } from "../utils/format";
 
+export type ParentLoginInput = {
+  email: string;
+  password: string;
+};
+
+export type ChildLoginInput = {
+  parentEmail: string;
+  childName: string;
+  password: string;
+};
+
 export function useSessionBootstrap({
   loadModules,
   setModules,
@@ -57,12 +68,8 @@ export function useSessionBootstrap({
     };
   }, [loadModules]);
 
-  const handleLogin = useCallback(
-    async (email: string, password: string) => {
-      const nextSession = await apiClient.login({
-        email: email.trim(),
-        password,
-      });
+  const applyAuthenticatedSession = useCallback(
+    async (nextSession: AuthSessionResponse) => {
       setSession(nextSession);
       setActiveTab(defaultTabForRole(nextSession.user.role));
       setBootstrapError(null);
@@ -77,6 +84,29 @@ export function useSessionBootstrap({
     [loadModules],
   );
 
+  const handleParentLogin = useCallback(
+    async ({ email, password }: ParentLoginInput) => {
+      const nextSession = await apiClient.login({
+        email: email.trim(),
+        password,
+      });
+      await applyAuthenticatedSession(nextSession);
+    },
+    [applyAuthenticatedSession],
+  );
+
+  const handleChildLogin = useCallback(
+    async ({ parentEmail, childName, password }: ChildLoginInput) => {
+      const nextSession = await apiClient.childLogin({
+        parent_email: parentEmail.trim(),
+        child_name: childName.trim(),
+        password,
+      });
+      await applyAuthenticatedSession(nextSession);
+    },
+    [applyAuthenticatedSession],
+  );
+
   const handleLogout = useCallback(async () => {
     await apiClient.logout();
     setSession(null);
@@ -88,8 +118,9 @@ export function useSessionBootstrap({
     activeTab,
     bootstrapping,
     bootstrapError,
-    handleLogin,
+    handleChildLogin,
     handleLogout,
+    handleParentLogin,
     session,
     setActiveTab,
     setBootstrapError,

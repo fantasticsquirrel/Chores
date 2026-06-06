@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select, func, select
 
 from app.models.core import Child
 from app.repositories.base import SQLAlchemyRepository
@@ -18,6 +18,18 @@ class ChildRepository(SQLAlchemyRepository):
     def get_by_id(self, household_id: int, child_id: int) -> Child | None:
         query = select(Child).where(Child.household_id == household_id, Child.id == child_id)
         return self.session.scalars(query).one_or_none()
+
+    def list_active_by_normalized_name(self, household_id: int, normalized_name: str) -> list[Child]:
+        query = (
+            select(Child)
+            .where(
+                Child.household_id == household_id,
+                Child.active.is_(True),
+                func.lower(func.trim(Child.name)) == normalized_name,
+            )
+            .order_by(Child.id.asc())
+        )
+        return list(self.session.scalars(query).all())
 
     def add(self, child: Child) -> Child:
         self.session.add(child)

@@ -108,6 +108,56 @@ describe("mobile ApiClient", () => {
     );
   });
 
+  it("serializes child login payload for auth endpoint", async () => {
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          csrf_token: "child-csrf-token",
+          user: {
+            child_id: 20,
+            email: "generated-ava@example.com",
+            household_id: 7,
+            id: 31,
+            role: "CHILD",
+          },
+        }),
+        {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        },
+      ),
+    );
+
+    const client = new ApiClient({
+      baseUrl: "https://family.example.test/chore-api",
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+
+    await client.childLogin({
+      parent_email: "parent@example.com",
+      child_name: "Ava",
+      password: "kid-password-123",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://family.example.test/chore-api/auth/child-login",
+      expect.objectContaining({
+        body: JSON.stringify({
+          parent_email: "parent@example.com",
+          child_name: "Ava",
+          password: "kid-password-123",
+        }),
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        }),
+        method: "POST",
+      }),
+    );
+  });
+
   it("serializes child account password reset payload", async () => {
     const fetchMock = vi.fn();
     fetchMock

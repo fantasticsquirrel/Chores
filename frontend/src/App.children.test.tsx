@@ -309,7 +309,7 @@ describe("Parent children page", () => {
     );
     expect(
       await screen.findByText(
-        "Updated password for Ava. Child signs in with login email ava-login@example.com, not display name.",
+        "Updated password for Ava. Child can sign in with a parent login email, Ava, and the new child password. Legacy email ava-login@example.com still works.",
       ),
     ).toBeVisible();
   });

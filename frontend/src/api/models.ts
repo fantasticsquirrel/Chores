@@ -9,6 +9,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ChildLoginRequest {
+  parent_email: string;
+  child_name: string;
+  password: string;
+}
+
 export interface ChangePasswordRequest {
   current_password: string;
   new_password: string;

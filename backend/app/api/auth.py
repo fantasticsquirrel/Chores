@@ -4,16 +4,22 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db_session
-from app.models.core import User
 from app.config import get_settings
-from app.schemas.auth import AuthSessionResponse, AuthUserResponse, ChangePasswordRequest, LoginRequest
+from app.models.core import User
+from app.schemas.auth import (
+    AuthSessionResponse,
+    AuthUserResponse,
+    ChangePasswordRequest,
+    ChildLoginRequest,
+    LoginRequest,
+)
 from app.security.csrf import CSRF_COOKIE_NAME, create_csrf_token
 from app.security.sessions import (
     SESSION_COOKIE_MAX_AGE_SECONDS,
     SESSION_COOKIE_NAME,
     create_session_token,
 )
-from app.services.auth import AuthService
+from app.services.auth import AuthService, ChildLoginStatus
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 _service = AuthService()
@@ -30,12 +36,7 @@ def _request_uses_https(request: Request) -> bool:
     return request.url.scheme == "https"
 
 
-@router.post("/login", response_model=AuthSessionResponse)
-def login(payload: LoginRequest, request: Request, response: Response, session: Session = Depends(get_db_session)) -> AuthSessionResponse:
-    user = _service.authenticate(session, payload.email, payload.password)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
-
+def _set_session_cookies(user: User, request: Request, response: Response) -> str:
     settings = get_settings()
     token = create_session_token(settings.secret_key, user.id)
     csrf_token = create_csrf_token()
@@ -58,8 +59,52 @@ def login(payload: LoginRequest, request: Request, response: Response, session: 
         max_age=SESSION_COOKIE_MAX_AGE_SECONDS,
         path="/",
     )
+    return csrf_token
+
+
+@router.post("/login", response_model=AuthSessionResponse)
+def login(
+    payload: LoginRequest,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_db_session),
+) -> AuthSessionResponse:
+    user = _service.authenticate(session, payload.email, payload.password)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
+
+    csrf_token = _set_session_cookies(user, request, response)
     session.commit()
     return _build_session_response(user, csrf_token=csrf_token)
+
+
+@router.post("/child-login", response_model=AuthSessionResponse)
+def child_login(
+    payload: ChildLoginRequest,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_db_session),
+) -> AuthSessionResponse:
+    result = _service.authenticate_child(
+        session,
+        payload.parent_email,
+        payload.child_name,
+        payload.password,
+    )
+    if result.status == ChildLoginStatus.DUPLICATE_CHILD_NAMES:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Multiple children have that name. Ask a parent to use a unique child name.",
+        )
+    if result.user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid child login credentials.",
+        )
+
+    csrf_token = _set_session_cookies(result.user, request, response)
+    session.commit()
+    return _build_session_response(result.user, csrf_token=csrf_token)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -90,7 +135,10 @@ def change_password(
         current_password=payload.current_password,
         new_password=payload.new_password,
     ):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect.",
+        )
 
     session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

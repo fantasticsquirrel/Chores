@@ -150,7 +150,7 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         state.children.find((child) => child.id === selectedChildId)?.name ??
         "child";
       setLinkAccountSuccess(
-        `Linked login created for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+        `Linked login created for ${childName}. Child can sign in with a parent login email, ${childName}, and the child password. Legacy email ${account.email} still works for email/password sign-in.`,
       );
       setChildEmail("");
       setChildPassword("");
@@ -180,7 +180,7 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         state.children.find((child) => child.id === selectedChildId)?.name ??
         "child";
       setResetEmailSuccess(
-        `Updated login email for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+        `Updated legacy login email for ${childName}. Parent email + child name + child password is recommended; ${account.email} still works for email/password sign-in.`,
       );
       setResetEmailInput("");
     } catch (error) {
@@ -221,7 +221,7 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         state.children.find((child) => child.id === selectedChildId)?.name ??
         "child";
       setResetPasswordSuccess(
-        `Updated password for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+        `Updated password for ${childName}. Child can sign in with a parent login email, ${childName}, and the new child password. Legacy email ${account.email} still works.`,
       );
       setResetPasswordInput("");
       setResetPasswordConfirm("");
@@ -237,7 +237,7 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
   return (
     <View>
       <ScreenHeader
-        subtitle="Profiles and child login emails"
+        subtitle="Profiles and child-friendly login credentials"
         title="Children"
         trailing={
           <ActionButton
@@ -341,10 +341,10 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
       </SectionCard>
 
       <SectionCard
-        subtitle="Children sign in with login email and password, not display name."
+        subtitle="Kids can sign in with parent email, child name, and child password. Legacy child emails still work."
         title="Child Login"
       >
-        <FieldLabel label="Login Email (optional, blank auto-generates)" />
+        <FieldLabel label="Legacy Login Email (optional, blank auto-generates)" />
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
@@ -388,10 +388,10 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
       </SectionCard>
 
       <SectionCard
-        subtitle="Leave blank to generate a new internal login email."
-        title="Reset Login Email"
+        subtitle="Leave blank to generate a new internal legacy email."
+        title="Reset Legacy Login Email"
       >
-        <FieldLabel label="New Login Email (optional)" />
+        <FieldLabel label="New Legacy Login Email (optional)" />
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"

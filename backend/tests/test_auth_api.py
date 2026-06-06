@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Household, User
+from app.models.core import Child, Household, User
 from app.models.enums import UserRole
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
 from app.security import hash_password, verify_password
@@ -44,6 +44,35 @@ def _create_parent_user(email: str = "parent@example.com", password: str = "pass
         session.commit()
         session.refresh(user)
         return user, password
+
+
+def _create_child_user(
+    *,
+    household_id: int,
+    child_name: str = "Ava",
+    child_email: str = "ava@example.com",
+    child_password: str = "kid-password-123",
+    active: bool = True,
+) -> tuple[Child, User, str]:
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        child = Child(household_id=household_id, name=child_name, active=active)
+        session.add(child)
+        session.flush()
+
+        user = User(
+            household_id=household_id,
+            email=child_email.lower(),
+            password_hash=hash_password(child_password),
+            role=UserRole.CHILD,
+            child_id=child.id,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(child)
+        session.refresh(user)
+        return child, user, child_password
 
 
 def test_login_and_me_flow(tmp_path: Path, monkeypatch) -> None:
@@ -86,6 +115,126 @@ def test_login_rejects_invalid_credentials(tmp_path: Path, monkeypatch) -> None:
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid email or password."
+
+
+def test_child_login_uses_parent_email_child_name_and_child_password(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, _parent_password = _create_parent_user(email="parent@example.com")
+    child, child_user, child_password = _create_child_user(
+        household_id=parent.household_id,
+        child_name="Ava",
+        child_email="generated-ava@example.com",
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/child-login",
+            json={
+                "parent_email": " PARENT@example.com ",
+                "child_name": " ava ",
+                "password": child_password,
+            },
+        )
+
+    assert response.status_code == 200
+    payload = response.json()["user"]
+    assert payload["id"] == child_user.id
+    assert payload["household_id"] == parent.household_id
+    assert payload["email"] == child_user.email
+    assert payload["role"] == UserRole.CHILD.value
+    assert payload["child_id"] == child.id
+    assert "chore_tracker_session" in response.cookies
+    assert CSRF_COOKIE_NAME in response.cookies
+    assert response.json()["csrf_token"] == response.cookies[CSRF_COOKIE_NAME]
+
+
+def test_child_login_rejects_unknown_parent_email(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, _parent_password = _create_parent_user(email="parent@example.com")
+    _create_child_user(household_id=parent.household_id)
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/child-login",
+            json={
+                "parent_email": "missing-parent@example.com",
+                "child_name": "Ava",
+                "password": "kid-password-123",
+            },
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid child login credentials."
+
+
+def test_child_login_rejects_wrong_child_password(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, _parent_password = _create_parent_user(email="parent@example.com")
+    _create_child_user(household_id=parent.household_id, child_name="Ava")
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/child-login",
+            json={
+                "parent_email": "parent@example.com",
+                "child_name": "Ava",
+                "password": "wrong-password",
+            },
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid child login credentials."
+
+
+def test_child_login_rejects_duplicate_child_names(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, _parent_password = _create_parent_user(email="parent@example.com")
+    _create_child_user(
+        household_id=parent.household_id,
+        child_name="Ava",
+        child_email="ava-one@example.com",
+    )
+    _create_child_user(
+        household_id=parent.household_id,
+        child_name=" ava ",
+        child_email="ava-two@example.com",
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/child-login",
+            json={
+                "parent_email": "parent@example.com",
+                "child_name": "AVA",
+                "password": "kid-password-123",
+            },
+        )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Multiple children have that name. Ask a parent to use a unique child name."
+
+
+def test_child_login_rejects_inactive_child(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, _parent_password = _create_parent_user(email="parent@example.com")
+    _create_child_user(
+        household_id=parent.household_id,
+        child_name="Ava",
+        active=False,
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/child-login",
+            json={
+                "parent_email": "parent@example.com",
+                "child_name": "Ava",
+                "password": "kid-password-123",
+            },
+        )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid child login credentials."
 
 
 def test_logout_clears_session_cookie(tmp_path: Path, monkeypatch) -> None:
