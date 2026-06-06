@@ -45,11 +45,22 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
   const [resetEmailSuccess, setResetEmailSuccess] = useState<string | null>(
     null,
   );
+  const [resetPasswordInput, setResetPasswordInput] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(
+    null,
+  );
+  const [resetPasswordSuccess, setResetPasswordSuccess] = useState<
+    string | null
+  >(null);
 
   const loadChildren = useCallback(async () => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
     try {
-      const children = await apiClient.listChildren({ household_id: householdId });
+      const children = await apiClient.listChildren({
+        household_id: householdId,
+      });
       setState({ children, loading: false, error: null });
       if (children.length > 0) {
         setSelectedChildId((current) => current ?? children[0].id);
@@ -100,7 +111,9 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         household_id: householdId,
         active: !child.active,
       });
-      setSubmitSuccess(`${child.name} is now ${child.active ? "inactive" : "active"}.`);
+      setSubmitSuccess(
+        `${child.name} is now ${child.active ? "inactive" : "active"}.`,
+      );
       await loadChildren();
     } catch (error) {
       setSubmitError(`Could not save child: ${formatError(error)}`);
@@ -136,7 +149,9 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
       const childName =
         state.children.find((child) => child.id === selectedChildId)?.name ??
         "child";
-      setLinkAccountSuccess(`Linked login created for ${childName}: ${account.email}`);
+      setLinkAccountSuccess(
+        `Linked login created for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+      );
       setChildEmail("");
       setChildPassword("");
     } catch (error) {
@@ -164,7 +179,9 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
       const childName =
         state.children.find((child) => child.id === selectedChildId)?.name ??
         "child";
-      setResetEmailSuccess(`Updated child login email for ${childName}: ${account.email}`);
+      setResetEmailSuccess(
+        `Updated login email for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+      );
       setResetEmailInput("");
     } catch (error) {
       setResetEmailError(`Could not reset child email: ${formatError(error)}`);
@@ -173,10 +190,54 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
     }
   }
 
+  async function resetChildPassword() {
+    setResetPasswordError(null);
+    setResetPasswordSuccess(null);
+    if (selectedChildId === null) {
+      setResetPasswordError("Choose a child first.");
+      return;
+    }
+    if (resetPasswordInput.length < 8) {
+      setResetPasswordError(
+        "Temporary password must be at least 8 characters.",
+      );
+      return;
+    }
+    if (resetPasswordInput !== resetPasswordConfirm) {
+      setResetPasswordError("Temporary password and confirmation must match.");
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const account = await apiClient.resetChildAccountPassword(
+        selectedChildId,
+        {
+          household_id: householdId,
+          new_password: resetPasswordInput,
+        },
+      );
+      const childName =
+        state.children.find((child) => child.id === selectedChildId)?.name ??
+        "child";
+      setResetPasswordSuccess(
+        `Updated password for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+      );
+      setResetPasswordInput("");
+      setResetPasswordConfirm("");
+    } catch (error) {
+      setResetPasswordError(
+        `Could not reset child password: ${formatError(error)}`,
+      );
+    } finally {
+      setResettingPassword(false);
+    }
+  }
+
   return (
     <View>
       <ScreenHeader
-        subtitle="Profiles and child logins"
+        subtitle="Profiles and child login emails"
         title="Children"
         trailing={
           <ActionButton
@@ -237,7 +298,10 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
       <SectionCard title="Select Child">
         {state.loading ? <LoadingRow label="Loading children" /> : null}
         {!state.loading && state.error !== null ? (
-          <InlineNotice tone="error" message={`Could not load children: ${state.error}`} />
+          <InlineNotice
+            tone="error"
+            message={`Could not load children: ${state.error}`}
+          />
         ) : null}
         {!state.loading && state.children.length === 0 ? (
           <Text style={styles.mutedText}>No children found yet.</Text>
@@ -250,7 +314,9 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
               onPress={() => setSelectedChildId(child.id)}
               style={[
                 styles.selectableRow,
-                selectedChildId === child.id ? styles.selectableRowSelected : null,
+                selectedChildId === child.id
+                  ? styles.selectableRowSelected
+                  : null,
               ]}
             >
               <View style={styles.rowMain}>
@@ -274,8 +340,11 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         </View>
       </SectionCard>
 
-      <SectionCard title="Child Login">
-        <FieldLabel label="Child Email (optional)" />
+      <SectionCard
+        subtitle="Children sign in with login email and password, not display name."
+        title="Child Login"
+      >
+        <FieldLabel label="Login Email (optional, blank auto-generates)" />
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
@@ -318,8 +387,11 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Reset Login Email">
-        <FieldLabel label="New Email (optional)" />
+      <SectionCard
+        subtitle="Leave blank to generate a new internal login email."
+        title="Reset Login Email"
+      >
+        <FieldLabel label="New Login Email (optional)" />
         <TextInput
           autoCapitalize="none"
           keyboardType="email-address"
@@ -347,6 +419,55 @@ export function ChildrenScreen({ session }: { session: AuthSessionResponse }) {
         ) : null}
         {resetEmailSuccess !== null ? (
           <InlineNotice tone="success" message={resetEmailSuccess} />
+        ) : null}
+      </SectionCard>
+
+      <SectionCard
+        subtitle="Sets a temporary password for the selected child account."
+        title="Reset Child Password"
+      >
+        <FieldLabel label="New Temporary Password" />
+        <TextInput
+          onChangeText={(value) => {
+            setResetPasswordInput(value);
+            setResetPasswordError(null);
+            setResetPasswordSuccess(null);
+          }}
+          placeholder="At least 8 characters"
+          placeholderTextColor="#94a3b8"
+          secureTextEntry
+          style={styles.input}
+          textContentType="newPassword"
+          value={resetPasswordInput}
+        />
+        <FieldLabel label="Confirm Temporary Password" />
+        <TextInput
+          onChangeText={(value) => {
+            setResetPasswordConfirm(value);
+            setResetPasswordError(null);
+            setResetPasswordSuccess(null);
+          }}
+          placeholder="Repeat temporary password"
+          placeholderTextColor="#94a3b8"
+          secureTextEntry
+          style={styles.input}
+          textContentType="newPassword"
+          value={resetPasswordConfirm}
+        />
+        <View style={styles.inlineButtons}>
+          <ActionButton
+            compact
+            disabled={resettingPassword || state.children.length === 0}
+            label={resettingPassword ? "Resetting..." : "Reset Password"}
+            onPress={resetChildPassword}
+            variant="secondary"
+          />
+        </View>
+        {resetPasswordError !== null ? (
+          <InlineNotice tone="error" message={resetPasswordError} />
+        ) : null}
+        {resetPasswordSuccess !== null ? (
+          <InlineNotice tone="success" message={resetPasswordSuccess} />
         ) : null}
       </SectionCard>
 

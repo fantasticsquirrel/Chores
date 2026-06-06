@@ -51,7 +51,8 @@ export function LoginScreen({
         <View style={styles.loginCard}>
           <Text style={styles.loginTitle}>Family Manager</Text>
           <Text style={styles.loginSubtitle}>
-            Sign in with a parent or child account.
+            Sign in with a parent or child login email, not a child display
+            name.
           </Text>
           <View style={styles.apiBasePanel}>
             <Text style={styles.apiBaseLabel}>API</Text>
@@ -59,7 +60,7 @@ export function LoginScreen({
               {apiBaseUrl}
             </Text>
           </View>
-          <FieldLabel label="Email" />
+          <FieldLabel label="Login Email" />
           <TextInput
             autoCapitalize="none"
             autoCorrect={false}
@@ -87,7 +88,9 @@ export function LoginScreen({
             textContentType="password"
             value={password}
           />
-          {error !== null ? <InlineNotice tone="error" message={error} /> : null}
+          {error !== null ? (
+            <InlineNotice tone="error" message={error} />
+          ) : null}
           <ActionButton
             disabled={!canSubmit}
             label={loading ? "Signing in..." : "Sign in"}

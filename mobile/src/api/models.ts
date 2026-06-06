@@ -72,6 +72,11 @@ export interface ResetChildAccountEmailRequest {
   email?: string | null;
 }
 
+export interface ResetChildAccountPasswordRequest {
+  household_id: number;
+  new_password: string;
+}
+
 export interface ChildAccount {
   id: number;
   household_id: number;

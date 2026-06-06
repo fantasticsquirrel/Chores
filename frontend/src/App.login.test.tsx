@@ -30,14 +30,23 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: " parent@example.com " } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password123" } });
+    fireEvent.change(screen.getByLabelText("Login Email"), {
+      target: { value: " parent@example.com " },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password123" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
 
     await waitFor(() =>
-      expect(loginSpy).toHaveBeenCalledWith({ email: "parent@example.com", password: "password123" }),
+      expect(loginSpy).toHaveBeenCalledWith({
+        email: "parent@example.com",
+        password: "password123",
+      }),
     );
-    expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Parent Dashboard" }),
+    ).toBeVisible();
   });
 
   it("shows inline error when login request fails", async () => {
@@ -54,8 +63,12 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "parent@example.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong-pass" } });
+    fireEvent.change(screen.getByLabelText("Login Email"), {
+      target: { value: "parent@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "wrong-pass" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
 
     await waitFor(() => expect(loginSpy).toHaveBeenCalledTimes(1));
@@ -92,16 +105,24 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "parent@example.com" } });
-    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password123" } });
+    fireEvent.change(screen.getByLabelText("Login Email"), {
+      target: { value: "parent@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password123" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
 
-    expect(await screen.findByRole("button", { name: "Signing In..." })).toBeDisabled();
+    expect(
+      await screen.findByRole("button", { name: "Signing In..." }),
+    ).toBeDisabled();
     expect(screen.getByText("Signing you in...")).toBeVisible();
 
     resolveLogin?.();
 
     await waitFor(() => expect(loginSpy).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Parent Dashboard" }),
+    ).toBeVisible();
   });
 });

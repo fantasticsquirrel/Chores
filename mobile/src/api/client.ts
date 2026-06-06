@@ -24,6 +24,7 @@ import type {
   LoginRequest,
   MyModulesResponse,
   ResetChildAccountEmailRequest,
+  ResetChildAccountPasswordRequest,
   SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
   SubmissionRequest,
@@ -167,6 +168,16 @@ export class ApiClient {
   ): Promise<ChildAccount> {
     return this.patch<ChildAccount, ResetChildAccountEmailRequest>(
       `/children/${childId}/account-email`,
+      payload,
+    );
+  }
+
+  async resetChildAccountPassword(
+    childId: number,
+    payload: ResetChildAccountPasswordRequest,
+  ): Promise<ChildAccount> {
+    return this.patch<ChildAccount, ResetChildAccountPasswordRequest>(
+      `/children/${childId}/account-password`,
       payload,
     );
   }
@@ -528,7 +539,10 @@ function normalizeBaseUrl(baseUrl: string): string {
 
 function buildUrl(baseUrl: string, path: string, query?: RequestQuery): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const absoluteUrl = new URL(normalizedPath.replace(/^\/+/, ""), `${baseUrl}/`);
+  const absoluteUrl = new URL(
+    normalizedPath.replace(/^\/+/, ""),
+    `${baseUrl}/`,
+  );
   appendQueryParams(absoluteUrl.searchParams, query);
   return absoluteUrl.toString();
 }

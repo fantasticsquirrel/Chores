@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import UserRole
 
@@ -49,6 +49,17 @@ class ResetChildAccountEmailRequest(BaseModel):
 
     household_id: int = Field(gt=0)
     email: str | None = Field(default=None, min_length=3, max_length=320)
+
+
+class ResetChildAccountPasswordRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    household_id: int = Field(gt=0)
+    new_password: str = Field(
+        validation_alias=AliasChoices("new_password", "password"),
+        min_length=8,
+        max_length=1024,
+    )
 
 
 class ChildAccountResponse(BaseModel):

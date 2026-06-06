@@ -251,6 +251,75 @@ describe("ApiClient", () => {
     );
   });
 
+  it("serializes child account password reset payload with CSRF header", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            user: {
+              id: 11,
+              household_id: 2,
+              email: "parent@example.com",
+              role: "PARENT",
+              child_id: null,
+            },
+            csrf_token: "csrf-token",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: 21,
+            household_id: 2,
+            email: "ava@example.com",
+            role: "CHILD",
+            child_id: 7,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        ),
+      );
+
+    const client = new ApiClient({
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    await client.login({
+      email: "parent@example.com",
+      password: "password123",
+    });
+    const account = await client.resetChildAccountPassword(7, {
+      household_id: 2,
+      new_password: "new-password-456",
+    });
+
+    expect(account.email).toBe("ava@example.com");
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/children/7/account-password",
+      expect.objectContaining({
+        method: "PATCH",
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          [CSRF_HEADER_NAME]: "csrf-token",
+        }),
+        body: JSON.stringify({
+          household_id: 2,
+          new_password: "new-password-456",
+        }),
+      }),
+    );
+  });
+
   it("throws ApiClientError with backend detail on non-2xx responses", async () => {
     const fetchMock = vi.fn();
     fetchMock.mockResolvedValue(

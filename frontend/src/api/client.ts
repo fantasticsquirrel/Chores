@@ -26,6 +26,7 @@ import type {
   MyModulesResponse,
   ReadinessResponse,
   ResetChildAccountEmailRequest,
+  ResetChildAccountPasswordRequest,
   SetUserModuleAccessRequest,
   SubmissionItemDecisionRequest,
   UpdateHomeschoolSemesterRequest,
@@ -177,6 +178,16 @@ export class ApiClient {
   ): Promise<ChildAccount> {
     return this.patch<ChildAccount, ResetChildAccountEmailRequest>(
       `/children/${childId}/account-email`,
+      payload,
+    );
+  }
+
+  async resetChildAccountPassword(
+    childId: number,
+    payload: ResetChildAccountPasswordRequest,
+  ): Promise<ChildAccount> {
+    return this.patch<ChildAccount, ResetChildAccountPasswordRequest>(
+      `/children/${childId}/account-password`,
       payload,
     );
   }

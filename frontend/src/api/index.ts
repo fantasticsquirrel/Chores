@@ -37,6 +37,7 @@ export type {
   MyModulesResponse,
   ReadinessResponse,
   ResetChildAccountEmailRequest,
+  ResetChildAccountPasswordRequest,
   ScheduleMode,
   ScheduleUnit,
   SetUserModuleAccessRequest,

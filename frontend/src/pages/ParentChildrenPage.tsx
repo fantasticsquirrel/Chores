@@ -3,7 +3,15 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ApiClientError, apiClient, type Child } from "../api";
 import { useAuth } from "../auth/useAuth";
-import { Badge, Button, Card, CheckboxField, FormField, InlineNotice, TextInput } from "../ui";
+import {
+  Badge,
+  Button,
+  Card,
+  CheckboxField,
+  FormField,
+  InlineNotice,
+  TextInput,
+} from "../ui";
 
 type PageState = {
   children: Child[];
@@ -43,22 +51,41 @@ export function ParentChildrenPage(): ReactElement {
   const [childPassword, setChildPassword] = useState("");
   const [linkingAccount, setLinkingAccount] = useState(false);
   const [linkAccountError, setLinkAccountError] = useState<string | null>(null);
-  const [linkAccountSuccess, setLinkAccountSuccess] = useState<string | null>(null);
+  const [linkAccountSuccess, setLinkAccountSuccess] = useState<string | null>(
+    null,
+  );
   const [resetEmailInput, setResetEmailInput] = useState("");
   const [resettingEmail, setResettingEmail] = useState(false);
   const [resetEmailError, setResetEmailError] = useState<string | null>(null);
-  const [resetEmailSuccess, setResetEmailSuccess] = useState<string | null>(null);
+  const [resetEmailSuccess, setResetEmailSuccess] = useState<string | null>(
+    null,
+  );
+  const [resetPasswordInput, setResetPasswordInput] = useState("");
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState("");
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetPasswordError, setResetPasswordError] = useState<string | null>(
+    null,
+  );
+  const [resetPasswordSuccess, setResetPasswordSuccess] = useState<
+    string | null
+  >(null);
 
   const loadChildren = useCallback(async (): Promise<void> => {
     if (householdId === null) {
-      setState({ children: [], loading: false, error: "Could not determine household scope." });
+      setState({
+        children: [],
+        loading: false,
+        error: "Could not determine household scope.",
+      });
       return;
     }
 
     setState((previous) => ({ ...previous, loading: true, error: null }));
 
     try {
-      const children = await apiClient.listChildren({ household_id: householdId });
+      const children = await apiClient.listChildren({
+        household_id: householdId,
+      });
       setState({ children, loading: false, error: null });
       if (children.length > 0) {
         setSelectedChildId((current) => current ?? children[0].id);
@@ -72,7 +99,9 @@ export function ParentChildrenPage(): ReactElement {
     void loadChildren();
   }, [loadChildren]);
 
-  async function handleCreateChild(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleCreateChild(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
 
     const trimmedName = nameInput.trim();
@@ -126,7 +155,9 @@ export function ParentChildrenPage(): ReactElement {
     }
   }
 
-  async function handleCreateChildAccount(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleCreateChildAccount(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
     setLinkAccountError(null);
     setLinkAccountSuccess(null);
@@ -156,8 +187,11 @@ export function ParentChildrenPage(): ReactElement {
         email: normalizedEmail.length > 0 ? normalizedEmail : null,
         password: childPassword,
       });
-      const childName = state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
-      setLinkAccountSuccess(`Linked login created for ${childName}: ${account.email}`);
+      const childName =
+        state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
+      setLinkAccountSuccess(
+        `Linked login created for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+      );
       setChildEmail("");
       setChildPassword("");
     } catch (error: unknown) {
@@ -167,7 +201,9 @@ export function ParentChildrenPage(): ReactElement {
     }
   }
 
-  async function handleResetChildEmail(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleResetChildEmail(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
     setResetEmailError(null);
     setResetEmailSuccess(null);
@@ -188,13 +224,65 @@ export function ParentChildrenPage(): ReactElement {
         household_id: householdId,
         email: normalizedEmail.length > 0 ? normalizedEmail : null,
       });
-      const childName = state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
-      setResetEmailSuccess(`Updated child login email for ${childName}: ${account.email}`);
+      const childName =
+        state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
+      setResetEmailSuccess(
+        `Updated login email for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+      );
       setResetEmailInput("");
     } catch (error: unknown) {
       setResetEmailError(formatLoadError(error));
     } finally {
       setResettingEmail(false);
+    }
+  }
+
+  async function handleResetChildPassword(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    event.preventDefault();
+    setResetPasswordError(null);
+    setResetPasswordSuccess(null);
+
+    if (householdId === null) {
+      setResetPasswordError("Could not determine household scope.");
+      return;
+    }
+    if (selectedChildId === null) {
+      setResetPasswordError("Choose a child first.");
+      return;
+    }
+    if (resetPasswordInput.length < 8) {
+      setResetPasswordError(
+        "Temporary password must be at least 8 characters.",
+      );
+      return;
+    }
+    if (resetPasswordInput !== resetPasswordConfirm) {
+      setResetPasswordError("Temporary password and confirmation must match.");
+      return;
+    }
+
+    setResettingPassword(true);
+    try {
+      const account = await apiClient.resetChildAccountPassword(
+        selectedChildId,
+        {
+          household_id: householdId,
+          new_password: resetPasswordInput,
+        },
+      );
+      const childName =
+        state.children.find((c) => c.id === selectedChildId)?.name ?? "child";
+      setResetPasswordSuccess(
+        `Updated password for ${childName}. Child signs in with login email ${account.email}, not display name.`,
+      );
+      setResetPasswordInput("");
+      setResetPasswordConfirm("");
+    } catch (error: unknown) {
+      setResetPasswordError(formatLoadError(error));
+    } finally {
+      setResettingPassword(false);
     }
   }
 
@@ -205,14 +293,20 @@ export function ParentChildrenPage(): ReactElement {
           <h1>Children Management</h1>
           <Badge>Household {householdId ?? "Unknown"}</Badge>
         </div>
-        <p>Create child profiles and link login accounts for child sign-in.</p>
+        <p>
+          Create child profiles and manage child login accounts. Children sign
+          in with their login email and password.
+        </p>
       </Card>
 
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Add Child</h2>
         </div>
-        <form className="children-form" onSubmit={(event) => void handleCreateChild(event)}>
+        <form
+          className="children-form"
+          onSubmit={(event) => void handleCreateChild(event)}
+        >
           <FormField label="Name">
             <TextInput
               type="text"
@@ -233,22 +327,37 @@ export function ParentChildrenPage(): ReactElement {
             {submitting ? "Saving..." : "Create Child"}
           </Button>
         </form>
-        {submitError !== null ? <InlineNotice variant="error">Could not save child: {submitError}</InlineNotice> : null}
+        {submitError !== null ? (
+          <InlineNotice variant="error">
+            Could not save child: {submitError}
+          </InlineNotice>
+        ) : null}
       </Card>
 
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Link Child Login</h2>
         </div>
-        <form className="children-form" onSubmit={(event) => void handleCreateChildAccount(event)}>
+        <form
+          className="children-form"
+          onSubmit={(event) => void handleCreateChildAccount(event)}
+        >
           <FormField label="Child">
             <select
               className="text-input"
               value={selectedChildId ?? ""}
-              onChange={(event) => setSelectedChildId(event.target.value.length > 0 ? Number(event.target.value) : null)}
+              onChange={(event) =>
+                setSelectedChildId(
+                  event.target.value.length > 0
+                    ? Number(event.target.value)
+                    : null,
+                )
+              }
               disabled={linkingAccount || state.children.length === 0}
             >
-              {state.children.length === 0 ? <option value="">No children found</option> : null}
+              {state.children.length === 0 ? (
+                <option value="">No children found</option>
+              ) : null}
               {state.children.map((child) => (
                 <option key={child.id} value={child.id}>
                   {child.name} {child.active ? "" : "(inactive)"}
@@ -256,7 +365,7 @@ export function ParentChildrenPage(): ReactElement {
               ))}
             </select>
           </FormField>
-          <FormField label="Child Email (optional)">
+          <FormField label="Login Email (optional, leave blank to auto-generate)">
             <TextInput
               type="email"
               value={childEmail}
@@ -274,29 +383,47 @@ export function ParentChildrenPage(): ReactElement {
               disabled={linkingAccount}
             />
           </FormField>
-          <Button type="submit" disabled={linkingAccount || state.children.length === 0}>
+          <Button
+            type="submit"
+            disabled={linkingAccount || state.children.length === 0}
+          >
             {linkingAccount ? "Linking..." : "Create Linked Child Login"}
           </Button>
         </form>
         {linkAccountError !== null ? (
-          <InlineNotice variant="error">Could not link child login: {linkAccountError}</InlineNotice>
+          <InlineNotice variant="error">
+            Could not link child login: {linkAccountError}
+          </InlineNotice>
         ) : null}
-        {linkAccountSuccess !== null ? <InlineNotice>{linkAccountSuccess}</InlineNotice> : null}
+        {linkAccountSuccess !== null ? (
+          <InlineNotice>{linkAccountSuccess}</InlineNotice>
+        ) : null}
       </Card>
 
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Reset Child Login Email</h2>
         </div>
-        <form className="children-form" onSubmit={(event) => void handleResetChildEmail(event)}>
+        <form
+          className="children-form"
+          onSubmit={(event) => void handleResetChildEmail(event)}
+        >
           <FormField label="Child">
             <select
               className="text-input"
               value={selectedChildId ?? ""}
-              onChange={(event) => setSelectedChildId(event.target.value.length > 0 ? Number(event.target.value) : null)}
+              onChange={(event) =>
+                setSelectedChildId(
+                  event.target.value.length > 0
+                    ? Number(event.target.value)
+                    : null,
+                )
+              }
               disabled={resettingEmail || state.children.length === 0}
             >
-              {state.children.length === 0 ? <option value="">No children found</option> : null}
+              {state.children.length === 0 ? (
+                <option value="">No children found</option>
+              ) : null}
               {state.children.map((child) => (
                 <option key={child.id} value={child.id}>
                   {child.name} {child.active ? "" : "(inactive)"}
@@ -304,7 +431,7 @@ export function ParentChildrenPage(): ReactElement {
               ))}
             </select>
           </FormField>
-          <FormField label="New Email (optional, leave blank to auto-generate)">
+          <FormField label="New Login Email (optional, leave blank to auto-generate)">
             <TextInput
               type="email"
               value={resetEmailInput}
@@ -313,14 +440,89 @@ export function ParentChildrenPage(): ReactElement {
               disabled={resettingEmail}
             />
           </FormField>
-          <Button type="submit" disabled={resettingEmail || state.children.length === 0}>
+          <Button
+            type="submit"
+            disabled={resettingEmail || state.children.length === 0}
+          >
             {resettingEmail ? "Resetting..." : "Reset Child Email"}
           </Button>
         </form>
         {resetEmailError !== null ? (
-          <InlineNotice variant="error">Could not reset child email: {resetEmailError}</InlineNotice>
+          <InlineNotice variant="error">
+            Could not reset child email: {resetEmailError}
+          </InlineNotice>
         ) : null}
-        {resetEmailSuccess !== null ? <InlineNotice>{resetEmailSuccess}</InlineNotice> : null}
+        {resetEmailSuccess !== null ? (
+          <InlineNotice>{resetEmailSuccess}</InlineNotice>
+        ) : null}
+      </Card>
+
+      <Card className="dashboard-panel">
+        <div className="panel-header-row">
+          <h2>Reset Child Password</h2>
+        </div>
+        <form
+          className="children-form"
+          onSubmit={(event) => void handleResetChildPassword(event)}
+        >
+          <FormField label="Child">
+            <select
+              className="text-input"
+              value={selectedChildId ?? ""}
+              onChange={(event) =>
+                setSelectedChildId(
+                  event.target.value.length > 0
+                    ? Number(event.target.value)
+                    : null,
+                )
+              }
+              disabled={resettingPassword || state.children.length === 0}
+            >
+              {state.children.length === 0 ? (
+                <option value="">No children found</option>
+              ) : null}
+              {state.children.map((child) => (
+                <option key={child.id} value={child.id}>
+                  {child.name} {child.active ? "" : "(inactive)"}
+                </option>
+              ))}
+            </select>
+          </FormField>
+          <FormField label="New Temporary Password">
+            <TextInput
+              type="password"
+              value={resetPasswordInput}
+              onChange={(event) => setResetPasswordInput(event.target.value)}
+              placeholder="at least 8 chars"
+              disabled={resettingPassword}
+              autoComplete="new-password"
+            />
+          </FormField>
+          <FormField label="Confirm Temporary Password">
+            <TextInput
+              type="password"
+              value={resetPasswordConfirm}
+              onChange={(event) => setResetPasswordConfirm(event.target.value)}
+              placeholder="repeat temporary password"
+              disabled={resettingPassword}
+              autoComplete="new-password"
+            />
+          </FormField>
+          <Button
+            type="submit"
+            disabled={resettingPassword || state.children.length === 0}
+          >
+            {resettingPassword ? "Resetting..." : "Reset Child Password"}
+          </Button>
+        </form>
+        {resetPasswordError !== null ? (
+          <InlineNotice variant="error">
+            Could not reset child password: {resetPasswordError}
+          </InlineNotice>
+        ) : null}
+        {resetPasswordSuccess !== null ? (
+          <InlineNotice>{resetPasswordSuccess}</InlineNotice>
+        ) : null}
       </Card>
 
       <Card className="dashboard-panel">
@@ -330,10 +532,14 @@ export function ParentChildrenPage(): ReactElement {
 
         {state.loading ? <p>Loading children...</p> : null}
         {!state.loading && state.error !== null ? (
-          <InlineNotice variant="error">Could not load children: {state.error}</InlineNotice>
+          <InlineNotice variant="error">
+            Could not load children: {state.error}
+          </InlineNotice>
         ) : null}
 
-        {!state.loading && state.error === null && state.children.length === 0 ? (
+        {!state.loading &&
+        state.error === null &&
+        state.children.length === 0 ? (
           <p>No children found yet for this household.</p>
         ) : null}
 
@@ -347,9 +553,14 @@ export function ParentChildrenPage(): ReactElement {
                 <li key={child.id} className="balance-item">
                   <div>
                     <p className="balance-name">{child.name}</p>
-                    <p className="balance-meta">{child.active ? "Active" : "Inactive"}</p>
+                    <p className="balance-meta">
+                      {child.active ? "Active" : "Inactive"}
+                    </p>
                   </div>
-                  <Button onClick={() => void handleToggleActive(child)} disabled={isUpdating}>
+                  <Button
+                    onClick={() => void handleToggleActive(child)}
+                    disabled={isUpdating}
+                  >
                     {isUpdating ? "Updating..." : buttonLabel}
                   </Button>
                 </li>

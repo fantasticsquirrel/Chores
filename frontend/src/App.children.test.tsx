@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -11,7 +17,9 @@ describe("Parent children page", () => {
 
   it("loads children list for the household", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
-    listChildrenSpy.mockResolvedValue([{ id: 1, household_id: 1, name: "Maya", active: true }]);
+    listChildrenSpy.mockResolvedValue([
+      { id: 1, household_id: 1, name: "Maya", active: true },
+    ]);
 
     render(
       <MemoryRouter initialEntries={["/parent/children"]}>
@@ -19,7 +27,9 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    const childrenList = await screen.findByRole("list", {
+      name: "Children list",
+    });
     expect(within(childrenList).getByText("Maya")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 1 });
   });
@@ -27,13 +37,20 @@ describe("Parent children page", () => {
   it("creates a child and refreshes the list", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy
-      .mockResolvedValueOnce([{ id: 1, household_id: 1, name: "Maya", active: true }])
+      .mockResolvedValueOnce([
+        { id: 1, household_id: 1, name: "Maya", active: true },
+      ])
       .mockResolvedValueOnce([
         { id: 1, household_id: 1, name: "Maya", active: true },
         { id: 2, household_id: 1, name: "Leo", active: true },
       ]);
     const createChildSpy = vi.spyOn(apiClient, "createChild");
-    createChildSpy.mockResolvedValue({ id: 2, household_id: 1, name: "Leo", active: true });
+    createChildSpy.mockResolvedValue({
+      id: 2,
+      household_id: 1,
+      name: "Leo",
+      active: true,
+    });
 
     render(
       <MemoryRouter initialEntries={["/parent/children"]}>
@@ -42,7 +59,9 @@ describe("Parent children page", () => {
     );
 
     await screen.findByRole("list", { name: "Children list" });
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Leo" } });
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Leo" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
 
     await waitFor(() =>
@@ -53,7 +72,9 @@ describe("Parent children page", () => {
       }),
     );
 
-    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    const childrenList = await screen.findByRole("list", {
+      name: "Children list",
+    });
     expect(within(childrenList).getByText("Leo")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledTimes(2);
   });
@@ -61,10 +82,19 @@ describe("Parent children page", () => {
   it("toggles child active status and refreshes list", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy
-      .mockResolvedValueOnce([{ id: 1, household_id: 1, name: "Maya", active: true }])
-      .mockResolvedValueOnce([{ id: 1, household_id: 1, name: "Maya", active: false }]);
+      .mockResolvedValueOnce([
+        { id: 1, household_id: 1, name: "Maya", active: true },
+      ])
+      .mockResolvedValueOnce([
+        { id: 1, household_id: 1, name: "Maya", active: false },
+      ]);
     const updateChildSpy = vi.spyOn(apiClient, "updateChild");
-    updateChildSpy.mockResolvedValue({ id: 1, household_id: 1, name: "Maya", active: false });
+    updateChildSpy.mockResolvedValue({
+      id: 1,
+      household_id: 1,
+      name: "Maya",
+      active: false,
+    });
 
     render(
       <MemoryRouter initialEntries={["/parent/children"]}>
@@ -88,7 +118,9 @@ describe("Parent children page", () => {
 
   it("shows an error message when creating a child fails", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
-    listChildrenSpy.mockResolvedValue([{ id: 1, household_id: 1, name: "Maya", active: true }]);
+    listChildrenSpy.mockResolvedValue([
+      { id: 1, household_id: 1, name: "Maya", active: true },
+    ]);
     const createChildSpy = vi.spyOn(apiClient, "createChild");
     createChildSpy.mockRejectedValue(
       new ApiClientError(400, "Duplicate name", {
@@ -103,7 +135,9 @@ describe("Parent children page", () => {
     );
 
     await screen.findByRole("list", { name: "Children list" });
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Maya" } });
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Maya" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
 
     await waitFor(() =>
@@ -113,13 +147,17 @@ describe("Parent children page", () => {
         active: true,
       }),
     );
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not save child: Duplicate name");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not save child: Duplicate name",
+    );
     expect(listChildrenSpy).toHaveBeenCalledTimes(1);
   });
 
   it("shows an error message when updating child status fails", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
-    listChildrenSpy.mockResolvedValue([{ id: 1, household_id: 1, name: "Maya", active: true }]);
+    listChildrenSpy.mockResolvedValue([
+      { id: 1, household_id: 1, name: "Maya", active: true },
+    ]);
     const updateChildSpy = vi.spyOn(apiClient, "updateChild");
     updateChildSpy.mockRejectedValue(
       new ApiClientError(409, "Concurrent update conflict", {
@@ -162,7 +200,9 @@ describe("Parent children page", () => {
 
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy
-      .mockResolvedValueOnce([{ id: 5, household_id: 42, name: "Ari", active: true }])
+      .mockResolvedValueOnce([
+        { id: 5, household_id: 42, name: "Ari", active: true },
+      ])
       .mockResolvedValueOnce([
         { id: 5, household_id: 42, name: "Ari", active: true },
         { id: 8, household_id: 42, name: "Nova", active: true },
@@ -172,9 +212,19 @@ describe("Parent children page", () => {
         { id: 8, household_id: 42, name: "Nova", active: true },
       ]);
     const createChildSpy = vi.spyOn(apiClient, "createChild");
-    createChildSpy.mockResolvedValue({ id: 8, household_id: 42, name: "Nova", active: true });
+    createChildSpy.mockResolvedValue({
+      id: 8,
+      household_id: 42,
+      name: "Nova",
+      active: true,
+    });
     const updateChildSpy = vi.spyOn(apiClient, "updateChild");
-    updateChildSpy.mockResolvedValue({ id: 5, household_id: 42, name: "Ari", active: false });
+    updateChildSpy.mockResolvedValue({
+      id: 5,
+      household_id: 42,
+      name: "Ari",
+      active: false,
+    });
 
     render(
       <MemoryRouter initialEntries={["/parent/children"]}>
@@ -182,11 +232,15 @@ describe("Parent children page", () => {
       </MemoryRouter>,
     );
 
-    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    const childrenList = await screen.findByRole("list", {
+      name: "Children list",
+    });
     expect(within(childrenList).getByText("Ari")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenNthCalledWith(1, { household_id: 42 });
 
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Nova" } });
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Nova" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
 
     await waitFor(() =>
@@ -197,10 +251,16 @@ describe("Parent children page", () => {
       }),
     );
 
-    const refreshedChildrenList = screen.getByRole("list", { name: "Children list" });
+    const refreshedChildrenList = screen.getByRole("list", {
+      name: "Children list",
+    });
     const ariRow = within(refreshedChildrenList).getByText("Ari").closest("li");
     expect(ariRow).not.toBeNull();
-    fireEvent.click(within(ariRow as HTMLLIElement).getByRole("button", { name: "Set Inactive" }));
+    fireEvent.click(
+      within(ariRow as HTMLLIElement).getByRole("button", {
+        name: "Set Inactive",
+      }),
+    );
 
     await waitFor(() =>
       expect(updateChildSpy).toHaveBeenCalledWith(5, {
@@ -208,5 +268,78 @@ describe("Parent children page", () => {
         active: false,
       }),
     );
+  });
+
+  it("resets a linked child account password and shows the login email", async () => {
+    const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
+    listChildrenSpy.mockResolvedValue([
+      { id: 1, household_id: 1, name: "Ava", active: true },
+    ]);
+    const resetPasswordSpy = vi.spyOn(apiClient, "resetChildAccountPassword");
+    resetPasswordSpy.mockResolvedValue({
+      id: 10,
+      household_id: 1,
+      email: "ava-login@example.com",
+      role: "CHILD",
+      child_id: 1,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/parent/children"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("list", { name: "Children list" });
+    fireEvent.change(screen.getByLabelText("New Temporary Password"), {
+      target: { value: "new-password-456" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm Temporary Password"), {
+      target: { value: "new-password-456" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset Child Password" }),
+    );
+
+    await waitFor(() =>
+      expect(resetPasswordSpy).toHaveBeenCalledWith(1, {
+        household_id: 1,
+        new_password: "new-password-456",
+      }),
+    );
+    expect(
+      await screen.findByText(
+        "Updated password for Ava. Child signs in with login email ava-login@example.com, not display name.",
+      ),
+    ).toBeVisible();
+  });
+
+  it("validates child password reset confirmation before calling the API", async () => {
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([
+      { id: 1, household_id: 1, name: "Ava", active: true },
+    ]);
+    const resetPasswordSpy = vi.spyOn(apiClient, "resetChildAccountPassword");
+
+    render(
+      <MemoryRouter initialEntries={["/parent/children"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("list", { name: "Children list" });
+    fireEvent.change(screen.getByLabelText("New Temporary Password"), {
+      target: { value: "new-password-456" },
+    });
+    fireEvent.change(screen.getByLabelText("Confirm Temporary Password"), {
+      target: { value: "different-password" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset Child Password" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not reset child password: Temporary password and confirmation must match.",
+    );
+    expect(resetPasswordSpy).not.toHaveBeenCalled();
   });
 });

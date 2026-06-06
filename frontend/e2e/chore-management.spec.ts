@@ -45,7 +45,7 @@ async function signIn(
   password: string,
 ): Promise<void> {
   await page.goto("/chore/login");
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Login Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign In" }).click();
   await expect(page).toHaveURL(/\/chore\/parent\/dashboard$/);

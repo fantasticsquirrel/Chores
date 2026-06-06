@@ -107,4 +107,79 @@ describe("mobile ApiClient", () => {
       }),
     );
   });
+
+  it("serializes child account password reset payload", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            csrf_token: "csrf-token",
+            user: {
+              child_id: null,
+              email: "parent@example.com",
+              household_id: 7,
+              id: 12,
+              role: "PARENT",
+            },
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            child_id: 20,
+            email: "ava@example.com",
+            household_id: 7,
+            id: 31,
+            role: "CHILD",
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          },
+        ),
+      );
+
+    const client = new ApiClient({
+      baseUrl: "https://family.example.test/chore-api",
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+
+    await client.login({
+      email: "parent@example.com",
+      password: "password123",
+    });
+    await expect(
+      client.resetChildAccountPassword(20, {
+        household_id: 7,
+        new_password: "new-password-456",
+      }),
+    ).resolves.toMatchObject({
+      child_id: 20,
+      email: "ava@example.com",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://family.example.test/chore-api/children/20/account-password",
+      expect.objectContaining({
+        body: JSON.stringify({
+          household_id: 7,
+          new_password: "new-password-456",
+        }),
+        credentials: "include",
+        headers: expect.objectContaining({
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          [CSRF_HEADER_NAME]: "csrf-token",
+        }),
+        method: "PATCH",
+      }),
+    );
+  });
 });

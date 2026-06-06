@@ -16,6 +16,7 @@ from app.schemas.children import (
     CreateChildAccountRequest,
     CreateChildRequest,
     ResetChildAccountEmailRequest,
+    ResetChildAccountPasswordRequest,
     UpdateChildRequest,
 )
 from app.security import hash_password
@@ -191,6 +192,34 @@ def reset_child_account_email(
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not reset child account email.") from exc
+
+    session.refresh(account)
+    return ChildAccountResponse.model_validate(account)
+
+
+@router.patch("/{child_id}/account-password", response_model=ChildAccountResponse)
+def reset_child_account_password(
+    payload: ResetChildAccountPasswordRequest,
+    child_id: int = Path(gt=0),
+    session: Session = Depends(get_db_session),
+    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+) -> ChildAccountResponse:
+    if payload.household_id != _user.household_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+
+    account = session.scalar(
+        select(User).where(User.household_id == payload.household_id, User.child_id == child_id, User.role == UserRole.CHILD)
+    )
+    if account is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No linked child account found.")
+
+    account.password_hash = hash_password(payload.new_password)
+
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not reset child account password.") from exc
 
     session.refresh(account)
     return ChildAccountResponse.model_validate(account)

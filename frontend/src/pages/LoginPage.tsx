@@ -44,7 +44,9 @@ export function LoginPage(): ReactElement {
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
 
     const trimmedEmail = email.trim();
@@ -71,9 +73,15 @@ export function LoginPage(): ReactElement {
   return (
     <Card as="section">
       <h1>Welcome Back</h1>
-      <p>Sign in to manage chores, approvals, and balances for your household.</p>
-      <form className="auth-form" onSubmit={(event) => void handleSubmit(event)}>
-        <FormField label="Email">
+      <p>
+        Sign in with your login email and password. Child accounts use the login
+        email shown by a parent, not the child display name.
+      </p>
+      <form
+        className="auth-form"
+        onSubmit={(event) => void handleSubmit(event)}
+      >
+        <FormField label="Login Email">
           <TextInput
             type="email"
             value={email}
@@ -100,8 +108,14 @@ export function LoginPage(): ReactElement {
           {submitting ? "Signing In..." : "Sign In"}
         </Button>
       </form>
-      {submitting ? <InlineNotice variant="info">Signing you in...</InlineNotice> : null}
-      {submitError !== null ? <InlineNotice variant="error">Could not sign in: {submitError}</InlineNotice> : null}
+      {submitting ? (
+        <InlineNotice variant="info">Signing you in...</InlineNotice>
+      ) : null}
+      {submitError !== null ? (
+        <InlineNotice variant="error">
+          Could not sign in: {submitError}
+        </InlineNotice>
+      ) : null}
     </Card>
   );
 }
