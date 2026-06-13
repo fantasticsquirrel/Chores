@@ -66,7 +66,7 @@ def test_parent_admin_sees_all_default_modules(tmp_path: Path, monkeypatch) -> N
         response = client.get("/chore-api/modules/me")
 
     assert response.status_code == 200
-    assert [module["key"] for module in response.json()["modules"]] == ["chores", "homeschool", "admin"]
+    assert [module["key"] for module in response.json()["modules"]] == ["chores", "homeschool", "recipes", "admin"]
 
 
 def test_child_sees_chores_only_by_default(tmp_path: Path, monkeypatch) -> None:
@@ -102,7 +102,7 @@ def test_parent_admin_can_list_household_user_module_access(tmp_path: Path, monk
     payload = response.json()
     assert len(payload) == 1
     assert payload[0]["email"] == admin.email
-    assert [module["key"] for module in payload[0]["modules"]] == ["chores", "homeschool", "admin"]
+    assert [module["key"] for module in payload[0]["modules"]] == ["chores", "homeschool", "recipes", "admin"]
 
 
 def test_parent_admin_can_create_additional_parent_user(tmp_path: Path, monkeypatch) -> None:
@@ -125,7 +125,7 @@ def test_parent_admin_can_create_additional_parent_user(tmp_path: Path, monkeypa
         assert payload["email"] == "second.parent@example.com"
         assert payload["role"] == "PARENT"
         assert payload["child_id"] is None
-        assert [module["key"] for module in payload["modules"]] == ["chores", "homeschool"]
+        assert [module["key"] for module in payload["modules"]] == ["chores", "homeschool", "recipes"]
 
         client.post("/chore-api/auth/logout", headers={"X-CSRF-Token": csrf_token})
         login_created_response = client.post(
@@ -153,7 +153,7 @@ def test_parent_admin_can_create_additional_parent_admin_user(tmp_path: Path, mo
 
     assert create_response.status_code == 201
     assert create_response.json()["role"] == "PARENT_ADMIN"
-    assert [module["key"] for module in create_response.json()["modules"]] == ["chores", "homeschool", "admin"]
+    assert [module["key"] for module in create_response.json()["modules"]] == ["chores", "homeschool", "recipes", "admin"]
 
 
 def test_parent_admin_cannot_create_duplicate_parent_email(tmp_path: Path, monkeypatch) -> None:
@@ -209,7 +209,7 @@ def test_parent_admin_can_override_user_module_access(tmp_path: Path, monkeypatc
         )
 
     assert response.status_code == 200
-    assert [module["key"] for module in response.json()["modules"]] == ["chores", "admin"]
+    assert [module["key"] for module in response.json()["modules"]] == ["chores", "recipes", "admin"]
 
 
 def test_parent_cannot_list_module_access_admin_endpoint(tmp_path: Path, monkeypatch) -> None:

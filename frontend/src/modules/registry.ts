@@ -1,6 +1,6 @@
 import type { UserRole } from "../api";
 
-export type FamilyModuleKey = "chores" | "homeschool" | "admin";
+export type FamilyModuleKey = "chores" | "homeschool" | "admin" | "recipes";
 
 export type FamilyModule = {
   key: FamilyModuleKey;
@@ -23,6 +23,13 @@ export const familyModules: FamilyModule[] = [
     label: "Homeschool",
     description: "Attendance, subjects, semesters, comments, and homeschool reporting.",
     path: "/homeschool",
+    roles: ["PARENT_ADMIN", "PARENT"],
+  },
+  {
+    key: "recipes",
+    label: "Recipes",
+    description: "Personal recipe collection, ingredients, scaling, and cooking notes.",
+    path: "/recipes",
     roles: ["PARENT_ADMIN", "PARENT"],
   },
   {

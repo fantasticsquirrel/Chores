@@ -10,6 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { AccountSecurityPage } from "./pages/AccountSecurityPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { HomeschoolPage } from "./pages/HomeschoolPage";
+import { RecipeOrganizerPage } from "./pages/RecipeOrganizerPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { ApiClientError, type UserRole } from "./api";
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
   { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
+  { to: "/recipes", label: "Recipes", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "recipes" },
   { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
@@ -229,6 +231,9 @@ export default function App(): ReactElement {
               </Route>
               <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
                 <Route path="/homeschool" element={<HomeschoolPage />} />
+              </Route>
+              <Route element={<ModuleProtectedRoute moduleKey="recipes" />}>
+                <Route path="/recipes" element={<RecipeOrganizerPage />} />
               </Route>
               <Route
                 path="/parent/children"

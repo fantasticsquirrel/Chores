@@ -18,6 +18,7 @@ beforeEach(() => {
     modules: [
       { key: "chores", name: "Chores", description: "" },
       { key: "homeschool", name: "Homeschool", description: "" },
+      { key: "recipes", name: "Recipes", description: "" },
       { key: "admin", name: "Admin", description: "" },
     ],
   });

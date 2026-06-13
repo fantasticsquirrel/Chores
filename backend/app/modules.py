@@ -15,6 +15,7 @@ class AppModule:
 MODULE_CHORES = "chores"
 MODULE_HOMESCHOOL = "homeschool"
 MODULE_ADMIN = "admin"
+MODULE_RECIPES = "recipes"
 
 AVAILABLE_MODULES: tuple[AppModule, ...] = (
     AppModule(
@@ -28,6 +29,11 @@ AVAILABLE_MODULES: tuple[AppModule, ...] = (
         description="Attendance, subjects, semesters, comments, and homeschool reporting.",
     ),
     AppModule(
+        key=MODULE_RECIPES,
+        name="Recipes",
+        description="Personal recipe collection, categories, ingredients, scaling, and cooking notes.",
+    ),
+    AppModule(
         key=MODULE_ADMIN,
         name="Admin",
         description="Household users, children, account links, and module access.",
@@ -35,8 +41,8 @@ AVAILABLE_MODULES: tuple[AppModule, ...] = (
 )
 
 DEFAULT_ROLE_MODULES: dict[UserRole, tuple[str, ...]] = {
-    UserRole.PARENT_ADMIN: (MODULE_CHORES, MODULE_HOMESCHOOL, MODULE_ADMIN),
-    UserRole.PARENT: (MODULE_CHORES, MODULE_HOMESCHOOL),
+    UserRole.PARENT_ADMIN: (MODULE_CHORES, MODULE_HOMESCHOOL, MODULE_RECIPES, MODULE_ADMIN),
+    UserRole.PARENT: (MODULE_CHORES, MODULE_HOMESCHOOL, MODULE_RECIPES),
     UserRole.CHILD: (MODULE_CHORES,),
 }
 

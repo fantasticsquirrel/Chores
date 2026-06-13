@@ -1207,4 +1207,33 @@ describe("ApiClient", () => {
         "body.end_date: Value error, end_date must be on or after start_date.",
     });
   });
+
+  it("calls recipe endpoints with parent-scoped paths", async () => {
+    const fetchMock = vi.fn();
+    fetchMock
+      .mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 1, household_id: 1, owner_user_id: 1, name: "Dinner", color: "#f97316" }), { status: 201, headers: { "Content-Type": "application/json" } }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ recipe_id: 10, base_servings: 4, target_servings: 8, factor: 2, warnings: [], ingredients: [] }), { status: 200, headers: { "Content-Type": "application/json" } }));
+
+    const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
+    await client.listRecipes({ query: "pancake", favorite: true });
+    await client.createRecipeCategory({ name: "Dinner", color: "#f97316" });
+    await client.scaleRecipe(10, 8);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/chore-api/recipes?query=pancake&favorite=true",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/chore-api/recipes/categories",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ name: "Dinner", color: "#f97316" }) }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/chore-api/recipes/10/scale?target_servings=8",
+      expect.objectContaining({ method: "GET", credentials: "include" }),
+    );
+  });
 });
