@@ -203,7 +203,7 @@ class ScaledStepResponse(RecipeStepResponse):
 class RecipeScaleResponse(BaseModel):
     recipe_id: int
     base_servings: float | None
-    target_servings: float
+    target_servings: float | None
     factor: float
     warnings: list[str]
     ingredients: list[ScaledIngredientResponse]

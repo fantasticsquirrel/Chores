@@ -77,10 +77,16 @@ describe("Recipe organizer page", () => {
     fireEvent.click(screen.getByRole("link", { name: "View Pancakes" }));
     await waitFor(() => expect(apiClient.getRecipe).toHaveBeenCalledWith(10));
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Target Servings"), { target: { value: "8" } });
-    await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenCalledWith(10, 8));
+    expect(screen.getByText("Default servings: 4")).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Scaled Servings"), { target: { value: "8" } });
+    await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenCalledWith(10, { targetServings: 8 }));
+    expect(screen.getByLabelText("Scale Multiplier")).toHaveValue(2);
     expect(await screen.findByText("4 cup flour")).toBeVisible();
     expect(await screen.findByText("Cook with flour on a hot griddle. Uses: 4 cup flour.")).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText("Scale Multiplier"), { target: { value: "1.5" } });
+    await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenLastCalledWith(10, { scaleFactor: 1.5 }));
+    expect(screen.getByLabelText("Scaled Servings")).toHaveValue(6);
   });
 
   it("loads recipe cooking detail directly from its own route", async () => {
@@ -113,7 +119,7 @@ describe("Recipe organizer page", () => {
     const editor = screen.getByRole("heading", { name: "Recipe Editor" }).closest("article");
     expect(editor).not.toBeNull();
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Title"), { target: { value: "Pancakes" } });
-    fireEvent.change(within(editor as HTMLElement).getByLabelText("Servings"), { target: { value: "4" } });
+    fireEvent.change(within(editor as HTMLElement).getByLabelText("Default Servings"), { target: { value: "4" } });
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Ingredient Item"), { target: { value: "flour" } });
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Ingredient Quantity"), { target: { value: "2" } });
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Ingredient Unit"), { target: { value: "cup" } });

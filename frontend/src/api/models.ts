@@ -363,7 +363,7 @@ export interface DuplicateRecipeRequest {
 export interface RecipeScaleResponse {
   recipe_id: number;
   base_servings: number | null;
-  target_servings: number;
+  target_servings: number | null;
   factor: number;
   warnings: string[];
   ingredients: Array<RecipeIngredient & { scaled_quantity: number | null }>;

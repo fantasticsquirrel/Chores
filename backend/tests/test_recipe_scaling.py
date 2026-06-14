@@ -19,6 +19,31 @@ def test_scale_ingredients_doubles_numeric_quantities() -> None:
     assert result["ingredients"][1]["scaled_quantity"] is None
 
 
+def test_scale_ingredients_can_use_multiplier_without_target_servings() -> None:
+    result = scale_ingredients(
+        [{"id": 1, "quantity": 2.0, "unit": "cup", "item": "flour"}],
+        base_servings=4,
+        scale_factor=1.5,
+    )
+
+    assert result["factor"] == 1.5
+    assert result["target_servings"] == 6.0
+    assert result["ingredients"][0]["scaled_quantity"] == 3.0
+
+
+def test_scale_ingredients_can_use_multiplier_even_without_base_servings() -> None:
+    result = scale_ingredients(
+        [{"id": 1, "quantity": 2.0, "unit": "cup", "item": "flour"}],
+        base_servings=None,
+        scale_factor=3,
+    )
+
+    assert result["factor"] == 3.0
+    assert result["target_servings"] is None
+    assert result["warnings"] == ["Default servings are not set; multiplier scaling was applied without a target serving count."]
+    assert result["ingredients"][0]["scaled_quantity"] == 6.0
+
+
 def test_scale_ingredients_uses_factor_one_when_base_servings_missing() -> None:
     result = scale_ingredients(
         [{"id": 1, "quantity": 3.0, "unit": "tbsp", "item": "oil"}],
@@ -27,7 +52,7 @@ def test_scale_ingredients_uses_factor_one_when_base_servings_missing() -> None:
     )
 
     assert result["factor"] == 1.0
-    assert result["warnings"] == ["Base servings are not set; quantities were not scaled."]
+    assert result["warnings"] == ["Default servings are not set; quantities were not scaled."]
     assert result["ingredients"][0]["scaled_quantity"] == 3.0
 
 

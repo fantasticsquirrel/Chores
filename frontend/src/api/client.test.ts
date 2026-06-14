@@ -1218,7 +1218,7 @@ describe("ApiClient", () => {
     const client = new ApiClient({ fetchImpl: fetchMock as unknown as typeof fetch });
     await client.listRecipes({ query: "pancake", favorite: true });
     await client.createRecipeCategory({ name: "Dinner", color: "#f97316" });
-    await client.scaleRecipe(10, 8);
+    await client.scaleRecipe(10, { targetServings: 8, scaleFactor: 2 });
 
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -1232,7 +1232,7 @@ describe("ApiClient", () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       3,
-      "/chore-api/recipes/10/scale?target_servings=8",
+      "/chore-api/recipes/10/scale?target_servings=8&scale_factor=2",
       expect.objectContaining({ method: "GET", credentials: "include" }),
     );
   });

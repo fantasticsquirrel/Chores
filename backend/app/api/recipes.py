@@ -467,7 +467,16 @@ def duplicate_recipe(recipe_id: int, payload: DuplicateRecipeRequest, current_us
 
 
 @router.get("/{recipe_id}/scale", response_model=RecipeScaleResponse)
-def scale_recipe(recipe_id: int, target_servings: float = Query(gt=0), current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
+def scale_recipe(
+    recipe_id: int,
+    target_servings: float | None = Query(default=None, gt=0),
+    scale_factor: float | None = Query(default=None, gt=0),
+    current_user: User = Depends(_require_recipes_access),
+    session: Session = Depends(get_db_session),
+) -> dict[str, object]:
+    if target_servings is None and scale_factor is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Either target_servings or scale_factor is required.")
+
     recipe = _get_recipe(session, recipe_id, current_user)
     ingredients = [
         _ingredient_dict(ingredient)
@@ -477,7 +486,7 @@ def scale_recipe(recipe_id: int, target_servings: float = Query(gt=0), current_u
         _step_dict(session, step)
         for step in session.scalars(select(RecipeStep).where(RecipeStep.recipe_id == recipe.id).order_by(RecipeStep.position)).all()
     ]
-    scaled = scale_ingredients(ingredients, base_servings=recipe.servings, target_servings=target_servings)
+    scaled = scale_ingredients(ingredients, base_servings=recipe.servings, target_servings=target_servings, scale_factor=scale_factor)
     step_ingredient_ids = {
         cast(int, step["id"]): cast(list[int], step["ingredient_ids"])
         for step in steps
@@ -490,7 +499,6 @@ def scale_recipe(recipe_id: int, target_servings: float = Query(gt=0), current_u
     return {
         "recipe_id": recipe.id,
         "base_servings": recipe.servings,
-        "target_servings": target_servings,
         **scaled,
         "steps": scaled_steps,
     }

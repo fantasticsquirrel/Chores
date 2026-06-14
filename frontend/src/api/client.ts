@@ -456,10 +456,11 @@ export class ApiClient {
 
   async scaleRecipe(
     recipeId: number,
-    targetServings: number,
+    options: { targetServings?: number; scaleFactor?: number },
   ): Promise<RecipeScaleResponse> {
     return this.get<RecipeScaleResponse>(`/recipes/${recipeId}/scale`, {
-      target_servings: targetServings,
+      target_servings: options.targetServings,
+      scale_factor: options.scaleFactor,
     });
   }
 

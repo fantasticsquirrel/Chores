@@ -34,7 +34,7 @@ test("parent can create, find, open, and scale a parent-account recipe", async (
   await page.getByRole("button", { name: "New Recipe" }).click();
   const editor = page.locator("article").filter({ has: page.getByRole("heading", { name: "Recipe Editor" }) });
   await editor.getByLabel("Title").fill(uniqueTitle);
-  await editor.getByLabel("Servings").fill("4");
+  await editor.getByLabel("Default Servings").fill("4");
   await editor.getByLabel("Ingredient Item").fill("flour");
   await editor.getByLabel("Ingredient Quantity").fill("2");
   await editor.getByLabel("Ingredient Unit").fill("cup");
@@ -53,8 +53,12 @@ test("parent can create, find, open, and scale a parent-account recipe", async (
   await expect(page).toHaveURL(/\/chore\/recipes\/\d+$/);
   await expect(page.getByRole("heading", { name: uniqueTitle })).toBeVisible();
   await expect(page.getByRole("link", { name: "Back to Recipes" })).toBeVisible();
-  await expect(page.getByLabel("Target Servings")).toHaveValue("4");
-  await page.getByLabel("Target Servings").fill("8");
+  await expect(page.getByText("Default servings: 4")).toBeVisible();
+  await expect(page.getByLabel("Scaled Servings")).toHaveValue("4");
+  await page.getByLabel("Scaled Servings").fill("8");
+  await expect(page.getByLabel("Scale Multiplier")).toHaveValue("2");
   await expect(page.locator("label", { hasText: "4 cup flour" })).toBeVisible();
   await expect(page.getByText("Cook until golden. Uses: 4 cup flour.")).toBeVisible();
+  await page.getByLabel("Scale Multiplier").fill("1.5");
+  await expect(page.getByLabel("Scaled Servings")).toHaveValue("6");
 });

@@ -207,8 +207,15 @@ def test_recipe_filters_variants_components_and_scaling(tmp_path: Path, monkeypa
         scaled = client.get(f"/chore-api/recipes/{base['id']}/scale", params={"target_servings": 8})
         assert scaled.status_code == 200
         assert scaled.json()["factor"] == 2
+        assert scaled.json()["target_servings"] == 8
         assert scaled.json()["ingredients"][0]["scaled_quantity"] == 4
         assert scaled.json()["steps"][0]["scaled_instruction"] == "Whisk dry ingredients. Uses: 4 cup flour."
+
+        multiplier_scaled = client.get(f"/chore-api/recipes/{base['id']}/scale", params={"scale_factor": 1.5})
+        assert multiplier_scaled.status_code == 200
+        assert multiplier_scaled.json()["factor"] == 1.5
+        assert multiplier_scaled.json()["target_servings"] == 6
+        assert multiplier_scaled.json()["ingredients"][0]["scaled_quantity"] == 3
 
 
 def test_update_archive_and_duplicate_recipe(tmp_path: Path, monkeypatch) -> None:

@@ -51,6 +51,10 @@ function displayStepInstruction(step: RecipeDetail["steps"][number] | RecipeScal
   return step.instruction;
 }
 
+function formatScaleInput(value: number): string {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
+}
+
 export function RecipeOrganizerPage(): ReactElement {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<RecipeCategory[]>([]);
@@ -150,7 +154,7 @@ export function RecipeOrganizerPage(): ReactElement {
             <FormField label="Title">
               <TextInput value={payload.title} onChange={(event) => setPayload((prev) => ({ ...prev, title: event.target.value }))} required />
             </FormField>
-            <FormField label="Servings">
+            <FormField label="Default Servings">
               <TextInput type="number" value={payload.servings ?? ""} onChange={(event) => setPayload((prev) => ({ ...prev, servings: event.target.value === "" ? null : Number(event.target.value) }))} />
             </FormField>
             <FormField label="Ingredient Item">
@@ -195,6 +199,7 @@ export function RecipeDetailPage(): ReactElement {
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [scaled, setScaled] = useState<RecipeScaleResponse | null>(null);
   const [targetServings, setTargetServings] = useState("8");
+  const [scaleMultiplier, setScaleMultiplier] = useState("1");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -208,7 +213,8 @@ export function RecipeDetailPage(): ReactElement {
         const detail = await apiClient.getRecipe(parsedRecipeId);
         setRecipe(detail);
         setScaled(null);
-        setTargetServings(detail.servings !== null ? String(detail.servings) : "8");
+        setTargetServings(detail.servings !== null ? String(detail.servings) : "");
+        setScaleMultiplier("1");
       } catch (loadError: unknown) {
         setError(errorText(loadError));
       }
@@ -217,12 +223,27 @@ export function RecipeDetailPage(): ReactElement {
     void loadRecipe();
   }, [parsedRecipeId]);
 
-  async function handleScale(value: string): Promise<void> {
+  async function handleServingScale(value: string): Promise<void> {
     setTargetServings(value);
     if (recipe === null) return;
     const numeric = Number(value);
     if (!Number.isFinite(numeric) || numeric <= 0) return;
-    const preview = await apiClient.scaleRecipe(recipe.id, numeric);
+    if (recipe.servings !== null && recipe.servings > 0) {
+      setScaleMultiplier(formatScaleInput(numeric / recipe.servings));
+    }
+    const preview = await apiClient.scaleRecipe(recipe.id, { targetServings: numeric });
+    setScaled(preview);
+  }
+
+  async function handleMultiplierScale(value: string): Promise<void> {
+    setScaleMultiplier(value);
+    if (recipe === null) return;
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return;
+    if (recipe.servings !== null && recipe.servings > 0) {
+      setTargetServings(formatScaleInput(recipe.servings * numeric));
+    }
+    const preview = await apiClient.scaleRecipe(recipe.id, { scaleFactor: numeric });
     setScaled(preview);
   }
 
@@ -260,8 +281,12 @@ export function RecipeDetailPage(): ReactElement {
       <p>{recipe.tags.map((row) => row.name).join(", ")}</p>
       <p>{recipe.favorite ? "Favorite" : ""} {recipe.rating !== null ? `Rating ${recipe.rating}` : ""}</p>
       <p>{recipe.notes}</p>
-      <FormField label="Target Servings">
-        <TextInput type="number" value={targetServings} onChange={(event) => { void handleScale(event.target.value); }} />
+      <p>Default servings: {recipe.servings !== null ? formatQuantity(recipe.servings) : "not set"}</p>
+      <FormField label="Scaled Servings">
+        <TextInput type="number" value={targetServings} onChange={(event) => { void handleServingScale(event.target.value); }} />
+      </FormField>
+      <FormField label="Scale Multiplier">
+        <TextInput type="number" step="0.25" value={scaleMultiplier} onChange={(event) => { void handleMultiplierScale(event.target.value); }} />
       </FormField>
       <h2>Ingredients</h2>
       <ul>
