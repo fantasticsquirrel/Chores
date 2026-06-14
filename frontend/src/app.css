@@ -917,11 +917,19 @@ body {
     position: static;
     width: 100%;
     max-width: none;
-    color: #111;
+    color: #000 !important;
     background: #fff;
     font-family: Georgia, "Times New Roman", serif;
     font-size: 9.5pt;
     line-height: 1.22;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .recipe-pdf-sheet,
+  .recipe-pdf-sheet * {
+    color: #000 !important;
+    text-shadow: none !important;
   }
 
   .recipe-pdf-sheet h1,
