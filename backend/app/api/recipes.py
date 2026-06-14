@@ -10,10 +10,12 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
 from app.models.core import (
+    Child,
     Recipe,
     RecipeCategory,
     RecipeCategoryLink,
     RecipeComponent,
+    RecipeFeedback,
     RecipeIngredient,
     RecipeStep,
     RecipeStepIngredientLink,
@@ -37,6 +39,7 @@ from app.schemas.recipes import (
     UpdateRecipeCategoryRequest,
     UpdateRecipeRequest,
     UpdateRecipeTagRequest,
+    UpsertRecipeFeedbackRequest,
 )
 from app.services.recipes import scale_ingredients, scale_linked_steps
 
@@ -166,6 +169,53 @@ def _step_dict(session: Session, step: RecipeStep) -> dict[str, object]:
     }
 
 
+def _reviewer_name(session: Session, feedback: RecipeFeedback) -> str:
+    if feedback.reviewer_type == "PARENT" and feedback.parent_user_id is not None:
+        parent = session.get(User, feedback.parent_user_id)
+        return parent.email if parent is not None else "Parent"
+    if feedback.child_id is not None:
+        child = session.get(Child, feedback.child_id)
+        return child.name if child is not None else "Child"
+    return "Family member"
+
+
+def _feedback_dict(session: Session, feedback: RecipeFeedback) -> dict[str, object]:
+    return {
+        "id": feedback.id,
+        "recipe_id": feedback.recipe_id,
+        "household_id": feedback.household_id,
+        "reviewer_type": feedback.reviewer_type,
+        "parent_user_id": feedback.parent_user_id,
+        "child_id": feedback.child_id,
+        "reviewer_name": _reviewer_name(session, feedback),
+        "rating": feedback.rating,
+        "verdict": feedback.verdict,
+        "notes": feedback.notes,
+        "created_at": feedback.created_at,
+    }
+
+
+def _feedback_summary(session: Session, recipe_id: int) -> dict[str, object]:
+    ratings = [
+        rating
+        for rating in session.scalars(select(RecipeFeedback.rating).where(RecipeFeedback.recipe_id == recipe_id, RecipeFeedback.rating.is_not(None))).all()
+        if rating is not None
+    ]
+    if not ratings:
+        return {"average_rating": None, "rating_count": 0}
+    return {"average_rating": round(sum(ratings) / len(ratings), 2), "rating_count": len(ratings)}
+
+
+def _recipe_feedback(session: Session, recipe_id: int) -> list[RecipeFeedback]:
+    return list(
+        session.scalars(
+            select(RecipeFeedback)
+            .where(RecipeFeedback.recipe_id == recipe_id)
+            .order_by(RecipeFeedback.reviewer_type.desc(), RecipeFeedback.reviewer_key)
+        )
+    )
+
+
 def _summary_dict(session: Session, recipe: Recipe) -> dict[str, object]:
     data = _recipe_base_dict(recipe)
     data["categories"] = [_category_dict(category) for category in _recipe_categories(session, recipe.id)]
@@ -173,6 +223,7 @@ def _summary_dict(session: Session, recipe: Recipe) -> dict[str, object]:
     data["ingredient_count"] = session.scalar(select(RecipeIngredient.id).where(RecipeIngredient.recipe_id == recipe.id).limit(1)) is not None and len(
         session.scalars(select(RecipeIngredient.id).where(RecipeIngredient.recipe_id == recipe.id)).all()
     ) or 0
+    data["feedback_summary"] = _feedback_summary(session, recipe.id)
     return data
 
 
@@ -204,6 +255,8 @@ def _detail_dict(session: Session, recipe: Recipe) -> dict[str, object]:
         .order_by(Recipe.title)
     ).all()
     data["variants"] = [_summary_dict(session, variant) for variant in variants]
+    data["core_recipe"] = _summary_dict(session, session.get(Recipe, recipe.parent_recipe_id)) if recipe.parent_recipe_id is not None and session.get(Recipe, recipe.parent_recipe_id) is not None else None
+    data["feedback"] = [_feedback_dict(session, row) for row in _recipe_feedback(session, recipe.id)]
     return data
 
 
@@ -410,6 +463,61 @@ def create_recipe(payload: CreateRecipeRequest, current_user: User = Depends(_re
 @router.get("/{recipe_id}", response_model=RecipeDetailResponse)
 def get_recipe(recipe_id: int, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
     return _detail_dict(session, _get_recipe(session, recipe_id, current_user))
+
+
+@router.post("/{recipe_id}/variants", response_model=RecipeDetailResponse, status_code=status.HTTP_201_CREATED)
+def create_recipe_variant(recipe_id: int, payload: CreateRecipeRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
+    core = _get_recipe(session, recipe_id, current_user)
+    variant_payload = payload.model_copy(update={"parent_recipe_id": core.id})
+    _validate_owned_refs(session, current_user, variant_payload)
+    variant = Recipe(household_id=current_user.household_id, owner_user_id=current_user.id, title=variant_payload.title)
+    session.add(variant)
+    session.flush()
+    _apply_recipe_payload(session, variant, variant_payload)
+    session.commit()
+    session.refresh(variant)
+    return _detail_dict(session, variant)
+
+
+def _feedback_reviewer(payload: UpsertRecipeFeedbackRequest, current_user: User, session: Session) -> tuple[str, int | None, int | None]:
+    if payload.reviewer_type == "PARENT":
+        parent = session.get(User, payload.parent_user_id)
+        if parent is None or parent.household_id != current_user.household_id or parent.role not in {UserRole.PARENT_ADMIN, UserRole.PARENT}:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe feedback parent reviewer not found.")
+        return f"parent:{parent.id}", parent.id, None
+    child = session.get(Child, payload.child_id)
+    if child is None or child.household_id != current_user.household_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe feedback child reviewer not found.")
+    return f"child:{child.id}", None, child.id
+
+
+@router.put("/{recipe_id}/feedback", response_model=dict)
+def upsert_recipe_feedback(recipe_id: int, payload: UpsertRecipeFeedbackRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
+    recipe = _get_recipe(session, recipe_id, current_user)
+    reviewer_key, parent_user_id, child_id = _feedback_reviewer(payload, current_user, session)
+    feedback = session.scalar(
+        select(RecipeFeedback).where(
+            RecipeFeedback.recipe_id == recipe.id,
+            RecipeFeedback.reviewer_type == payload.reviewer_type,
+            RecipeFeedback.reviewer_key == reviewer_key,
+        )
+    )
+    if feedback is None:
+        feedback = RecipeFeedback(
+            recipe_id=recipe.id,
+            household_id=current_user.household_id,
+            reviewer_type=payload.reviewer_type,
+            reviewer_key=reviewer_key,
+            parent_user_id=parent_user_id,
+            child_id=child_id,
+        )
+        session.add(feedback)
+    feedback.rating = payload.rating
+    feedback.verdict = payload.verdict
+    feedback.notes = payload.notes
+    session.commit()
+    session.refresh(feedback)
+    return _feedback_dict(session, feedback)
 
 
 @router.put("/{recipe_id}", response_model=RecipeDetailResponse)

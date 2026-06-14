@@ -32,6 +32,7 @@ import type {
   ReadinessResponse,
   RecipeCategory,
   RecipeDetail,
+  RecipeFeedback,
   RecipeScaleResponse,
   RecipeSummary,
   RecipeTag,
@@ -51,6 +52,7 @@ import type {
   UpsertHomeschoolAttendanceRequest,
   UpsertHomeschoolDayCommentRequest,
   UpsertHomeschoolGradeRequest,
+  UpsertRecipeFeedbackRequest,
   UserModuleAccess,
 } from "./models";
 
@@ -450,6 +452,26 @@ export class ApiClient {
   ): Promise<RecipeDetail> {
     return this.post<RecipeDetail, DuplicateRecipeRequest>(
       `/recipes/${recipeId}/duplicate`,
+      payload,
+    );
+  }
+
+  async createRecipeVariant(
+    recipeId: number,
+    payload: CreateRecipeRequest,
+  ): Promise<RecipeDetail> {
+    return this.post<RecipeDetail, CreateRecipeRequest>(
+      `/recipes/${recipeId}/variants`,
+      payload,
+    );
+  }
+
+  async upsertRecipeFeedback(
+    recipeId: number,
+    payload: UpsertRecipeFeedbackRequest,
+  ): Promise<RecipeFeedback> {
+    return this.put<RecipeFeedback, UpsertRecipeFeedbackRequest>(
+      `/recipes/${recipeId}/feedback`,
       payload,
     );
   }

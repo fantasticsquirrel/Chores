@@ -354,6 +354,31 @@ class RecipeComponent(Base):
     unit: Mapped[str] = mapped_column(String(64), nullable=False, default="")
 
 
+class RecipeFeedback(TimestampMixin, Base):
+    __tablename__ = "recipe_feedback"
+    __table_args__ = (
+        UniqueConstraint("recipe_id", "reviewer_type", "reviewer_key"),
+        CheckConstraint("rating IS NULL OR (rating >= 1 AND rating <= 5)", name="recipe_feedback_rating_range"),
+        CheckConstraint("reviewer_type IN ('PARENT', 'CHILD')", name="recipe_feedback_reviewer_type"),
+        CheckConstraint(
+            "(reviewer_type = 'PARENT' AND parent_user_id IS NOT NULL AND child_id IS NULL) OR "
+            "(reviewer_type = 'CHILD' AND child_id IS NOT NULL AND parent_user_id IS NULL)",
+            name="recipe_feedback_reviewer_target",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False, index=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    reviewer_type: Mapped[str] = mapped_column(String(16), nullable=False)
+    reviewer_key: Mapped[str] = mapped_column(String(64), nullable=False)
+    parent_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    child_id: Mapped[int | None] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=True, index=True)
+    rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    verdict: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+    notes: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+
+
 ALL_MODELS = (
     Household,
     Child,
@@ -385,4 +410,5 @@ ALL_MODELS = (
     RecipeStep,
     RecipeStepIngredientLink,
     RecipeComponent,
+    RecipeFeedback,
 )

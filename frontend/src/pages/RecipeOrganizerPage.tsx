@@ -4,6 +4,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   apiClient,
+  type AuthUser,
+  type Child,
   type CreateRecipeRequest,
   type RecipeCategory,
   type RecipeDetail,
@@ -200,7 +202,15 @@ export function RecipeDetailPage(): ReactElement {
   const [scaled, setScaled] = useState<RecipeScaleResponse | null>(null);
   const [targetServings, setTargetServings] = useState("8");
   const [scaleMultiplier, setScaleMultiplier] = useState("1");
+  const [children, setChildren] = useState<Child[]>([]);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [feedbackReviewerType, setFeedbackReviewerType] = useState<"PARENT" | "CHILD">("PARENT");
+  const [feedbackChildId, setFeedbackChildId] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState("5");
+  const [feedbackVerdict, setFeedbackVerdict] = useState("");
+  const [feedbackNotes, setFeedbackNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadRecipe(): Promise<void> {
@@ -215,6 +225,11 @@ export function RecipeDetailPage(): ReactElement {
         setScaled(null);
         setTargetServings(detail.servings !== null ? String(detail.servings) : "");
         setScaleMultiplier("1");
+        const session = await apiClient.getCurrentSession();
+        setCurrentUser(session.user);
+        const childRows = await apiClient.listChildren({ household_id: detail.household_id, active_only: true });
+        setChildren(childRows);
+        setFeedbackChildId(childRows[0]?.id !== undefined ? String(childRows[0].id) : "");
       } catch (loadError: unknown) {
         setError(errorText(loadError));
       }
@@ -247,6 +262,47 @@ export function RecipeDetailPage(): ReactElement {
     setScaled(preview);
   }
 
+  async function reloadRecipe(recipeIdToLoad: number): Promise<void> {
+    const detail = await apiClient.getRecipe(recipeIdToLoad);
+    setRecipe(detail);
+  }
+
+  async function handleAddVariant(): Promise<void> {
+    if (recipe === null) return;
+    setError(null);
+    try {
+      const variant = await apiClient.duplicateRecipe(recipe.id, { title: `${recipe.title} Variant`, as_variant: true });
+      setMessage(`Created variant ${variant.title}.`);
+      await reloadRecipe(recipe.id);
+    } catch (variantError: unknown) {
+      setError(errorText(variantError));
+    }
+  }
+
+  async function handleFeedbackSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (recipe === null || currentUser === null) return;
+    const numericRating = feedbackRating === "" ? null : Number(feedbackRating);
+    if (numericRating !== null && (!Number.isFinite(numericRating) || numericRating < 1 || numericRating > 5)) return;
+    setError(null);
+    try {
+      await apiClient.upsertRecipeFeedback(recipe.id, {
+        reviewer_type: feedbackReviewerType,
+        parent_user_id: feedbackReviewerType === "PARENT" ? currentUser.id : null,
+        child_id: feedbackReviewerType === "CHILD" ? Number(feedbackChildId) : null,
+        rating: numericRating,
+        verdict: feedbackVerdict,
+        notes: feedbackNotes,
+      });
+      setMessage("Saved family feedback.");
+      setFeedbackVerdict("");
+      setFeedbackNotes("");
+      await reloadRecipe(recipe.id);
+    } catch (feedbackError: unknown) {
+      setError(errorText(feedbackError));
+    }
+  }
+
   const displayedIngredients = scaled?.ingredients ?? recipe?.ingredients ?? [];
 
   if (error !== null) {
@@ -273,8 +329,10 @@ export function RecipeDetailPage(): ReactElement {
   return (
     <Card as="section">
       <Link to="/recipes">Back to Recipes</Link>
+      {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
       <p className="eyebrow">Recipe Cooking Page</p>
       <h1>{recipe.title}</h1>
+      {recipe.core_recipe !== null ? <p>Core recipe: <Link to={`/recipes/${recipe.core_recipe.id}`}>{recipe.core_recipe.title}</Link></p> : null}
       <p>{recipe.description}</p>
       {recipe.source_url !== null ? <p>Source: <a href={recipe.source_url}>{recipe.source_name || recipe.source_url}</a></p> : null}
       <p>{recipe.categories.map((row) => row.name).join(", ")}</p>
@@ -302,8 +360,49 @@ export function RecipeDetailPage(): ReactElement {
       <ol>
         {displayedSteps.map((step) => <li key={step.id}>{displayStepInstruction(step)}</li>)}
       </ol>
-      {recipe.variants.length > 0 ? <p>Variants: {recipe.variants.map((row) => row.title).join(", ")}</p> : null}
+      <h2>Recipe Variants</h2>
+      <p>Use variants for varieties like gluten-free, spicy, kid-friendly, or batch-size versions that stay attached to this core recipe.</p>
+      <Button type="button" onClick={() => { void handleAddVariant(); }}>Add Variant</Button>
+      {recipe.variants.length > 0 ? (
+        <ul>
+          {recipe.variants.map((row) => <li key={row.id}><Link to={`/recipes/${row.id}`}>{row.title}</Link></li>)}
+        </ul>
+      ) : <p>No variants yet.</p>}
       {recipe.components.length > 0 ? <p>Sub-recipes: {recipe.components.map((row) => row.component_recipe.title).join(", ")}</p> : null}
+      <h2>Family Feedback</h2>
+      <p>Average family rating: {recipe.feedback_summary.average_rating ?? "not rated"} ({recipe.feedback_summary.rating_count} ratings)</p>
+      <form onSubmit={(event) => { void handleFeedbackSubmit(event); }}>
+        <FormField label="Feedback For">
+          <select value={feedbackReviewerType} onChange={(event) => setFeedbackReviewerType(event.target.value as "PARENT" | "CHILD")}>
+            <option value="PARENT">Parent</option>
+            <option value="CHILD">Child</option>
+          </select>
+        </FormField>
+        {feedbackReviewerType === "CHILD" ? (
+          <FormField label="Child">
+            <select value={feedbackChildId} onChange={(event) => setFeedbackChildId(event.target.value)}>
+              {children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
+            </select>
+          </FormField>
+        ) : null}
+        <FormField label="Family Rating">
+          <TextInput type="number" min="1" max="5" value={feedbackRating} onChange={(event) => setFeedbackRating(event.target.value)} />
+        </FormField>
+        <FormField label="Verdict">
+          <TextInput value={feedbackVerdict} onChange={(event) => setFeedbackVerdict(event.target.value)} placeholder="Loved it, okay, too spicy..." />
+        </FormField>
+        <FormField label="Feedback Notes">
+          <TextInput value={feedbackNotes} onChange={(event) => setFeedbackNotes(event.target.value)} />
+        </FormField>
+        <Button type="submit">Save Feedback</Button>
+      </form>
+      {recipe.feedback.length > 0 ? (
+        <ul>
+          {recipe.feedback.map((row) => (
+            <li key={row.id}>{row.reviewer_name}: {row.rating !== null ? `${row.rating}/5` : "not rated"} {row.verdict} {row.notes}</li>
+          ))}
+        </ul>
+      ) : <p>No family feedback yet.</p>}
     </Card>
   );
 }

@@ -267,6 +267,28 @@ export interface RecipeSummary {
   categories: RecipeCategory[];
   tags: RecipeTag[];
   ingredient_count: number;
+  feedback_summary: RecipeFeedbackSummary;
+}
+
+export type RecipeFeedbackReviewerType = "PARENT" | "CHILD";
+
+export interface RecipeFeedbackSummary {
+  average_rating: number | null;
+  rating_count: number;
+}
+
+export interface RecipeFeedback {
+  id: number;
+  recipe_id: number;
+  household_id: number;
+  reviewer_type: RecipeFeedbackReviewerType;
+  parent_user_id: number | null;
+  child_id: number | null;
+  reviewer_name: string;
+  rating: number | null;
+  verdict: string;
+  notes: string;
+  created_at: string;
 }
 
 export interface RecipeComponent {
@@ -282,6 +304,8 @@ export interface RecipeDetail extends RecipeSummary {
   steps: RecipeStep[];
   components: RecipeComponent[];
   variants: RecipeSummary[];
+  core_recipe: RecipeSummary | null;
+  feedback: RecipeFeedback[];
 }
 
 export interface CreateRecipeCategoryRequest {
@@ -358,6 +382,15 @@ export interface ListRecipesParams {
 export interface DuplicateRecipeRequest {
   title?: string | null;
   as_variant?: boolean;
+}
+
+export interface UpsertRecipeFeedbackRequest {
+  reviewer_type: RecipeFeedbackReviewerType;
+  parent_user_id?: number | null;
+  child_id?: number | null;
+  rating?: number | null;
+  verdict?: string;
+  notes?: string;
 }
 
 export interface RecipeScaleResponse {

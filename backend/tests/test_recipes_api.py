@@ -245,3 +245,91 @@ def test_update_archive_and_duplicate_recipe(tmp_path: Path, monkeypatch) -> Non
         assert all(recipe["id"] != created["id"] for recipe in active_listing.json())
         all_listing = client.get("/chore-api/recipes", params={"active_only": False})
         assert any(recipe["id"] == created["id"] for recipe in all_listing.json())
+
+
+def test_recipe_feedback_can_be_saved_for_each_parent_and_child(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(email="parent@example.com")
+    other_parent, _ = _create_user(email="other-parent@example.com", household_id=parent.household_id)
+    child, _ = _create_user(email="kid@example.com", role=UserRole.CHILD, household_id=parent.household_id)
+
+    with TestClient(app) as client:
+        headers = _login(client, parent, password)
+        created = client.post("/chore-api/recipes", json=_recipe_payload(title="Family Chili"), headers=headers)
+        assert created.status_code == 201
+        recipe_id = created.json()["id"]
+
+        parent_feedback = client.put(
+            f"/chore-api/recipes/{recipe_id}/feedback",
+            json={
+                "reviewer_type": "PARENT",
+                "parent_user_id": other_parent.id,
+                "rating": 5,
+                "verdict": "Loved it",
+                "notes": "Make this on game nights.",
+            },
+            headers=headers,
+        )
+        assert parent_feedback.status_code == 200
+        assert parent_feedback.json()["reviewer_name"] == "other-parent@example.com"
+
+        child_feedback = client.put(
+            f"/chore-api/recipes/{recipe_id}/feedback",
+            json={
+                "reviewer_type": "CHILD",
+                "child_id": child.child_id,
+                "rating": 3,
+                "verdict": "Okay",
+                "notes": "Less spice next time.",
+            },
+            headers=headers,
+        )
+        assert child_feedback.status_code == 200
+        assert child_feedback.json()["reviewer_name"] == "kid"
+
+        detail = client.get(f"/chore-api/recipes/{recipe_id}")
+        assert detail.status_code == 200
+        assert [(row["reviewer_type"], row["rating"], row["notes"]) for row in detail.json()["feedback"]] == [
+            ("PARENT", 5, "Make this on game nights."),
+            ("CHILD", 3, "Less spice next time."),
+        ]
+        assert detail.json()["feedback_summary"] == {"average_rating": 4, "rating_count": 2}
+
+        updated_child_feedback = client.put(
+            f"/chore-api/recipes/{recipe_id}/feedback",
+            json={
+                "reviewer_type": "CHILD",
+                "child_id": child.child_id,
+                "rating": 4,
+                "verdict": "Good",
+                "notes": "Good with cheese.",
+            },
+            headers=headers,
+        )
+        assert updated_child_feedback.status_code == 200
+        assert updated_child_feedback.json()["rating"] == 4
+        assert len(client.get(f"/chore-api/recipes/{recipe_id}").json()["feedback"]) == 2
+
+
+def test_recipe_variants_are_first_class_core_recipe_varieties(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(email="parent@example.com")
+
+    with TestClient(app) as client:
+        headers = _login(client, parent, password)
+        core = client.post("/chore-api/recipes", json=_recipe_payload(title="Core Pizza Dough"), headers=headers).json()
+        thin = client.post(
+            f"/chore-api/recipes/{core['id']}/variants",
+            json=_recipe_payload(title="Thin Crust Pizza Dough", servings=2),
+            headers=headers,
+        )
+        assert thin.status_code == 201
+        assert thin.json()["parent_recipe_id"] == core["id"]
+
+        detail = client.get(f"/chore-api/recipes/{core['id']}")
+        assert detail.status_code == 200
+        assert [variant["title"] for variant in detail.json()["variants"]] == ["Thin Crust Pizza Dough"]
+
+        variant_detail = client.get(f"/chore-api/recipes/{thin.json()['id']}")
+        assert variant_detail.status_code == 200
+        assert variant_detail.json()["core_recipe"]["title"] == "Core Pizza Dough"

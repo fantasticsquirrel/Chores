@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
@@ -161,6 +162,44 @@ class DuplicateRecipeRequest(BaseModel):
     as_variant: bool = False
 
 
+class UpsertRecipeFeedbackRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    reviewer_type: Literal["PARENT", "CHILD"]
+    parent_user_id: int | None = Field(default=None, gt=0)
+    child_id: int | None = Field(default=None, gt=0)
+    rating: int | None = Field(default=None, ge=1, le=5)
+    verdict: str = Field(default="", max_length=100)
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def one_reviewer_target(self) -> "UpsertRecipeFeedbackRequest":
+        if self.reviewer_type == "PARENT" and (self.parent_user_id is None or self.child_id is not None):
+            raise ValueError("parent feedback requires parent_user_id only.")
+        if self.reviewer_type == "CHILD" and (self.child_id is None or self.parent_user_id is not None):
+            raise ValueError("child feedback requires child_id only.")
+        return self
+
+
+class RecipeFeedbackResponse(BaseModel):
+    id: int
+    recipe_id: int
+    household_id: int
+    reviewer_type: Literal["PARENT", "CHILD"]
+    parent_user_id: int | None
+    child_id: int | None
+    reviewer_name: str
+    rating: int | None
+    verdict: str
+    notes: str
+    created_at: datetime
+
+
+class RecipeFeedbackSummary(BaseModel):
+    average_rating: float | None = None
+    rating_count: int = 0
+
+
 class RecipeSummaryResponse(BaseModel):
     id: int
     household_id: int
@@ -182,6 +221,7 @@ class RecipeSummaryResponse(BaseModel):
     categories: list[RecipeCategoryResponse] = Field(default_factory=list)
     tags: list[RecipeTagResponse] = Field(default_factory=list)
     ingredient_count: int = 0
+    feedback_summary: RecipeFeedbackSummary = Field(default_factory=RecipeFeedbackSummary)
 
 
 class RecipeDetailResponse(RecipeSummaryResponse):
@@ -189,6 +229,8 @@ class RecipeDetailResponse(RecipeSummaryResponse):
     steps: list[RecipeStepResponse] = Field(default_factory=list)
     components: list[RecipeComponentResponse] = Field(default_factory=list)
     variants: list[RecipeSummaryResponse] = Field(default_factory=list)
+    core_recipe: RecipeSummaryResponse | None = None
+    feedback: list[RecipeFeedbackResponse] = Field(default_factory=list)
 
 
 class ScaledIngredientResponse(RecipeIngredientResponse):

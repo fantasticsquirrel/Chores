@@ -27,10 +27,16 @@ const recipe: RecipeDetail = {
   categories: [category],
   tags: [tag],
   ingredient_count: 1,
+  feedback_summary: { average_rating: 4, rating_count: 2 },
   ingredients: [{ id: 100, recipe_id: 10, position: 1, group_name: "Batter", quantity: 2, unit: "cup", item: "flour", preparation: "", note: "", is_optional: false }],
   steps: [{ id: 200, recipe_id: 10, position: 1, section: "Cook", instruction: "Cook with flour on a hot griddle.", ingredient_position_refs: [1], ingredient_ids: [100] }],
   components: [],
-  variants: [],
+  variants: [{ id: 11, household_id: 1, owner_user_id: 1, parent_recipe_id: 10, title: "Blueberry Pancakes", description: "", source_name: "", source_url: null, prep_minutes: null, cook_minutes: null, servings: 4, yield_quantity: null, yield_unit: "", rating: null, favorite: false, notes: "", archived_at: null, categories: [], tags: [], ingredient_count: 0, feedback_summary: { average_rating: null, rating_count: 0 } }],
+  core_recipe: null,
+  feedback: [
+    { id: 500, recipe_id: 10, household_id: 1, reviewer_type: "PARENT", parent_user_id: 1, child_id: null, reviewer_name: "parent@example.com", rating: 5, verdict: "Loved it", notes: "Make again.", created_at: "2026-06-14T00:00:00Z" },
+    { id: 501, recipe_id: 10, household_id: 1, reviewer_type: "CHILD", parent_user_id: null, child_id: 7, reviewer_name: "Kid", rating: 3, verdict: "Okay", notes: "Less spice.", created_at: "2026-06-14T00:00:00Z" },
+  ],
 };
 
 function mockRecipeApi(recipes: RecipeSummary[] = [recipe]): void {
@@ -43,6 +49,10 @@ function mockRecipeApi(recipes: RecipeSummary[] = [recipe]): void {
   vi.spyOn(apiClient, "listRecipeCategories").mockResolvedValue([category]);
   vi.spyOn(apiClient, "listRecipeTags").mockResolvedValue([tag]);
   vi.spyOn(apiClient, "listRecipes").mockResolvedValue(recipes);
+  vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({ user: { id: 1, household_id: 1, email: "parent@example.com", role: "PARENT" }, csrf_token: "token" });
+  vi.spyOn(apiClient, "listChildren").mockResolvedValue([{ id: 7, household_id: 1, name: "Kid", active: true }]);
+  vi.spyOn(apiClient, "upsertRecipeFeedback").mockResolvedValue(recipe.feedback[0]);
+  vi.spyOn(apiClient, "duplicateRecipe").mockResolvedValue({ ...recipe, id: 12, title: "Pancakes Variant", parent_recipe_id: 10, variants: [] });
   vi.spyOn(apiClient, "getRecipe").mockResolvedValue(recipe);
   vi.spyOn(apiClient, "scaleRecipe").mockResolvedValue({
     recipe_id: 10,
@@ -83,6 +93,27 @@ describe("Recipe organizer page", () => {
     expect(screen.getByLabelText("Scale Multiplier")).toHaveValue(2);
     expect(await screen.findByText("4 cup flour")).toBeVisible();
     expect(await screen.findByText("Cook with flour on a hot griddle. Uses: 4 cup flour.")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Recipe Variants" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Blueberry Pancakes" })).toHaveAttribute("href", "/recipes/11");
+    expect(screen.getByRole("heading", { name: "Family Feedback" })).toBeVisible();
+    expect(screen.getByText("Average family rating: 4 (2 ratings)")).toBeVisible();
+    expect(screen.getByText(/parent@example.com: 5\/5 Loved it Make again\./)).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText("Feedback For"), { target: { value: "CHILD" } });
+    fireEvent.change(screen.getByLabelText("Family Rating"), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText("Verdict"), { target: { value: "Good" } });
+    fireEvent.change(screen.getByLabelText("Feedback Notes"), { target: { value: "Needs syrup." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save Feedback" }));
+    await waitFor(() => expect(apiClient.upsertRecipeFeedback).toHaveBeenCalledWith(10, expect.objectContaining({
+      reviewer_type: "CHILD",
+      child_id: 7,
+      rating: 4,
+      verdict: "Good",
+      notes: "Needs syrup.",
+    })));
+
+    fireEvent.click(screen.getByRole("button", { name: "Add Variant" }));
+    await waitFor(() => expect(apiClient.duplicateRecipe).toHaveBeenCalledWith(10, { title: "Pancakes Variant", as_variant: true }));
 
     fireEvent.change(screen.getByLabelText("Scale Multiplier"), { target: { value: "1.5" } });
     await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenLastCalledWith(10, { scaleFactor: 1.5 }));
