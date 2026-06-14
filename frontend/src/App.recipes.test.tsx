@@ -54,6 +54,7 @@ function mockRecipeApi(recipes: RecipeSummary[] = [recipe]): void {
   vi.spyOn(apiClient, "listChildren").mockResolvedValue([{ id: 7, household_id: 1, name: "Kid", active: true }]);
   vi.spyOn(apiClient, "upsertRecipeFeedback").mockResolvedValue(recipe.feedback[0]);
   vi.spyOn(apiClient, "duplicateRecipe").mockResolvedValue({ ...recipe, id: 12, title: "Pancakes Variant", parent_recipe_id: 10, variants: [] });
+  vi.spyOn(apiClient, "deleteRecipe").mockResolvedValue(undefined);
   vi.spyOn(apiClient, "getRecipe").mockResolvedValue(recipe);
   vi.spyOn(apiClient, "scaleRecipe").mockResolvedValue({
     recipe_id: 10,
@@ -138,6 +139,35 @@ describe("Recipe organizer page", () => {
     expect(apiClient.getRecipe).toHaveBeenCalledWith(10);
     expect(screen.getAllByText("Rest batter.").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Back to Recipes" })).toHaveAttribute("href", "/recipes");
+  });
+
+  it("requires two confirmations before deleting a recipe", async () => {
+    mockRecipeApi();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+    render(
+      <MemoryRouter initialEntries={["/recipes/10"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Delete Recipe" }));
+    expect(confirmSpy).toHaveBeenNthCalledWith(
+      1,
+      'Delete "Pancakes"? This permanently removes the recipe, ingredients, steps, variants, and feedback.',
+    );
+    expect(confirmSpy).toHaveBeenNthCalledWith(
+      2,
+      'Final confirmation: permanently delete "Pancakes"? This cannot be undone.',
+    );
+    expect(apiClient.deleteRecipe).not.toHaveBeenCalled();
+
+    confirmSpy.mockReset();
+    confirmSpy.mockReturnValueOnce(true).mockReturnValueOnce(true);
+    fireEvent.click(screen.getByRole("button", { name: "Delete Recipe" }));
+    await waitFor(() => expect(apiClient.deleteRecipe).toHaveBeenCalledWith(10));
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Recipe Organizer" })).toBeVisible());
   });
 
   it("creates a recipe for the signed-in parent account", async () => {

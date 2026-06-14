@@ -446,6 +446,10 @@ export class ApiClient {
     );
   }
 
+  async deleteRecipe(recipeId: number): Promise<void> {
+    return this.delete(`/recipes/${recipeId}`);
+  }
+
   async duplicateRecipe(
     recipeId: number,
     payload: DuplicateRecipeRequest,

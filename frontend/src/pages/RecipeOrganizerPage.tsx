@@ -204,6 +204,7 @@ export function RecipeOrganizerPage(): ReactElement {
 }
 
 export function RecipeDetailPage(): ReactElement {
+  const navigate = useNavigate();
   const { recipeId } = useParams();
   const parsedRecipeId = Number(recipeId);
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
@@ -219,6 +220,7 @@ export function RecipeDetailPage(): ReactElement {
   const [feedbackNotes, setFeedbackNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [deletingRecipe, setDeletingRecipe] = useState(false);
 
   useEffect(() => {
     async function loadRecipe(): Promise<void> {
@@ -311,6 +313,29 @@ export function RecipeDetailPage(): ReactElement {
     }
   }
 
+  async function handleDeleteRecipe(): Promise<void> {
+    if (recipe === null || deletingRecipe) return;
+    const firstConfirmed = window.confirm(
+      `Delete "${recipe.title}"? This permanently removes the recipe, ingredients, steps, variants, and feedback.`,
+    );
+    if (!firstConfirmed) return;
+
+    const finalConfirmed = window.confirm(
+      `Final confirmation: permanently delete "${recipe.title}"? This cannot be undone.`,
+    );
+    if (!finalConfirmed) return;
+
+    setError(null);
+    setDeletingRecipe(true);
+    try {
+      await apiClient.deleteRecipe(recipe.id);
+      navigate("/recipes");
+    } catch (deleteError: unknown) {
+      setError(errorText(deleteError));
+      setDeletingRecipe(false);
+    }
+  }
+
   function handleExportPdf(): void {
     window.print();
   }
@@ -344,7 +369,10 @@ export function RecipeDetailPage(): ReactElement {
       {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
       <div className="recipe-print-actions">
         <Button type="button" onClick={handleExportPdf}>Export PDF</Button>
-        <span>Creates a compact grayscale print/PDF sheet for this recipe.</span>
+        <Button type="button" variant="danger" onClick={() => { void handleDeleteRecipe(); }} disabled={deletingRecipe}>
+          {deletingRecipe ? "Deleting Recipe..." : "Delete Recipe"}
+        </Button>
+        <span>Creates a compact grayscale print/PDF sheet for this recipe. Delete requires two confirmations.</span>
       </div>
       <p className="eyebrow">Recipe Cooking Page</p>
       <h1>{recipe.title}</h1>

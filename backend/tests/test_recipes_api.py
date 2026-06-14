@@ -249,6 +249,33 @@ def test_update_archive_and_duplicate_recipe(tmp_path: Path, monkeypatch) -> Non
         all_listing = client.get("/chore-api/recipes", params={"active_only": False})
         assert any(recipe["id"] == created["id"] for recipe in all_listing.json())
 
+        deleted = client.delete(f"/chore-api/recipes/{duplicate.json()['id']}", headers=headers)
+        assert deleted.status_code == 204
+        deleted_detail = client.get(f"/chore-api/recipes/{duplicate.json()['id']}")
+        assert deleted_detail.status_code == 404
+        listing_after_delete = client.get("/chore-api/recipes", params={"active_only": False})
+        assert all(recipe["id"] != duplicate.json()["id"] for recipe in listing_after_delete.json())
+
+
+def test_recipe_delete_is_scoped_to_owner(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent_one, password_one = _create_user(email="one@example.com")
+    parent_two, password_two = _create_user(email="two@example.com", household_id=parent_one.household_id)
+
+    with TestClient(app) as client:
+        headers_one = _login(client, parent_one, password_one)
+        created = client.post("/chore-api/recipes", json=_recipe_payload(title="Private Pancakes"), headers=headers_one).json()
+
+    with TestClient(app) as client:
+        headers_two = _login(client, parent_two, password_two)
+        denied_delete = client.delete(f"/chore-api/recipes/{created['id']}", headers=headers_two)
+        assert denied_delete.status_code == 404
+
+    with TestClient(app) as client:
+        _login(client, parent_one, password_one)
+        still_present = client.get(f"/chore-api/recipes/{created['id']}")
+        assert still_present.status_code == 200
+
 
 def test_recipe_feedback_can_be_saved_for_each_parent_and_child(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)

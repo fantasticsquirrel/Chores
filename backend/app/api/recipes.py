@@ -541,6 +541,13 @@ def archive_recipe(recipe_id: int, payload: ArchiveRecipeRequest, current_user: 
     return _detail_dict(session, recipe)
 
 
+@router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recipe(recipe_id: int, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> None:
+    recipe = _get_recipe(session, recipe_id, current_user)
+    session.delete(recipe)
+    session.commit()
+
+
 @router.post("/{recipe_id}/duplicate", response_model=RecipeDetailResponse, status_code=status.HTTP_201_CREATED)
 def duplicate_recipe(recipe_id: int, payload: DuplicateRecipeRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
     source = _get_recipe(session, recipe_id, current_user)
