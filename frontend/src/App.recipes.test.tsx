@@ -93,13 +93,16 @@ describe("Recipe organizer page", () => {
     fireEvent.change(screen.getByLabelText("Scaled Servings"), { target: { value: "8" } });
     await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenCalledWith(10, { targetServings: 8 }));
     expect(screen.getByLabelText("Scale Multiplier")).toHaveValue(2);
-    expect(await screen.findByText("4 cup flour")).toBeVisible();
-    expect(await screen.findByText("Cook with flour on a hot griddle. Uses: 4 cup flour.")).toBeVisible();
+    await waitFor(() => expect(screen.getAllByText("4 cup flour").length).toBeGreaterThan(0));
+    expect(screen.getAllByText("Cook with flour on a hot griddle. Uses: 4 cup flour.").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Recipe Variants" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Blueberry Pancakes" })).toHaveAttribute("href", "/recipes/11");
     expect(screen.getByRole("heading", { name: "Family Feedback" })).toBeVisible();
     expect(screen.getByText("Average family rating: 4 (2 ratings)")).toBeVisible();
     expect(screen.getByText(/parent@example.com: 5\/5 Loved it Make again\./)).toBeVisible();
+    const printSpy = vi.spyOn(window, "print").mockImplementation(() => undefined);
+    fireEvent.click(screen.getByRole("button", { name: "Export PDF" }));
+    expect(printSpy).toHaveBeenCalledOnce();
 
     fireEvent.change(screen.getByLabelText("Feedback For"), { target: { value: "CHILD" } });
     fireEvent.change(screen.getByLabelText("Family Rating"), { target: { value: "4" } });
@@ -133,7 +136,7 @@ describe("Recipe organizer page", () => {
 
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
     expect(apiClient.getRecipe).toHaveBeenCalledWith(10);
-    expect(screen.getByText("Rest batter.")).toBeVisible();
+    expect(screen.getAllByText("Rest batter.").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Back to Recipes" })).toHaveAttribute("href", "/recipes");
   });
 

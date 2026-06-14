@@ -177,6 +177,19 @@ body {
   border-radius: var(--radius-card);
 }
 
+.recipe-print-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--text-muted);
+}
+
+.recipe-pdf-sheet {
+  display: none;
+}
+
 .content-grid {
   position: relative;
   z-index: 1;
@@ -865,5 +878,104 @@ body {
     min-width: 1.05rem;
     height: 1.05rem;
     font-size: 0.65rem;
+  }
+}
+
+@page {
+  size: letter;
+  margin: 0.35in;
+}
+
+@media print {
+  body {
+    color: #111;
+    background: #fff;
+  }
+
+  .background-orb,
+  .top-bar,
+  .app-shell > .eyebrow,
+  .glass-card > :not(.recipe-pdf-sheet) {
+    display: none !important;
+  }
+
+  .app-shell,
+  .content-grid,
+  .glass-card {
+    display: block !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    border: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .recipe-pdf-sheet {
+    display: block !important;
+    position: static;
+    width: 100%;
+    max-width: none;
+    color: #111;
+    background: #fff;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 9.5pt;
+    line-height: 1.22;
+  }
+
+  .recipe-pdf-sheet h1,
+  .recipe-pdf-sheet h2,
+  .recipe-pdf-sheet p {
+    margin-top: 0;
+  }
+
+  .recipe-pdf-sheet h1 {
+    margin-bottom: 0.08in;
+    border-bottom: 1px solid #555;
+    padding-bottom: 0.04in;
+    font-size: 20pt;
+    line-height: 1.05;
+  }
+
+  .recipe-pdf-sheet h2 {
+    margin-bottom: 0.06in;
+    border-bottom: 1px solid #aaa;
+    font-size: 11pt;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .recipe-pdf-sheet ul,
+  .recipe-pdf-sheet ol {
+    margin: 0 0 0.12in 0.18in;
+    padding: 0;
+  }
+
+  .recipe-pdf-sheet li {
+    break-inside: avoid;
+    margin-bottom: 0.035in;
+  }
+
+  .recipe-pdf-kicker,
+  .recipe-pdf-meta,
+  .recipe-pdf-source,
+  .recipe-pdf-notes {
+    color: #333;
+    font-size: 8.5pt;
+  }
+
+  .recipe-pdf-kicker {
+    margin-bottom: 0.02in;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .recipe-pdf-grid {
+    display: grid;
+    grid-template-columns: minmax(1.65in, 0.86fr) minmax(3in, 1.45fr);
+    gap: 0.22in;
+    align-items: start;
+    margin-top: 0.12in;
   }
 }
