@@ -386,6 +386,16 @@ export interface DuplicateRecipeRequest {
   as_variant?: boolean;
 }
 
+export interface ImportRecipeBackupResponse {
+  imported_count: number;
+  recipes: RecipeDetail[];
+}
+
+export interface RecipeBackup {
+  version: number;
+  recipes: RecipeDetail[];
+}
+
 export interface UpsertRecipeFeedbackRequest {
   reviewer_type: RecipeFeedbackReviewerType;
   parent_user_id?: number | null;

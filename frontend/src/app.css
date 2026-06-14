@@ -190,6 +190,71 @@ body {
   display: none;
 }
 
+.recipe-card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+.recipe-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.recipe-card-body {
+  padding: 1rem;
+}
+
+.recipe-photo-placeholder {
+  display: grid;
+  min-height: 10rem;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.18), rgba(124, 58, 237, 0.2));
+  color: var(--text-muted);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.recipe-editor-grid,
+.recipe-row-editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recipe-editor-grid {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.recipe-row-editor {
+  align-items: center;
+  grid-template-columns: auto repeat(auto-fit, minmax(8rem, 1fr));
+  margin-bottom: 0.75rem;
+}
+
+.recipe-delete-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.recipe-delete-modal > .glass-card {
+  width: min(34rem, 100%);
+}
+
+.cooking-mode-card {
+  font-size: 1.2rem;
+}
+
+.cooking-mode-card h2 {
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1.08;
+}
+
 .content-grid {
   position: relative;
   z-index: 1;

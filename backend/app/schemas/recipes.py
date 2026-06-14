@@ -152,6 +152,22 @@ class UpdateRecipeRequest(RecipeBasePayload):
     pass
 
 
+class ImportRecipeUrlRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    url: HttpUrl
+
+
+class ImportRecipeBackupRequest(BaseModel):
+    recipes: list[CreateRecipeRequest] = Field(default_factory=list)
+
+
+class ImportRecipeBackupResponse(BaseModel):
+    imported_count: int
+    recipes: list["RecipeDetailResponse"]
+
+
+
 class ArchiveRecipeRequest(BaseModel):
     archived: bool
 

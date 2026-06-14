@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import re
+import urllib.request
 from datetime import UTC, datetime
-from typing import cast
+from html.parser import HTMLParser
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import delete, or_, select
@@ -31,6 +35,9 @@ from app.schemas.recipes import (
     CreateRecipeRequest,
     CreateRecipeTagRequest,
     DuplicateRecipeRequest,
+    ImportRecipeBackupRequest,
+    ImportRecipeBackupResponse,
+    ImportRecipeUrlRequest,
     RecipeCategoryResponse,
     RecipeDetailResponse,
     RecipeScaleResponse,
@@ -66,6 +73,136 @@ def _get_recipe(session: Session, recipe_id: int, user: User) -> Recipe:
     if recipe is None or recipe.owner_user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recipe not found.")
     return recipe
+
+
+class _JsonLdParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self._inside_json_ld = False
+        self.blocks: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag.lower() != "script":
+            return
+        attr_map = {name.lower(): value for name, value in attrs}
+        script_type = attr_map.get("type") or ""
+        self._inside_json_ld = script_type.lower() == "application/ld+json"
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "script":
+            self._inside_json_ld = False
+
+    def handle_data(self, data: str) -> None:
+        if self._inside_json_ld:
+            self.blocks.append(data)
+
+
+def _first_text(value: Any) -> str:
+    if isinstance(value, list):
+        return _first_text(value[0]) if value else ""
+    if isinstance(value, dict):
+        return str(value.get("name") or value.get("text") or "")
+    return str(value or "")
+
+
+def _find_recipe_json_ld(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, dict):
+        graph = value.get("@graph")
+        if graph is not None:
+            found = _find_recipe_json_ld(graph)
+            if found is not None:
+                return found
+        raw_type = value.get("@type")
+        types = raw_type if isinstance(raw_type, list) else [raw_type]
+        if any(str(item).lower() == "recipe" for item in types):
+            return value
+        for child in value.values():
+            found = _find_recipe_json_ld(child)
+            if found is not None:
+                return found
+    if isinstance(value, list):
+        for child in value:
+            found = _find_recipe_json_ld(child)
+            if found is not None:
+                return found
+    return None
+
+
+def _recipe_payload_from_json_ld(recipe_data: dict[str, Any], source_url: str) -> CreateRecipeRequest:
+    raw_ingredients = recipe_data.get("recipeIngredient") or recipe_data.get("ingredients") or []
+    if isinstance(raw_ingredients, str):
+        raw_ingredients = [line.strip() for line in raw_ingredients.split("\n") if line.strip()]
+    ingredients = [
+        {"position": index, "item": str(item).strip()[:255]}
+        for index, item in enumerate(raw_ingredients if isinstance(raw_ingredients, list) else [], start=1)
+        if str(item).strip()
+    ]
+
+    raw_steps = recipe_data.get("recipeInstructions") or []
+    if isinstance(raw_steps, str):
+        raw_steps = [line.strip() for line in re.split(r"\n+", raw_steps) if line.strip()]
+    steps: list[dict[str, object]] = []
+    if isinstance(raw_steps, list):
+        for item in raw_steps:
+            if isinstance(item, dict) and isinstance(item.get("itemListElement"), list):
+                for nested in item["itemListElement"]:
+                    text = _first_text(nested).strip()
+                    if text:
+                        steps.append({"position": len(steps) + 1, "instruction": text[:2000]})
+            else:
+                text = _first_text(item).strip()
+                if text:
+                    steps.append({"position": len(steps) + 1, "instruction": text[:2000]})
+
+    image = recipe_data.get("image")
+    photo_url = _first_text(image).strip() or None
+    servings_text = _first_text(recipe_data.get("recipeYield") or recipe_data.get("yield")).strip()
+    serving_match = re.search(r"\d+(?:\.\d+)?", servings_text)
+    servings = float(serving_match.group(0)) if serving_match else None
+    title = _first_text(recipe_data.get("name")).strip() or "Imported Recipe"
+    description = _first_text(recipe_data.get("description")).strip()
+
+    return CreateRecipeRequest.model_validate(
+        {
+            "title": title[:255],
+            "description": description[:2000],
+            "photo_url": photo_url,
+            "source_name": _first_text(recipe_data.get("author")).strip()[:255],
+            "source_url": source_url,
+            "servings": servings,
+            "notes": "Imported from recipe URL.",
+            "ingredients": ingredients,
+            "steps": steps,
+            "components": [],
+            "category_ids": [],
+            "tag_ids": [],
+        }
+    )
+
+
+def _fetch_recipe_payload_from_url(url: str) -> CreateRecipeRequest:
+    request = urllib.request.Request(url, headers={"User-Agent": "FamilyManagerRecipeImporter/1.0"})
+    try:
+        with urllib.request.urlopen(request, timeout=10) as response:
+            headers = getattr(response, "headers", None)
+            charset = "utf-8"
+            if headers is not None and hasattr(headers, "get_content_charset"):
+                charset = headers.get_content_charset() or "utf-8"
+            html = response.read(2_000_000).decode(charset, errors="replace")
+    except Exception as exc:  # noqa: BLE001 - convert network/parser failures to API errors.
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not fetch recipe URL.") from exc
+
+    parser = _JsonLdParser()
+    parser.feed(html)
+    for block in parser.blocks:
+        try:
+            data = json.loads(block)
+        except json.JSONDecodeError:
+            continue
+        recipe_data = _find_recipe_json_ld(data)
+        if recipe_data is not None:
+            return _recipe_payload_from_json_ld(recipe_data, url)
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No Recipe JSON-LD metadata found at URL.")
 
 
 def _category_dict(category: RecipeCategory) -> dict[str, object]:
@@ -460,6 +597,39 @@ def create_recipe(payload: CreateRecipeRequest, current_user: User = Depends(_re
     session.commit()
     session.refresh(recipe)
     return _detail_dict(session, recipe)
+
+
+@router.post("/import-url", response_model=RecipeDetailResponse, status_code=status.HTTP_201_CREATED)
+def import_recipe_url(payload: ImportRecipeUrlRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
+    recipe_payload = _fetch_recipe_payload_from_url(str(payload.url))
+    recipe = Recipe(household_id=current_user.household_id, owner_user_id=current_user.id, title=recipe_payload.title)
+    session.add(recipe)
+    session.flush()
+    _apply_recipe_payload(session, recipe, recipe_payload)
+    session.commit()
+    session.refresh(recipe)
+    return _detail_dict(session, recipe)
+
+
+@router.get("/backup", response_model=dict)
+def export_recipe_backup(current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
+    recipes = session.scalars(select(Recipe).where(Recipe.owner_user_id == current_user.id).order_by(Recipe.title)).unique().all()
+    return {"version": 1, "recipes": [_detail_dict(session, recipe) for recipe in recipes]}
+
+
+@router.post("/backup/import", response_model=ImportRecipeBackupResponse, status_code=status.HTTP_201_CREATED)
+def import_recipe_backup(payload: ImportRecipeBackupRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
+    imported: list[dict[str, object]] = []
+    for recipe_payload in payload.recipes:
+        _validate_owned_refs(session, current_user, recipe_payload)
+        recipe = Recipe(household_id=current_user.household_id, owner_user_id=current_user.id, title=recipe_payload.title)
+        session.add(recipe)
+        session.flush()
+        _apply_recipe_payload(session, recipe, recipe_payload)
+        session.commit()
+        session.refresh(recipe)
+        imported.append(_detail_dict(session, recipe))
+    return {"imported_count": len(imported), "recipes": imported}
 
 
 @router.get("/{recipe_id}", response_model=RecipeDetailResponse)

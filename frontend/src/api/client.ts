@@ -36,6 +36,8 @@ import type {
   RecipeScaleResponse,
   RecipeSummary,
   RecipeTag,
+  ImportRecipeBackupResponse,
+  RecipeBackup,
   ListRecipesParams,
   ResetChildAccountEmailRequest,
   ResetChildAccountPasswordRequest,
@@ -430,6 +432,18 @@ export class ApiClient {
 
   async createRecipe(payload: CreateRecipeRequest): Promise<RecipeDetail> {
     return this.post<RecipeDetail, CreateRecipeRequest>("/recipes", payload);
+  }
+
+  async importRecipeFromUrl(url: string): Promise<RecipeDetail> {
+    return this.post<RecipeDetail, { url: string }>("/recipes/import-url", { url });
+  }
+
+  async exportRecipeBackup(): Promise<RecipeBackup> {
+    return this.get<RecipeBackup>("/recipes/backup");
+  }
+
+  async importRecipeBackup(recipes: CreateRecipeRequest[]): Promise<ImportRecipeBackupResponse> {
+    return this.post<ImportRecipeBackupResponse, { recipes: CreateRecipeRequest[] }>("/recipes/backup/import", { recipes });
   }
 
   async updateRecipe(

@@ -141,9 +141,8 @@ describe("Recipe organizer page", () => {
     expect(screen.getByRole("link", { name: "Back to Recipes" })).toHaveAttribute("href", "/recipes");
   });
 
-  it("requires two confirmations before deleting a recipe", async () => {
+  it("requires typing the recipe title before deleting a recipe", async () => {
     mockRecipeApi();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValueOnce(true).mockReturnValueOnce(false);
 
     render(
       <MemoryRouter initialEntries={["/recipes/10"]}>
@@ -153,19 +152,10 @@ describe("Recipe organizer page", () => {
 
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Delete Recipe" }));
-    expect(confirmSpy).toHaveBeenNthCalledWith(
-      1,
-      'Delete "Pancakes"? This permanently removes the recipe, ingredients, steps, variants, and feedback.',
-    );
-    expect(confirmSpy).toHaveBeenNthCalledWith(
-      2,
-      'Final confirmation: permanently delete "Pancakes"? This cannot be undone.',
-    );
-    expect(apiClient.deleteRecipe).not.toHaveBeenCalled();
-
-    confirmSpy.mockReset();
-    confirmSpy.mockReturnValueOnce(true).mockReturnValueOnce(true);
-    fireEvent.click(screen.getByRole("button", { name: "Delete Recipe" }));
+    expect(screen.getByRole("dialog", { name: "Delete recipe confirmation" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Permanently Delete" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Type recipe title to delete"), { target: { value: "Pancakes" } });
+    fireEvent.click(screen.getByRole("button", { name: "Permanently Delete" }));
     await waitFor(() => expect(apiClient.deleteRecipe).toHaveBeenCalledWith(10));
     await waitFor(() => expect(screen.getByRole("heading", { name: "Recipe Organizer" })).toBeVisible());
   });

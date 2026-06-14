@@ -277,6 +277,47 @@ def test_recipe_delete_is_scoped_to_owner(tmp_path: Path, monkeypatch) -> None:
         assert still_present.status_code == 200
 
 
+def test_recipe_url_import_and_backup_roundtrip(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(email="parent@example.com")
+
+    class FakeResponse:
+        headers = {"content-type": "text/html; charset=utf-8"}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+        def read(self, _: int) -> bytes:
+            return b'''<html><script type="application/ld+json">{"@type":"Recipe","name":"Imported Soup","description":"Warm","recipeYield":"4 servings","recipeIngredient":["1 cup broth","2 carrots"],"recipeInstructions":[{"text":"Simmer everything."}]}</script></html>'''
+
+    def fake_urlopen(*args: object, **kwargs: object) -> FakeResponse:
+        return FakeResponse()
+
+    monkeypatch.setattr("app.api.recipes.urllib.request.urlopen", fake_urlopen)
+
+    with TestClient(app) as client:
+        headers = _login(client, parent, password)
+        imported = client.post("/chore-api/recipes/import-url", json={"url": "https://example.com/soup"}, headers=headers)
+        assert imported.status_code == 201
+        assert imported.json()["title"] == "Imported Soup"
+        assert [row["item"] for row in imported.json()["ingredients"]] == ["1 cup broth", "2 carrots"]
+        assert imported.json()["steps"][0]["instruction"] == "Simmer everything."
+
+        backup = client.get("/chore-api/recipes/backup")
+        assert backup.status_code == 200
+        assert backup.json()["version"] == 1
+        assert backup.json()["recipes"][0]["title"] == "Imported Soup"
+
+        roundtrip_payload = _recipe_payload(title="Backup Pancakes")
+        restored = client.post("/chore-api/recipes/backup/import", json={"recipes": [roundtrip_payload]}, headers=headers)
+        assert restored.status_code == 201
+        assert restored.json()["imported_count"] == 1
+        assert restored.json()["recipes"][0]["title"] == "Backup Pancakes"
+
+
 def test_recipe_feedback_can_be_saved_for_each_parent_and_child(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     parent, password = _create_user(email="parent@example.com")
