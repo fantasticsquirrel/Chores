@@ -1,5 +1,6 @@
 import type { FormEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import {
   apiClient,
@@ -31,13 +32,22 @@ function emptyRecipePayload(): CreateRecipeRequest {
   };
 }
 
+function displayIngredientQuantity(row: RecipeDetail["ingredients"][number] | RecipeScaleResponse["ingredients"][number]): number | null {
+  if ("scaled_quantity" in row) {
+    const scaledQuantity = row.scaled_quantity;
+    if (typeof scaledQuantity === "number" || scaledQuantity === null) {
+      return scaledQuantity;
+    }
+  }
+
+  return row.quantity;
+}
+
 export function RecipeOrganizerPage(): ReactElement {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<RecipeCategory[]>([]);
   const [tags, setTags] = useState<RecipeTag[]>([]);
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
-  const [selectedRecipe, setSelectedRecipe] = useState<RecipeDetail | null>(null);
-  const [scaled, setScaled] = useState<RecipeScaleResponse | null>(null);
-  const [targetServings, setTargetServings] = useState("8");
   const [editing, setEditing] = useState(false);
   const [payload, setPayload] = useState<CreateRecipeRequest>(emptyRecipePayload());
   const [query, setQuery] = useState("");
@@ -66,26 +76,6 @@ export function RecipeOrganizerPage(): ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function openRecipe(recipeId: number): Promise<void> {
-    setError(null);
-    try {
-      const detail = await apiClient.getRecipe(recipeId);
-      setSelectedRecipe(detail);
-      setScaled(null);
-      if (detail.servings !== null) setTargetServings(String(detail.servings));
-    } catch (loadError: unknown) {
-      setError(errorText(loadError));
-    }
-  }
-
-  async function handleScale(value: string): Promise<void> {
-    setTargetServings(value);
-    if (selectedRecipe === null) return;
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric <= 0) return;
-    const preview = await apiClient.scaleRecipe(selectedRecipe.id, numeric);
-    setScaled(preview);
-  }
 
   async function handleFilter(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -106,14 +96,11 @@ export function RecipeOrganizerPage(): ReactElement {
       setEditing(false);
       setPayload(emptyRecipePayload());
       await refresh();
-      setSelectedRecipe(saved);
-      if (saved.servings !== null) setTargetServings(String(saved.servings));
+      navigate(`/recipes/${saved.id}`);
     } catch (saveError: unknown) {
       setError(errorText(saveError));
     }
   }
-
-  const displayedIngredients = scaled?.ingredients ?? selectedRecipe?.ingredients ?? [];
 
   return (
     <>
@@ -176,36 +163,102 @@ export function RecipeOrganizerPage(): ReactElement {
             <p>{recipe.categories.map((row) => row.name).join(", ")}</p>
             <p>{recipe.tags.map((row) => row.name).join(", ")}</p>
             <p>{recipe.favorite ? "Favorite" : ""} {recipe.rating !== null ? `Rating ${recipe.rating}` : ""}</p>
-            <Button type="button" onClick={() => { void openRecipe(recipe.id); }}>View {recipe.title}</Button>
+            <Link className="jewel-button button-reset" to={`/recipes/${recipe.id}`}>View {recipe.title}</Link>
           </Card>
         ))}
       </section>
-
-      {selectedRecipe !== null ? (
-        <Card as="section">
-          <h2>{selectedRecipe.title}</h2>
-          <p>{selectedRecipe.notes}</p>
-          <FormField label="Target Servings">
-            <TextInput type="number" value={targetServings} onChange={(event) => { void handleScale(event.target.value); }} />
-          </FormField>
-          <h3>Ingredients</h3>
-          <ul>
-            {displayedIngredients.map((row) => (
-              <li key={row.id}>
-                <label>
-                  <input type="checkbox" /> {formatQuantity("scaled_quantity" in row ? row.scaled_quantity : row.quantity)} {row.unit} {row.item}
-                </label>
-              </li>
-            ))}
-          </ul>
-          <h3>Steps</h3>
-          <ol>
-            {selectedRecipe.steps.map((step) => <li key={step.id}>{step.instruction}</li>)}
-          </ol>
-          {selectedRecipe.variants.length > 0 ? <p>Variants: {selectedRecipe.variants.map((row) => row.title).join(", ")}</p> : null}
-          {selectedRecipe.components.length > 0 ? <p>Sub-recipes: {selectedRecipe.components.map((row) => row.component_recipe.title).join(", ")}</p> : null}
-        </Card>
-      ) : null}
     </>
+  );
+}
+
+export function RecipeDetailPage(): ReactElement {
+  const { recipeId } = useParams();
+  const parsedRecipeId = Number(recipeId);
+  const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
+  const [scaled, setScaled] = useState<RecipeScaleResponse | null>(null);
+  const [targetServings, setTargetServings] = useState("8");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadRecipe(): Promise<void> {
+      setError(null);
+      if (!Number.isInteger(parsedRecipeId) || parsedRecipeId <= 0) {
+        setError("Recipe not found.");
+        return;
+      }
+      try {
+        const detail = await apiClient.getRecipe(parsedRecipeId);
+        setRecipe(detail);
+        setScaled(null);
+        setTargetServings(detail.servings !== null ? String(detail.servings) : "8");
+      } catch (loadError: unknown) {
+        setError(errorText(loadError));
+      }
+    }
+
+    void loadRecipe();
+  }, [parsedRecipeId]);
+
+  async function handleScale(value: string): Promise<void> {
+    setTargetServings(value);
+    if (recipe === null) return;
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) return;
+    const preview = await apiClient.scaleRecipe(recipe.id, numeric);
+    setScaled(preview);
+  }
+
+  const displayedIngredients = scaled?.ingredients ?? recipe?.ingredients ?? [];
+
+  if (error !== null) {
+    return (
+      <Card as="section">
+        <Link to="/recipes">Back to Recipes</Link>
+        <InlineNotice variant="error">{error}</InlineNotice>
+      </Card>
+    );
+  }
+
+  if (recipe === null) {
+    return (
+      <Card as="section">
+        <p className="eyebrow">Recipe Organizer</p>
+        <h1>Loading Recipe</h1>
+        <p>Opening the recipe cooking page.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card as="section">
+      <Link to="/recipes">Back to Recipes</Link>
+      <p className="eyebrow">Recipe Cooking Page</p>
+      <h1>{recipe.title}</h1>
+      <p>{recipe.description}</p>
+      {recipe.source_url !== null ? <p>Source: <a href={recipe.source_url}>{recipe.source_name || recipe.source_url}</a></p> : null}
+      <p>{recipe.categories.map((row) => row.name).join(", ")}</p>
+      <p>{recipe.tags.map((row) => row.name).join(", ")}</p>
+      <p>{recipe.favorite ? "Favorite" : ""} {recipe.rating !== null ? `Rating ${recipe.rating}` : ""}</p>
+      <p>{recipe.notes}</p>
+      <FormField label="Target Servings">
+        <TextInput type="number" value={targetServings} onChange={(event) => { void handleScale(event.target.value); }} />
+      </FormField>
+      <h2>Ingredients</h2>
+      <ul>
+        {displayedIngredients.map((row) => (
+          <li key={row.id}>
+            <label>
+              <input type="checkbox" /> {formatQuantity(displayIngredientQuantity(row))} {row.unit} {row.item}
+            </label>
+          </li>
+        ))}
+      </ul>
+      <h2>Steps</h2>
+      <ol>
+        {recipe.steps.map((step) => <li key={step.id}>{step.instruction}</li>)}
+      </ol>
+      {recipe.variants.length > 0 ? <p>Variants: {recipe.variants.map((row) => row.title).join(", ")}</p> : null}
+      {recipe.components.length > 0 ? <p>Sub-recipes: {recipe.components.map((row) => row.component_recipe.title).join(", ")}</p> : null}
+    </Card>
   );
 }

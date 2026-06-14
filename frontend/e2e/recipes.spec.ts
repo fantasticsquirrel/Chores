@@ -41,11 +41,18 @@ test("parent can create, find, open, and scale a parent-account recipe", async (
   await editor.getByLabel("Step Instruction").fill("Cook until golden.");
   await editor.getByRole("button", { name: "Save Recipe" }).click();
 
-  await expect(page.getByText(`Saved ${uniqueTitle}.`)).toBeVisible();
+  await expect(page).toHaveURL(/\/chore\/recipes\/\d+$/);
+  await expect(page.getByRole("heading", { name: uniqueTitle })).toBeVisible();
+  await page.getByRole("link", { name: "Back to Recipes" }).click();
+  await expect(page).toHaveURL(/\/chore\/recipes$/);
   await page.getByLabel("Search").fill(uniqueTitle);
   await page.getByLabel("Ingredient").fill("flour");
   await page.getByRole("button", { name: "Apply Filters" }).click();
   await expect(page.locator("article").filter({ hasText: uniqueTitle }).getByRole("heading", { name: uniqueTitle })).toBeVisible();
+  await page.getByRole("link", { name: `View ${uniqueTitle}` }).click();
+  await expect(page).toHaveURL(/\/chore\/recipes\/\d+$/);
+  await expect(page.getByRole("heading", { name: uniqueTitle })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to Recipes" })).toBeVisible();
   await expect(page.getByLabel("Target Servings")).toHaveValue("4");
   await page.getByLabel("Target Servings").fill("8");
   await expect(page.getByText("4 cup flour")).toBeVisible();

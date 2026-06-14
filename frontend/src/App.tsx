@@ -10,7 +10,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { AccountSecurityPage } from "./pages/AccountSecurityPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { HomeschoolPage } from "./pages/HomeschoolPage";
-import { RecipeOrganizerPage } from "./pages/RecipeOrganizerPage";
+import { RecipeDetailPage, RecipeOrganizerPage } from "./pages/RecipeOrganizerPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { ApiClientError, type UserRole } from "./api";
@@ -234,6 +234,7 @@ export default function App(): ReactElement {
               </Route>
               <Route element={<ModuleProtectedRoute moduleKey="recipes" />}>
                 <Route path="/recipes" element={<RecipeOrganizerPage />} />
+                <Route path="/recipes/:recipeId" element={<RecipeDetailPage />} />
               </Route>
               <Route
                 path="/parent/children"

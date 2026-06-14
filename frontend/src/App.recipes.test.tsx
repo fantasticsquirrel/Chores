@@ -59,7 +59,7 @@ describe("Recipe organizer page", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders parent-owned recipes with filters and cooking detail", async () => {
+  it("renders parent-owned recipes with filters and links to a standalone cooking detail page", async () => {
     mockRecipeApi();
 
     render(
@@ -73,11 +73,27 @@ describe("Recipe organizer page", () => {
     expect(screen.getByText("Dinner")).toBeVisible();
     expect(screen.getByText("Quick")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "View Pancakes" }));
+    fireEvent.click(screen.getByRole("link", { name: "View Pancakes" }));
+    await waitFor(() => expect(apiClient.getRecipe).toHaveBeenCalledWith(10));
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
     fireEvent.change(screen.getByLabelText("Target Servings"), { target: { value: "8" } });
     await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenCalledWith(10, 8));
     expect(await screen.findByText("4 cup flour")).toBeVisible();
+  });
+
+  it("loads recipe cooking detail directly from its own route", async () => {
+    mockRecipeApi();
+
+    render(
+      <MemoryRouter initialEntries={["/recipes/10"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
+    expect(apiClient.getRecipe).toHaveBeenCalledWith(10);
+    expect(screen.getByText("Rest batter.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Back to Recipes" })).toHaveAttribute("href", "/recipes");
   });
 
   it("creates a recipe for the signed-in parent account", async () => {
