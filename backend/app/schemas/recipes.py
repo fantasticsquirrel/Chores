@@ -98,6 +98,7 @@ class RecipeBasePayload(BaseModel):
     parent_recipe_id: int | None = Field(default=None, gt=0)
     title: str = Field(min_length=1, max_length=255)
     description: str = Field(default="", max_length=2000)
+    photo_url: HttpUrl | None = None
     source_name: str = Field(default="", max_length=255)
     source_url: HttpUrl | None = None
     prep_minutes: int | None = Field(default=None, ge=0)
@@ -207,6 +208,7 @@ class RecipeSummaryResponse(BaseModel):
     parent_recipe_id: int | None
     title: str
     description: str
+    photo_url: str | None
     source_name: str
     source_url: str | None
     prep_minutes: int | None

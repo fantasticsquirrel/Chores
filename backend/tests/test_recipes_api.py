@@ -79,6 +79,7 @@ def _recipe_payload(**overrides: object) -> dict[str, object]:
     payload: dict[str, object] = {
         "title": "Pancakes",
         "description": "Weekend breakfast",
+        "photo_url": "https://example.com/pancakes.jpg",
         "source_name": "Family card",
         "source_url": "https://example.com/pancakes",
         "prep_minutes": 10,
@@ -143,6 +144,7 @@ def test_parent_can_create_and_read_full_recipe(tmp_path: Path, monkeypatch) -> 
         recipe = created.json()
         assert recipe["owner_user_id"] == parent.id
         assert recipe["title"] == "Pancakes"
+        assert recipe["photo_url"] == "https://example.com/pancakes.jpg"
         assert recipe["categories"][0]["name"] == "Dinner"
         assert recipe["tags"][0]["name"] == "Quick"
         assert [ingredient["item"] for ingredient in recipe["ingredients"]] == ["flour", "milk"]
@@ -152,6 +154,7 @@ def test_parent_can_create_and_read_full_recipe(tmp_path: Path, monkeypatch) -> 
         fetched = client.get(f"/chore-api/recipes/{recipe['id']}")
         assert fetched.status_code == 200
         assert fetched.json()["id"] == recipe["id"]
+        assert fetched.json()["photo_url"] == "https://example.com/pancakes.jpg"
 
 
 def test_recipes_are_scoped_to_parent_account_not_household(tmp_path: Path, monkeypatch) -> None:

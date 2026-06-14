@@ -156,6 +156,9 @@ export function RecipeOrganizerPage(): ReactElement {
             <FormField label="Title">
               <TextInput value={payload.title} onChange={(event) => setPayload((prev) => ({ ...prev, title: event.target.value }))} required />
             </FormField>
+            <FormField label="Recipe Photo URL">
+              <TextInput type="url" value={payload.photo_url ?? ""} onChange={(event) => setPayload((prev) => ({ ...prev, photo_url: event.target.value.trim() === "" ? null : event.target.value }))} placeholder="https://example.com/recipe-photo.jpg" />
+            </FormField>
             <FormField label="Default Servings">
               <TextInput type="number" value={payload.servings ?? ""} onChange={(event) => setPayload((prev) => ({ ...prev, servings: event.target.value === "" ? null : Number(event.target.value) }))} />
             </FormField>
@@ -182,6 +185,7 @@ export function RecipeOrganizerPage(): ReactElement {
       <section className="content-grid">
         {recipes.map((recipe) => (
           <Card as="article" key={recipe.id}>
+            {recipe.photo_url !== null ? <img className="recipe-photo recipe-photo--card" src={recipe.photo_url} alt={`${recipe.title}`} loading="lazy" /> : null}
             <h2>{recipe.title}</h2>
             <p>{recipe.description}</p>
             <p>{recipe.categories.map((row) => row.name).join(", ")}</p>
@@ -332,6 +336,7 @@ export function RecipeDetailPage(): ReactElement {
       {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
       <p className="eyebrow">Recipe Cooking Page</p>
       <h1>{recipe.title}</h1>
+      {recipe.photo_url !== null ? <img className="recipe-photo recipe-photo--hero" src={recipe.photo_url} alt={`${recipe.title}`} /> : null}
       {recipe.core_recipe !== null ? <p>Core recipe: <Link to={`/recipes/${recipe.core_recipe.id}`}>{recipe.core_recipe.title}</Link></p> : null}
       <p>{recipe.description}</p>
       {recipe.source_url !== null ? <p>Source: <a href={recipe.source_url}>{recipe.source_name || recipe.source_url}</a></p> : null}

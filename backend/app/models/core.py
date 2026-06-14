@@ -282,6 +282,7 @@ class Recipe(TimestampMixin, Base):
     parent_recipe_id: Mapped[int | None] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"), nullable=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     description: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    photo_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     source_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     source_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     prep_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)

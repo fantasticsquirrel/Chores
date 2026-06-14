@@ -156,6 +156,27 @@ body {
   border-color: transparent;
 }
 
+.recipe-photo {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  border: 1px solid #ffffff36;
+  box-shadow: 0 14px 28px #14083066;
+  background: #ffffff18;
+}
+
+.recipe-photo--card {
+  max-height: 12rem;
+  margin-bottom: 1rem;
+  border-radius: 1rem;
+}
+
+.recipe-photo--hero {
+  max-height: 24rem;
+  margin: 0.75rem 0 1rem;
+  border-radius: var(--radius-card);
+}
+
 .content-grid {
   position: relative;
   z-index: 1;

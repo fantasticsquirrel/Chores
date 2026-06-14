@@ -253,6 +253,7 @@ export interface RecipeSummary {
   parent_recipe_id: number | null;
   title: string;
   description: string;
+  photo_url: string | null;
   source_name: string;
   source_url: string | null;
   prep_minutes: number | null;
@@ -350,6 +351,7 @@ export interface CreateRecipeRequest {
   parent_recipe_id?: number | null;
   title: string;
   description?: string;
+  photo_url?: string | null;
   source_name?: string;
   source_url?: string | null;
   prep_minutes?: number | null;

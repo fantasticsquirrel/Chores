@@ -95,6 +95,7 @@ def _recipe_base_dict(recipe: Recipe) -> dict[str, object]:
         "parent_recipe_id": recipe.parent_recipe_id,
         "title": recipe.title,
         "description": recipe.description,
+        "photo_url": recipe.photo_url,
         "source_name": recipe.source_name,
         "source_url": recipe.source_url,
         "prep_minutes": recipe.prep_minutes,
@@ -279,6 +280,7 @@ def _apply_recipe_payload(session: Session, recipe: Recipe, payload: CreateRecip
     recipe.parent_recipe_id = payload.parent_recipe_id
     recipe.title = payload.title
     recipe.description = payload.description
+    recipe.photo_url = str(payload.photo_url) if payload.photo_url is not None else None
     recipe.source_name = payload.source_name
     recipe.source_url = str(payload.source_url) if payload.source_url is not None else None
     recipe.prep_minutes = payload.prep_minutes
@@ -548,6 +550,7 @@ def duplicate_recipe(recipe_id: int, payload: DuplicateRecipeRequest, current_us
         parent_recipe_id=source.id if payload.as_variant else source.parent_recipe_id,
         title=payload.title or f"{source.title} Copy",
         description=source.description,
+        photo_url=source.photo_url,
         source_name=source.source_name,
         source_url=source.source_url,
         prep_minutes=source.prep_minutes,

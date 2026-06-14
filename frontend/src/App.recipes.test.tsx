@@ -13,6 +13,7 @@ const recipe: RecipeDetail = {
   parent_recipe_id: null,
   title: "Pancakes",
   description: "Weekend breakfast",
+  photo_url: "https://example.com/pancakes.jpg",
   source_name: "Family card",
   source_url: null,
   prep_minutes: 10,
@@ -31,7 +32,7 @@ const recipe: RecipeDetail = {
   ingredients: [{ id: 100, recipe_id: 10, position: 1, group_name: "Batter", quantity: 2, unit: "cup", item: "flour", preparation: "", note: "", is_optional: false }],
   steps: [{ id: 200, recipe_id: 10, position: 1, section: "Cook", instruction: "Cook with flour on a hot griddle.", ingredient_position_refs: [1], ingredient_ids: [100] }],
   components: [],
-  variants: [{ id: 11, household_id: 1, owner_user_id: 1, parent_recipe_id: 10, title: "Blueberry Pancakes", description: "", source_name: "", source_url: null, prep_minutes: null, cook_minutes: null, servings: 4, yield_quantity: null, yield_unit: "", rating: null, favorite: false, notes: "", archived_at: null, categories: [], tags: [], ingredient_count: 0, feedback_summary: { average_rating: null, rating_count: 0 } }],
+  variants: [{ id: 11, household_id: 1, owner_user_id: 1, parent_recipe_id: 10, title: "Blueberry Pancakes", description: "", photo_url: null, source_name: "", source_url: null, prep_minutes: null, cook_minutes: null, servings: 4, yield_quantity: null, yield_unit: "", rating: null, favorite: false, notes: "", archived_at: null, categories: [], tags: [], ingredient_count: 0, feedback_summary: { average_rating: null, rating_count: 0 } }],
   core_recipe: null,
   feedback: [
     { id: 500, recipe_id: 10, household_id: 1, reviewer_type: "PARENT", parent_user_id: 1, child_id: null, reviewer_name: "parent@example.com", rating: 5, verdict: "Loved it", notes: "Make again.", created_at: "2026-06-14T00:00:00Z" },
@@ -81,6 +82,7 @@ describe("Recipe organizer page", () => {
 
     expect(await screen.findByRole("heading", { name: "Recipe Organizer" })).toBeVisible();
     expect(await screen.findByText("Pancakes")).toBeVisible();
+    expect(screen.getByRole("img", { name: "Pancakes" })).toHaveAttribute("src", "https://example.com/pancakes.jpg");
     expect(screen.getByText("Dinner")).toBeVisible();
     expect(screen.getByText("Quick")).toBeVisible();
 
@@ -150,6 +152,7 @@ describe("Recipe organizer page", () => {
     const editor = screen.getByRole("heading", { name: "Recipe Editor" }).closest("article");
     expect(editor).not.toBeNull();
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Title"), { target: { value: "Pancakes" } });
+    fireEvent.change(within(editor as HTMLElement).getByLabelText("Recipe Photo URL"), { target: { value: "https://example.com/pancakes.jpg" } });
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Default Servings"), { target: { value: "4" } });
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Ingredient Item"), { target: { value: "flour" } });
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Ingredient Quantity"), { target: { value: "2" } });
@@ -159,6 +162,7 @@ describe("Recipe organizer page", () => {
 
     await waitFor(() => expect(createRecipeSpy).toHaveBeenCalledWith(expect.objectContaining({
       title: "Pancakes",
+      photo_url: "https://example.com/pancakes.jpg",
       servings: 4,
       ingredients: [expect.objectContaining({ item: "flour", quantity: 2, unit: "cup" })],
       steps: [expect.objectContaining({ instruction: "Cook on a hot griddle.", ingredient_position_refs: [1] })],
