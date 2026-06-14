@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import delete, or_, select
@@ -15,6 +16,7 @@ from app.models.core import (
     RecipeComponent,
     RecipeIngredient,
     RecipeStep,
+    RecipeStepIngredientLink,
     RecipeTag,
     RecipeTagLink,
     User,
@@ -36,7 +38,7 @@ from app.schemas.recipes import (
     UpdateRecipeRequest,
     UpdateRecipeTagRequest,
 )
-from app.services.recipes import scale_ingredients
+from app.services.recipes import scale_ingredients, scale_linked_steps
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 _require_recipes_access = require_module_access(MODULE_RECIPES, UserRole.PARENT_ADMIN, UserRole.PARENT)
@@ -141,13 +143,26 @@ def _ingredient_dict(ingredient: RecipeIngredient) -> dict[str, object]:
     }
 
 
-def _step_dict(step: RecipeStep) -> dict[str, object]:
+def _step_ingredient_ids(session: Session, step_id: int) -> list[int]:
+    return list(
+        session.scalars(
+            select(RecipeIngredient.id)
+            .join(RecipeStepIngredientLink, RecipeStepIngredientLink.ingredient_id == RecipeIngredient.id)
+            .where(RecipeStepIngredientLink.step_id == step_id)
+            .order_by(RecipeIngredient.position)
+        )
+    )
+
+
+def _step_dict(session: Session, step: RecipeStep) -> dict[str, object]:
     return {
         "id": step.id,
         "recipe_id": step.recipe_id,
         "position": step.position,
         "section": step.section,
         "instruction": step.instruction,
+        "ingredient_position_refs": [],
+        "ingredient_ids": _step_ingredient_ids(session, step.id),
     }
 
 
@@ -168,7 +183,7 @@ def _detail_dict(session: Session, recipe: Recipe) -> dict[str, object]:
         for ingredient in session.scalars(select(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe.id).order_by(RecipeIngredient.position)).all()
     ]
     data["steps"] = [
-        _step_dict(step)
+        _step_dict(session, step)
         for step in session.scalars(select(RecipeStep).where(RecipeStep.recipe_id == recipe.id).order_by(RecipeStep.position)).all()
     ]
     components = session.scalars(select(RecipeComponent).where(RecipeComponent.parent_recipe_id == recipe.id).order_by(RecipeComponent.label)).all()
@@ -225,6 +240,10 @@ def _apply_recipe_payload(session: Session, recipe: Recipe, payload: CreateRecip
     if recipe.id is None:
         session.flush()
 
+    existing_step_ids = list(session.scalars(select(RecipeStep.id).where(RecipeStep.recipe_id == recipe.id)).all())
+    if existing_step_ids:
+        session.execute(delete(RecipeStepIngredientLink).where(RecipeStepIngredientLink.step_id.in_(existing_step_ids)))
+
     session.execute(delete(RecipeCategoryLink).where(RecipeCategoryLink.recipe_id == recipe.id))
     session.execute(delete(RecipeTagLink).where(RecipeTagLink.recipe_id == recipe.id))
     session.execute(delete(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe.id))
@@ -235,10 +254,23 @@ def _apply_recipe_payload(session: Session, recipe: Recipe, payload: CreateRecip
         session.add(RecipeCategoryLink(recipe_id=recipe.id, category_id=category_id))
     for tag_id in payload.tag_ids:
         session.add(RecipeTagLink(recipe_id=recipe.id, tag_id=tag_id))
+    ingredients_by_position: dict[int, RecipeIngredient] = {}
+    steps_by_position: dict[int, RecipeStep] = {}
     for ingredient in payload.ingredients:
-        session.add(RecipeIngredient(recipe_id=recipe.id, **ingredient.model_dump()))
+        ingredient_row = RecipeIngredient(recipe_id=recipe.id, **ingredient.model_dump())
+        ingredients_by_position[ingredient.position] = ingredient_row
+        session.add(ingredient_row)
+    session.flush()
     for step in payload.steps:
-        session.add(RecipeStep(recipe_id=recipe.id, **step.model_dump()))
+        step_row = RecipeStep(recipe_id=recipe.id, **step.model_dump(exclude={"ingredient_position_refs"}))
+        steps_by_position[step.position] = step_row
+        session.add(step_row)
+    session.flush()
+    for step in payload.steps:
+        step_row = steps_by_position[step.position]
+        for ingredient_position in step.ingredient_position_refs:
+            ingredient_row = ingredients_by_position[ingredient_position]
+            session.add(RecipeStepIngredientLink(step_id=step_row.id, ingredient_id=ingredient_row.id))
     for component in payload.components:
         session.add(RecipeComponent(parent_recipe_id=recipe.id, **component.model_dump()))
 
@@ -441,10 +473,24 @@ def scale_recipe(recipe_id: int, target_servings: float = Query(gt=0), current_u
         _ingredient_dict(ingredient)
         for ingredient in session.scalars(select(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe.id).order_by(RecipeIngredient.position)).all()
     ]
+    steps = [
+        _step_dict(session, step)
+        for step in session.scalars(select(RecipeStep).where(RecipeStep.recipe_id == recipe.id).order_by(RecipeStep.position)).all()
+    ]
     scaled = scale_ingredients(ingredients, base_servings=recipe.servings, target_servings=target_servings)
+    step_ingredient_ids = {
+        cast(int, step["id"]): cast(list[int], step["ingredient_ids"])
+        for step in steps
+    }
+    scaled_steps = scale_linked_steps(
+        steps,
+        scaled_ingredients=scaled["ingredients"],
+        step_ingredient_ids=step_ingredient_ids,
+    )
     return {
         "recipe_id": recipe.id,
         "base_servings": recipe.servings,
         "target_servings": target_servings,
         **scaled,
+        "steps": scaled_steps,
     }

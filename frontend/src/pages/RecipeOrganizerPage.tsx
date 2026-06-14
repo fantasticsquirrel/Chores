@@ -43,6 +43,14 @@ function displayIngredientQuantity(row: RecipeDetail["ingredients"][number] | Re
   return row.quantity;
 }
 
+function displayStepInstruction(step: RecipeDetail["steps"][number] | RecipeScaleResponse["steps"][number]): string {
+  if ("scaled_instruction" in step && typeof step.scaled_instruction === "string") {
+    return step.scaled_instruction;
+  }
+
+  return step.instruction;
+}
+
 export function RecipeOrganizerPage(): ReactElement {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<RecipeCategory[]>([]);
@@ -50,6 +58,7 @@ export function RecipeOrganizerPage(): ReactElement {
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [editing, setEditing] = useState(false);
   const [payload, setPayload] = useState<CreateRecipeRequest>(emptyRecipePayload());
+  const [linkFirstIngredientToStep, setLinkFirstIngredientToStep] = useState(true);
   const [query, setQuery] = useState("");
   const [ingredient, setIngredient] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -86,15 +95,21 @@ export function RecipeOrganizerPage(): ReactElement {
     event.preventDefault();
     setError(null);
     try {
+      const ingredients = (payload.ingredients ?? []).filter((row) => row.item.trim().length > 0);
+      let steps = (payload.steps ?? []).filter((row) => row.instruction.trim().length > 0);
+      if (linkFirstIngredientToStep && ingredients.length > 0 && steps.length > 0) {
+        steps = steps.map((row, index) => (index === 0 ? { ...row, ingredient_position_refs: [ingredients[0].position] } : row));
+      }
       const saved = await apiClient.createRecipe({
         ...payload,
         title: payload.title.trim(),
-        ingredients: (payload.ingredients ?? []).filter((row) => row.item.trim().length > 0),
-        steps: (payload.steps ?? []).filter((row) => row.instruction.trim().length > 0),
+        ingredients,
+        steps,
       });
       setMessage(`Saved ${saved.title}.`);
       setEditing(false);
       setPayload(emptyRecipePayload());
+      setLinkFirstIngredientToStep(true);
       await refresh();
       navigate(`/recipes/${saved.id}`);
     } catch (saveError: unknown) {
@@ -150,6 +165,9 @@ export function RecipeOrganizerPage(): ReactElement {
             <FormField label="Step Instruction">
               <TextInput value={payload.steps?.[0]?.instruction ?? ""} onChange={(event) => setPayload((prev) => ({ ...prev, steps: [{ ...(prev.steps?.[0] ?? { position: 1 }), position: 1, instruction: event.target.value }] }))} />
             </FormField>
+            <label>
+              <input type="checkbox" checked={linkFirstIngredientToStep} onChange={(event) => setLinkFirstIngredientToStep(event.target.checked)} /> Link first ingredient to this step for scaling
+            </label>
             <Button type="submit">Save Recipe</Button>
           </form>
         </Card>
@@ -229,6 +247,8 @@ export function RecipeDetailPage(): ReactElement {
     );
   }
 
+  const displayedSteps = scaled?.steps ?? recipe.steps;
+
   return (
     <Card as="section">
       <Link to="/recipes">Back to Recipes</Link>
@@ -255,7 +275,7 @@ export function RecipeDetailPage(): ReactElement {
       </ul>
       <h2>Steps</h2>
       <ol>
-        {recipe.steps.map((step) => <li key={step.id}>{step.instruction}</li>)}
+        {displayedSteps.map((step) => <li key={step.id}>{displayStepInstruction(step)}</li>)}
       </ol>
       {recipe.variants.length > 0 ? <p>Variants: {recipe.variants.map((row) => row.title).join(", ")}</p> : null}
       {recipe.components.length > 0 ? <p>Sub-recipes: {recipe.components.map((row) => row.component_recipe.title).join(", ")}</p> : null}

@@ -62,12 +62,12 @@ test("parent can link a child account without email, reset email, and child can 
     .getByRole("combobox", { name: "Child" })
     .first()
     .selectOption({ label: newChildName });
-  await page.getByLabel("Temporary Password").fill(childPassword);
+  await page.getByRole("textbox", { name: "Temporary Password", exact: true }).fill(childPassword);
   await page.getByRole("button", { name: "Create Linked Child Login" }).click();
 
   const successLink = page.getByText(
     new RegExp(
-      `Linked login created for ${newChildName}\\. Child signs in with login email child-`,
+      `Linked login created for ${newChildName}\\. Child can sign in with a parent login email, ${newChildName}, and the child password\\. Legacy email child-`,
     ),
   );
   await expect(successLink).toBeVisible();
@@ -78,12 +78,12 @@ test("parent can link a child account without email, reset email, and child can 
     .nth(1)
     .selectOption({ label: newChildName });
   await page
-    .getByRole("textbox", { name: /New Login Email/i })
+    .getByRole("textbox", { name: /New Legacy Login Email/i })
     .fill(resetEmail);
   await page.getByRole("button", { name: "Reset Child Email" }).click();
   await expect(
     page.getByText(
-      `Updated login email for ${newChildName}. Child signs in with login email ${resetEmail}, not display name.`,
+      `Updated legacy login email for ${newChildName}. Parent email + child name + child password is recommended; ${resetEmail} still works for email/password sign-in.`,
     ),
   ).toBeVisible();
 

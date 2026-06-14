@@ -69,11 +69,13 @@ class RecipeStepPayload(BaseModel):
     position: int = Field(gt=0)
     section: str = Field(default="", max_length=100)
     instruction: str = Field(min_length=1, max_length=2000)
+    ingredient_position_refs: list[int] = Field(default_factory=list)
 
 
 class RecipeStepResponse(RecipeStepPayload):
     id: int
     recipe_id: int
+    ingredient_ids: list[int] = Field(default_factory=list)
 
 
 class RecipeComponentPayload(BaseModel):
@@ -128,6 +130,12 @@ class RecipeBasePayload(BaseModel):
         step_positions = [step.position for step in self.steps]
         if len(set(step_positions)) != len(step_positions):
             raise ValueError("step positions must be unique.")
+        valid_ingredient_positions = set(ingredient_positions)
+        for step in self.steps:
+            if len(set(step.ingredient_position_refs)) != len(step.ingredient_position_refs):
+                raise ValueError("step ingredient references must be unique.")
+            if any(ref <= 0 or ref not in valid_ingredient_positions for ref in step.ingredient_position_refs):
+                raise ValueError("step ingredient references must point to ingredient positions in this recipe.")
         component_ids = [component.component_recipe_id for component in self.components]
         if len(set(component_ids)) != len(component_ids):
             raise ValueError("component recipes must be unique.")
@@ -187,6 +195,11 @@ class ScaledIngredientResponse(RecipeIngredientResponse):
     scaled_quantity: float | None
 
 
+class ScaledStepResponse(RecipeStepResponse):
+    scaled_instruction: str
+    linked_ingredients: list[ScaledIngredientResponse] = Field(default_factory=list)
+
+
 class RecipeScaleResponse(BaseModel):
     recipe_id: int
     base_servings: float | None
@@ -194,3 +207,4 @@ class RecipeScaleResponse(BaseModel):
     factor: float
     warnings: list[str]
     ingredients: list[ScaledIngredientResponse]
+    steps: list[ScaledStepResponse] = Field(default_factory=list)

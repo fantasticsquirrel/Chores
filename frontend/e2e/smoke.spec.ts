@@ -125,11 +125,12 @@ test("deployed auth protections block anonymous and wrong-role access", async ({
   await page.goto("/chore/parent/dashboard");
   await expect(page).toHaveURL(/\/chore\/child\/today$/);
 
-  const childParentEndpointResponse = await page.request.get(
-    "/chore-api/submissions",
-  );
-  expect(childParentEndpointResponse.status()).toBe(403);
-  const childParentEndpointBody = await childParentEndpointResponse.json();
+  const childParentEndpoint = await page.evaluate(async () => {
+    const response = await fetch("/chore-api/submissions", { credentials: "include" });
+    return { status: response.status, body: await response.json() };
+  });
+  expect(childParentEndpoint.status).toBe(403);
+  const childParentEndpointBody = childParentEndpoint.body;
   expect(childParentEndpointBody).toMatchObject({
     detail: "Forbidden.",
   });

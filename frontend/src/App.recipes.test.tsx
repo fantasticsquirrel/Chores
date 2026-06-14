@@ -28,7 +28,7 @@ const recipe: RecipeDetail = {
   tags: [tag],
   ingredient_count: 1,
   ingredients: [{ id: 100, recipe_id: 10, position: 1, group_name: "Batter", quantity: 2, unit: "cup", item: "flour", preparation: "", note: "", is_optional: false }],
-  steps: [{ id: 200, recipe_id: 10, position: 1, section: "Cook", instruction: "Cook on a hot griddle." }],
+  steps: [{ id: 200, recipe_id: 10, position: 1, section: "Cook", instruction: "Cook with flour on a hot griddle.", ingredient_position_refs: [1], ingredient_ids: [100] }],
   components: [],
   variants: [],
 };
@@ -51,6 +51,7 @@ function mockRecipeApi(recipes: RecipeSummary[] = [recipe]): void {
     factor: 2,
     warnings: [],
     ingredients: [{ ...recipe.ingredients[0], scaled_quantity: 4 }],
+    steps: [{ ...recipe.steps[0], scaled_instruction: "Cook with flour on a hot griddle. Uses: 4 cup flour.", linked_ingredients: [{ ...recipe.ingredients[0], scaled_quantity: 4 }] }],
   });
 }
 
@@ -79,6 +80,7 @@ describe("Recipe organizer page", () => {
     fireEvent.change(screen.getByLabelText("Target Servings"), { target: { value: "8" } });
     await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenCalledWith(10, 8));
     expect(await screen.findByText("4 cup flour")).toBeVisible();
+    expect(await screen.findByText("Cook with flour on a hot griddle. Uses: 4 cup flour.")).toBeVisible();
   });
 
   it("loads recipe cooking detail directly from its own route", async () => {
@@ -122,7 +124,7 @@ describe("Recipe organizer page", () => {
       title: "Pancakes",
       servings: 4,
       ingredients: [expect.objectContaining({ item: "flour", quantity: 2, unit: "cup" })],
-      steps: [expect.objectContaining({ instruction: "Cook on a hot griddle." })],
+      steps: [expect.objectContaining({ instruction: "Cook on a hot griddle.", ingredient_position_refs: [1] })],
     })));
   });
 });

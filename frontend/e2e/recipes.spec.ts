@@ -55,5 +55,6 @@ test("parent can create, find, open, and scale a parent-account recipe", async (
   await expect(page.getByRole("link", { name: "Back to Recipes" })).toBeVisible();
   await expect(page.getByLabel("Target Servings")).toHaveValue("4");
   await page.getByLabel("Target Servings").fill("8");
-  await expect(page.getByText("4 cup flour")).toBeVisible();
+  await expect(page.locator("label", { hasText: "4 cup flour" })).toBeVisible();
+  await expect(page.getByText("Cook until golden. Uses: 4 cup flour.")).toBeVisible();
 });

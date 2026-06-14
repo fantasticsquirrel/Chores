@@ -242,6 +242,8 @@ export interface RecipeStep {
   position: number;
   section: string;
   instruction: string;
+  ingredient_position_refs: number[];
+  ingredient_ids: number[];
 }
 
 export interface RecipeSummary {
@@ -310,6 +312,7 @@ export interface RecipeStepRequest {
   position: number;
   section?: string;
   instruction: string;
+  ingredient_position_refs?: number[];
 }
 
 export interface RecipeComponentRequest {
@@ -364,6 +367,10 @@ export interface RecipeScaleResponse {
   factor: number;
   warnings: string[];
   ingredients: Array<RecipeIngredient & { scaled_quantity: number | null }>;
+  steps: Array<RecipeStep & {
+    scaled_instruction: string;
+    linked_ingredients: Array<RecipeIngredient & { scaled_quantity: number | null }>;
+  }>;
 }
 
 export interface FamilyModule {

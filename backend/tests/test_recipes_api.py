@@ -97,7 +97,7 @@ def _recipe_payload(**overrides: object) -> dict[str, object]:
             {"position": 2, "group_name": "Batter", "quantity": 1, "unit": "cup", "item": "milk", "preparation": "", "note": "", "is_optional": False},
         ],
         "steps": [
-            {"position": 1, "section": "Batter", "instruction": "Whisk dry ingredients."},
+            {"position": 1, "section": "Batter", "instruction": "Whisk dry ingredients.", "ingredient_position_refs": [1]},
             {"position": 2, "section": "Cook", "instruction": "Cook on a hot griddle."},
         ],
         "components": [],
@@ -147,6 +147,7 @@ def test_parent_can_create_and_read_full_recipe(tmp_path: Path, monkeypatch) -> 
         assert recipe["tags"][0]["name"] == "Quick"
         assert [ingredient["item"] for ingredient in recipe["ingredients"]] == ["flour", "milk"]
         assert [step["instruction"] for step in recipe["steps"]] == ["Whisk dry ingredients.", "Cook on a hot griddle."]
+        assert recipe["steps"][0]["ingredient_ids"] == [recipe["ingredients"][0]["id"]]
 
         fetched = client.get(f"/chore-api/recipes/{recipe['id']}")
         assert fetched.status_code == 200
@@ -181,7 +182,7 @@ def test_recipe_filters_variants_components_and_scaling(tmp_path: Path, monkeypa
         headers = _login(client, parent, password)
         category = client.post("/chore-api/recipes/categories", json=_category_payload("Breakfast"), headers=headers).json()
         tag = client.post("/chore-api/recipes/tags", json=_tag_payload("Weekend"), headers=headers).json()
-        sauce = client.post("/chore-api/recipes", json=_recipe_payload(title="Berry Sauce", ingredients=[]), headers=headers).json()
+        sauce = client.post("/chore-api/recipes", json=_recipe_payload(title="Berry Sauce", ingredients=[], steps=[]), headers=headers).json()
         base = client.post(
             "/chore-api/recipes",
             json=_recipe_payload(
@@ -207,6 +208,7 @@ def test_recipe_filters_variants_components_and_scaling(tmp_path: Path, monkeypa
         assert scaled.status_code == 200
         assert scaled.json()["factor"] == 2
         assert scaled.json()["ingredients"][0]["scaled_quantity"] == 4
+        assert scaled.json()["steps"][0]["scaled_instruction"] == "Whisk dry ingredients. Uses: 4 cup flour."
 
 
 def test_update_archive_and_duplicate_recipe(tmp_path: Path, monkeypatch) -> None:

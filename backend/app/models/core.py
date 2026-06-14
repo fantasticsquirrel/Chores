@@ -336,6 +336,13 @@ class RecipeStep(Base):
     instruction: Mapped[str] = mapped_column(String(2000), nullable=False)
 
 
+class RecipeStepIngredientLink(Base):
+    __tablename__ = "recipe_step_ingredient_links"
+
+    step_id: Mapped[int] = mapped_column(ForeignKey("recipe_steps.id", ondelete="CASCADE"), primary_key=True)
+    ingredient_id: Mapped[int] = mapped_column(ForeignKey("recipe_ingredients.id", ondelete="CASCADE"), primary_key=True)
+
+
 class RecipeComponent(Base):
     __tablename__ = "recipe_components"
     __table_args__ = (CheckConstraint("parent_recipe_id != component_recipe_id", name="recipe_component_not_self"),)
@@ -376,5 +383,6 @@ ALL_MODELS = (
     RecipeTagLink,
     RecipeIngredient,
     RecipeStep,
+    RecipeStepIngredientLink,
     RecipeComponent,
 )
