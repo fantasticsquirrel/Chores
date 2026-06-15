@@ -543,7 +543,7 @@ export function RecipeDetailPage(): ReactElement {
         <h1>{recipe.title}</h1>
         <h2>{currentStep !== undefined ? displayStepInstruction(currentStep) : "No steps yet."}</h2>
         {linkedCurrentIngredients.length > 0 ? <p>Uses: {linkedCurrentIngredients.map(formatIngredientLine).join("; ")}</p> : null}
-        <div className="recipe-print-actions"><Button type="button" disabled={currentStepIndex === 0} onClick={() => setCurrentStepIndex((value) => Math.max(0, value - 1))}>Previous Step</Button><Button type="button" disabled={currentStepIndex >= displayedSteps.length - 1} onClick={() => setCurrentStepIndex((value) => Math.min(displayedSteps.length - 1, value + 1))}>Next Step</Button></div>
+        <div className="recipe-print-actions cooking-step-actions"><Button type="button" disabled={currentStepIndex === 0} onClick={() => setCurrentStepIndex((value) => Math.max(0, value - 1))}>Previous Step</Button><Button type="button" disabled={currentStepIndex >= displayedSteps.length - 1} onClick={() => setCurrentStepIndex((value) => Math.min(displayedSteps.length - 1, value + 1))}>Next Step</Button></div>
       </Card>
     );
   }

@@ -255,6 +255,26 @@ body {
   line-height: 1.08;
 }
 
+.cooking-step-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cooking-step-actions .jewel-button {
+  min-height: 4.75rem;
+  padding: 1.25rem 1.5rem;
+  font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+  border-radius: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .cooking-step-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .content-grid {
   position: relative;
   z-index: 1;
