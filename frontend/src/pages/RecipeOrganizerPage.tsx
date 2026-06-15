@@ -343,7 +343,7 @@ export function RecipeOrganizerPage(): ReactElement {
 
   return (
     <>
-      <Card as="section">
+      <Card as="section" className="recipe-page-card">
         <p className="eyebrow">Parent Account Recipes</p>
         <h1>Recipe Organizer</h1>
         <p>Store recipes per parent account with tags, ingredients, variants, sub-recipes, URL import, backups, and scaling.</p>
@@ -354,7 +354,7 @@ export function RecipeOrganizerPage(): ReactElement {
       {error !== null ? <InlineNotice variant="error">{error}</InlineNotice> : null}
       {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
 
-      <Card as="section">
+      <Card as="section" className="recipe-page-card">
         <h2>Import & Backup</h2>
         <FormField label="Import Recipe URL"><TextInput type="url" value={importUrl} onChange={(event) => setImportUrl(event.target.value)} placeholder="https://example.com/recipe" /></FormField>
         <Button type="button" onClick={() => { void handleImportUrl(); }}>Import from URL</Button>
@@ -362,7 +362,7 @@ export function RecipeOrganizerPage(): ReactElement {
         <Button type="button" onClick={() => { void handleImportBackup(); }}>Import Backup</Button>
       </Card>
 
-      <Card as="section">
+      <Card as="section" className="recipe-page-card">
         <h2>Find Recipes</h2>
         <form onSubmit={(event) => { void handleFilter(event); }}>
           <FormField label="Search"><TextInput value={query} onChange={(event) => setQuery(event.target.value)} /></FormField>
@@ -375,7 +375,7 @@ export function RecipeOrganizerPage(): ReactElement {
         </form>
       </Card>
 
-      {editing ? <Card as="article"><h2>Recipe Editor</h2><RecipeEditor payload={payload} setPayload={setPayload} categories={categories} tags={tags} availableRecipes={recipes} submitLabel="Save Recipe" onSubmit={(event) => { void handleSave(event); }} onCancel={() => setEditing(false)} /></Card> : null}
+      {editing ? <Card as="article" className="recipe-page-card recipe-editor-card"><h2>Recipe Editor</h2><RecipeEditor payload={payload} setPayload={setPayload} categories={categories} tags={tags} availableRecipes={recipes} submitLabel="Save Recipe" onSubmit={(event) => { void handleSave(event); }} onCancel={() => setEditing(false)} /></Card> : null}
 
       <section className="recipe-card-grid">
         {recipes.map((recipe) => (
@@ -532,12 +532,12 @@ export function RecipeDetailPage(): ReactElement {
     return recipe.ingredients.filter((ingredient) => refs.includes(ingredient.position));
   }, [currentStep, recipe]);
 
-  if (error !== null) return <Card as="section"><Link to="/recipes">Back to Recipes</Link><InlineNotice variant="error">{error}</InlineNotice></Card>;
-  if (recipe === null) return <Card as="section"><p className="eyebrow">Recipe Organizer</p><h1>Loading Recipe</h1><p>Opening the recipe cooking page.</p></Card>;
+  if (error !== null) return <Card as="section" className="recipe-detail-card"><Link to="/recipes">Back to Recipes</Link><InlineNotice variant="error">{error}</InlineNotice></Card>;
+  if (recipe === null) return <Card as="section" className="recipe-detail-card"><p className="eyebrow">Recipe Organizer</p><h1>Loading Recipe</h1><p>Opening the recipe cooking page.</p></Card>;
 
   if (cookingMode) {
     return (
-      <Card as="section" className="cooking-mode-card">
+      <Card as="section" className="recipe-detail-card cooking-mode-card">
         <Button type="button" onClick={() => setCookingMode(false)}>Exit Cooking Mode</Button>
         <p className="eyebrow">Cooking Mode · Step {Math.min(currentStepIndex + 1, displayedSteps.length)} of {displayedSteps.length}</p>
         <h1>{recipe.title}</h1>
@@ -549,7 +549,7 @@ export function RecipeDetailPage(): ReactElement {
   }
 
   return (
-    <Card as="section">
+    <Card as="section" className="recipe-detail-card">
       <Link to="/recipes">Back to Recipes</Link>
       {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
       <div className="recipe-print-actions">
@@ -569,7 +569,7 @@ export function RecipeDetailPage(): ReactElement {
           </div>
         </div>
       ) : null}
-      {editing ? <Card as="article"><h2>Edit Recipe</h2><RecipeEditor payload={editPayload} setPayload={setEditPayload} categories={categories} tags={tags} availableRecipes={allRecipes} submitLabel="Update Recipe" onSubmit={(event) => { void handleUpdateRecipe(event); }} onCancel={() => setEditing(false)} /></Card> : null}
+      {editing ? <Card as="article" className="recipe-editor-card"><h2>Edit Recipe</h2><RecipeEditor payload={editPayload} setPayload={setEditPayload} categories={categories} tags={tags} availableRecipes={allRecipes} submitLabel="Update Recipe" onSubmit={(event) => { void handleUpdateRecipe(event); }} onCancel={() => setEditing(false)} /></Card> : null}
       <p className="eyebrow">Recipe Cooking Page</p>
       <h1>{recipe.title}</h1>
       {recipe.photo_url !== null ? <img className="recipe-photo recipe-photo--hero" src={recipe.photo_url} alt={`${recipe.title}`} /> : null}

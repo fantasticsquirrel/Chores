@@ -190,13 +190,27 @@ body {
   display: none;
 }
 
+.recipe-page-card,
+.recipe-detail-card {
+  width: min(100%, 56rem);
+  margin-inline: auto;
+}
+
+.recipe-editor-card {
+  width: min(100%, 72rem);
+}
+
 .recipe-card-grid {
   display: grid;
+  width: min(100%, 72rem);
+  margin-inline: auto;
+  justify-content: center;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 24rem));
 }
 
 .recipe-card {
+  width: 100%;
   overflow: hidden;
   padding: 0;
 }
