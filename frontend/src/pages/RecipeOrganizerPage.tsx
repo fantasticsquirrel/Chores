@@ -126,6 +126,18 @@ function parsePositionRefs(value: string): number[] {
   return value.split(",").map((part) => Number(part.trim())).filter((value) => Number.isInteger(value) && value > 0);
 }
 
+function recipeMetaPills(recipe: RecipeSummary): string[] {
+  return [
+    recipe.servings !== null ? `Serves ${formatQuantity(recipe.servings)}` : "Servings not set",
+    `${recipe.ingredient_count} ingredients`,
+    recipe.rating !== null ? `${recipe.rating}/5 rating` : "Not rated",
+  ];
+}
+
+function recipeTaxonomy(recipe: RecipeSummary): string[] {
+  return [...recipe.categories.map((row) => row.name), ...recipe.tags.map((row) => `#${row.name}`)];
+}
+
 type RecipeEditorProps = {
   payload: CreateRecipeRequest;
   setPayload: (next: CreateRecipeRequest | ((prev: CreateRecipeRequest) => CreateRecipeRequest)) => void;
@@ -246,6 +258,8 @@ export function RecipeOrganizerPage(): ReactElement {
   const [minRating, setMinRating] = useState("");
   const [importUrl, setImportUrl] = useState("");
   const [backupJson, setBackupJson] = useState("");
+  const [showBackupTools, setShowBackupTools] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -343,35 +357,75 @@ export function RecipeOrganizerPage(): ReactElement {
 
   return (
     <>
-      <Card as="section" className="recipe-page-card">
-        <p className="eyebrow">Parent Account Recipes</p>
-        <h1>Recipe Organizer</h1>
-        <p>Store recipes per parent account with tags, ingredients, variants, sub-recipes, URL import, backups, and scaling.</p>
-        <p>{recipes.length} recipes · {categories.length} categories · {tags.length} tags</p>
-        <div className="recipe-print-actions"><Button type="button" onClick={() => setEditing(true)}>New Recipe</Button><Button type="button" onClick={() => { void handleExportBackup(); }}>Export Backup</Button></div>
+      <Card as="section" className="recipe-page-card recipe-hero-card">
+        <div>
+          <p className="eyebrow">Parent Account Recipes</p>
+          <h1>Recipe Organizer</h1>
+          <p>Build a family cookbook with import, tags, variants, sub-recipes, backups, and cooking-mode scaling.</p>
+          <div className="recipe-stat-strip" aria-label="Recipe organizer summary">
+            <span>{recipes.length} recipes</span>
+            <span>{categories.length} categories</span>
+            <span>{tags.length} tags</span>
+          </div>
+        </div>
+        <div className="recipe-hero-actions"><Button type="button" onClick={() => setEditing(true)}>New Recipe</Button><Button type="button" onClick={() => setShowBackupTools((value) => !value)}>{showBackupTools ? "Hide Backup" : "Backup & Restore"}</Button></div>
       </Card>
 
       {error !== null ? <InlineNotice variant="error">{error}</InlineNotice> : null}
       {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
 
-      <Card as="section" className="recipe-page-card">
-        <h2>Import & Backup</h2>
-        <FormField label="Import Recipe URL"><TextInput type="url" value={importUrl} onChange={(event) => setImportUrl(event.target.value)} placeholder="https://example.com/recipe" /></FormField>
-        <Button type="button" onClick={() => { void handleImportUrl(); }}>Import from URL</Button>
-        <FormField label="Import Backup JSON"><textarea value={backupJson} onChange={(event) => setBackupJson(event.target.value)} placeholder="Paste a Family Manager recipe backup JSON here." /></FormField>
-        <Button type="button" onClick={() => { void handleImportBackup(); }}>Import Backup</Button>
+      <Card as="section" className="recipe-page-card recipe-tool-card">
+        <div className="recipe-section-heading">
+          <div>
+            <p className="eyebrow">Quick Add</p>
+            <h2>Add recipes quickly</h2>
+            <p>Paste a recipe URL to import title, servings, ingredients, source attribution, and steps.</p>
+          </div>
+        </div>
+        <div className="recipe-import-row">
+          <FormField label="Import Recipe URL" className="recipe-form-field"><TextInput type="url" value={importUrl} onChange={(event) => setImportUrl(event.target.value)} placeholder="https://example.com/recipe" /></FormField>
+          <Button type="button" onClick={() => { void handleImportUrl(); }}>Import from URL</Button>
+        </div>
+        {showBackupTools ? (
+          <div className="recipe-backup-panel">
+            <div className="recipe-section-heading recipe-section-heading--compact">
+              <div>
+                <h3>Backup & Restore</h3>
+                <p>Export a portable JSON backup or paste one here to restore recipes.</p>
+              </div>
+              <Button type="button" onClick={() => { void handleExportBackup(); }}>Export Backup</Button>
+            </div>
+            <FormField label="Import Backup JSON" className="recipe-form-field"><textarea value={backupJson} onChange={(event) => setBackupJson(event.target.value)} placeholder="Paste a Family Manager recipe backup JSON here." /></FormField>
+            <Button type="button" onClick={() => { void handleImportBackup(); }}>Import Backup</Button>
+          </div>
+        ) : null}
       </Card>
 
-      <Card as="section" className="recipe-page-card">
-        <h2>Find Recipes</h2>
-        <form onSubmit={(event) => { void handleFilter(event); }}>
-          <FormField label="Search"><TextInput value={query} onChange={(event) => setQuery(event.target.value)} /></FormField>
-          <FormField label="Ingredient"><TextInput value={ingredient} onChange={(event) => setIngredient(event.target.value)} /></FormField>
-          <FormField label="Category"><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Any category</option>{categories.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></FormField>
-          <FormField label="Tag"><select value={tagId} onChange={(event) => setTagId(event.target.value)}><option value="">Any tag</option>{tags.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></FormField>
-          <FormField label="Minimum Rating"><TextInput type="number" min="1" max="5" value={minRating} onChange={(event) => setMinRating(event.target.value)} /></FormField>
-          <label><input type="checkbox" checked={favoriteOnly} onChange={(event) => setFavoriteOnly(event.target.checked)} /> Favorites only</label>
-          <Button type="submit">Apply Filters</Button>
+      <Card as="section" className="recipe-page-card recipe-tool-card">
+        <div className="recipe-section-heading">
+          <div>
+            <p className="eyebrow">Cookbook Search</p>
+            <h2>Find a recipe</h2>
+            <p>Search by name or ingredient, then narrow by category, tags, favorites, or rating.</p>
+          </div>
+          <Button type="button" onClick={() => setShowAdvancedFilters((value) => !value)}>{showAdvancedFilters ? "Hide Advanced" : "Advanced Filters"}</Button>
+        </div>
+        <form className="recipe-filter-form" onSubmit={(event) => { void handleFilter(event); }}>
+          <div className="recipe-filter-grid">
+            <FormField label="Search" className="recipe-form-field"><TextInput value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Spaghetti, cake, fajitas..." /></FormField>
+            <FormField label="Ingredient" className="recipe-form-field"><TextInput value={ingredient} onChange={(event) => setIngredient(event.target.value)} placeholder="beef, flour, peppers..." /></FormField>
+            {showAdvancedFilters ? (
+              <>
+                <FormField label="Category" className="recipe-form-field"><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}><option value="">Any category</option>{categories.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></FormField>
+                <FormField label="Tag" className="recipe-form-field"><select value={tagId} onChange={(event) => setTagId(event.target.value)}><option value="">Any tag</option>{tags.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></FormField>
+                <FormField label="Minimum Rating" className="recipe-form-field"><TextInput type="number" min="1" max="5" value={minRating} onChange={(event) => setMinRating(event.target.value)} /></FormField>
+                <label className="recipe-checkbox-pill"><input type="checkbox" checked={favoriteOnly} onChange={(event) => setFavoriteOnly(event.target.checked)} /> Favorites only</label>
+              </>
+            ) : null}
+          </div>
+          <div className="recipe-filter-actions">
+            <Button type="submit">Apply Filters</Button>
+          </div>
         </form>
       </Card>
 
@@ -380,14 +434,17 @@ export function RecipeOrganizerPage(): ReactElement {
       <section className="recipe-card-grid">
         {recipes.map((recipe) => (
           <Card as="article" key={recipe.id} className="recipe-card">
-            {recipe.photo_url !== null ? <img className="recipe-photo recipe-photo--card" src={recipe.photo_url} alt={`${recipe.title}`} loading="lazy" /> : <div className="recipe-photo-placeholder">Recipe</div>}
+            <div className="recipe-card-media">
+              {recipe.photo_url !== null ? <img className="recipe-photo recipe-photo--card" src={recipe.photo_url} alt={`${recipe.title}`} loading="lazy" /> : <div className="recipe-photo-placeholder">Family Recipe</div>}
+              {recipe.favorite ? <span className="recipe-favorite-badge" aria-label="Favorite recipe">★</span> : null}
+            </div>
             <div className="recipe-card-body">
-              <p className="eyebrow">{recipe.favorite ? "★ Favorite" : "Recipe"}</p>
+              <p className="eyebrow">Recipe</p>
               <h2>{recipe.title}</h2>
-              <p>{recipe.description}</p>
-              <p>{recipe.servings !== null ? `Serves ${formatQuantity(recipe.servings)}` : "Servings not set"} · {recipe.ingredient_count} ingredients · {recipe.rating !== null ? `${recipe.rating}/5` : "not rated"}</p>
-              <p>{[...recipe.categories.map((row) => row.name), ...recipe.tags.map((row) => `#${row.name}`)].join(" · ")}</p>
-              <Link className="jewel-button button-reset" to={`/recipes/${recipe.id}`}>View {recipe.title}</Link>
+              <p className="recipe-card-description">{recipe.description || "No description yet."}</p>
+              <div className="recipe-pill-row">{recipeMetaPills(recipe).map((pill) => <span key={pill} className="recipe-meta-pill">{pill}</span>)}</div>
+              {recipeTaxonomy(recipe).length > 0 ? <div className="recipe-chip-row">{recipeTaxonomy(recipe).map((label) => <span key={label} className="recipe-chip">{label}</span>)}</div> : null}
+              <Link className="jewel-button button-reset recipe-card-cta" to={`/recipes/${recipe.id}`}>View Recipe</Link>
             </div>
           </Card>
         ))}
