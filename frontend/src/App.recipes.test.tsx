@@ -85,9 +85,9 @@ describe("Recipe organizer page", () => {
     expect(await screen.findByText("Pancakes")).toBeVisible();
     expect(screen.getByRole("img", { name: "Pancakes" })).toHaveAttribute("src", "https://example.com/pancakes.jpg");
     expect(screen.getByText("Dinner")).toBeVisible();
-    expect(screen.getByText("Quick")).toBeVisible();
+    expect(screen.getByText("#Quick")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("link", { name: "View Pancakes" }));
+    fireEvent.click(screen.getByRole("link", { name: "View Recipe" }));
     await waitFor(() => expect(apiClient.getRecipe).toHaveBeenCalledWith(10));
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
     expect(screen.getByText("Default servings: 4")).toBeVisible();
