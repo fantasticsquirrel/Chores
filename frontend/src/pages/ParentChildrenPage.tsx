@@ -1,8 +1,9 @@
 import type { FormEvent, ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
 
-import { ApiClientError, apiClient, type Child } from "../api";
+import { apiClient, type Child } from "../api";
 import { useAuth } from "../auth/useAuth";
+import { formatApiError } from "../lib/errors";
 import {
   Badge,
   Button,
@@ -18,18 +19,6 @@ type PageState = {
   loading: boolean;
   error: string | null;
 };
-
-function formatLoadError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
-}
 
 export function ParentChildrenPage(): ReactElement {
   const { user } = useAuth();
@@ -91,7 +80,7 @@ export function ParentChildrenPage(): ReactElement {
         setSelectedChildId((current) => current ?? children[0].id);
       }
     } catch (error: unknown) {
-      setState({ children: [], loading: false, error: formatLoadError(error) });
+      setState({ children: [], loading: false, error: formatApiError(error) });
     }
   }, [householdId]);
 
@@ -127,7 +116,7 @@ export function ParentChildrenPage(): ReactElement {
       setActiveOnCreate(true);
       await loadChildren();
     } catch (error: unknown) {
-      setSubmitError(formatLoadError(error));
+      setSubmitError(formatApiError(error));
     } finally {
       setSubmitting(false);
     }
@@ -149,7 +138,7 @@ export function ParentChildrenPage(): ReactElement {
       });
       await loadChildren();
     } catch (error: unknown) {
-      setSubmitError(formatLoadError(error));
+      setSubmitError(formatApiError(error));
     } finally {
       setUpdatingChildId(null);
     }
@@ -195,7 +184,7 @@ export function ParentChildrenPage(): ReactElement {
       setChildEmail("");
       setChildPassword("");
     } catch (error: unknown) {
-      setLinkAccountError(formatLoadError(error));
+      setLinkAccountError(formatApiError(error));
     } finally {
       setLinkingAccount(false);
     }
@@ -231,7 +220,7 @@ export function ParentChildrenPage(): ReactElement {
       );
       setResetEmailInput("");
     } catch (error: unknown) {
-      setResetEmailError(formatLoadError(error));
+      setResetEmailError(formatApiError(error));
     } finally {
       setResettingEmail(false);
     }
@@ -280,7 +269,7 @@ export function ParentChildrenPage(): ReactElement {
       setResetPasswordInput("");
       setResetPasswordConfirm("");
     } catch (error: unknown) {
-      setResetPasswordError(formatLoadError(error));
+      setResetPasswordError(formatApiError(error));
     } finally {
       setResettingPassword(false);
     }

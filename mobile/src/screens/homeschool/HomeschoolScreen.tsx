@@ -34,7 +34,7 @@ import {
   HomeschoolSetupSection,
   type SemesterFormState,
   type SubjectFormState,
-} from "./HomeschoolForms";
+} from "../../features/homeschool/components/HomeschoolForms";
 import {
   type HomeschoolTab,
   buildSubjectSummaryRows,
@@ -45,7 +45,7 @@ import {
   selectKnownId,
   toYearMonth,
   validateSemesterForm,
-} from "./homeschoolLogic";
+} from "../../features/homeschool/lib/homeschoolLogic";
 
 type HomeschoolDataState = {
   attendance: HomeschoolAttendance[];

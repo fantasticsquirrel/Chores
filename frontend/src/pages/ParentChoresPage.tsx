@@ -2,17 +2,18 @@ import type { FormEvent, ReactElement } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-  ApiClientError,
   apiClient,
-  type AssignmentMode,
   type Child,
   type Chore,
-  type CompletionMode,
   type EligibleChore,
-  type ScheduleMode,
   type ScheduleUnit,
 } from "../api";
 import { useAuth } from "../auth/useAuth";
+import { ChoreForm, type ChoreFormState } from "../features/chores/components/ChoreForm";
+import { ChoreList } from "../features/chores/components/ChoreList";
+import { EligibleChorePanel } from "../features/chores/components/EligibleChorePanel";
+import { parseOptionalPositiveInteger } from "../features/chores/lib/choreForm";
+import { formatApiError } from "../lib/errors";
 import {
   Badge,
   Button,
@@ -21,7 +22,6 @@ import {
   DateInput,
   FormField,
   InlineNotice,
-  TextInput,
 } from "../ui";
 
 type ChoresState = {
@@ -44,19 +44,8 @@ type EligibleChildState = {
   submittingChoreId: number | null;
 };
 
-type FormState = {
-  name: string;
-  start_date: string;
-  expires_at: string;
-  timeout_days: string;
-  schedule_mode: ScheduleMode;
-  schedule_interval: string;
-  schedule_unit: ScheduleUnit;
-  completion_mode: CompletionMode;
-  assignment_mode: AssignmentMode;
-  allowed_child_ids: number[];
-  rotation_order: number[];
-};
+type FormState = ChoreFormState;
+
 
 const EMPTY_ELIGIBLE_STATE: EligibleChildState = {
   chores: [],
@@ -70,7 +59,7 @@ function buildTodayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function buildDefaultForm(): FormState {
+function buildDefaultForm(): ChoreFormState {
   return {
     name: "",
     start_date: buildTodayIsoDate(),
@@ -84,191 +73,6 @@ function buildDefaultForm(): FormState {
     allowed_child_ids: [],
     rotation_order: [],
   };
-}
-
-function formatError(error: unknown): string {
-  if (error instanceof ApiClientError) return error.detail;
-  if (error instanceof Error) return error.message;
-  return "Request failed.";
-}
-
-function scheduleLabel(chore: Chore): string {
-  switch (chore.schedule_mode) {
-    case "NONE":
-      return "On-demand";
-    case "ONCE":
-      return `Once on ${chore.start_date}`;
-    case "EVERY":
-      return `Every ${chore.schedule_interval ?? "?"} ${chore.schedule_unit ?? ""}`;
-    case "AFTER_COMPLETION":
-      return `${chore.schedule_interval ?? "?"} ${chore.schedule_unit ?? ""} after completion`;
-    default:
-      return chore.schedule_mode;
-  }
-}
-
-function completionLabel(mode: CompletionMode): string {
-  return mode === "SHARED" ? "Shared completion" : "Per-child completion";
-}
-
-function eligibilityLabel(chore: Chore, children: Child[]): string {
-  if (chore.assignment_mode === "ROTATING") {
-    const names = chore.rotation_order
-      .map((id) => children.find((child) => child.id === id)?.name ?? `#${id}`)
-      .join(" then ");
-    return `Rotation: ${names || "none set"}`;
-  }
-
-  if (chore.allowed_child_ids.length === 0) return "All children";
-  return chore.allowed_child_ids
-    .map((id) => children.find((child) => child.id === id)?.name ?? `#${id}`)
-    .join(", ");
-}
-
-function buildTimingLabel(chore: Chore): string {
-  const labels: string[] = [];
-  if (chore.expires_at !== null) labels.push(`Ends ${chore.expires_at}`);
-  if (chore.timeout_days !== null)
-    labels.push(
-      `Window ${chore.timeout_days} day${chore.timeout_days === 1 ? "" : "s"}`,
-    );
-  return labels.join(" - ");
-}
-
-function parseOptionalPositiveInteger(
-  value: string,
-  fieldName: string,
-): number | null {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return null;
-
-  const parsed = Number.parseInt(trimmed, 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`${fieldName} must be a positive whole number.`);
-  }
-  return parsed;
-}
-
-type ChildChecklistProps = {
-  children: Child[];
-  selected: number[];
-  onChange: (ids: number[]) => void;
-  disabled: boolean;
-};
-
-function ChildChecklist({
-  children,
-  selected,
-  onChange,
-  disabled,
-}: ChildChecklistProps): ReactElement {
-  function toggle(id: number): void {
-    onChange(
-      selected.includes(id)
-        ? selected.filter((childId) => childId !== id)
-        : [...selected, id],
-    );
-  }
-
-  return (
-    <div className="stacked-control-list">
-      {children.map((child) => (
-        <label key={child.id} className="checkbox-row task-checkbox">
-          <input
-            type="checkbox"
-            checked={selected.includes(child.id)}
-            onChange={() => toggle(child.id)}
-            disabled={disabled}
-          />
-          <span>
-            {child.name}
-            {!child.active ? (
-              <span className="muted-inline">inactive</span>
-            ) : null}
-          </span>
-        </label>
-      ))}
-      {children.length === 0 ? <p>No children in household yet.</p> : null}
-    </div>
-  );
-}
-
-type RotationOrderProps = {
-  children: Child[];
-  order: number[];
-  onChange: (ids: number[]) => void;
-  disabled: boolean;
-};
-
-function RotationOrderList({
-  children,
-  order,
-  onChange,
-  disabled,
-}: RotationOrderProps): ReactElement {
-  const inRotation = new Set(order);
-
-  function move(index: number, direction: -1 | 1): void {
-    const next = [...order];
-    const swap = index + direction;
-    if (swap < 0 || swap >= next.length) return;
-    [next[index], next[swap]] = [next[swap], next[index]];
-    onChange(next);
-  }
-
-  function toggleChild(id: number): void {
-    onChange(
-      order.includes(id)
-        ? order.filter((childId) => childId !== id)
-        : [...order, id],
-    );
-  }
-
-  return (
-    <div className="stacked-control-list">
-      {children.map((child) => (
-        <label key={child.id} className="checkbox-row task-checkbox">
-          <input
-            type="checkbox"
-            checked={inRotation.has(child.id)}
-            onChange={() => toggleChild(child.id)}
-            disabled={disabled}
-          />
-          {child.name}
-        </label>
-      ))}
-
-      {order.length > 0 ? (
-        <ol className="rotation-order-list" aria-label="Rotation order">
-          {order.map((id, index) => {
-            const name =
-              children.find((child) => child.id === id)?.name ?? `#${id}`;
-            return (
-              <li key={id}>
-                <span>{name}</span>
-                <div className="item-actions">
-                  <Button
-                    type="button"
-                    onClick={() => move(index, -1)}
-                    disabled={disabled || index === 0}
-                  >
-                    Up
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => move(index, 1)}
-                    disabled={disabled || index === order.length - 1}
-                  >
-                    Down
-                  </Button>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      ) : null}
-    </div>
-  );
 }
 
 export function ParentChoresPage(): ReactElement {
@@ -297,7 +101,7 @@ export function ParentChoresPage(): ReactElement {
     loading: true,
     error: null,
   });
-  const [form, setForm] = useState<FormState>(buildDefaultForm);
+  const [form, setForm] = useState<ChoreFormState>(buildDefaultForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [submittingForm, setSubmittingForm] = useState(false);
@@ -336,7 +140,7 @@ export function ParentChoresPage(): ReactElement {
       });
       setChoresState({ chores, loading: false, error: null });
     } catch (error: unknown) {
-      setChoresState({ chores: [], loading: false, error: formatError(error) });
+      setChoresState({ chores: [], loading: false, error: formatApiError(error) });
     }
   }, [householdId]);
 
@@ -387,7 +191,7 @@ export function ParentChoresPage(): ReactElement {
             ...(previous[childId] ?? EMPTY_ELIGIBLE_STATE),
             chores: [],
             loading: false,
-            error: formatError(error),
+            error: formatApiError(error),
             message: null,
             submittingChoreId: null,
           },
@@ -450,7 +254,7 @@ export function ParentChoresPage(): ReactElement {
           } catch (error: unknown) {
             return [
               child.id,
-              { ...EMPTY_ELIGIBLE_STATE, error: formatError(error) },
+              { ...EMPTY_ELIGIBLE_STATE, error: formatApiError(error) },
             ] as const;
           }
         }),
@@ -461,7 +265,7 @@ export function ParentChoresPage(): ReactElement {
       setChildrenState({
         children: [],
         loading: false,
-        error: formatError(error),
+        error: formatApiError(error),
       });
       setEligibleByChildId({});
     }
@@ -532,7 +336,7 @@ export function ParentChoresPage(): ReactElement {
       await refreshEligibleForChild(child.id, { preserveMessage: true });
     } catch (error: unknown) {
       setEligibleChildState(child.id, {
-        error: formatError(error),
+        error: formatApiError(error),
         submittingChoreId: null,
         message: null,
       });
@@ -564,7 +368,7 @@ export function ParentChoresPage(): ReactElement {
       setSelectedChoreIds([]);
       await refreshEligibleForChild(selectedChild.id);
     } catch (error: unknown) {
-      setSelectedSubmitError(formatError(error));
+      setSelectedSubmitError(formatApiError(error));
     } finally {
       setSelectedSubmitting(false);
     }
@@ -636,7 +440,7 @@ export function ParentChoresPage(): ReactElement {
         return;
       }
     } catch (error: unknown) {
-      setSubmitError(formatError(error));
+      setSubmitError(formatApiError(error));
       return;
     }
 
@@ -696,7 +500,7 @@ export function ParentChoresPage(): ReactElement {
       await loadChores();
       await loadChildrenAndEligible();
     } catch (error: unknown) {
-      setSubmitError(formatError(error));
+      setSubmitError(formatApiError(error));
     } finally {
       setSubmittingForm(false);
     }
@@ -719,7 +523,7 @@ export function ParentChoresPage(): ReactElement {
     } catch (error: unknown) {
       setChoresState((previous) => ({
         ...previous,
-        error: formatError(error),
+        error: formatApiError(error),
       }));
     } finally {
       setArchivingId(null);
@@ -798,63 +602,14 @@ export function ParentChoresPage(): ReactElement {
       </Card>
 
       {!childrenState.loading && childrenState.error === null
-        ? activeChildren.map((child) => {
-            const childState =
-              eligibleByChildId[child.id] ?? EMPTY_ELIGIBLE_STATE;
-            return (
-              <Card key={child.id} className="parent-child-chore-card">
-                <div className="panel-header-row">
-                  <h3>{child.name}</h3>
-                  <Badge>{childState.chores.length} available</Badge>
-                </div>
-                {childState.loading ? <p>Loading chores...</p> : null}
-                {childState.error !== null ? (
-                  <InlineNotice variant="error">
-                    Could not load chores: {childState.error}
-                  </InlineNotice>
-                ) : null}
-                {!childState.loading &&
-                childState.error === null &&
-                childState.chores.length === 0 ? (
-                  <p>No chores available for this date.</p>
-                ) : null}
-                {!childState.loading &&
-                childState.error === null &&
-                childState.chores.length > 0 ? (
-                  <div
-                    className="chore-button-list"
-                    aria-label={`${child.name} available chores`}
-                  >
-                    {childState.chores.map((chore) => (
-                      <Button
-                        key={chore.chore_id}
-                        type="button"
-                        className="chore-submit-button"
-                        onClick={() => void handleQuickSubmit(child, chore)}
-                        disabled={childState.submittingChoreId !== null}
-                      >
-                        <span>{chore.name}</span>
-                        {chore.expires_on !== null &&
-                        chore.expires_on !== undefined ? (
-                          <small>Ends {chore.expires_on}</small>
-                        ) : null}
-                        <strong>
-                          {childState.submittingChoreId === chore.chore_id
-                            ? "Submitting..."
-                            : "Submit"}
-                        </strong>
-                      </Button>
-                    ))}
-                  </div>
-                ) : null}
-                {childState.message !== null ? (
-                  <InlineNotice variant="success">
-                    {childState.message}
-                  </InlineNotice>
-                ) : null}
-              </Card>
-            );
-          })
+        ? activeChildren.map((child) => (
+            <EligibleChorePanel
+              key={child.id}
+              child={child}
+              state={eligibleByChildId[child.id] ?? EMPTY_ELIGIBLE_STATE}
+              onQuickSubmit={(panelChild, chore) => void handleQuickSubmit(panelChild, chore)}
+            />
+          ))
         : null}
 
       <Card className="dashboard-panel">
@@ -974,254 +729,28 @@ export function ParentChoresPage(): ReactElement {
       </div>
 
       {showForm ? (
-        <Card className="dashboard-panel">
-          <div className="panel-header-row">
-            <h2>{editingId !== null ? "Edit Chore" : "New Chore"}</h2>
-          </div>
-          <form
-            className="children-form chore-management-form"
-            onSubmit={(event) => void handleSubmit(event)}
-          >
-            <FormField label="Name">
-              <TextInput
-                type="text"
-                value={form.name}
-                onChange={(event) => setField("name", event.target.value)}
-                placeholder="Take out trash"
-                maxLength={255}
-                disabled={submittingForm}
-              />
-            </FormField>
-
-            <FormField label="Start Date">
-              <DateInput
-                value={form.start_date}
-                onChange={(event) => setField("start_date", event.target.value)}
-                disabled={submittingForm}
-              />
-            </FormField>
-
-            <FormField label="Global End Date">
-              <DateInput
-                value={form.expires_at}
-                onChange={(event) => setField("expires_at", event.target.value)}
-                disabled={submittingForm}
-              />
-            </FormField>
-
-            <FormField label="Completion Window Days">
-              <TextInput
-                type="number"
-                min="1"
-                value={form.timeout_days}
-                onChange={(event) =>
-                  setField("timeout_days", event.target.value)
-                }
-                disabled={submittingForm}
-              />
-            </FormField>
-
-            <FormField label="Schedule">
-              <select
-                value={form.schedule_mode}
-                onChange={(event) =>
-                  setField("schedule_mode", event.target.value as ScheduleMode)
-                }
-                disabled={submittingForm}
-                className="text-input"
-              >
-                <option value="NONE">On-demand</option>
-                <option value="ONCE">Once</option>
-                <option value="EVERY">Repeating</option>
-                <option value="AFTER_COMPLETION">After completion</option>
-              </select>
-            </FormField>
-
-            {showInterval ? (
-              <FormField label="Interval">
-                <div className="inline-field-row">
-                  <TextInput
-                    type="number"
-                    min="1"
-                    value={form.schedule_interval}
-                    onChange={(event) =>
-                      setField("schedule_interval", event.target.value)
-                    }
-                    disabled={submittingForm}
-                  />
-                  <select
-                    value={form.schedule_unit}
-                    onChange={(event) =>
-                      setField(
-                        "schedule_unit",
-                        event.target.value as ScheduleUnit,
-                      )
-                    }
-                    disabled={submittingForm}
-                    className="text-input"
-                  >
-                    <option value="DAY">Day(s)</option>
-                    <option value="WEEK">Week(s)</option>
-                    <option value="MONTH">Month(s)</option>
-                  </select>
-                </div>
-              </FormField>
-            ) : null}
-
-            <FormField label="Completion">
-              <select
-                value={form.completion_mode}
-                onChange={(event) =>
-                  setField(
-                    "completion_mode",
-                    event.target.value as CompletionMode,
-                  )
-                }
-                disabled={submittingForm}
-                className="text-input"
-              >
-                <option value="PER_CHILD">Per child</option>
-                <option value="SHARED">Shared</option>
-              </select>
-            </FormField>
-
-            <FormField label="Assignment">
-              <select
-                value={form.assignment_mode}
-                onChange={(event) =>
-                  setField(
-                    "assignment_mode",
-                    event.target.value as AssignmentMode,
-                  )
-                }
-                disabled={submittingForm}
-                className="text-input"
-              >
-                <option value="STATIC">Static</option>
-                <option value="ROTATING">Rotating</option>
-              </select>
-            </FormField>
-
-            {form.assignment_mode === "ROTATING" ? (
-              <fieldset className="plain-fieldset">
-                <legend>Rotation Order</legend>
-                <RotationOrderList
-                  children={childrenState.children}
-                  order={form.rotation_order}
-                  onChange={(ids) => setField("rotation_order", ids)}
-                  disabled={submittingForm}
-                />
-              </fieldset>
-            ) : (
-              <fieldset className="plain-fieldset">
-                <legend>Who can complete? Empty means all children.</legend>
-                <ChildChecklist
-                  children={childrenState.children}
-                  selected={form.allowed_child_ids}
-                  onChange={(ids) => setField("allowed_child_ids", ids)}
-                  disabled={submittingForm}
-                />
-              </fieldset>
-            )}
-
-            <div className="quick-actions">
-              <Button type="submit" disabled={submittingForm}>
-                {submittingForm
-                  ? "Saving..."
-                  : editingId !== null
-                    ? "Save Changes"
-                    : "Create Chore"}
-              </Button>
-              <Button
-                type="button"
-                onClick={cancelForm}
-                disabled={submittingForm}
-              >
-                Cancel
-              </Button>
-            </div>
-
-            {submitError !== null ? (
-              <InlineNotice variant="error">{submitError}</InlineNotice>
-            ) : null}
-          </form>
-        </Card>
+        <ChoreForm
+          children={childrenState.children}
+          editingId={editingId}
+          form={form}
+          onCancel={cancelForm}
+          onSubmit={(event) => void handleSubmit(event)}
+          setField={setField}
+          showInterval={showInterval}
+          submitError={submitError}
+          submitting={submittingForm}
+        />
       ) : null}
 
-      <Card className="dashboard-panel">
-        <div className="panel-header-row">
-          <h2>All Chores</h2>
-          {!showForm ? (
-            <Button type="button" onClick={openCreateForm}>
-              Add Chore
-            </Button>
-          ) : null}
-        </div>
-
-        {choresState.loading ? <p>Loading chores...</p> : null}
-        {!choresState.loading && choresState.error !== null ? (
-          <InlineNotice variant="error">
-            Could not load chores: {choresState.error}
-          </InlineNotice>
-        ) : null}
-        {!choresState.loading &&
-        choresState.error === null &&
-        choresState.chores.length === 0 ? (
-          <p>No chores yet. Add one above to get started.</p>
-        ) : null}
-
-        {!choresState.loading &&
-        choresState.error === null &&
-        choresState.chores.length > 0 ? (
-          <ul className="balance-list" aria-label="Chores list">
-            {choresState.chores.map((chore) => {
-              const isArchiving = archivingId === chore.id;
-              const timingLabel = buildTimingLabel(chore);
-              return (
-                <li key={chore.id} className="balance-item">
-                  <div>
-                    <p className="balance-name">
-                      {chore.name}
-                      {!chore.is_active ? (
-                        <span className="muted-inline">archived</span>
-                      ) : null}
-                    </p>
-                    <p className="balance-meta">
-                      {scheduleLabel(chore)} -{" "}
-                      {completionLabel(chore.completion_mode)}
-                    </p>
-                    {timingLabel.length > 0 ? (
-                      <p className="balance-meta">{timingLabel}</p>
-                    ) : null}
-                    <p className="balance-meta">
-                      Assigned:{" "}
-                      {eligibilityLabel(chore, childrenState.children)}
-                    </p>
-                  </div>
-                  {chore.is_active ? (
-                    <div className="item-actions">
-                      <Button
-                        type="button"
-                        onClick={() => openEditForm(chore)}
-                        disabled={isArchiving}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => void handleArchive(chore)}
-                        disabled={isArchiving}
-                      >
-                        {isArchiving ? "Archiving..." : "Archive"}
-                      </Button>
-                    </div>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </Card>
+      <ChoreList
+        archivingId={archivingId}
+        children={childrenState.children}
+        choresState={choresState}
+        onArchive={(chore) => void handleArchive(chore)}
+        onCreate={openCreateForm}
+        onEdit={openEditForm}
+        showForm={showForm}
+      />
     </section>
   );
 }

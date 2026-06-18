@@ -22,7 +22,9 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 - `backend/`: FastAPI service, SQLAlchemy models, tests
 - `frontend/`: React + TypeScript SPA
 - `mobile/`: Expo + React Native TypeScript app for Android and iPhone
-- `specs/`: product and feature specifications
+- `docs/`: product and feature specifications
+- `docs/architecture-and-change-standards.md`: standing architecture, structure, and verification standards for future changes
+- `docs/standard-module-creation-guide.md`: standing guide for adding module-gated feature areas
 - `IMPLEMENTATION_PLAN.md`: checklist-driven delivery plan
 
 ## Exact Production URLs

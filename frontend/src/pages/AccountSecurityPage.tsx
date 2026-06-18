@@ -1,20 +1,9 @@
 import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
 
-import { apiClient, ApiClientError } from "../api";
+import { apiClient } from "../api";
+import { formatApiError } from "../lib/errors";
 import { Button, Card, FormField, InlineNotice, TextInput } from "../ui";
-
-function formatChangePasswordError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
-}
 
 export function AccountSecurityPage(): ReactElement {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -68,7 +57,7 @@ export function AccountSecurityPage(): ReactElement {
       setConfirmPassword("");
       setSubmitSuccess("Password changed successfully.");
     } catch (error: unknown) {
-      setSubmitError(formatChangePasswordError(error));
+      setSubmitError(formatApiError(error));
     } finally {
       setSubmitting(false);
     }

@@ -1,8 +1,9 @@
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { apiClient, ApiClientError, type Child } from "../api";
+import { apiClient, type Child } from "../api";
 import { useAuth } from "../auth/useAuth";
+import { formatApiError } from "../lib/errors";
 import { Badge, ButtonLink, Card, InlineNotice } from "../ui";
 
 type DashboardState = {
@@ -11,18 +12,6 @@ type DashboardState = {
   loading: boolean;
   error: string | null;
 };
-
-function formatLoadError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
-}
 
 export function ParentDashboardPage(): ReactElement {
   const { user } = useAuth();
@@ -74,7 +63,7 @@ export function ParentDashboardPage(): ReactElement {
           children: [],
           pendingSubmissionsCount: 0,
           loading: false,
-          error: formatLoadError(error),
+          error: formatApiError(error),
         });
       });
 

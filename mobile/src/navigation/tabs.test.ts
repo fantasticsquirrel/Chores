@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import type { FamilyModuleKey } from "@family-manager/family-api/modules";
 import type { FamilyModule } from "../api/models";
 import { buildTabs } from "./tabs";
 
-const modules = (...keys: string[]): FamilyModule[] =>
+const modules = (...keys: FamilyModuleKey[]): FamilyModule[] =>
   keys.map((key) => ({
     description: key,
     key,

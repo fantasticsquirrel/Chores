@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   apiClient,
-  ApiClientError,
   type Child,
   type HomeschoolAttendance,
   type HomeschoolDayComment,
@@ -10,6 +9,7 @@ import {
   type HomeschoolSemester,
   type HomeschoolSubject,
 } from "../../api";
+import { formatApiError } from "../../lib/errors";
 
 type HomeschoolData = {
   children: Child[];
@@ -55,7 +55,7 @@ export function useHomeschoolData(householdId: number | null): { data: Homeschoo
         setData({ children, semesters, subjects, attendanceRecords, dayComments, grades, loading: false, error: null });
       })
       .catch((error: unknown) => {
-        setData({ ...emptyData, loading: false, error: formatLoadError(error) });
+        setData({ ...emptyData, loading: false, error: formatApiError(error) });
       });
   }, [householdId]);
 
@@ -64,14 +64,4 @@ export function useHomeschoolData(householdId: number | null): { data: Homeschoo
   }, [refresh]);
 
   return { data, refresh };
-}
-
-export function formatLoadError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "Request failed.";
 }

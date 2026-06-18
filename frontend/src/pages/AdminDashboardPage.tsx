@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 
 import {
   apiClient,
-  ApiClientError,
   type UserModuleAccess,
   type UserRole,
 } from "../api";
+import { formatApiError } from "../lib/errors";
 import { familyModules, type FamilyModuleKey } from "../modules/registry";
 import {
   Button,
@@ -22,16 +22,6 @@ type AdminState = {
   loading: boolean;
   error: string | null;
 };
-
-function formatLoadError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "Request failed.";
-}
 
 function hasModule(
   user: UserModuleAccess,
@@ -75,7 +65,7 @@ export function AdminDashboardPage(): ReactElement {
       .listUserModuleAccess()
       .then((users) => setState({ users, loading: false, error: null }))
       .catch((error: unknown) =>
-        setState({ users: [], loading: false, error: formatLoadError(error) }),
+        setState({ users: [], loading: false, error: formatApiError(error) }),
       );
   }
 
@@ -104,7 +94,7 @@ export function AdminDashboardPage(): ReactElement {
         `${updated.email} ${nextCanView ? "can now access" : "lost access to"} ${moduleKey}.`,
       );
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -146,7 +136,7 @@ export function AdminDashboardPage(): ReactElement {
         `Created ${created.role === "PARENT_ADMIN" ? "admin" : "parent"} login for ${created.email}.`,
       );
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     } finally {
       setCreatingParent(false);
     }

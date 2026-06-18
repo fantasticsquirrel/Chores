@@ -1,21 +1,4 @@
-:root {
-  --font-ui: "Sora", "Avenir Next", "Trebuchet MS", sans-serif;
-  --text-main: #fff8ff;
-  --text-muted: #ecdfff;
-  --surface-border: #ffffff3a;
-  --surface-bg: linear-gradient(145deg, #ffffff2f 0%, #ffffff11 100%);
-  --surface-shadow: 0 14px 32px #0c062f7a;
-  --surface-shadow-strong: 0 20px 38px #09031f99;
-  --accent-cyan: #20d3ff;
-  --accent-sky: #6892ff;
-  --accent-pink: #ff4f9e;
-  --accent-danger-a: #ff7ca0;
-  --accent-danger-b: #f34a69;
-  --ring-focus: #72deff;
-  --radius-card: 1.25rem;
-  --radius-pill: 999px;
-  --radius-button: 0.9rem;
-}
+@import "./styles/tokens.css";
 
 * {
   box-sizing: border-box;
@@ -1378,4 +1361,46 @@ body {
     align-items: start;
     margin-top: 0.12in;
   }
+}
+
+
+.notification-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 1.25rem;
+}
+
+.notification-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.notification-card {
+  align-items: flex-start;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.notification-card.unread {
+  border-color: rgba(250, 204, 21, 0.55);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.16);
+}
+
+.settings-panel {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.badge.muted {
+  opacity: 0.7;
 }

@@ -13,6 +13,7 @@
     "format:write": "prettier --write ."
   },
   "dependencies": {
+    "@family-manager/family-api": "file:../packages/family-api",
     "@tanstack/react-query": "^5.66.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

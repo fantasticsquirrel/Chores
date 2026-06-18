@@ -9,7 +9,8 @@ import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
 import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
 import { HomeschoolStatus } from "./homeschool/HomeschoolStatus";
-import { formatLoadError, useHomeschoolData } from "./homeschool/useHomeschoolData";
+import { useHomeschoolData } from "./homeschool/useHomeschoolData";
+import { formatApiError } from "../lib/errors";
 
 function confirmDestructiveAction(message: string): boolean {
   return window.confirm(message);
@@ -95,7 +96,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage(`${editingSemesterId === null ? "Created" : "Updated"} semester ${saved.name}.`);
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -123,7 +124,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Deleted semester.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -145,7 +146,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage(`${editingSubjectId === null ? "Created" : "Updated"} subject ${saved.name}.`);
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -171,7 +172,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Deleted subject.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -193,7 +194,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Saved attendance.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -206,7 +207,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Cleared attendance entry.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -219,7 +220,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Cleared day comment.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -238,7 +239,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Saved day comment.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -251,7 +252,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Cleared grade.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 
@@ -271,7 +272,7 @@ export function HomeschoolPage(): ReactElement {
       setActionMessage("Saved grade.");
       refresh();
     } catch (error: unknown) {
-      setActionError(formatLoadError(error));
+      setActionError(formatApiError(error));
     }
   }
 

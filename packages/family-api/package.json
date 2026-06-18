@@ -1,0 +1,13 @@
+{
+  "name": "@family-manager/family-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api-endpoints": "./src/api-endpoints.ts",
+    "./client-core": "./src/client-core.ts",
+    "./models": "./src/models.ts",
+    "./modules": "./src/modules.ts"
+  }
+}

@@ -2,11 +2,11 @@ import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  ApiClientError,
   apiClient,
   type SubmissionItemDecisionRequest,
   type SubmissionReview,
 } from "../api";
+import { formatApiError } from "../lib/errors";
 import { Badge, Button, Card, InlineNotice } from "../ui";
 
 type PageState = {
@@ -14,18 +14,6 @@ type PageState = {
   loading: boolean;
   error: string | null;
 };
-
-function formatApiError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
-}
 
 export function ParentSubmissionReviewPage(): ReactElement {
   const [state, setState] = useState<PageState>({

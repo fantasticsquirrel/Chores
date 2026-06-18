@@ -1,7 +1,8 @@
 import type { ReactElement, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { ApiClientError, apiClient, type AuthSessionResponse, type AuthUser } from "../api";
+import { apiClient, type AuthSessionResponse, type AuthUser } from "../api";
+import { isUnauthorizedError } from "../lib/errors";
 import { familyModules } from "../modules/registry";
 import { AuthContext, type AuthContextValue, type AuthStatus } from "./context";
 
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
           return;
         }
 
-        if (error instanceof ApiClientError && error.status === 401) {
+        if (isUnauthorizedError(error)) {
           setUser(null);
           setModuleKeys([]);
           setStatus("anonymous");

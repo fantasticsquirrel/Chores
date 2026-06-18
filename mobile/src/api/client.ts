@@ -1,51 +1,14 @@
-import type {
-  ApiErrorResponse,
-  AuthSessionResponse,
-  ChangePasswordRequest,
-  Child,
-  ChildAccount,
-  ChildLoginRequest,
-  Chore,
-  CreateChildAccountRequest,
-  CreateChildRequest,
-  CreateChoreRequest,
-  CreateHomeschoolSemesterRequest,
-  CreateHomeschoolSubjectRequest,
-  CreateParentUserRequest,
-  EligibleChore,
-  HomeschoolAttendance,
-  HomeschoolDayComment,
-  HomeschoolGrade,
-  HomeschoolSemester,
-  HomeschoolSubject,
-  ListChoresParams,
-  ListChildrenParams,
-  ListEligibleChoresParams,
-  ListSubmissionsParams,
-  LoginRequest,
-  MyModulesResponse,
-  ResetChildAccountEmailRequest,
-  ResetChildAccountPasswordRequest,
-  SetUserModuleAccessRequest,
-  SubmissionItemDecisionRequest,
-  SubmissionRequest,
-  SubmissionResponse,
-  SubmissionReview,
-  UpdateChildRequest,
-  UpdateChoreRequest,
-  UpdateHomeschoolSemesterRequest,
-  UpdateHomeschoolSubjectRequest,
-  UpsertHomeschoolAttendanceRequest,
-  UpsertHomeschoolDayCommentRequest,
-  UpsertHomeschoolGradeRequest,
-  UserModuleAccess,
-} from "./models";
+import { FamilyCoreApiEndpoints } from "@family-manager/family-api/api-endpoints";
+import {
+  buildUrl,
+  extractErrorDetail,
+  normalizeBaseUrl,
+  requiresCsrfToken,
+  type RequestQuery,
+} from "@family-manager/family-api/client-core";
 
 export const DEFAULT_API_BASE_URL = "http://10.0.2.2:8000/chore-api";
 export const CSRF_HEADER_NAME = "X-CSRF-Token";
-
-type QueryValue = string | number | boolean | null | undefined;
-type RequestQuery = Record<string, QueryValue>;
 
 export class ApiClientError extends Error {
   status: number;
@@ -66,13 +29,16 @@ export type ApiClientConfig = {
   fetchImpl?: typeof fetch;
 };
 
-export class ApiClient {
+export class ApiClient extends FamilyCoreApiEndpoints {
   private baseUrl: string;
   private csrfToken: string | null;
   private fetchImpl: typeof fetch;
 
   constructor(config: ApiClientConfig = {}) {
-    this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl());
+    super();
+    this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl(), DEFAULT_API_BASE_URL, {
+      allowRelative: false,
+    });
     this.fetchImpl = resolveFetchImpl(config.fetchImpl);
     this.csrfToken = null;
   }
@@ -81,349 +47,22 @@ export class ApiClient {
     return this.baseUrl;
   }
 
-  async login(payload: LoginRequest): Promise<AuthSessionResponse> {
-    const session = await this.post<AuthSessionResponse, LoginRequest>(
-      "/auth/login",
-      payload,
-    );
-    this.csrfToken = session.csrf_token ?? null;
-    return session;
-  }
-
-  async childLogin(payload: ChildLoginRequest): Promise<AuthSessionResponse> {
-    const session = await this.post<AuthSessionResponse, ChildLoginRequest>(
-      "/auth/child-login",
-      payload,
-    );
-    this.csrfToken = session.csrf_token ?? null;
-    return session;
-  }
-
-  async getCurrentSession(): Promise<AuthSessionResponse> {
-    const session = await this.get<AuthSessionResponse>("/auth/me");
+  protected override afterAuthSession(session: import("./models").AuthSessionResponse): void {
     this.csrfToken = session.csrf_token ?? this.csrfToken;
-    return session;
   }
 
-  async logout(): Promise<void> {
-    await this.postNoContent("/auth/logout");
+  protected override afterLogout(): void {
     this.csrfToken = null;
   }
 
-  async changePassword(payload: ChangePasswordRequest): Promise<void> {
-    await this.postNoContentWithBody("/auth/change-password", payload);
-  }
-
-  async getMyModules(): Promise<MyModulesResponse> {
-    return this.get<MyModulesResponse>("/modules/me");
-  }
-
-  async listUserModuleAccess(): Promise<UserModuleAccess[]> {
-    return this.get<UserModuleAccess[]>("/modules/users");
-  }
-
-  async createParentUser(
-    payload: CreateParentUserRequest,
-  ): Promise<UserModuleAccess> {
-    return this.post<UserModuleAccess, CreateParentUserRequest>(
-      "/modules/users",
-      payload,
-    );
-  }
-
-  async setUserModuleAccess(
-    userId: number,
-    payload: SetUserModuleAccessRequest,
-  ): Promise<UserModuleAccess> {
-    return this.put<UserModuleAccess, SetUserModuleAccessRequest>(
-      `/modules/users/${userId}`,
-      payload,
-    );
-  }
-
-  async listChildren(params: ListChildrenParams): Promise<Child[]> {
-    return this.get<Child[]>("/children", {
-      household_id: params.household_id,
-      active_only: params.active_only,
-    });
-  }
-
-  async createChild(payload: CreateChildRequest): Promise<Child> {
-    return this.post<Child, CreateChildRequest>("/children", payload);
-  }
-
-  async updateChild(
-    childId: number,
-    payload: UpdateChildRequest,
-  ): Promise<Child> {
-    return this.patch<Child, UpdateChildRequest>(
-      `/children/${childId}`,
-      payload,
-    );
-  }
-
-  async createChildAccount(
-    childId: number,
-    payload: CreateChildAccountRequest,
-  ): Promise<ChildAccount> {
-    return this.post<ChildAccount, CreateChildAccountRequest>(
-      `/children/${childId}/account`,
-      payload,
-    );
-  }
-
-  async resetChildAccountEmail(
-    childId: number,
-    payload: ResetChildAccountEmailRequest,
-  ): Promise<ChildAccount> {
-    return this.patch<ChildAccount, ResetChildAccountEmailRequest>(
-      `/children/${childId}/account-email`,
-      payload,
-    );
-  }
-
-  async resetChildAccountPassword(
-    childId: number,
-    payload: ResetChildAccountPasswordRequest,
-  ): Promise<ChildAccount> {
-    return this.patch<ChildAccount, ResetChildAccountPasswordRequest>(
-      `/children/${childId}/account-password`,
-      payload,
-    );
-  }
-
-  async listEligibleChores(
-    params: ListEligibleChoresParams,
-  ): Promise<EligibleChore[]> {
-    return this.get<EligibleChore[]>("/children/me/eligible-chores", {
-      date: params.date,
-      child_id: params.child_id,
-    });
-  }
-
-  async createSubmission(
-    payload: SubmissionRequest,
-    params: { child_id?: number } = {},
-  ): Promise<SubmissionResponse> {
-    return this.post<SubmissionResponse, SubmissionRequest>(
-      "/submissions",
-      payload,
-      params,
-    );
-  }
-
-  async listSubmissions(
-    params: ListSubmissionsParams = {},
-  ): Promise<SubmissionReview[]> {
-    return this.get<SubmissionReview[]>("/submissions", {
-      status: params.status,
-    });
-  }
-
-  async approveSubmission(submissionId: number): Promise<SubmissionReview> {
-    return this.post<SubmissionReview, Record<string, never>>(
-      `/submissions/${submissionId}/approve-all`,
-      {},
-    );
-  }
-
-  async decideSubmissionItem(
-    submissionId: number,
-    itemId: number,
-    payload: SubmissionItemDecisionRequest,
-  ): Promise<SubmissionReview> {
-    return this.post<SubmissionReview, SubmissionItemDecisionRequest>(
-      `/submissions/${submissionId}/items/${itemId}/decision`,
-      payload,
-    );
-  }
-
-  async listHomeschoolSemesters(
-    householdId: number,
-  ): Promise<HomeschoolSemester[]> {
-    return this.get<HomeschoolSemester[]>("/homeschool/semesters", {
-      household_id: householdId,
-    });
-  }
-
-  async createHomeschoolSemester(
-    payload: CreateHomeschoolSemesterRequest,
-  ): Promise<HomeschoolSemester> {
-    return this.post<HomeschoolSemester, CreateHomeschoolSemesterRequest>(
-      "/homeschool/semesters",
-      payload,
-    );
-  }
-
-  async updateHomeschoolSemester(
-    semesterId: number,
-    payload: UpdateHomeschoolSemesterRequest,
-  ): Promise<HomeschoolSemester> {
-    return this.put<HomeschoolSemester, UpdateHomeschoolSemesterRequest>(
-      `/homeschool/semesters/${semesterId}`,
-      payload,
-    );
-  }
-
-  async deleteHomeschoolSemester(
-    semesterId: number,
-    householdId: number,
-  ): Promise<void> {
-    return this.delete(`/homeschool/semesters/${semesterId}`, {
-      household_id: householdId,
-    });
-  }
-
-  async listHomeschoolSubjects(
-    householdId: number,
-  ): Promise<HomeschoolSubject[]> {
-    return this.get<HomeschoolSubject[]>("/homeschool/subjects", {
-      household_id: householdId,
-    });
-  }
-
-  async createHomeschoolSubject(
-    payload: CreateHomeschoolSubjectRequest,
-  ): Promise<HomeschoolSubject> {
-    return this.post<HomeschoolSubject, CreateHomeschoolSubjectRequest>(
-      "/homeschool/subjects",
-      payload,
-    );
-  }
-
-  async updateHomeschoolSubject(
-    subjectId: number,
-    payload: UpdateHomeschoolSubjectRequest,
-  ): Promise<HomeschoolSubject> {
-    return this.put<HomeschoolSubject, UpdateHomeschoolSubjectRequest>(
-      `/homeschool/subjects/${subjectId}`,
-      payload,
-    );
-  }
-
-  async deleteHomeschoolSubject(
-    subjectId: number,
-    householdId: number,
-  ): Promise<void> {
-    return this.delete(`/homeschool/subjects/${subjectId}`, {
-      household_id: householdId,
-    });
-  }
-
-  async listHomeschoolAttendance(
-    householdId: number,
-    childId?: number,
-  ): Promise<HomeschoolAttendance[]> {
-    return this.get<HomeschoolAttendance[]>("/homeschool/attendance", {
-      household_id: householdId,
-      child_id: childId,
-    });
-  }
-
-  async upsertHomeschoolAttendance(
-    payload: UpsertHomeschoolAttendanceRequest,
-  ): Promise<HomeschoolAttendance> {
-    return this.put<HomeschoolAttendance, UpsertHomeschoolAttendanceRequest>(
-      "/homeschool/attendance",
-      payload,
-    );
-  }
-
-  async deleteHomeschoolAttendance(
-    attendanceId: number,
-    householdId: number,
-  ): Promise<void> {
-    return this.delete(`/homeschool/attendance/${attendanceId}`, {
-      household_id: householdId,
-    });
-  }
-
-  async listHomeschoolDayComments(
-    householdId: number,
-    childId?: number,
-  ): Promise<HomeschoolDayComment[]> {
-    return this.get<HomeschoolDayComment[]>("/homeschool/day-comments", {
-      household_id: householdId,
-      child_id: childId,
-    });
-  }
-
-  async upsertHomeschoolDayComment(
-    payload: UpsertHomeschoolDayCommentRequest,
-  ): Promise<HomeschoolDayComment> {
-    return this.put<HomeschoolDayComment, UpsertHomeschoolDayCommentRequest>(
-      "/homeschool/day-comments",
-      payload,
-    );
-  }
-
-  async deleteHomeschoolDayComment(
-    commentId: number,
-    householdId: number,
-  ): Promise<void> {
-    return this.delete(`/homeschool/day-comments/${commentId}`, {
-      household_id: householdId,
-    });
-  }
-
-  async listHomeschoolGrades(
-    householdId: number,
-    childId?: number,
-  ): Promise<HomeschoolGrade[]> {
-    return this.get<HomeschoolGrade[]>("/homeschool/grades", {
-      household_id: householdId,
-      child_id: childId,
-    });
-  }
-
-  async upsertHomeschoolGrade(
-    payload: UpsertHomeschoolGradeRequest,
-  ): Promise<HomeschoolGrade> {
-    return this.put<HomeschoolGrade, UpsertHomeschoolGradeRequest>(
-      "/homeschool/grades",
-      payload,
-    );
-  }
-
-  async deleteHomeschoolGrade(
-    gradeId: number,
-    householdId: number,
-  ): Promise<void> {
-    return this.delete(`/homeschool/grades/${gradeId}`, {
-      household_id: householdId,
-    });
-  }
-
-  async listChores(params: ListChoresParams): Promise<Chore[]> {
-    return this.get<Chore[]>("/chores", {
-      household_id: params.household_id,
-      active_only: params.active_only,
-    });
-  }
-
-  async createChore(payload: CreateChoreRequest): Promise<Chore> {
-    return this.post<Chore, CreateChoreRequest>("/chores", payload);
-  }
-
-  async updateChore(
-    choreId: number,
-    payload: UpdateChoreRequest,
-  ): Promise<Chore> {
-    return this.patch<Chore, UpdateChoreRequest>(`/chores/${choreId}`, payload);
-  }
-
-  async archiveChore(choreId: number, householdId: number): Promise<void> {
-    return this.delete(`/chores/${choreId}`, { household_id: householdId });
-  }
-
-  private async get<TResponse>(
+  protected async get<TResponse>(
     path: string,
     query?: RequestQuery,
   ): Promise<TResponse> {
     return this.request<TResponse>(path, { method: "GET" }, query);
   }
 
-  private async post<TResponse, TBody>(
+  protected async post<TResponse, TBody>(
     path: string,
     body: TBody,
     query?: RequestQuery,
@@ -439,11 +78,11 @@ export class ApiClient {
     );
   }
 
-  private async postNoContent(path: string): Promise<void> {
+  protected async postNoContent(path: string): Promise<void> {
     await this.request<void>(path, { method: "POST" });
   }
 
-  private async postNoContentWithBody<TBody>(
+  protected async postNoContentWithBody<TBody>(
     path: string,
     body: TBody,
   ): Promise<void> {
@@ -454,7 +93,7 @@ export class ApiClient {
     });
   }
 
-  private async put<TResponse, TBody>(
+  protected async put<TResponse, TBody>(
     path: string,
     body: TBody,
   ): Promise<TResponse> {
@@ -465,7 +104,7 @@ export class ApiClient {
     });
   }
 
-  private async patch<TResponse, TBody>(
+  protected async patch<TResponse, TBody>(
     path: string,
     body: TBody,
   ): Promise<TResponse> {
@@ -476,7 +115,7 @@ export class ApiClient {
     });
   }
 
-  private async delete(path: string, query?: RequestQuery): Promise<void> {
+  protected async delete(path: string, query?: RequestQuery): Promise<void> {
     await this.request<void>(path, { method: "DELETE" }, query);
   }
 
@@ -537,90 +176,4 @@ function resolveFetchImpl(fetchImpl?: typeof fetch): typeof fetch {
   }
 
   return globalThis.fetch.bind(globalThis);
-}
-
-function normalizeBaseUrl(baseUrl: string): string {
-  const trimmedBaseUrl = baseUrl.trim();
-  if (trimmedBaseUrl.length === 0) {
-    return DEFAULT_API_BASE_URL;
-  }
-  return trimmedBaseUrl.replace(/\/+$/, "");
-}
-
-function buildUrl(baseUrl: string, path: string, query?: RequestQuery): string {
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const absoluteUrl = new URL(
-    normalizedPath.replace(/^\/+/, ""),
-    `${baseUrl}/`,
-  );
-  appendQueryParams(absoluteUrl.searchParams, query);
-  return absoluteUrl.toString();
-}
-
-function appendQueryParams(
-  searchParams: URLSearchParams,
-  query?: RequestQuery,
-): void {
-  if (query === undefined) {
-    return;
-  }
-
-  for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined && value !== null) {
-      searchParams.set(key, String(value));
-    }
-  }
-}
-
-function requiresCsrfToken(method?: string): boolean {
-  return (
-    method !== undefined &&
-    method !== "GET" &&
-    method !== "HEAD" &&
-    method !== "OPTIONS"
-  );
-}
-
-function extractErrorDetail(data: unknown, fallback: string): string {
-  if (!isApiErrorResponse(data)) {
-    return fallback || "Request failed";
-  }
-
-  const { detail } = data;
-  if (typeof detail === "string" && detail.trim().length > 0) {
-    return detail;
-  }
-  if (Array.isArray(detail)) {
-    const messages = detail
-      .map(formatValidationDetail)
-      .filter((message) => message.length > 0);
-    if (messages.length > 0) {
-      return messages.join(" ");
-    }
-  }
-  return fallback || "Request failed";
-}
-
-function formatValidationDetail(value: unknown): string {
-  if (typeof value === "string") {
-    return value;
-  }
-  if (typeof value !== "object" || value === null) {
-    return "";
-  }
-  const record = value as Record<string, unknown>;
-  const message = typeof record.msg === "string" ? record.msg : "";
-  const location = Array.isArray(record.loc)
-    ? record.loc
-        .filter((part) => typeof part === "string" || typeof part === "number")
-        .join(".")
-    : "";
-  if (message.length === 0) {
-    return "";
-  }
-  return location.length > 0 ? `${location}: ${message}` : message;
-}
-
-function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
-  return typeof value === "object" && value !== null && "detail" in value;
 }

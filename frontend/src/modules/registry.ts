@@ -1,6 +1,10 @@
 import type { UserRole } from "../api";
+import {
+  getFamilyModulesForPlatform,
+  type FamilyModuleKey,
+} from "@family-manager/family-api/modules";
 
-export type FamilyModuleKey = "chores" | "homeschool" | "admin" | "recipes";
+export type { FamilyModuleKey } from "@family-manager/family-api/modules";
 
 export type FamilyModule = {
   key: FamilyModuleKey;
@@ -10,33 +14,12 @@ export type FamilyModule = {
   roles: UserRole[];
 };
 
-export const familyModules: FamilyModule[] = [
-  {
-    key: "chores",
-    label: "Chores",
-    description: "Chore assignments, submissions, approvals, and rewards.",
-    path: "/parent/chores",
-    roles: ["PARENT_ADMIN", "PARENT"],
-  },
-  {
-    key: "homeschool",
-    label: "Homeschool",
-    description: "Attendance, subjects, semesters, comments, and homeschool reporting.",
-    path: "/homeschool",
-    roles: ["PARENT_ADMIN", "PARENT"],
-  },
-  {
-    key: "recipes",
-    label: "Recipes",
-    description: "Personal recipe collection, ingredients, scaling, and cooking notes.",
-    path: "/recipes",
-    roles: ["PARENT_ADMIN", "PARENT"],
-  },
-  {
-    key: "admin",
-    label: "Admin",
-    description: "Household users, child accounts, and module access controls.",
-    path: "/admin/dashboard",
-    roles: ["PARENT_ADMIN"],
-  },
-];
+export const familyModules: FamilyModule[] = getFamilyModulesForPlatform("web").map(
+  (module) => ({
+    key: module.key,
+    label: module.label,
+    description: module.description,
+    path: module.path,
+    roles: module.roles,
+  }),
+);

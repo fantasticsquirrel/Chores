@@ -4,13 +4,10 @@ import { Alert, Pressable, Text, TextInput, View } from "react-native";
 
 import { apiClient } from "../../api/client";
 import type {
-  AssignmentMode,
   AuthSessionResponse,
   Child,
   Chore,
-  CompletionMode,
   EligibleChore,
-  ScheduleMode,
   ScheduleUnit,
 } from "../../api/models";
 import { ActionButton } from "../../components/ActionButton";
@@ -20,6 +17,19 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
+import {
+  assignmentOptions,
+  buildDefaultChoreForm,
+  completionOptions,
+  eligibilityLabel,
+  type MobileChoreFormState,
+  parseNonNegativeInteger,
+  parseOptionalPositiveInteger,
+  scheduleLabel,
+  scheduleOptions,
+  scheduleUnitOptions,
+  timingLabel,
+} from "../../features/chores/lib/chorePresentation";
 import { styles } from "../../styles/layout";
 import { todayDateString } from "../../utils/date";
 import { formatCents, formatError } from "../../utils/format";
@@ -44,21 +54,6 @@ type EligibleChildState = {
   submittingChoreId: number | null;
 };
 
-type FormState = {
-  name: string;
-  reward_cents: string;
-  start_date: string;
-  expires_at: string;
-  timeout_days: string;
-  schedule_mode: ScheduleMode;
-  schedule_interval: string;
-  schedule_unit: ScheduleUnit;
-  completion_mode: CompletionMode;
-  assignment_mode: AssignmentMode;
-  allowed_child_ids: number[];
-  rotation_order: number[];
-};
-
 const EMPTY_ELIGIBLE_STATE: EligibleChildState = {
   chores: [],
   loading: false,
@@ -66,112 +61,6 @@ const EMPTY_ELIGIBLE_STATE: EligibleChildState = {
   message: null,
   submittingChoreId: null,
 };
-
-const scheduleOptions = [
-  { label: "On-demand", value: "NONE" },
-  { label: "Once", value: "ONCE" },
-  { label: "Repeating", value: "EVERY" },
-  { label: "After completion", value: "AFTER_COMPLETION" },
-] satisfies Array<{ label: string; value: ScheduleMode }>;
-
-const scheduleUnitOptions = [
-  { label: "Days", value: "DAY" },
-  { label: "Weeks", value: "WEEK" },
-  { label: "Months", value: "MONTH" },
-] satisfies Array<{ label: string; value: ScheduleUnit }>;
-
-const completionOptions = [
-  { label: "Per child", value: "PER_CHILD" },
-  { label: "Shared", value: "SHARED" },
-] satisfies Array<{ label: string; value: CompletionMode }>;
-
-const assignmentOptions = [
-  { label: "Static", value: "STATIC" },
-  { label: "Rotating", value: "ROTATING" },
-] satisfies Array<{ label: string; value: AssignmentMode }>;
-
-function buildDefaultForm(): FormState {
-  return {
-    name: "",
-    reward_cents: "0",
-    start_date: todayDateString(),
-    expires_at: "",
-    timeout_days: "",
-    schedule_mode: "NONE",
-    schedule_interval: "1",
-    schedule_unit: "WEEK",
-    completion_mode: "PER_CHILD",
-    assignment_mode: "STATIC",
-    allowed_child_ids: [],
-    rotation_order: [],
-  };
-}
-
-function parseOptionalPositiveInteger(
-  value: string,
-  fieldName: string,
-): number | null {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-  const parsed = Number.parseInt(trimmed, 10);
-  if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`${fieldName} must be a positive whole number.`);
-  }
-  return parsed;
-}
-
-function parseNonNegativeInteger(value: string, fieldName: string): number {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    return 0;
-  }
-  const parsed = Number.parseInt(trimmed, 10);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(`${fieldName} must be zero or a positive whole number.`);
-  }
-  return parsed;
-}
-
-function scheduleLabel(chore: Chore): string {
-  switch (chore.schedule_mode) {
-    case "NONE":
-      return "On-demand";
-    case "ONCE":
-      return `Once on ${chore.start_date}`;
-    case "EVERY":
-      return `Every ${chore.schedule_interval ?? "?"} ${chore.schedule_unit ?? ""}`;
-    case "AFTER_COMPLETION":
-      return `${chore.schedule_interval ?? "?"} ${chore.schedule_unit ?? ""} after completion`;
-  }
-}
-
-function eligibilityLabel(chore: Chore, children: Child[]): string {
-  if (chore.assignment_mode === "ROTATING") {
-    const names = chore.rotation_order
-      .map((id) => children.find((child) => child.id === id)?.name ?? `#${id}`)
-      .join(" then ");
-    return `Rotation: ${names || "none set"}`;
-  }
-  if (chore.allowed_child_ids.length === 0) {
-    return "All children";
-  }
-  return chore.allowed_child_ids
-    .map((id) => children.find((child) => child.id === id)?.name ?? `#${id}`)
-    .join(", ");
-}
-
-function timingLabel(chore: Chore): string {
-  const labels: string[] = [];
-  if (chore.expires_at !== null) {
-    labels.push(`Ends ${chore.expires_at}`);
-  }
-  if (chore.timeout_days !== null) {
-    labels.push(`Window ${chore.timeout_days} day${chore.timeout_days === 1 ? "" : "s"}`);
-  }
-  return labels.join(" · ");
-}
 
 export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
   const householdId = session.user.household_id;
@@ -198,7 +87,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
     loading: true,
     error: null,
   });
-  const [form, setForm] = useState<FormState>(buildDefaultForm);
+  const [form, setForm] = useState<MobileChoreFormState>(() => buildDefaultChoreForm(todayDateString()));
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [submittingForm, setSubmittingForm] = useState(false);
@@ -433,7 +322,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
 
   function openCreateForm() {
     setEditingId(null);
-    setForm(buildDefaultForm());
+    setForm(buildDefaultChoreForm(todayDateString()));
     setSubmitError(null);
     setShowForm(true);
   }
@@ -458,7 +347,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
     setShowForm(true);
   }
 
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
+  function setField<K extends keyof MobileChoreFormState>(key: K, value: MobileChoreFormState[K]) {
     setForm((previous) => ({ ...previous, [key]: value }));
   }
 
@@ -870,11 +759,11 @@ function ChoreForm({
 }: {
   activeChildren: Child[];
   editingId: number | null;
-  form: FormState;
+  form: MobileChoreFormState;
   onCancel: () => void;
   onSubmit: () => Promise<void>;
-  setField: <K extends keyof FormState>(key: K, value: FormState[K]) => void;
-  setForm: Dispatch<SetStateAction<FormState>>;
+  setField: <K extends keyof MobileChoreFormState>(key: K, value: MobileChoreFormState[K]) => void;
+  setForm: Dispatch<SetStateAction<MobileChoreFormState>>;
   showInterval: boolean;
   submitError: string | null;
   submitting: boolean;

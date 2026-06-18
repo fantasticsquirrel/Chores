@@ -2,6 +2,8 @@
 
 ## Project
 - Name: chore_tracking
+- Standing architecture/change standards for future changes: `docs/architecture-and-change-standards.md`. Read and follow this before structural refactors, new modules, shared-contract work, frontend/mobile feature extraction, or verification planning.
+- New module-gated feature areas must also follow `docs/standard-module-creation-guide.md`.
 - Description: 1. Overview
 Chore Tracker v3 is a household chore management and allowance system. Children submit completed chores and parents approve or reject them. The system tracks balances using a ledger and supports advanced scheduling including recurring chores, cooldown chores, rotating assignments, one-time chores, and expiring chores.
 The UI uses the Jewel Pop theme, featuring glass cards, jewel gradients, glow effects, floating decorative elements, and responsive layouts.

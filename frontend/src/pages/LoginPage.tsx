@@ -2,23 +2,12 @@ import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { apiClient, ApiClientError, type AuthSessionResponse } from "../api";
+import { apiClient, type AuthSessionResponse } from "../api";
 import { useAuth } from "../auth/useAuth";
+import { formatApiError } from "../lib/errors";
 import { Button, Card, FormField, InlineNotice, TextInput } from "../ui";
 
 type LoginMode = "parent" | "child";
-
-function formatLoginError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
-}
 
 function getPostLoginPath(session: AuthSessionResponse): string {
   return session.user.role === "CHILD" ? "/child/today" : "/parent/dashboard";
@@ -119,7 +108,7 @@ export function LoginPage(): ReactElement {
       setAuthenticatedSession(session);
       navigate(getPostLoginPath(session), { replace: true });
     } catch (error: unknown) {
-      setSubmitError(formatLoginError(error));
+      setSubmitError(formatApiError(error));
     } finally {
       setSubmitting(false);
     }

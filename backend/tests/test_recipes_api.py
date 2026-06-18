@@ -296,7 +296,7 @@ def test_recipe_url_import_and_backup_roundtrip(tmp_path: Path, monkeypatch) -> 
     def fake_urlopen(*args: object, **kwargs: object) -> FakeResponse:
         return FakeResponse()
 
-    monkeypatch.setattr("app.api.recipes.urllib.request.urlopen", fake_urlopen)
+    monkeypatch.setattr("app.services.recipes.importer.urllib.request.urlopen", fake_urlopen)
 
     with TestClient(app) as client:
         headers = _login(client, parent, password)

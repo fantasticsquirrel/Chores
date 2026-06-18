@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import { Navigate, NavLink, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
@@ -11,9 +11,11 @@ import { AccountSecurityPage } from "./pages/AccountSecurityPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { HomeschoolPage } from "./pages/HomeschoolPage";
 import { RecipeDetailPage, RecipeOrganizerPage } from "./pages/RecipeOrganizerPage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
-import { ApiClientError, type UserRole } from "./api";
+import { type UserRole, apiClient } from "./api";
+import { formatApiError } from "./lib/errors";
 import type { FamilyModuleKey } from "./modules/registry";
 import { Button, Card, InlineNotice } from "./ui";
 
@@ -38,23 +40,12 @@ const navItems: NavItem[] = [
   { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
   { to: "/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
+  { to: "/notifications", label: "Notifications", roles: ["PARENT_ADMIN", "PARENT", "CHILD"], moduleKey: "chores" },
   { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
 ];
 
 function getDefaultRouteForRole(role: UserRole): string {
   return role === "CHILD" ? "/child/today" : "/parent/dashboard";
-}
-
-function formatAuthActionError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
 }
 
 function RouteCard({ title, description }: RouteCardProps): ReactElement {
@@ -145,10 +136,30 @@ function AppShell(): ReactElement {
   const { status, user, moduleKeys, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const visibleNavItems =
     status === "authenticated" && user !== null
       ? navItems.filter((item) => item.roles.includes(user.role) && (item.moduleKey === undefined || moduleKeys.includes(item.moduleKey)))
       : [];
+
+  useEffect(() => {
+    if (status !== "authenticated" || !moduleKeys.includes("chores")) {
+      setUnreadNotifications(0);
+      return;
+    }
+    let active = true;
+    void apiClient
+      .listNotifications({ unread: 1, limit: 1 })
+      .then((response) => {
+        if (active) setUnreadNotifications(response.unread_count);
+      })
+      .catch(() => {
+        if (active) setUnreadNotifications(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, [moduleKeys, status]);
 
   async function handleLogout(): Promise<void> {
     setLoggingOut(true);
@@ -158,7 +169,7 @@ function AppShell(): ReactElement {
       await logout();
       navigate("/login", { replace: true });
     } catch (error: unknown) {
-      setLogoutError(formatAuthActionError(error));
+      setLogoutError(formatApiError(error));
     } finally {
       setLoggingOut(false);
     }
@@ -180,7 +191,7 @@ function AppShell(): ReactElement {
               to={item.to}
               className={({ isActive }) => `nav-chip${isActive ? " active" : ""}`}
             >
-              {item.label}
+              {item.label === "Notifications" && unreadNotifications > 0 ? `${item.label} (${unreadNotifications})` : item.label}
             </NavLink>
           ))}
           {status === "authenticated" ? (
@@ -219,6 +230,7 @@ export default function App(): ReactElement {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/account/security" element={<AccountSecurityPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/chore/account/security" element={<Navigate to="/account/security" replace />} />
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
               <Route path="/parent/dashboard" element={<ParentDashboardPage />} />

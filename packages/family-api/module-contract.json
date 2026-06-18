@@ -1,0 +1,29 @@
+{
+  "modules": [
+    {
+      "key": "chores",
+      "name": "Chores",
+      "description": "Chore assignments, submissions, approvals, and rewards."
+    },
+    {
+      "key": "homeschool",
+      "name": "Homeschool",
+      "description": "Attendance, subjects, semesters, comments, and homeschool reporting."
+    },
+    {
+      "key": "recipes",
+      "name": "Recipes",
+      "description": "Personal recipe collection, ingredients, scaling, and cooking notes."
+    },
+    {
+      "key": "admin",
+      "name": "Admin",
+      "description": "Household users, child accounts, and module access controls."
+    }
+  ],
+  "default_role_modules": {
+    "PARENT_ADMIN": ["chores", "homeschool", "recipes", "admin"],
+    "PARENT": ["chores", "homeschool", "recipes"],
+    "CHILD": ["chores"]
+  }
+}

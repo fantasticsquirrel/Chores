@@ -1,7 +1,8 @@
 import type { ChangeEvent, ReactElement } from "react";
 import { useEffect, useState } from "react";
 
-import { ApiClientError, apiClient, type EligibleChore } from "../api";
+import { apiClient, type EligibleChore } from "../api";
+import { formatApiError } from "../lib/errors";
 import { Badge, Button, Card, DateInput, FormField, InlineNotice } from "../ui";
 
 type PageState = {
@@ -9,18 +10,6 @@ type PageState = {
   loading: boolean;
   error: string | null;
 };
-
-function formatApiError(error: unknown): string {
-  if (error instanceof ApiClientError) {
-    return error.detail;
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Request failed.";
-}
 
 function toUsd(cents: number): string {
   return new Intl.NumberFormat("en-US", {

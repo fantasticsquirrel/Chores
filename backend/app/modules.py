@@ -21,7 +21,7 @@ AVAILABLE_MODULES: tuple[AppModule, ...] = (
     AppModule(
         key=MODULE_CHORES,
         name="Chores",
-        description="Chore assignments, child submissions, approvals, and rewards.",
+        description="Chore assignments, submissions, approvals, and rewards.",
     ),
     AppModule(
         key=MODULE_HOMESCHOOL,
@@ -31,12 +31,12 @@ AVAILABLE_MODULES: tuple[AppModule, ...] = (
     AppModule(
         key=MODULE_RECIPES,
         name="Recipes",
-        description="Personal recipe collection, categories, ingredients, scaling, and cooking notes.",
+        description="Personal recipe collection, ingredients, scaling, and cooking notes.",
     ),
     AppModule(
         key=MODULE_ADMIN,
         name="Admin",
-        description="Household users, children, account links, and module access.",
+        description="Household users, child accounts, and module access controls.",
     ),
 )
 

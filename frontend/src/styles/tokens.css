@@ -1,0 +1,18 @@
+:root {
+  --font-ui: "Sora", "Avenir Next", "Trebuchet MS", sans-serif;
+  --text-main: #fff8ff;
+  --text-muted: #ecdfff;
+  --surface-border: #ffffff3a;
+  --surface-bg: linear-gradient(145deg, #ffffff2f 0%, #ffffff11 100%);
+  --surface-shadow: 0 14px 32px #0c062f7a;
+  --surface-shadow-strong: 0 20px 38px #09031f99;
+  --accent-cyan: #20d3ff;
+  --accent-sky: #6892ff;
+  --accent-pink: #ff4f9e;
+  --accent-danger-a: #ff7ca0;
+  --accent-danger-b: #f34a69;
+  --ring-focus: #72deff;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --radius-button: 0.9rem;
+}

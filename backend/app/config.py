@@ -17,6 +17,9 @@ class Settings:
     secret_key: str
     log_level: str
     session_cookie_secure: bool
+    push_vapid_public_key: str = ""
+    push_vapid_private_key: str = ""
+    push_vapid_claims_sub: str = "mailto:admin@multihost.ing"
 
     @property
     def is_production(self) -> bool:
@@ -74,4 +77,7 @@ def get_settings() -> Settings:
         secret_key=secret_key,
         log_level=log_level,
         session_cookie_secure=session_cookie_secure,
+        push_vapid_public_key=os.getenv("PUSH_VAPID_PUBLIC_KEY", "").strip(),
+        push_vapid_private_key=os.getenv("PUSH_VAPID_PRIVATE_KEY", "").strip(),
+        push_vapid_claims_sub=os.getenv("PUSH_VAPID_CLAIMS_SUB", "mailto:admin@multihost.ing").strip(),
     )
