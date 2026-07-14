@@ -9,6 +9,7 @@ import type {
 
 export type MobileChoreFormState = {
   name: string;
+  preserved_reward_cents: number;
   start_date: string;
   expires_at: string;
   timeout_days: string;
@@ -47,6 +48,7 @@ export const assignmentOptions = [
 export function buildDefaultChoreForm(startDate: string): MobileChoreFormState {
   return {
     name: "",
+    preserved_reward_cents: 0,
     start_date: startDate,
     expires_at: "",
     timeout_days: "",
@@ -57,6 +59,23 @@ export function buildDefaultChoreForm(startDate: string): MobileChoreFormState {
     assignment_mode: "STATIC",
     allowed_child_ids: [],
     rotation_order: [],
+  };
+}
+
+export function buildEditChoreForm(chore: Chore): MobileChoreFormState {
+  return {
+    name: chore.name,
+    preserved_reward_cents: chore.reward_cents,
+    start_date: chore.start_date,
+    expires_at: chore.expires_at ?? "",
+    timeout_days: chore.timeout_days?.toString() ?? "",
+    schedule_mode: chore.schedule_mode,
+    schedule_interval: String(chore.schedule_interval ?? 1),
+    schedule_unit: chore.schedule_unit ?? "WEEK",
+    completion_mode: chore.completion_mode,
+    assignment_mode: chore.assignment_mode,
+    allowed_child_ids: chore.allowed_child_ids,
+    rotation_order: chore.rotation_order,
   };
 }
 

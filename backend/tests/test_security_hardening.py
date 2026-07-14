@@ -21,6 +21,7 @@ def _setup(tmp_path: Path, monkeypatch, *, max_age: int = 120, attempts: int = 3
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path / 'security.db'}")
     monkeypatch.setenv("SECRET_KEY", "s" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
     monkeypatch.setenv("SESSION_MAX_AGE_SECONDS", str(max_age))
     monkeypatch.setenv("LOGIN_MAX_ATTEMPTS", str(attempts))
     monkeypatch.setenv("LOGIN_WINDOW_SECONDS", "300")
@@ -145,6 +146,26 @@ def test_successful_login_resets_recent_failure_budget(tmp_path: Path, monkeypat
         assert client.post("/chore-api/auth/login", json={"email": user.email, "password": password}).status_code == 200
         assert client.post("/chore-api/auth/login", json={"email": user.email, "password": "wrong"}).status_code == 401
         assert client.post("/chore-api/auth/login", json={"email": user.email, "password": "wrong"}).status_code == 401
+
+
+def test_successful_login_does_not_reset_another_accounts_ip_budget(tmp_path: Path, monkeypatch) -> None:
+    victim, _ = _setup(tmp_path, monkeypatch, attempts=2)
+    factory = get_session_factory(get_settings().database_url)
+    with factory() as session:
+        attacker = User(
+            household_id=victim.household_id,
+            email="attacker@example.com",
+            password_hash=hash_password("attacker-password"),
+            role=UserRole.PARENT,
+        )
+        session.add(attacker)
+        session.commit()
+
+    with TestClient(app) as client:
+        assert client.post("/chore-api/auth/login", json={"email": victim.email, "password": "wrong"}).status_code == 401
+        assert client.post("/chore-api/auth/login", json={"email": attacker.email, "password": "attacker-password"}).status_code == 200
+        assert client.post("/chore-api/auth/login", json={"email": victim.email, "password": "wrong"}).status_code == 401
+        assert client.post("/chore-api/auth/login", json={"email": victim.email, "password": "wrong"}).status_code == 429
 
 
 def test_security_events_are_structured_and_durable(tmp_path: Path, monkeypatch) -> None:

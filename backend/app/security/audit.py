@@ -49,7 +49,7 @@ def record_login_attempt(session: Session, key_hash: str, ip: str, *, succeeded:
         session.execute(
             delete(LoginAttempt).where(
                 LoginAttempt.succeeded.is_(False),
-                or_(LoginAttempt.account_key_hash == key_hash, LoginAttempt.ip_address == ip),
+                LoginAttempt.account_key_hash == key_hash,
             )
         )
     session.add(LoginAttempt(account_key_hash=key_hash, ip_address=ip, succeeded=succeeded))

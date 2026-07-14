@@ -86,6 +86,7 @@ class ModuleService:
             select(User).where(
                 User.household_id == target_user.household_id,
                 User.role == UserRole.PARENT_ADMIN,
+                User.active.is_(True),
             )
         ).all()
         admin_managers = [user for user in admin_users if self.can_access_module(session, user, MODULE_ADMIN, manage=True)]

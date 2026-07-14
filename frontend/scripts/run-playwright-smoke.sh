@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP_DIR="$(mktemp -d /tmp/family-manager-playwright-XXXXXX)"
+: > "$TMP_DIR/.family-manager-smoke"
 FIXTURE_PATH="${PLAYWRIGHT_SMOKE_FIXTURE_PATH:-$TMP_DIR/playwright-smoke-fixture.json}"
 DATABASE_PATH="$TMP_DIR/chore_tracking.db"
 DATABASE_URL="sqlite:///$DATABASE_PATH"

@@ -295,9 +295,14 @@ def process_pending_push_deliveries(
                 attempt.status = "disabled"
                 counts["disabled"] = counts.get("disabled", 0) + 1
                 continue
+            if subscription.user_id != notification.user_id:
+                attempt.status = "dead"
+                attempt.error_message = "attempts=0;subscription ownership mismatch"
+                counts["dead"] = counts.get("dead", 0) + 1
+                continue
             user = session.get(User, notification.user_id)
             household = session.get(Household, notification.household_id)
-            if user is None or household is None:
+            if user is None or household is None or user.household_id != notification.household_id:
                 attempt.status = "dead"
                 counts["dead"] = counts.get("dead", 0) + 1
                 continue

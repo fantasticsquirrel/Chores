@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Child, Chore } from "../../../api/models";
 import {
   buildDefaultChoreForm,
+  buildEditChoreForm,
   eligibilityLabel,
   parseOptionalPositiveInteger,
   scheduleLabel,
@@ -43,6 +44,13 @@ describe("mobile chore presentation helpers", () => {
       name: "",
       start_date: "2026-06-16",
       schedule_mode: "NONE",
+    });
+  });
+
+  it("preserves a legacy reward when building an edit form", () => {
+    expect(buildEditChoreForm(chore({ reward_cents: 275 }))).toMatchObject({
+      name: "Laundry",
+      preserved_reward_cents: 275,
     });
   });
 

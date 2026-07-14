@@ -4,6 +4,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+import pytest
 from sqlalchemy import create_engine, inspect, text
 
 from app.config import get_settings
@@ -164,3 +165,125 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
     upgraded = inspect(create_engine(database_url))
     assert "auth_sessions" in upgraded.get_table_names()
     assert "active" in {column["name"] for column in upgraded.get_columns("users")}
+
+
+def test_recipe_timestamp_compatibility_migration_repairs_runtime_created_schema(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Legacy create_all recipe tables omitted columns present in migration 0007."""
+    database_path = tmp_path / "legacy-recipes.db"
+    database_url = f"sqlite:///{database_path}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-with-at-least-32-characters")
+    get_settings.cache_clear()
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        for table in ("recipe_categories", "recipe_tags", "recipes"):
+            connection.exec_driver_sql(
+                f"CREATE TABLE {table} (id INTEGER PRIMARY KEY, created_at DATETIME NOT NULL)"
+            )
+            connection.exec_driver_sql(
+                f"INSERT INTO {table} (id, created_at) VALUES (1, '2026-01-02 03:04:05')"
+            )
+    engine.dispose()
+
+    alembic_config = Config(str(BACKEND_ROOT / "alembic.ini"))
+    alembic_config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    alembic_config.set_main_option("sqlalchemy.url", database_url)
+    command.stamp(alembic_config, "20260714_0013")
+    command.upgrade(alembic_config, "head")
+
+    engine = create_engine(database_url)
+    with engine.connect() as connection:
+        inspector = inspect(connection)
+        for table in ("recipe_categories", "recipe_tags", "recipes"):
+            assert "updated_at" in {column["name"] for column in inspector.get_columns(table)}
+            assert connection.exec_driver_sql(
+                f"SELECT updated_at FROM {table} WHERE id = 1"
+            ).scalar_one() == "2026-01-02 03:04:05"
+
+
+def test_notification_queue_migration_preserves_successful_delivery_history(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'notification-dedup.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-with-at-least-32-characters")
+    get_settings.cache_clear()
+
+    alembic_config = Config(str(BACKEND_ROOT / "alembic.ini"))
+    alembic_config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    alembic_config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(alembic_config, "20260618_0011")
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            """INSERT INTO notifications
+            (id, household_id, user_id, child_id, module_key, category, severity, title, body,
+             link_url, read_at, expires_at, dedup_key, created_at)
+            VALUES (1, 1, 1, NULL, 'chores', 'approval', 'info', 'Title', 'Body',
+                    '/chore/', NULL, NULL, NULL, '2026-01-01 00:00:00')"""
+        )
+        connection.exec_driver_sql(
+            """INSERT INTO notification_delivery_attempts
+            (id, notification_id, channel, status, attempted_at, error_message)
+            VALUES
+              (1, 1, 'push:1', 'failed', '2026-01-01 00:00:00', 'temporary'),
+              (2, 1, 'push:1', 'delivered', '2026-01-01 00:01:00', '')"""
+        )
+    engine.dispose()
+
+    command.upgrade(alembic_config, "20260714_0012")
+
+    engine = create_engine(database_url)
+    with engine.connect() as connection:
+        rows = connection.exec_driver_sql(
+            "SELECT id, status FROM notification_delivery_attempts ORDER BY id"
+        ).all()
+    assert rows == [(2, "delivered")]
+
+
+def test_security_migration_reserves_occurrence_keys_only_for_approved_records(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'completion-status.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-with-at-least-32-characters")
+    get_settings.cache_clear()
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE chores (id INTEGER PRIMARY KEY, completion_mode VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql(
+            """CREATE TABLE completion_records (
+            id INTEGER PRIMARY KEY, household_id INTEGER NOT NULL, child_id INTEGER NOT NULL,
+            chore_id INTEGER NOT NULL, date DATE NOT NULL, status VARCHAR(32) NOT NULL)"""
+        )
+        connection.exec_driver_sql("INSERT INTO users (id) VALUES (1)")
+        connection.exec_driver_sql("INSERT INTO chores (id, completion_mode) VALUES (1, 'SHARED')")
+        connection.exec_driver_sql(
+            """INSERT INTO completion_records
+            (id, household_id, child_id, chore_id, date, status) VALUES
+            (1, 1, 10, 1, '2026-01-02', 'REJECTED'),
+            (2, 1, 11, 1, '2026-01-02', 'APPROVED')"""
+        )
+    engine.dispose()
+
+    alembic_config = Config(str(BACKEND_ROOT / "alembic.ini"))
+    alembic_config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    alembic_config.set_main_option("sqlalchemy.url", database_url)
+    command.stamp(alembic_config, "20260714_0012")
+    command.upgrade(alembic_config, "20260714_0013")
+
+    engine = create_engine(database_url)
+    with engine.connect() as connection:
+        rows = connection.exec_driver_sql(
+            "SELECT id, occurrence_key FROM completion_records ORDER BY id"
+        ).all()
+    assert rows == [(1, None), (2, "household:1:chore:1:date:2026-01-02")]
