@@ -51,6 +51,16 @@ class ModuleService:
 
         return [module for module in AVAILABLE_MODULES if module.key in allowed_keys and module.key in catalog]
 
+    def can_access_module(self, session: Session, user: User, module_key: str, *, manage: bool = False) -> bool:
+        if module_key not in module_keys(self.list_effective_modules(session, user)):
+            return False
+        if not manage:
+            return True
+        override = session.get(UserModuleAccess, {"user_id": user.id, "module_key": module_key})
+        # Default role/household access remains fully usable. An explicit user override
+        # is the only place that can intentionally reduce a user to view-only.
+        return override is None or override.can_manage
+
     def list_household_user_access(self, session: Session, household_id: int) -> list[tuple[User, list[AppModule]]]:
         users = session.scalars(select(User).where(User.household_id == household_id).order_by(User.email)).all()
         return [(user, self.list_effective_modules(session, user)) for user in users]
@@ -59,7 +69,7 @@ class ModuleService:
         self.ensure_catalog(session)
         if module_key not in {module.key for module in AVAILABLE_MODULES}:
             raise ValueError("Unknown module key.")
-        if module_key == MODULE_ADMIN and not can_view and self._is_last_admin_user(session, target_user):
+        if module_key == MODULE_ADMIN and (not can_view or not can_manage) and self._is_last_admin_manager(session, target_user):
             raise ValueError("Cannot remove admin module access from the last household admin.")
         access = session.get(UserModuleAccess, {"user_id": target_user.id, "module_key": module_key})
         if access is None:
@@ -71,15 +81,15 @@ class ModuleService:
         session.flush()
         return access
 
-    def _is_last_admin_user(self, session: Session, target_user: User) -> bool:
+    def _is_last_admin_manager(self, session: Session, target_user: User) -> bool:
         admin_users = session.scalars(
             select(User).where(
                 User.household_id == target_user.household_id,
                 User.role == UserRole.PARENT_ADMIN,
             )
         ).all()
-        admin_users_with_access = [user for user in admin_users if MODULE_ADMIN in module_keys(self.list_effective_modules(session, user))]
-        return len(admin_users_with_access) == 1 and admin_users_with_access[0].id == target_user.id
+        admin_managers = [user for user in admin_users if self.can_access_module(session, user, MODULE_ADMIN, manage=True)]
+        return len(admin_managers) == 1 and admin_managers[0].id == target_user.id
 
 
 def module_keys(modules: list[AppModule]) -> list[str]:

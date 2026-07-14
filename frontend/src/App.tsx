@@ -113,7 +113,7 @@ type ModuleProtectedRouteProps = {
 };
 
 function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactElement {
-  const { status, moduleKeys } = useAuth();
+  const { status, moduleKeys, manageableModuleKeys } = useAuth();
 
   if (status !== "authenticated") {
     return <Navigate to="/login" replace />;
@@ -125,6 +125,17 @@ function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactEl
         title="Module Not Available"
         description="This module is not enabled for your account. Ask a household admin to update module access."
       />
+    );
+  }
+
+  if (!manageableModuleKeys.includes(moduleKey)) {
+    return (
+      <>
+        <InlineNotice variant="info">You have view-only access. Management controls are hidden.</InlineNotice>
+        <div className="module-read-only">
+          <Outlet />
+        </div>
+      </>
     );
   }
 
@@ -240,6 +251,7 @@ export default function App(): ReactElement {
                   element={<ParentSubmissionReviewPage />}
                 />
                 <Route path="/parent/chores" element={<ParentChoresPage />} />
+                <Route path="/parent/children" element={<ParentChildrenPage />} />
               </Route>
               <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
                 <Route path="/homeschool" element={<HomeschoolPage />} />
@@ -248,10 +260,6 @@ export default function App(): ReactElement {
                 <Route path="/recipes" element={<RecipeOrganizerPage />} />
                 <Route path="/recipes/:recipeId" element={<RecipeDetailPage />} />
               </Route>
-              <Route
-                path="/parent/children"
-                element={<ParentChildrenPage />}
-              />
               <Route
                 path="/parent/tags"
                 element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db_session, require_roles
+from app.api.dependencies import get_db_session, require_module_access
+from app.modules import MODULE_CHORES
 from app.models.core import User
 from app.models.enums import UserRole
 from app.schemas.children import (
@@ -20,10 +21,13 @@ from app.schemas.children import (
     UpdateChildRequest,
 )
 from app.security import hash_password
+from app.security.audit import audit
+from app.security.sessions import revoke_user_sessions
 from app.services.children import ChildService
 
 router = APIRouter(prefix="/children", tags=["children"])
 _service = ChildService()
+_REQUIRE_CHORES_ACCESS = require_module_access(MODULE_CHORES, UserRole.PARENT, UserRole.PARENT_ADMIN)
 
 
 def _generate_child_login_email(household_id: int, child_id: int) -> str:
@@ -36,7 +40,7 @@ def list_children(
     household_id: int = Query(gt=0),
     active_only: bool = Query(default=False),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> list[ChildResponse]:
     if household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -47,8 +51,9 @@ def list_children(
 @router.post("", response_model=ChildResponse, status_code=status.HTTP_201_CREATED)
 def create_child(
     payload: CreateChildRequest,
+    request: Request,
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> ChildResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -59,6 +64,7 @@ def create_child(
             payload.name,
             active=payload.active,
         )
+        audit(session, "child.created", request=request, actor=_user, details={"child_id": child.id, "active": child.active})
         session.commit()
     except IntegrityError as exc:
         session.rollback()
@@ -69,9 +75,10 @@ def create_child(
 @router.patch("/{child_id}", response_model=ChildResponse)
 def update_child(
     payload: UpdateChildRequest,
+    request: Request,
     child_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> ChildResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -90,6 +97,11 @@ def update_child(
     if child is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found.")
 
+    account = session.scalar(select(User).where(User.child_id == child.id, User.role == UserRole.CHILD))
+    if payload.active is False and account is not None:
+        revoke_user_sessions(session, account.id)
+    audit(session, "child.updated", request=request, actor=_user, target=account, details={"child_id": child.id, "active": child.active})
+
     try:
         session.commit()
     except IntegrityError as exc:
@@ -101,9 +113,10 @@ def update_child(
 @router.post("/{child_id}/account", response_model=ChildAccountResponse, status_code=status.HTTP_201_CREATED)
 def create_child_account(
     payload: CreateChildAccountRequest,
+    request: Request,
     child_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> ChildAccountResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -142,6 +155,8 @@ def create_child_account(
         child_id=child_id,
     )
     session.add(account)
+    session.flush()
+    audit(session, "account.child_created", request=request, actor=_user, target=account, details={"child_id": child_id})
 
     try:
         session.commit()
@@ -156,9 +171,10 @@ def create_child_account(
 @router.patch("/{child_id}/account-email", response_model=ChildAccountResponse)
 def reset_child_account_email(
     payload: ResetChildAccountEmailRequest,
+    request: Request,
     child_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> ChildAccountResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -186,6 +202,8 @@ def reset_child_account_email(
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not generate child login email.")
 
     account.email = normalized_email
+    revoke_user_sessions(session, account.id)
+    audit(session, "credential.child_email_reset", request=request, actor=_user, target=account, details={"child_id": child_id})
 
     try:
         session.commit()
@@ -200,9 +218,10 @@ def reset_child_account_email(
 @router.patch("/{child_id}/account-password", response_model=ChildAccountResponse)
 def reset_child_account_password(
     payload: ResetChildAccountPasswordRequest,
+    request: Request,
     child_id: int = Path(gt=0),
     session: Session = Depends(get_db_session),
-    _user: User = Depends(require_roles(UserRole.PARENT, UserRole.PARENT_ADMIN)),
+    _user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> ChildAccountResponse:
     if payload.household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -214,6 +233,8 @@ def reset_child_account_password(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No linked child account found.")
 
     account.password_hash = hash_password(payload.new_password)
+    revoke_user_sessions(session, account.id)
+    audit(session, "credential.child_password_reset", request=request, actor=_user, target=account, details={"child_id": child_id})
 
     try:
         session.commit()

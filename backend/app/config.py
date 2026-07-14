@@ -17,6 +17,9 @@ class Settings:
     secret_key: str
     log_level: str
     session_cookie_secure: bool
+    session_max_age_seconds: int = 60 * 60 * 24 * 14
+    login_max_attempts: int = 5
+    login_window_seconds: int = 300
     push_vapid_public_key: str = ""
     push_vapid_private_key: str = ""
     push_vapid_claims_sub: str = "mailto:admin@multihost.ing"
@@ -71,12 +74,21 @@ def get_settings() -> Settings:
             field_name="SESSION_COOKIE_SECURE",
         )
 
+    session_max_age_seconds = int(os.getenv("SESSION_MAX_AGE_SECONDS", str(60 * 60 * 24 * 14)))
+    login_max_attempts = int(os.getenv("LOGIN_MAX_ATTEMPTS", "5"))
+    login_window_seconds = int(os.getenv("LOGIN_WINDOW_SECONDS", "300"))
+    if min(session_max_age_seconds, login_max_attempts, login_window_seconds) <= 0:
+        raise SettingsError("Session and login limit settings must be positive integers.")
+
     return Settings(
         app_env=app_env,
         database_url=database_url,
         secret_key=secret_key,
         log_level=log_level,
         session_cookie_secure=session_cookie_secure,
+        session_max_age_seconds=session_max_age_seconds,
+        login_max_attempts=login_max_attempts,
+        login_window_seconds=login_window_seconds,
         push_vapid_public_key=os.getenv("PUSH_VAPID_PUBLIC_KEY", "").strip(),
         push_vapid_private_key=os.getenv("PUSH_VAPID_PRIVATE_KEY", "").strip(),
         push_vapid_claims_sub=os.getenv("PUSH_VAPID_CLAIMS_SUB", "mailto:admin@multihost.ing").strip(),

@@ -9,6 +9,8 @@ export type AuthContextValue = {
   user: AuthUser | null;
   setAuthenticatedSession: (session: AuthSessionResponse) => void;
   moduleKeys: string[];
+  manageableModuleKeys: string[];
+  clearSession: () => void;
   logout: () => Promise<void>;
 };
 

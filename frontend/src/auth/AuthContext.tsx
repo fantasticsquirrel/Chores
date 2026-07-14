@@ -14,6 +14,7 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [user, setUser] = useState<AuthUser | null>(null);
   const [moduleKeys, setModuleKeys] = useState<string[]>([]);
+  const [manageableModuleKeys, setManageableModuleKeys] = useState<string[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -21,13 +22,14 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
     void apiClient
       .getCurrentSession()
       .then(async (session) => {
-        const loadedModuleKeys = await loadModuleKeys(session.user);
+        const loadedModules = await loadModuleAccess(session.user);
         if (!active) {
           return;
         }
 
         setUser(session.user);
-        setModuleKeys(loadedModuleKeys);
+        setModuleKeys(loadedModules.moduleKeys);
+        setManageableModuleKeys(loadedModules.manageableModuleKeys);
         setStatus("authenticated");
       })
       .catch((error: unknown) => {
@@ -38,12 +40,14 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
         if (isUnauthorizedError(error)) {
           setUser(null);
           setModuleKeys([]);
+          setManageableModuleKeys([]);
           setStatus("anonymous");
           return;
         }
 
         setUser(null);
         setModuleKeys([]);
+        setManageableModuleKeys([]);
         setStatus("anonymous");
       });
 
@@ -53,29 +57,41 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   }, []);
 
   const setAuthenticatedSession = useCallback((session: AuthSessionResponse): void => {
+    const fallback = getFallbackModuleKeys(session.user);
     setUser(session.user);
-    setModuleKeys(getFallbackModuleKeys(session.user));
+    setModuleKeys(fallback);
+    setManageableModuleKeys(fallback);
     setStatus("authenticated");
 
-    void loadModuleKeys(session.user).then(setModuleKeys);
+    void loadModuleAccess(session.user).then((loaded) => {
+      setModuleKeys(loaded.moduleKeys);
+      setManageableModuleKeys(loaded.manageableModuleKeys);
+    });
+  }, []);
+
+  const clearSession = useCallback((): void => {
+    setUser(null);
+    setModuleKeys([]);
+    setManageableModuleKeys([]);
+    setStatus("anonymous");
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
     await apiClient.logout();
-    setUser(null);
-    setModuleKeys([]);
-    setStatus("anonymous");
-  }, []);
+    clearSession();
+  }, [clearSession]);
 
   const contextValue = useMemo<AuthContextValue>(
     () => ({
       status,
       user,
       moduleKeys,
+      manageableModuleKeys,
       setAuthenticatedSession,
+      clearSession,
       logout,
     }),
-    [logout, moduleKeys, setAuthenticatedSession, status, user],
+    [clearSession, logout, manageableModuleKeys, moduleKeys, setAuthenticatedSession, status, user],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
@@ -88,11 +104,20 @@ function getFallbackModuleKeys(user: AuthUser): string[] {
     .map((module) => module.key);
 }
 
-async function loadModuleKeys(user: AuthUser): Promise<string[]> {
+type ModuleAccess = {
+  moduleKeys: string[];
+  manageableModuleKeys: string[];
+};
+
+async function loadModuleAccess(user: AuthUser): Promise<ModuleAccess> {
   try {
     const response = await apiClient.getMyModules();
-    return response.modules.map((module) => module.key);
+    return {
+      moduleKeys: response.modules.map((module) => module.key),
+      manageableModuleKeys: response.modules.filter((module) => module.can_manage !== false).map((module) => module.key),
+    };
   } catch {
-    return getFallbackModuleKeys(user);
+    const fallback = getFallbackModuleKeys(user);
+    return { moduleKeys: fallback, manageableModuleKeys: fallback };
   }
 }

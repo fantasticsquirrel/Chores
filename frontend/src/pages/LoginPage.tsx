@@ -1,6 +1,6 @@
 import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiClient, type AuthSessionResponse } from "../api";
 import { useAuth } from "../auth/useAuth";
@@ -15,6 +15,7 @@ function getPostLoginPath(session: AuthSessionResponse): string {
 
 export function LoginPage(): ReactElement {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setAuthenticatedSession } = useAuth();
   const [mode, setMode] = useState<LoginMode>("parent");
   const [email, setEmail] = useState("");
@@ -121,6 +122,9 @@ export function LoginPage(): ReactElement {
         Parents use their login email and password. Kids can use a parent login
         email, their child name, and their child password.
       </p>
+      {searchParams.get("passwordChanged") === "1" ? (
+        <InlineNotice variant="info">Password changed. Sign in again with your new password.</InlineNotice>
+      ) : null}
       <div className="auth-mode-switch" role="tablist" aria-label="Login mode">
         <button
           aria-selected={mode === "parent"}

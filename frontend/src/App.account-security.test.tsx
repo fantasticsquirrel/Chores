@@ -34,7 +34,8 @@ describe("Account security page", () => {
         new_password: "new-password-456",
       }),
     );
-    expect(await screen.findByText("Password changed successfully.")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    expect(screen.getByText("Password changed. Sign in again with your new password.")).toBeVisible();
   });
 
   it("shows client-side mismatch validation and does not call API", async () => {

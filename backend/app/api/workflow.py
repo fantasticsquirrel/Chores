@@ -13,21 +13,17 @@ from app.models.core import (
     ChoreAllowedChild,
     ChoreRotationMember,
     ChoreRotationState,
-    CompletionRecord,
     Submission,
     SubmissionItem,
-    Transaction,
     User,
 )
 from app.modules import MODULE_CHORES
 from app.models.enums import (
     AssignmentMode,
     CompletionMode,
-    CompletionStatus,
     ScheduleMode,
     ScheduleUnit,
     SubmissionStatus,
-    TransactionType,
     UserRole,
 )
 from app.schemas.workflow import (
@@ -46,6 +42,7 @@ from app.services.chores.workflow import (
     _eligible_chores_for_child,
     _resolve_active_child,
     _serialize_submission_review,
+    record_approved_occurrence,
 )
 from app.services.notifications import notify_submission_approved, notify_submission_created
 
@@ -167,24 +164,12 @@ def approve_submission(
         occurrence_date = _approval_occurrence_or_409(session, submission, chore)
 
         item.status = SubmissionStatus.APPROVED
-        session.add(
-            CompletionRecord(
-                household_id=submission.household_id,
-                child_id=submission.child_id,
-                chore_id=item.chore_id,
-                date=submission.for_date,
-                status=CompletionStatus.APPROVED,
-            )
+        record_approved_occurrence(
+            session,
+            submission=submission,
+            chore=chore,
+            occurrence_date=occurrence_date,
         )
-        if chore.reward_cents != 0:
-            session.add(
-                Transaction(
-                    household_id=submission.household_id,
-                    child_id=submission.child_id,
-                    amount_cents=chore.reward_cents,
-                    type=TransactionType.CHORE_APPROVAL,
-                )
-            )
 
         if chore.id not in processed_rotation_chores:
             _advance_rotation_state_if_needed(session, chore, occurrence_date)
@@ -230,24 +215,12 @@ def decide_submission_item(
         if chore is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chore not found for submission item.")
         occurrence_date = _approval_occurrence_or_409(session, submission, chore)
-        session.add(
-            CompletionRecord(
-                household_id=submission.household_id,
-                child_id=submission.child_id,
-                chore_id=item.chore_id,
-                date=submission.for_date,
-                status=CompletionStatus.APPROVED,
-            )
+        record_approved_occurrence(
+            session,
+            submission=submission,
+            chore=chore,
+            occurrence_date=occurrence_date,
         )
-        if chore.reward_cents != 0:
-            session.add(
-                Transaction(
-                    household_id=submission.household_id,
-                    child_id=submission.child_id,
-                    amount_cents=chore.reward_cents,
-                    type=TransactionType.CHORE_APPROVAL,
-                )
-            )
         _advance_rotation_state_if_needed(session, chore, occurrence_date)
 
     submission_items = list(

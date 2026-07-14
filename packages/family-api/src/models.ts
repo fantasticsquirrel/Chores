@@ -424,6 +424,7 @@ export interface FamilyModule {
   key: FamilyModuleKey;
   name: string;
   description: string;
+  can_manage?: boolean;
 }
 
 export interface MyModulesResponse {

@@ -138,6 +138,27 @@ describe("Protected routes", () => {
   });
 
 
+  it("renders view-only modules without management controls", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: { id: 16, household_id: 1, email: "viewer@example.com", role: "PARENT", child_id: null },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
+      modules: [{ key: "chores", name: "Chores", description: "", can_manage: false }],
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter initialEntries={["/parent/children"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("You have view-only access. Management controls are hidden.")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
+    expect(document.querySelector(".module-read-only")).not.toBeNull();
+  });
+
   it("blocks direct access to disabled parent modules without loading module data", async () => {
     vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
       modules: [{ key: "chores", name: "Chores", description: "" }],

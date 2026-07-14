@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Generator
 
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_session_factory
-from app.models.core import User
+from app.models.core import Child, User
 from app.models.enums import UserRole
-from app.security.sessions import SESSION_COOKIE_NAME, parse_session_token
+from app.security.sessions import SESSION_COOKIE_NAME, resolve_session
 from app.services.auth import AuthService
-from app.services.modules import ModuleService, module_keys
+from app.services.modules import ModuleService
 
 _auth_service = AuthService()
 _module_service = ModuleService()
@@ -31,14 +31,17 @@ def get_current_user(
     if session_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
 
-    settings = get_settings()
-    user_id = parse_session_token(settings.secret_key, session_token)
-    if user_id is None:
+    auth_session = resolve_session(session, session_token)
+    if auth_session is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
 
-    user = _auth_service.get_user(session, user_id)
-    if user is None:
+    user = _auth_service.get_user(session, auth_session.user_id)
+    if user is None or not user.active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
+    if user.role == UserRole.CHILD:
+        child = session.get(Child, user.child_id)
+        if child is None or not child.active:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated.")
 
     return user
 
@@ -52,13 +55,45 @@ def require_roles(*allowed_roles: UserRole) -> Callable[[User], User]:
     return _require_roles
 
 
-def require_module_access(module_key: str, *allowed_roles: UserRole) -> Callable[[User, Session], User]:
+def require_module_access(module_key: str, *allowed_roles: UserRole) -> Callable[..., User]:
+    """Require view access for safe methods and manage access for mutations."""
+
     def _require_module_access(
+        request: Request,
         user: User = Depends(require_roles(*allowed_roles)),
         session: Session = Depends(get_db_session),
     ) -> User:
-        if module_key not in module_keys(_module_service.list_effective_modules(session, user)):
+        manage = request.method.upper() not in {"GET", "HEAD", "OPTIONS"}
+        if not _module_service.can_access_module(session, user, module_key, manage=manage):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Module access denied.")
         return user
 
     return _require_module_access
+
+
+def require_module_view(module_key: str, *allowed_roles: UserRole) -> Callable[..., User]:
+    def _require_module_view(
+        request: Request,
+        user: User = Depends(require_roles(*allowed_roles)),
+        session: Session = Depends(get_db_session),
+    ) -> User:
+        _ = request
+        if not _module_service.can_access_module(session, user, module_key, manage=False):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Module access denied.")
+        return user
+
+    return _require_module_view
+
+
+def require_module_manage(module_key: str, *allowed_roles: UserRole) -> Callable[..., User]:
+    def _require_module_manage(
+        request: Request,
+        user: User = Depends(require_roles(*allowed_roles)),
+        session: Session = Depends(get_db_session),
+    ) -> User:
+        _ = request
+        if not _module_service.can_access_module(session, user, module_key, manage=True):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Module management access denied.")
+        return user
+
+    return _require_module_manage

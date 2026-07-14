@@ -401,6 +401,17 @@ def test_shared_chore_duplicate_pending_approval_is_rejected_without_second_cred
             )
         ).all()
         assert len(approved_records) == 1
+        assert approved_records[0].occurrence_key == (
+            f"household:{household_id}:chore:{chore_id}:date:{target_date.isoformat()}"
+        )
+        reward = session.scalar(
+            select(Transaction).where(
+                Transaction.household_id == household_id,
+                Transaction.type == TransactionType.CHORE_APPROVAL,
+            )
+        )
+        assert reward is not None
+        assert reward.completion_record_id == approved_records[0].id
 
 
 def test_none_schedule_uses_target_date_as_occurrence_and_blocks_only_that_day(
