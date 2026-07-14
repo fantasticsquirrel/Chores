@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base, TimestampMixin
@@ -372,6 +372,7 @@ class Notification(TimestampMixin, Base):
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     dedup_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    in_app_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class NotificationPreference(Base):
@@ -401,6 +402,9 @@ class PushSubscription(TimestampMixin, Base):
 
 class NotificationDeliveryAttempt(Base):
     __tablename__ = "notification_delivery_attempts"
+    __table_args__ = (
+        Index("uq_notification_delivery_attempt_channel", "notification_id", "channel", unique=True),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     notification_id: Mapped[int] = mapped_column(ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False, index=True)

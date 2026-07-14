@@ -1,0 +1,11 @@
+[Unit]
+Description=Process Family Manager push queue every minute
+
+[Timer]
+OnCalendar=*:0/1
+Persistent=true
+RandomizedDelaySec=10s
+Unit=chore-tracker-push-worker.service
+
+[Install]
+WantedBy=timers.target
