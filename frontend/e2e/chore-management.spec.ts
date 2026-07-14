@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { execSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,18 +20,25 @@ type ChoreFixture = {
 
 function seedChoreFixture(): ChoreFixture {
   const rootDir = path.resolve(__dirname, "../../");
-  const fixturePath = path.join(rootDir, ".ralph/chore-mgmt-fixture.json");
+
   const seedScript = path.join(
     rootDir,
     "backend/scripts/seed_chore_mgmt_smoke.py",
   );
 
-  const output = execSync(
-    `DATABASE_URL="sqlite:///${rootDir}/data/chore_tracking.db" "${rootDir}/.venv/bin/python" "${seedScript}"`,
-    { encoding: "utf-8" },
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl === undefined || process.env.PLAYWRIGHT_ISOLATED_DB !== "1") {
+    throw new Error("Chore management E2E requires an explicitly isolated database.");
+  }
+  const output = execFileSync(
+    path.join(rootDir, ".venv/bin/python"),
+    [seedScript],
+    {
+      encoding: "utf-8",
+      env: { ...process.env, DATABASE_URL: databaseUrl, PLAYWRIGHT_ISOLATED_DB: "1" },
+    },
   );
   const fixture = JSON.parse(output.trim()) as ChoreFixture;
-  writeFileSync(fixturePath, JSON.stringify(fixture, null, 2));
   return fixture;
 }
 

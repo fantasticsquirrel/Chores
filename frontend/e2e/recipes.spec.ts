@@ -21,7 +21,7 @@ async function signIn(page: Page, email: string, password: string): Promise<void
   await page.getByRole("button", { name: "Sign In" }).click();
 }
 
-test("parent can create, find, open, and scale a parent-account recipe", async ({ page }) => {
+test("parent can create, find, open, and scale a household recipe", async ({ page }) => {
   const fixture = readFixture();
   const uniqueTitle = `Playwright Pancakes ${Date.now()}`;
 
@@ -48,8 +48,9 @@ test("parent can create, find, open, and scale a parent-account recipe", async (
   await page.getByLabel("Search").fill(uniqueTitle);
   await page.getByLabel("Ingredient").fill("flour");
   await page.getByRole("button", { name: "Apply Filters" }).click();
-  await expect(page.locator("article").filter({ hasText: uniqueTitle }).getByRole("heading", { name: uniqueTitle })).toBeVisible();
-  await page.getByRole("link", { name: `View ${uniqueTitle}` }).click();
+  const recipeCard = page.locator("article").filter({ hasText: uniqueTitle });
+  await expect(recipeCard.getByRole("heading", { name: uniqueTitle })).toBeVisible();
+  await recipeCard.getByRole("link", { name: "View Recipe" }).click();
   await expect(page).toHaveURL(/\/chore\/recipes\/\d+$/);
   await expect(page.getByRole("heading", { name: uniqueTitle })).toBeVisible();
   await expect(page.getByRole("link", { name: "Back to Recipes" })).toBeVisible();
@@ -58,7 +59,7 @@ test("parent can create, find, open, and scale a parent-account recipe", async (
   await page.getByLabel("Scaled Servings").fill("8");
   await expect(page.getByLabel("Scale Multiplier")).toHaveValue("2");
   await expect(page.locator("label", { hasText: "4 cup flour" })).toBeVisible();
-  await expect(page.getByText("Cook until golden. Uses: 4 cup flour.")).toBeVisible();
+  await expect(page.getByText("Cook until golden. Uses: 4 cup flour.").first()).toBeVisible();
   await page.getByLabel("Scale Multiplier").fill("1.5");
   await expect(page.getByLabel("Scaled Servings")).toHaveValue("6");
 });

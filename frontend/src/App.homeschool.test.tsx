@@ -35,7 +35,7 @@ describe("Homeschool page", () => {
     mockHomeschoolApi();
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -69,7 +69,7 @@ describe("Homeschool page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -110,7 +110,7 @@ describe("Homeschool page", () => {
     const gradeSpy = vi.spyOn(apiClient, "upsertHomeschoolGrade").mockResolvedValue(grades[0]);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -179,7 +179,7 @@ describe("Homeschool page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -222,7 +222,7 @@ describe("Homeschool page", () => {
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolAttendance").mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -241,7 +241,7 @@ describe("Homeschool page", () => {
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolDayComment").mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -260,7 +260,7 @@ describe("Homeschool page", () => {
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolGrade").mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -279,7 +279,7 @@ describe("Homeschool page", () => {
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSemester").mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -298,7 +298,7 @@ describe("Homeschool page", () => {
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSubject").mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -317,7 +317,7 @@ describe("Homeschool page", () => {
     const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolGrade").mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -339,7 +339,7 @@ describe("Homeschool page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );

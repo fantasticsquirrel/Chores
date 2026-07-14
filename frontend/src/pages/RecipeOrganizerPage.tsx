@@ -13,6 +13,7 @@ import {
   type RecipeSummary,
   type RecipeTag,
 } from "../api";
+import { formatApiError } from "../lib/errors";
 import { RecipeEditor } from "../features/recipes/components/RecipeEditor";
 import {
   backupRecipeToPayload,
@@ -67,7 +68,7 @@ export function RecipeOrganizerPage(): ReactElement {
       setTags(tagRows);
       setRecipes(recipeRows);
     } catch (loadError: unknown) {
-      setError(errorText(loadError));
+      setError(formatApiError(loadError));
     }
   }
 
@@ -89,7 +90,7 @@ export function RecipeOrganizerPage(): ReactElement {
       await refresh();
       navigate(`/recipes/${saved.id}`);
     } catch (saveError: unknown) {
-      setError(errorText(saveError));
+      setError(formatApiError(saveError));
     }
   }
 
@@ -103,7 +104,7 @@ export function RecipeOrganizerPage(): ReactElement {
       await refresh();
       navigate(`/recipes/${imported.id}`);
     } catch (importError: unknown) {
-      setError(errorText(importError));
+      setError(formatApiError(importError));
     }
   }
 
@@ -129,7 +130,7 @@ export function RecipeOrganizerPage(): ReactElement {
       setMessage(`Imported ${result.imported_count} recipes from backup.`);
       await refresh();
     } catch (backupError: unknown) {
-      setError(errorText(backupError));
+      setError(formatApiError(backupError));
     }
   }
 
@@ -137,7 +138,7 @@ export function RecipeOrganizerPage(): ReactElement {
     <>
       <Card as="section" className="recipe-page-card recipe-hero-card">
         <div>
-          <p className="eyebrow">Parent Account Recipes</p>
+          <p className="eyebrow">Household Cookbook</p>
           <h1>Recipe Organizer</h1>
           <p>Build a family cookbook with import, tags, variants, sub-recipes, backups, and cooking-mode scaling.</p>
           <div className="recipe-stat-strip" aria-label="Recipe organizer summary">
@@ -270,14 +271,16 @@ export function RecipeDetailPage(): ReactElement {
       setError(null);
       if (!Number.isInteger(parsedRecipeId) || parsedRecipeId <= 0) { setError("Recipe not found."); return; }
       try {
-        const detail = await apiClient.getRecipe(parsedRecipeId);
+        const [detail, session] = await Promise.all([
+          apiClient.getRecipe(parsedRecipeId),
+          apiClient.getCurrentSession(),
+        ]);
         setRecipe(detail);
+        setCurrentUser(session.user);
         setEditPayload(payloadFromRecipe(detail));
         setScaled(null);
         setTargetServings(detail.servings !== null ? String(detail.servings) : "");
         setScaleMultiplier("1");
-        const session = await apiClient.getCurrentSession();
-        setCurrentUser(session.user);
         const [childRows, recipeRows, categoryRows, tagRows] = await Promise.all([
           apiClient.listChildren({ household_id: detail.household_id, active_only: true }),
           apiClient.listRecipes({ active_only: true }),
@@ -289,7 +292,7 @@ export function RecipeDetailPage(): ReactElement {
         setCategories(categoryRows);
         setTags(tagRows);
         setFeedbackChildId(childRows[0]?.id !== undefined ? String(childRows[0].id) : "");
-      } catch (loadError: unknown) { setError(errorText(loadError)); }
+      } catch (loadError: unknown) { setError(formatApiError(loadError)); }
     }
     void loadRecipe();
   }, [parsedRecipeId]);
@@ -326,14 +329,14 @@ export function RecipeDetailPage(): ReactElement {
       setEditPayload(payloadFromRecipe(updated));
       setEditing(false);
       setMessage(`Updated ${updated.title}.`);
-    } catch (updateError: unknown) { setError(errorText(updateError)); }
+    } catch (updateError: unknown) { setError(formatApiError(updateError)); }
   }
 
   async function handleAddVariant(): Promise<void> {
     if (recipe === null) return;
     const title = `${recipe.title} Variant`;
     setError(null);
-    try { const variant = await apiClient.duplicateRecipe(recipe.id, { title, as_variant: true }); setMessage(`Created variant ${variant.title}.`); await reloadRecipe(recipe.id); } catch (variantError: unknown) { setError(errorText(variantError)); }
+    try { const variant = await apiClient.duplicateRecipe(recipe.id, { title, as_variant: true }); setMessage(`Created variant ${variant.title}.`); await reloadRecipe(recipe.id); } catch (variantError: unknown) { setError(formatApiError(variantError)); }
   }
 
   async function handleFeedbackSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -347,13 +350,13 @@ export function RecipeDetailPage(): ReactElement {
       setMessage("Saved family feedback.");
       setFeedbackVerdict(""); setFeedbackNotes("");
       await reloadRecipe(recipe.id);
-    } catch (feedbackError: unknown) { setError(errorText(feedbackError)); }
+    } catch (feedbackError: unknown) { setError(formatApiError(feedbackError)); }
   }
 
   async function handleDeleteRecipe(): Promise<void> {
     if (recipe === null || deleteConfirmText !== recipe.title || deletingRecipe) return;
     setError(null); setDeletingRecipe(true);
-    try { await apiClient.deleteRecipe(recipe.id); navigate("/recipes"); } catch (deleteError: unknown) { setError(errorText(deleteError)); setDeletingRecipe(false); }
+    try { await apiClient.deleteRecipe(recipe.id); navigate("/recipes"); } catch (deleteError: unknown) { setError(formatApiError(deleteError)); setDeletingRecipe(false); }
   }
 
   function handleExportPdf(): void { window.print(); }
@@ -361,6 +364,7 @@ export function RecipeDetailPage(): ReactElement {
   const displayedIngredients = scaled?.ingredients ?? recipe?.ingredients ?? [];
   const displayedSteps = scaled?.steps ?? recipe?.steps ?? [];
   const currentStep = displayedSteps[currentStepIndex];
+  const canEditRecipe = currentUser !== null && (currentUser.id === recipe?.owner_user_id || currentUser.role === "PARENT_ADMIN");
   const linkedCurrentIngredients = useMemo(() => {
     if (currentStep === undefined || recipe === null) return [];
     const refs = "ingredient_position_refs" in currentStep ? currentStep.ingredient_position_refs : [];
@@ -389,12 +393,12 @@ export function RecipeDetailPage(): ReactElement {
       {message !== null ? <InlineNotice variant="success">{message}</InlineNotice> : null}
       <div className="recipe-print-actions">
         <Button type="button" onClick={handleExportPdf}>Export PDF</Button>
-        <Button type="button" onClick={() => setEditing((value) => !value)}>{editing ? "Close Editor" : "Edit Recipe"}</Button>
+        {canEditRecipe ? <Button type="button" onClick={() => setEditing((value) => !value)}>{editing ? "Close Editor" : "Edit Recipe"}</Button> : null}
         <Button type="button" onClick={() => setCookingMode(true)}>Cooking Mode</Button>
-        <Button type="button" variant="danger" onClick={() => { setDeleteConfirmText(""); setDeleteModalOpen(true); }}>Delete Recipe</Button>
-        <span>Export, edit, cook step-by-step, or delete with typed confirmation.</span>
+        {canEditRecipe ? <Button type="button" variant="danger" onClick={() => { setDeleteConfirmText(""); setDeleteModalOpen(true); }}>Delete Recipe</Button> : null}
+        <span>{canEditRecipe ? "Export, edit, cook step-by-step, or delete with typed confirmation." : "Export or cook step-by-step. Only the creator or a household admin can edit this recipe."}</span>
       </div>
-      {deleteModalOpen ? (
+      {deleteModalOpen && canEditRecipe ? (
         <div className="recipe-delete-modal" role="dialog" aria-modal="true" aria-label="Delete recipe confirmation">
           <div className="glass-card">
             <h2>Delete {recipe.title}?</h2>
@@ -404,9 +408,10 @@ export function RecipeDetailPage(): ReactElement {
           </div>
         </div>
       ) : null}
-      {editing ? <Card as="article" className="recipe-editor-card"><h2>Edit Recipe</h2><RecipeEditor payload={editPayload} setPayload={setEditPayload} categories={categories} tags={tags} availableRecipes={allRecipes} submitLabel="Update Recipe" onSubmit={(event) => { void handleUpdateRecipe(event); }} onCancel={() => setEditing(false)} /></Card> : null}
+      {editing && canEditRecipe ? <Card as="article" className="recipe-editor-card"><h2>Edit Recipe</h2><RecipeEditor payload={editPayload} setPayload={setEditPayload} categories={categories} tags={tags} availableRecipes={allRecipes} submitLabel="Update Recipe" onSubmit={(event) => { void handleUpdateRecipe(event); }} onCancel={() => setEditing(false)} /></Card> : null}
       <p className="eyebrow">Recipe Cooking Page</p>
       <h1>{recipe.title}</h1>
+      <p>Added by {recipe.creator_email ?? "a family member"}.</p>
       {recipe.photo_url !== null ? <img className="recipe-photo recipe-photo--hero" src={recipe.photo_url} alt={`${recipe.title}`} /> : null}
       {recipe.core_recipe !== null ? <p>Core recipe: <Link to={`/recipes/${recipe.core_recipe.id}`}>{recipe.core_recipe.title}</Link></p> : null}
       <p>{recipe.description}</p>

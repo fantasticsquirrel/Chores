@@ -70,7 +70,7 @@ describe("Parent chores page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -108,7 +108,7 @@ describe("Parent chores page", () => {
       .mockResolvedValue(createdChore);
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -154,7 +154,7 @@ describe("Parent chores page", () => {
       .mockResolvedValue(updatedChore);
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -207,7 +207,7 @@ describe("Parent chores page", () => {
       });
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -245,7 +245,7 @@ describe("Parent chores page", () => {
       });
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -282,7 +282,7 @@ describe("Parent chores page", () => {
       .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -305,7 +305,7 @@ describe("Parent chores page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/chores"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );

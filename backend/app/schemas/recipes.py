@@ -70,7 +70,7 @@ class RecipeStepPayload(BaseModel):
     position: int = Field(gt=0)
     section: str = Field(default="", max_length=100)
     instruction: str = Field(min_length=1, max_length=2000)
-    ingredient_position_refs: list[int] = Field(default_factory=list)
+    ingredient_position_refs: list[int] = Field(default_factory=list, max_length=100)
 
 
 class RecipeStepResponse(RecipeStepPayload):
@@ -109,11 +109,11 @@ class RecipeBasePayload(BaseModel):
     rating: int | None = Field(default=None, ge=1, le=5)
     favorite: bool = False
     notes: str = Field(default="", max_length=4000)
-    category_ids: list[int] = Field(default_factory=list)
-    tag_ids: list[int] = Field(default_factory=list)
-    ingredients: list[RecipeIngredientPayload] = Field(default_factory=list)
-    steps: list[RecipeStepPayload] = Field(default_factory=list)
-    components: list[RecipeComponentPayload] = Field(default_factory=list)
+    category_ids: list[int] = Field(default_factory=list, max_length=50)
+    tag_ids: list[int] = Field(default_factory=list, max_length=100)
+    ingredients: list[RecipeIngredientPayload] = Field(default_factory=list, max_length=250)
+    steps: list[RecipeStepPayload] = Field(default_factory=list, max_length=250)
+    components: list[RecipeComponentPayload] = Field(default_factory=list, max_length=50)
 
     @field_validator("category_ids", "tag_ids")
     @classmethod
@@ -159,7 +159,7 @@ class ImportRecipeUrlRequest(BaseModel):
 
 
 class ImportRecipeBackupRequest(BaseModel):
-    recipes: list[CreateRecipeRequest] = Field(default_factory=list)
+    recipes: list[CreateRecipeRequest] = Field(default_factory=list, max_length=200)
 
 
 class ImportRecipeBackupResponse(BaseModel):
@@ -221,6 +221,7 @@ class RecipeSummaryResponse(BaseModel):
     id: int
     household_id: int
     owner_user_id: int
+    creator_email: str
     parent_recipe_id: int | None
     title: str
     description: str

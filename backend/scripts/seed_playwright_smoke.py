@@ -18,6 +18,7 @@ from app.db import get_session_factory, initialize_database
 from app.models.core import Child, Chore, Household, User
 from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, UserRole
 from app.security import hash_password
+from scripts.smoke_safety import require_isolated_smoke_database
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class SmokeFixture:
 
 def main() -> None:
     settings = get_settings()
+    require_isolated_smoke_database(settings.database_url)
     initialize_database(settings)
     session_factory = get_session_factory(settings.database_url)
 

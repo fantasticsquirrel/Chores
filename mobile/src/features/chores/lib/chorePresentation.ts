@@ -9,7 +9,6 @@ import type {
 
 export type MobileChoreFormState = {
   name: string;
-  reward_cents: string;
   start_date: string;
   expires_at: string;
   timeout_days: string;
@@ -48,7 +47,6 @@ export const assignmentOptions = [
 export function buildDefaultChoreForm(startDate: string): MobileChoreFormState {
   return {
     name: "",
-    reward_cents: "0",
     start_date: startDate,
     expires_at: "",
     timeout_days: "",
@@ -68,16 +66,6 @@ export function parseOptionalPositiveInteger(value: string, fieldName: string): 
   const parsed = Number.parseInt(trimmed, 10);
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`${fieldName} must be a positive whole number.`);
-  }
-  return parsed;
-}
-
-export function parseNonNegativeInteger(value: string, fieldName: string): number {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return 0;
-  const parsed = Number.parseInt(trimmed, 10);
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    throw new Error(`${fieldName} must be zero or a positive whole number.`);
   }
   return parsed;
 }

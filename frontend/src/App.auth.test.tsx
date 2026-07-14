@@ -25,7 +25,7 @@ describe("Auth bootstrap and logout", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -52,7 +52,7 @@ describe("Auth bootstrap and logout", () => {
     logoutSpy.mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -84,7 +84,7 @@ describe("Auth bootstrap and logout", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );

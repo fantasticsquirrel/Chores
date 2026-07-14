@@ -10,6 +10,7 @@ const recipe: RecipeDetail = {
   id: 10,
   household_id: 1,
   owner_user_id: 1,
+  creator_email: "parent@example.com",
   parent_recipe_id: null,
   title: "Pancakes",
   description: "Weekend breakfast",
@@ -76,12 +77,13 @@ describe("Recipe organizer page", () => {
     mockRecipeApi();
 
     render(
-      <MemoryRouter initialEntries={["/recipes"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/recipes"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Recipe Organizer" })).toBeVisible();
+    expect(screen.getByText("Household Cookbook")).toBeVisible();
     expect(await screen.findByText("Pancakes")).toBeVisible();
     expect(screen.getByRole("img", { name: "Pancakes" })).toHaveAttribute("src", "https://example.com/pancakes.jpg");
     expect(screen.getByText("Dinner")).toBeVisible();
@@ -90,6 +92,7 @@ describe("Recipe organizer page", () => {
     fireEvent.click(screen.getByRole("link", { name: "View Recipe" }));
     await waitFor(() => expect(apiClient.getRecipe).toHaveBeenCalledWith(10));
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
+    expect(screen.getByText("Added by parent@example.com.")).toBeVisible();
     expect(screen.getByText("Default servings: 4")).toBeVisible();
     fireEvent.change(screen.getByLabelText("Scaled Servings"), { target: { value: "8" } });
     await waitFor(() => expect(apiClient.scaleRecipe).toHaveBeenCalledWith(10, { targetServings: 8 }));
@@ -130,12 +133,13 @@ describe("Recipe organizer page", () => {
     mockRecipeApi();
 
     render(
-      <MemoryRouter initialEntries={["/recipes/10"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/recipes/10"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
+    expect(screen.getByText("Added by parent@example.com.")).toBeVisible();
     expect(apiClient.getRecipe).toHaveBeenCalledWith(10);
     expect(screen.getAllByText("Rest batter.").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: "Back to Recipes" })).toHaveAttribute("href", "/recipes");
@@ -145,12 +149,13 @@ describe("Recipe organizer page", () => {
     mockRecipeApi();
 
     render(
-      <MemoryRouter initialEntries={["/recipes/10"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/recipes/10"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
+    expect(screen.getByText("Added by parent@example.com.")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Delete Recipe" }));
     expect(screen.getByRole("dialog", { name: "Delete recipe confirmation" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Permanently Delete" })).toBeDisabled();
@@ -160,12 +165,32 @@ describe("Recipe organizer page", () => {
     await waitFor(() => expect(screen.getByRole("heading", { name: "Recipe Organizer" })).toBeVisible());
   });
 
-  it("creates a recipe for the signed-in parent account", async () => {
+  it("shows household recipes read-only to a parent who did not create them", async () => {
+    mockRecipeApi();
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: { id: 2, household_id: 1, email: "other@example.com", role: "PARENT" },
+      csrf_token: "token",
+    });
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/recipes/10"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Pancakes" })).toBeVisible();
+    expect(screen.getByText("Added by parent@example.com.")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Edit Recipe" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Delete Recipe" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Only the creator or a household admin can edit this recipe/u)).toBeVisible();
+  });
+
+  it("creates a recipe for the household cookbook", async () => {
     mockRecipeApi([]);
     const createRecipeSpy = vi.spyOn(apiClient, "createRecipe").mockResolvedValue(recipe);
 
     render(
-      <MemoryRouter initialEntries={["/recipes"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/recipes"]}>
         <App />
       </MemoryRouter>,
     );

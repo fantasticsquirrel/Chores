@@ -63,7 +63,7 @@ describe("Notifications page", () => {
 
   it("shows notifications in the app shell and lets the user mark one read", async () => {
     render(
-      <MemoryRouter initialEntries={["/notifications"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/notifications"]}>
         <App />
       </MemoryRouter>,
     );
@@ -92,7 +92,7 @@ describe("Notifications page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/notifications"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/notifications"]}>
         <App />
       </MemoryRouter>,
     );
@@ -123,7 +123,7 @@ describe("Notifications page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/notifications"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/notifications"]}>
         <App />
       </MemoryRouter>,
     );

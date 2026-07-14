@@ -152,3 +152,15 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
 
     assert rows == [(1, "shared@example.com"), (2, "duplicate-user-2@child.local")]
     assert duplicate_count == 0
+
+    # Sparse legacy databases must support rollback and re-application of the
+    # security migration even when optional historical chore tables are absent.
+    command.downgrade(alembic_config, "20260714_0012")
+    downgraded = inspect(create_engine(database_url))
+    assert "auth_sessions" not in downgraded.get_table_names()
+    assert "active" not in {column["name"] for column in downgraded.get_columns("users")}
+
+    command.upgrade(alembic_config, "head")
+    upgraded = inspect(create_engine(database_url))
+    assert "auth_sessions" in upgraded.get_table_names()
+    assert "active" in {column["name"] for column in upgraded.get_columns("users")}

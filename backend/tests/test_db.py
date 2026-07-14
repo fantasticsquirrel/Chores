@@ -52,6 +52,8 @@ def test_sqlite_storage_pragmas_enabled(tmp_path: Path) -> None:
     with engine.connect() as connection:
         journal_mode = connection.execute(text("PRAGMA journal_mode;")).scalar_one()
         foreign_keys = connection.execute(text("PRAGMA foreign_keys;")).scalar_one()
+        busy_timeout = connection.execute(text("PRAGMA busy_timeout;")).scalar_one()
 
     assert str(journal_mode).lower() == "wal"
     assert int(foreign_keys) == 1
+    assert int(busy_timeout) == 5000

@@ -18,49 +18,54 @@ depends_on = None
 def upgrade() -> None:
     # can_manage existed before it was enforced. Preserve each historical
     # user's effective capabilities, then allow explicit view-only choices.
-    op.execute(sa.text("UPDATE user_module_access SET can_manage = can_view"))
+    bind = op.get_bind()
+    if sa.inspect(bind).has_table("user_module_access"):
+        op.execute(sa.text("UPDATE user_module_access SET can_manage = can_view"))
 
     with op.batch_alter_table("users") as batch_op:
         batch_op.add_column(sa.Column("active", sa.Boolean(), nullable=False, server_default=sa.true()))
 
-    with op.batch_alter_table("completion_records") as batch_op:
-        batch_op.add_column(sa.Column("occurrence_key", sa.String(length=160), nullable=True))
-    op.execute(
-        sa.text(
-            """
-            UPDATE completion_records AS current
-            SET occurrence_key =
-                CASE
-                    WHEN (SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) = 'SHARED'
-                    THEN 'household:' || current.household_id || ':chore:' || current.chore_id || ':date:' || current.date
-                    ELSE 'child:' || current.child_id || ':chore:' || current.chore_id || ':date:' || current.date
-                END ||
-                CASE WHEN current.id != (
-                    SELECT MIN(other.id)
-                    FROM completion_records AS other
-                    WHERE other.chore_id = current.chore_id
-                      AND other.date = current.date
-                      AND (
-                        ((SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) = 'SHARED' AND other.household_id = current.household_id)
-                        OR ((SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) != 'SHARED' AND other.child_id = current.child_id)
-                      )
-                ) THEN ':legacy:' || current.id ELSE '' END
-            """
+    inspector = sa.inspect(bind)
+    if inspector.has_table("completion_records"):
+        with op.batch_alter_table("completion_records") as batch_op:
+            batch_op.add_column(sa.Column("occurrence_key", sa.String(length=160), nullable=True))
+        op.execute(
+            sa.text(
+                """
+                UPDATE completion_records AS current
+                SET occurrence_key =
+                    CASE
+                        WHEN (SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) = 'SHARED'
+                        THEN 'household:' || current.household_id || ':chore:' || current.chore_id || ':date:' || current.date
+                        ELSE 'child:' || current.child_id || ':chore:' || current.chore_id || ':date:' || current.date
+                    END ||
+                    CASE WHEN current.id != (
+                        SELECT MIN(other.id)
+                        FROM completion_records AS other
+                        WHERE other.chore_id = current.chore_id
+                          AND other.date = current.date
+                          AND (
+                            ((SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) = 'SHARED' AND other.household_id = current.household_id)
+                            OR ((SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) != 'SHARED' AND other.child_id = current.child_id)
+                          )
+                    ) THEN ':legacy:' || current.id ELSE '' END
+                """
+            )
         )
-    )
-    with op.batch_alter_table("completion_records") as batch_op:
-        batch_op.create_unique_constraint("uq_completion_records_occurrence_key", ["occurrence_key"])
+        with op.batch_alter_table("completion_records") as batch_op:
+            batch_op.create_unique_constraint("uq_completion_records_occurrence_key", ["occurrence_key"])
 
-    with op.batch_alter_table("transactions") as batch_op:
-        batch_op.add_column(sa.Column("completion_record_id", sa.Integer(), nullable=True))
-        batch_op.create_foreign_key(
-            "fk_transactions_completion_record_id_completion_records",
-            "completion_records",
-            ["completion_record_id"],
-            ["id"],
-            ondelete="SET NULL",
-        )
-    op.create_index("ix_transactions_completion_record_id", "transactions", ["completion_record_id"], unique=True)
+    if inspector.has_table("transactions") and inspector.has_table("completion_records"):
+        with op.batch_alter_table("transactions") as batch_op:
+            batch_op.add_column(sa.Column("completion_record_id", sa.Integer(), nullable=True))
+            batch_op.create_foreign_key(
+                "fk_transactions_completion_record_id_completion_records",
+                "completion_records",
+                ["completion_record_id"],
+                ["id"],
+                ondelete="SET NULL",
+            )
+        op.create_index("ix_transactions_completion_record_id", "transactions", ["completion_record_id"], unique=True)
 
     op.create_table(
         "auth_sessions",
@@ -117,12 +122,32 @@ def downgrade() -> None:
     op.drop_table("security_audit_events")
     op.drop_table("login_attempts")
     op.drop_table("auth_sessions")
-    op.drop_index("ix_transactions_completion_record_id", table_name="transactions")
-    with op.batch_alter_table("transactions") as batch_op:
-        batch_op.drop_constraint("fk_transactions_completion_record_id_completion_records", type_="foreignkey")
-        batch_op.drop_column("completion_record_id")
-    with op.batch_alter_table("completion_records") as batch_op:
-        batch_op.drop_constraint("uq_completion_records_occurrence_key", type_="unique")
-        batch_op.drop_column("occurrence_key")
+
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if inspector.has_table("transactions") and "completion_record_id" in {
+        column["name"] for column in inspector.get_columns("transactions")
+    }:
+        if "ix_transactions_completion_record_id" in {
+            index["name"] for index in inspector.get_indexes("transactions")
+        }:
+            op.drop_index("ix_transactions_completion_record_id", table_name="transactions")
+        with op.batch_alter_table("transactions") as batch_op:
+            foreign_keys = {foreign_key.get("name") for foreign_key in inspector.get_foreign_keys("transactions")}
+            if "fk_transactions_completion_record_id_completion_records" in foreign_keys:
+                batch_op.drop_constraint("fk_transactions_completion_record_id_completion_records", type_="foreignkey")
+            batch_op.drop_column("completion_record_id")
+
+    inspector = sa.inspect(bind)
+    if inspector.has_table("completion_records") and "occurrence_key" in {
+        column["name"] for column in inspector.get_columns("completion_records")
+    }:
+        with op.batch_alter_table("completion_records") as batch_op:
+            unique_constraints = {
+                constraint.get("name") for constraint in inspector.get_unique_constraints("completion_records")
+            }
+            if "uq_completion_records_occurrence_key" in unique_constraints:
+                batch_op.drop_constraint("uq_completion_records_occurrence_key", type_="unique")
+            batch_op.drop_column("occurrence_key")
     with op.batch_alter_table("users") as batch_op:
         batch_op.drop_column("active")

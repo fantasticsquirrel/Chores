@@ -170,6 +170,8 @@ def recipe_feedback(session: Session, recipe_id: int) -> list[RecipeFeedback]:
 
 def summary_dict(session: Session, recipe: Recipe) -> dict[str, object]:
     data = recipe_base_dict(recipe)
+    creator = session.get(User, recipe.owner_user_id)
+    data["creator_email"] = creator.email if creator is not None else "Unknown family member"
     data["categories"] = [category_dict(category) for category in recipe_categories(session, recipe.id)]
     data["tags"] = [tag_dict(tag) for tag in recipe_tags(session, recipe.id)]
     data["ingredient_count"] = session.scalar(select(RecipeIngredient.id).where(RecipeIngredient.recipe_id == recipe.id).limit(1)) is not None and len(
@@ -203,7 +205,7 @@ def detail_dict(session: Session, recipe: Recipe) -> dict[str, object]:
     ]
     variants = session.scalars(
         select(Recipe)
-        .where(Recipe.owner_user_id == recipe.owner_user_id, Recipe.parent_recipe_id == recipe.id)
+        .where(Recipe.household_id == recipe.household_id, Recipe.parent_recipe_id == recipe.id)
         .order_by(Recipe.title)
     ).all()
     data["variants"] = [summary_dict(session, variant) for variant in variants]

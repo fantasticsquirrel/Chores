@@ -252,6 +252,7 @@ export interface RecipeSummary {
   id: number;
   household_id: number;
   owner_user_id: number;
+  creator_email?: string;
   parent_recipe_id: number | null;
   title: string;
   description: string;

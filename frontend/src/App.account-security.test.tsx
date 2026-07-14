@@ -15,7 +15,7 @@ describe("Account security page", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -42,7 +42,7 @@ describe("Account security page", () => {
     const changePasswordSpy = vi.spyOn(apiClient, "changePassword");
 
     render(
-      <MemoryRouter initialEntries={["/account/security"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/account/security"]}>
         <App />
       </MemoryRouter>,
     );
@@ -66,7 +66,7 @@ describe("Account security page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/account/security"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/account/security"]}>
         <App />
       </MemoryRouter>,
     );
@@ -95,7 +95,7 @@ describe("Account security page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/chore/account/security"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/chore/account/security"]}>
         <App />
       </MemoryRouter>,
     );

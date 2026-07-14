@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from pathlib import Path
+from threading import Barrier
 
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
@@ -412,6 +414,79 @@ def test_shared_chore_duplicate_pending_approval_is_rejected_without_second_cred
         )
         assert reward is not None
         assert reward.completion_record_id == approved_records[0].id
+
+
+def test_shared_chore_simultaneous_approvals_commit_one_occurrence(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 2, 23)
+
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
+        first_child_id = _create_child(client, household_id, csrf_token, "Riley")
+        second_child_id = _create_child(client, household_id, csrf_token, "Maya")
+        chore_id = _create_chore(
+            household_id,
+            target_date,
+            completion_mode=CompletionMode.SHARED,
+            reward_cents=0,
+        )
+
+    session_factory = get_session_factory(get_settings().database_url)
+    with session_factory() as session:
+        submissions = [
+            Submission(household_id=household_id, child_id=child_id, for_date=target_date, status=SubmissionStatus.PENDING)
+            for child_id in (first_child_id, second_child_id)
+        ]
+        session.add_all(submissions)
+        session.flush()
+        session.add_all(
+            SubmissionItem(submission_id=submission.id, chore_id=chore_id, status=SubmissionStatus.PENDING)
+            for submission in submissions
+        )
+        session.commit()
+        submission_ids = [submission.id for submission in submissions]
+
+    barrier = Barrier(2)
+
+    def approve(submission_id: int) -> tuple[int, str | None]:
+        with TestClient(app) as client:
+            csrf = _login_parent(client)
+            barrier.wait(timeout=10)
+            response = client.post(
+                f"/chore-api/submissions/{submission_id}/approve-all",
+                headers={CSRF_HEADER_NAME: csrf},
+            )
+            detail = response.json().get("detail") if response.headers.get("content-type", "").startswith("application/json") else None
+            return response.status_code, detail
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        results = list(executor.map(approve, submission_ids))
+
+    assert sorted(status_code for status_code, _ in results) == [200, 409]
+    conflict_detail = next(detail for status_code, detail in results if status_code == 409)
+    assert conflict_detail in {
+        "Chore already has an approved completion.",
+        "Chore occurrence was already approved.",
+    }
+
+    with session_factory() as session:
+        approved_records = session.scalars(
+            select(CompletionRecord).where(
+                CompletionRecord.household_id == household_id,
+                CompletionRecord.chore_id == chore_id,
+                CompletionRecord.status == CompletionStatus.APPROVED,
+            )
+        ).all()
+        assert len(approved_records) == 1
+        linked_rewards = session.scalar(
+            select(func.count()).select_from(Transaction).where(Transaction.completion_record_id == approved_records[0].id)
+        )
+        assert linked_rewards == 0
 
 
 def test_none_schedule_uses_target_date_as_occurrence_and_blocks_only_that_day(

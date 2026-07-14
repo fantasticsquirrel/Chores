@@ -59,8 +59,9 @@ export function AccountSecurityPage(): ReactElement {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
+      window.sessionStorage.setItem("family-manager.password-changed", "1");
+      navigate("/login?passwordChanged=1", { replace: true, flushSync: true });
       clearSession();
-      navigate("/login?passwordChanged=1", { replace: true });
     } catch (error: unknown) {
       setSubmitError(formatApiError(error));
     } finally {

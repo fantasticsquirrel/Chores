@@ -4,7 +4,6 @@ import type { Child, Chore } from "../../../api/models";
 import {
   buildDefaultChoreForm,
   eligibilityLabel,
-  parseNonNegativeInteger,
   parseOptionalPositiveInteger,
   scheduleLabel,
   timingLabel,
@@ -42,7 +41,6 @@ describe("mobile chore presentation helpers", () => {
   it("builds the default form from the supplied date", () => {
     expect(buildDefaultChoreForm("2026-06-16")).toMatchObject({
       name: "",
-      reward_cents: "0",
       start_date: "2026-06-16",
       schedule_mode: "NONE",
     });
@@ -54,12 +52,9 @@ describe("mobile chore presentation helpers", () => {
     expect(timingLabel(chore({ expires_at: "2026-02-01", timeout_days: 3 }))).toBe("Ends 2026-02-01 · Window 3 days");
   });
 
-  it("parses integer form values with mobile validation messages", () => {
+  it("parses optional positive integer form values with mobile validation messages", () => {
     expect(parseOptionalPositiveInteger("", "Timeout")).toBeNull();
     expect(parseOptionalPositiveInteger("3", "Timeout")).toBe(3);
-    expect(parseNonNegativeInteger("", "Reward")).toBe(0);
-    expect(parseNonNegativeInteger("4", "Reward")).toBe(4);
     expect(() => parseOptionalPositiveInteger("0", "Timeout")).toThrow("Timeout must be a positive whole number.");
-    expect(() => parseNonNegativeInteger("-1", "Reward")).toThrow("Reward must be zero or a positive whole number.");
   });
 });
