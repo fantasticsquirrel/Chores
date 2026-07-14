@@ -202,6 +202,60 @@ def test_worker_revalidates_endpoint_uses_bounded_timeout_and_never_resends_sent
     assert calls[0]["allow_redirects"] is False
 
 
+def test_worker_rejects_subscription_owned_by_different_user(tmp_path: Path, monkeypatch) -> None:
+    _configure(tmp_path, monkeypatch)
+    seed = _seed()
+    monkeypatch.setattr("socket.getaddrinfo", _public_dns)
+    from app.services.notifications import process_pending_push_deliveries, upsert_push_subscription
+
+    with seed["factory"]() as session:
+        subscription = upsert_push_subscription(
+            session,
+            user_id=seed["child_user_id"],
+            endpoint="https://fcm.googleapis.com/child-sub",
+            p256dh="p",
+            auth="a",
+            device_label="child-browser",
+        )
+        notification = Notification(
+            household_id=seed["household_id"],
+            user_id=seed["parent_id"],
+            module_key="chores",
+            category="general",
+            severity="info",
+            title="Private parent notification",
+            body="Do not send to child",
+            link_url="/chore/",
+            in_app_visible=True,
+            created_at=datetime(2026, 7, 14, 12, 0),
+        )
+        session.add(notification)
+        session.flush()
+        session.add(
+            NotificationDeliveryAttempt(
+                notification_id=notification.id,
+                channel=f"push:{subscription.id}",
+                status="pending",
+                attempted_at=datetime(2026, 7, 14, 12, 0),
+                error_message="",
+            )
+        )
+        session.commit()
+
+    calls: list[dict[str, object]] = []
+
+    def sender(**kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(status_code=201)
+
+    result = process_pending_push_deliveries(
+        limit=10, now=datetime(2026, 7, 14, 12, 1, tzinfo=UTC), sender=sender
+    )
+
+    assert result == {"dead": 1}
+    assert calls == []
+
+
 def test_worker_reclaims_only_stale_processing_leases(tmp_path: Path, monkeypatch) -> None:
     _configure(tmp_path, monkeypatch)
     seed = _seed()

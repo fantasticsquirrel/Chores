@@ -281,6 +281,34 @@ def test_recipe_delete_is_limited_to_creator_or_household_admin(tmp_path: Path, 
         assert still_present.status_code == 200
 
 
+def test_household_admin_can_edit_recipe_with_creator_metadata(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    creator, creator_password = _create_user(email="creator@example.com")
+    admin, admin_password = _create_user(
+        email="admin@example.com", role=UserRole.PARENT_ADMIN, household_id=creator.household_id
+    )
+
+    with TestClient(app) as client:
+        creator_headers = _login(client, creator, creator_password)
+        category = client.post("/chore-api/recipes/categories", json=_category_payload(), headers=creator_headers).json()
+        tag = client.post("/chore-api/recipes/tags", json=_tag_payload(), headers=creator_headers).json()
+        payload = _recipe_payload(category_ids=[category["id"]], tag_ids=[tag["id"]])
+        created = client.post("/chore-api/recipes", json=payload, headers=creator_headers).json()
+
+    with TestClient(app) as client:
+        admin_headers = _login(client, admin, admin_password)
+        updated = client.put(
+            f"/chore-api/recipes/{created['id']}",
+            json={**payload, "title": "Admin-updated Pancakes"},
+            headers=admin_headers,
+        )
+
+    assert updated.status_code == 200
+    assert updated.json()["title"] == "Admin-updated Pancakes"
+    assert [row["id"] for row in updated.json()["categories"]] == [category["id"]]
+    assert [row["id"] for row in updated.json()["tags"]] == [tag["id"]]
+
+
 def test_recipe_url_import_and_backup_roundtrip(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     parent, password = _create_user(email="parent@example.com")

@@ -44,11 +44,13 @@ def upgrade() -> None:
                         FROM completion_records AS other
                         WHERE other.chore_id = current.chore_id
                           AND other.date = current.date
+                          AND other.status = 'APPROVED'
                           AND (
                             ((SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) = 'SHARED' AND other.household_id = current.household_id)
                             OR ((SELECT completion_mode FROM chores WHERE chores.id = current.chore_id) != 'SHARED' AND other.child_id = current.child_id)
                           )
                     ) THEN ':legacy:' || current.id ELSE '' END
+                WHERE current.status = 'APPROVED'
                 """
             )
         )

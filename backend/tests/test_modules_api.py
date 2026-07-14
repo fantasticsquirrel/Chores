@@ -242,7 +242,7 @@ def test_parent_admin_cannot_remove_last_admin_module_access(tmp_path: Path, mon
     assert response.json()["detail"] == "Cannot remove admin module access from the last household admin."
 
 
-def test_parent_admin_can_remove_admin_access_when_another_admin_remains(tmp_path: Path, monkeypatch) -> None:
+def test_parent_admin_cannot_remove_access_when_only_other_admin_is_inactive(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     admin, password = _create_user(UserRole.PARENT_ADMIN, email="admin-primary@example.com")
 
@@ -256,6 +256,7 @@ def test_parent_admin_can_remove_admin_access_when_another_admin_remains(tmp_pat
                 password_hash=hash_password("password123"),
                 role=UserRole.PARENT_ADMIN,
                 child_id=None,
+                active=False,
             )
         )
         session.commit()
@@ -271,8 +272,8 @@ def test_parent_admin_can_remove_admin_access_when_another_admin_remains(tmp_pat
             json={"module_key": "admin", "can_view": False},
         )
 
-    assert response.status_code == 200
-    assert "admin" not in [module["key"] for module in response.json()["modules"]]
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot remove admin module access from the last household admin."
 
 
 def test_parent_admin_without_admin_module_access_cannot_list_or_update_module_access(tmp_path: Path, monkeypatch) -> None:

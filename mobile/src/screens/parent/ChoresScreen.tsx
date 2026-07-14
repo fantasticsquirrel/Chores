@@ -20,6 +20,7 @@ import { SectionCard } from "../../components/SectionCard";
 import {
   assignmentOptions,
   buildDefaultChoreForm,
+  buildEditChoreForm,
   completionOptions,
   eligibilityLabel,
   type MobileChoreFormState,
@@ -328,19 +329,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
 
   function openEditForm(chore: Chore) {
     setEditingId(chore.id);
-    setForm({
-      name: chore.name,
-      start_date: chore.start_date,
-      expires_at: chore.expires_at ?? "",
-      timeout_days: chore.timeout_days?.toString() ?? "",
-      schedule_mode: chore.schedule_mode,
-      schedule_interval: String(chore.schedule_interval ?? 1),
-      schedule_unit: chore.schedule_unit ?? "WEEK",
-      completion_mode: chore.completion_mode,
-      assignment_mode: chore.assignment_mode,
-      allowed_child_ids: chore.allowed_child_ids,
-      rotation_order: chore.rotation_order,
-    });
+    setForm(buildEditChoreForm(chore));
     setSubmitError(null);
     setShowForm(true);
   }
@@ -389,7 +378,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
         await apiClient.updateChore(editingId, {
           household_id: householdId,
           name,
-          reward_cents: 0,
+          reward_cents: form.preserved_reward_cents,
           start_date: form.start_date,
           expires_at: expiresAt,
           timeout_days: timeoutDays,

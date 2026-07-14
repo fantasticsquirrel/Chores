@@ -29,10 +29,21 @@ def upgrade() -> None:
         sa.text(
             """
             DELETE FROM notification_delivery_attempts
-            WHERE id NOT IN (
-                SELECT MIN(id)
-                FROM notification_delivery_attempts
-                GROUP BY notification_id, channel
+            WHERE id IN (
+                SELECT id
+                FROM (
+                    SELECT
+                        id,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY notification_id, channel
+                            ORDER BY
+                                CASE WHEN status IN ('sent', 'delivered') THEN 0 ELSE 1 END,
+                                attempted_at DESC,
+                                id DESC
+                        ) AS duplicate_rank
+                    FROM notification_delivery_attempts
+                ) AS ranked_attempts
+                WHERE duplicate_rank > 1
             )
             """
         )

@@ -15,7 +15,7 @@ from app.models.core import (
     User,
 )
 from app.schemas.recipes import CreateRecipeRequest, UpdateRecipeRequest
-from app.services.recipes.ownership import get_category_for_owner, get_recipe_for_owner, get_tag_for_owner
+from app.services.recipes.ownership import get_category_for_household, get_recipe_for_owner, get_tag_for_household
 
 
 def validate_owned_refs(session: Session, user: User, payload: CreateRecipeRequest | UpdateRecipeRequest, recipe_id: int | None = None) -> None:
@@ -24,9 +24,9 @@ def validate_owned_refs(session: Session, user: User, payload: CreateRecipeReque
         if recipe_id is not None and parent.id == recipe_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Recipe cannot be its own variant parent.")
     for category_id in payload.category_ids:
-        get_category_for_owner(session, category_id, user)
+        get_category_for_household(session, category_id, user)
     for tag_id in payload.tag_ids:
-        get_tag_for_owner(session, tag_id, user)
+        get_tag_for_household(session, tag_id, user)
     for component in payload.components:
         component_recipe = get_recipe_for_owner(session, component.component_recipe_id, user)
         if recipe_id is not None and component_recipe.id == recipe_id:
