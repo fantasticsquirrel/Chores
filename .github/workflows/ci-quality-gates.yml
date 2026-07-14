@@ -68,4 +68,4 @@ jobs:
         run: pytest backend/tests/test_alembic_migrations.py::test_alembic_upgrade_head_creates_family_manager_schema -q
 
       - name: Python dependency audit
-        run: pip-audit --strict
+        run: pip-audit --strict backend
