@@ -33,13 +33,13 @@ describe("Mobile browser smoke flows", () => {
     createChildSpy.mockResolvedValue({ id: 2, household_id: 1, name: "Leo", active: true });
 
     render(
-      <MemoryRouter initialEntries={["/parent/children"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Parent Dashboard" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Today" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Leo" } });
@@ -96,7 +96,7 @@ describe("Mobile browser smoke flows", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );

@@ -164,6 +164,10 @@ export abstract class FamilyCoreApiEndpoints {
     return this.post<PushSubscriptionResponse, PushSubscriptionCreate>("/push/subscriptions", payload);
   }
 
+  async disablePushSubscriptions(): Promise<void> {
+    await this.delete("/push/subscriptions");
+  }
+
   async listChildren(params: ListChildrenParams): Promise<Child[]> {
     return this.get<Child[]>("/children", params);
   }

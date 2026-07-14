@@ -15,7 +15,7 @@ describe("Account security page", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -34,14 +34,15 @@ describe("Account security page", () => {
         new_password: "new-password-456",
       }),
     );
-    expect(await screen.findByText("Password changed successfully.")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    expect(screen.getByText("Password changed. Sign in again with your new password.")).toBeVisible();
   });
 
   it("shows client-side mismatch validation and does not call API", async () => {
     const changePasswordSpy = vi.spyOn(apiClient, "changePassword");
 
     render(
-      <MemoryRouter initialEntries={["/account/security"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/account/security"]}>
         <App />
       </MemoryRouter>,
     );
@@ -65,7 +66,7 @@ describe("Account security page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/account/security"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/account/security"]}>
         <App />
       </MemoryRouter>,
     );
@@ -94,7 +95,7 @@ describe("Account security page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/chore/account/security"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/chore/account/security"]}>
         <App />
       </MemoryRouter>,
     );

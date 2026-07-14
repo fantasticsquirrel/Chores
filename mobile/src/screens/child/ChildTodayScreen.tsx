@@ -10,7 +10,7 @@ import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
 import { styles } from "../../styles/layout";
 import { todayDateString } from "../../utils/date";
-import { formatCents, formatError } from "../../utils/format";
+import { formatError } from "../../utils/format";
 
 export function ChildTodayScreen() {
   const initialDate = useMemo(() => todayDateString(), []);
@@ -135,10 +135,7 @@ export function ChildTodayScreen() {
               >
                 <View style={styles.rowMain}>
                   <Text style={styles.rowTitle}>{chore.name}</Text>
-                  <Text style={styles.rowMeta}>
-                    {formatCents(chore.reward_cents)}
-                    {chore.expires_on ? ` · expires ${chore.expires_on}` : ""}
-                  </Text>
+                  {chore.expires_on ? <Text style={styles.rowMeta}>Expires {chore.expires_on}</Text> : null}
                 </View>
                 <Text
                   style={[

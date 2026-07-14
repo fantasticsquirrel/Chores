@@ -9,7 +9,7 @@ describe("Parent dashboard", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders child balance rows and quick actions", async () => {
+  it("renders a task-first Today queue without finance or reports concepts", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy.mockResolvedValue([{ id: 1, household_id: 1, name: "Maya", active: true }]);
     const listSubmissionsSpy = vi.spyOn(apiClient, "listSubmissions");
@@ -23,17 +23,24 @@ describe("Parent dashboard", () => {
         items: [],
       },
     ]);
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([
+      { chore_id: 4, name: "Unload dishwasher", reward_cents: 0, occurrence_date: "2026-02-23", expires_on: null },
+    ]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Maya")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
+    expect(await screen.findByText("Maya · 1 chore due")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Review 1 submission" })).toHaveAttribute("href", "/board");
     expect(screen.getByText("Pending Submissions").closest("article")).toHaveTextContent("1");
     expect(screen.getByRole("link", { name: "Manage Children" })).toHaveAttribute("href", "/parent/children");
     expect(screen.getByRole("link", { name: "Open Board" })).toHaveAttribute("href", "/board");
+    expect(screen.queryByText(/balance/iu)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /reports/iu })).not.toBeInTheDocument();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 1 });
     expect(listSubmissionsSpy).toHaveBeenCalledWith({ status: "PENDING" });
   });
@@ -45,9 +52,10 @@ describe("Parent dashboard", () => {
       }),
     );
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -69,14 +77,15 @@ describe("Parent dashboard", () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy.mockResolvedValue([{ id: 5, household_id: 42, name: "Ari", active: true }]);
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Ari")).toBeVisible();
+    expect(await screen.findByText(/Ari · 0 chores due/u)).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 42 });
   });
 });

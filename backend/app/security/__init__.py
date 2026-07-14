@@ -3,7 +3,9 @@ from app.security.sessions import (
     SESSION_COOKIE_MAX_AGE_SECONDS,
     SESSION_COOKIE_NAME,
     create_session_token,
-    parse_session_token,
+    resolve_session,
+    revoke_session,
+    revoke_user_sessions,
 )
 
 __all__ = [
@@ -12,6 +14,8 @@ __all__ = [
     "create_session_token",
     "hash_password",
     "needs_rehash",
-    "parse_session_token",
+    "resolve_session",
+    "revoke_session",
+    "revoke_user_sessions",
     "verify_password",
 ]

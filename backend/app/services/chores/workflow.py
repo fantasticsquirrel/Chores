@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import and_, exists, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.core import (
@@ -15,6 +16,7 @@ from app.models.core import (
     CompletionRecord,
     Submission,
     SubmissionItem,
+    Transaction,
     User,
 )
 from app.models.enums import (
@@ -24,6 +26,7 @@ from app.models.enums import (
     ScheduleMode,
     ScheduleUnit,
     SubmissionStatus,
+    TransactionType,
     UserRole,
 )
 from app.schemas.workflow import (
@@ -248,6 +251,50 @@ def _approval_occurrence_or_409(session: Session, submission: Submission, chore:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore already has an approved completion.")
 
     return occurrence_date
+
+
+def _occurrence_key(submission: Submission, chore: Chore, occurrence_date: date) -> str:
+    if chore.completion_mode == CompletionMode.SHARED:
+        scope = f"household:{submission.household_id}"
+    else:
+        scope = f"child:{submission.child_id}"
+    return f"{scope}:chore:{chore.id}:date:{occurrence_date.isoformat()}"
+
+
+def record_approved_occurrence(
+    session: Session,
+    *,
+    submission: Submission,
+    chore: Chore,
+    occurrence_date: date,
+) -> CompletionRecord:
+    """Atomically establish the canonical occurrence and any linked reward."""
+    completion = CompletionRecord(
+        household_id=submission.household_id,
+        child_id=submission.child_id,
+        chore_id=chore.id,
+        occurrence_key=_occurrence_key(submission, chore, occurrence_date),
+        date=occurrence_date,
+        status=CompletionStatus.APPROVED,
+    )
+    session.add(completion)
+    try:
+        session.flush()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore occurrence was already approved.") from exc
+
+    if chore.reward_cents != 0:
+        session.add(
+            Transaction(
+                household_id=submission.household_id,
+                child_id=submission.child_id,
+                completion_record_id=completion.id,
+                amount_cents=chore.reward_cents,
+                type=TransactionType.CHORE_APPROVAL,
+            )
+        )
+    return completion
 
 
 def _is_child_rotation_assignee(session: Session, chore: Chore, child_id: int, occurrence_date: date) -> bool:

@@ -11,13 +11,6 @@ type PageState = {
   error: string | null;
 };
 
-function toUsd(cents: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(cents / 100);
-}
-
 function buildTodayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -138,10 +131,7 @@ export function ChildTodayPage(): ReactElement {
                   />
                   <span>
                     <span className="balance-name">{chore.name}</span>
-                    <span className="balance-meta">
-                      {toUsd(chore.reward_cents)} reward
-                      {chore.expires_on != null ? ` • Expires ${chore.expires_on}` : ""}
-                    </span>
+                    {chore.expires_on != null ? <span className="balance-meta">Expires {chore.expires_on}</span> : null}
                   </span>
                 </label>
               </li>

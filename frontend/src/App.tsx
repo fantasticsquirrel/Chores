@@ -32,13 +32,12 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { to: "/parent/dashboard", label: "Parent Dashboard", roles: ["PARENT_ADMIN", "PARENT"] },
+  { to: "/parent/dashboard", label: "Today", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
   { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
   { to: "/recipes", label: "Recipes", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "recipes" },
   { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
-  { to: "/parent/children", label: "Children", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/board", label: "Board", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
+
   { to: "/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
   { to: "/notifications", label: "Notifications", roles: ["PARENT_ADMIN", "PARENT", "CHILD"], moduleKey: "chores" },
   { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
@@ -113,7 +112,7 @@ type ModuleProtectedRouteProps = {
 };
 
 function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactElement {
-  const { status, moduleKeys } = useAuth();
+  const { status, moduleKeys, manageableModuleKeys } = useAuth();
 
   if (status !== "authenticated") {
     return <Navigate to="/login" replace />;
@@ -125,6 +124,17 @@ function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactEl
         title="Module Not Available"
         description="This module is not enabled for your account. Ask a household admin to update module access."
       />
+    );
+  }
+
+  if (!manageableModuleKeys.includes(moduleKey)) {
+    return (
+      <>
+        <InlineNotice variant="info">You have view-only access. Management controls are hidden.</InlineNotice>
+        <div className="module-read-only">
+          <Outlet />
+        </div>
+      </>
     );
   }
 
@@ -240,6 +250,7 @@ export default function App(): ReactElement {
                   element={<ParentSubmissionReviewPage />}
                 />
                 <Route path="/parent/chores" element={<ParentChoresPage />} />
+                <Route path="/parent/children" element={<ParentChildrenPage />} />
               </Route>
               <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
                 <Route path="/homeschool" element={<HomeschoolPage />} />
@@ -249,20 +260,8 @@ export default function App(): ReactElement {
                 <Route path="/recipes/:recipeId" element={<RecipeDetailPage />} />
               </Route>
               <Route
-                path="/parent/children"
-                element={<ParentChildrenPage />}
-              />
-              <Route
                 path="/parent/tags"
                 element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}
-              />
-              <Route
-                path="/parent/templates"
-                element={<RouteCard title="Parent Templates" description="Template scheduling UX is queued for a later task." />}
-              />
-              <Route
-                path="/parent/reports"
-                element={<RouteCard title="Parent Reports" description="Report visualizations will follow after transaction and approval flows." />}
               />
             </Route>
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN"]} />}>

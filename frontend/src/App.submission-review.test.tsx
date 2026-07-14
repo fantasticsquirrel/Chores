@@ -31,7 +31,7 @@ describe("Parent submission review page", () => {
     ]);
 
     render(
-      <MemoryRouter initialEntries={["/board"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/board"]}>
         <App />
       </MemoryRouter>,
     );
@@ -76,7 +76,7 @@ describe("Parent submission review page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/board"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/board"]}>
         <App />
       </MemoryRouter>,
     );
@@ -149,7 +149,7 @@ describe("Parent submission review page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/board"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/board"]}>
         <App />
       </MemoryRouter>,
     );
@@ -174,7 +174,7 @@ describe("Parent submission review page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/board"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/board"]}>
         <App />
       </MemoryRouter>,
     );
@@ -212,7 +212,7 @@ describe("Parent submission review page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/board"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/board"]}>
         <App />
       </MemoryRouter>,
     );
@@ -255,7 +255,7 @@ describe("Parent submission review page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/board"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/board"]}>
         <App />
       </MemoryRouter>,
     );

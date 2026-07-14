@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base, TimestampMixin
@@ -52,6 +52,40 @@ class User(TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, native_enum=False), nullable=False)
     child_id: Mapped[int | None] = mapped_column(ForeignKey("children.id", ondelete="SET NULL"), nullable=True, index=True)
+    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+
+class AuthSession(TimestampMixin, Base):
+    __tablename__ = "auth_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
+    ip_address: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    user_agent: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+
+
+class LoginAttempt(TimestampMixin, Base):
+    __tablename__ = "login_attempts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    account_key_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    ip_address: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    succeeded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+
+class SecurityAuditEvent(TimestampMixin, Base):
+    __tablename__ = "security_audit_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    actor_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    target_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    household_id: Mapped[int | None] = mapped_column(ForeignKey("households.id", ondelete="SET NULL"), nullable=True, index=True)
+    ip_address: Mapped[str] = mapped_column(String(64), nullable=False, default="unknown")
+    details_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
 class Module(Base):
@@ -157,12 +191,16 @@ class SubmissionItem(Base):
 
 class CompletionRecord(Base):
     __tablename__ = "completion_records"
-    __table_args__ = (UniqueConstraint("child_id", "chore_id", "date"),)
+    __table_args__ = (
+        UniqueConstraint("child_id", "chore_id", "date"),
+        UniqueConstraint("occurrence_key", name="uq_completion_records_occurrence_key"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     child_id: Mapped[int] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False, index=True)
     chore_id: Mapped[int] = mapped_column(ForeignKey("chores.id", ondelete="CASCADE"), nullable=False, index=True)
+    occurrence_key: Mapped[str | None] = mapped_column(String(160), nullable=True)
     date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[CompletionStatus] = mapped_column(Enum(CompletionStatus, native_enum=False), nullable=False)
 
@@ -173,6 +211,9 @@ class Transaction(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     child_id: Mapped[int] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False, index=True)
+    completion_record_id: Mapped[int | None] = mapped_column(
+        ForeignKey("completion_records.id", ondelete="SET NULL"), nullable=True, unique=True, index=True
+    )
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     type: Mapped[TransactionType] = mapped_column(Enum(TransactionType, native_enum=False), nullable=False)
 
@@ -250,6 +291,9 @@ class RecipeCategory(TimestampMixin, Base):
     __table_args__ = (UniqueConstraint("owner_user_id", "name"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
+    )
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -261,6 +305,9 @@ class RecipeTag(TimestampMixin, Base):
     __table_args__ = (UniqueConstraint("owner_user_id", "name"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
+    )
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -277,6 +324,9 @@ class Recipe(TimestampMixin, Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
+    )
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
     owner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     parent_recipe_id: Mapped[int | None] = mapped_column(ForeignKey("recipes.id", ondelete="CASCADE"), nullable=True, index=True)
@@ -372,6 +422,7 @@ class Notification(TimestampMixin, Base):
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
     dedup_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    in_app_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
 
 class NotificationPreference(Base):
@@ -401,6 +452,9 @@ class PushSubscription(TimestampMixin, Base):
 
 class NotificationDeliveryAttempt(Base):
     __tablename__ = "notification_delivery_attempts"
+    __table_args__ = (
+        Index("uq_notification_delivery_attempt_channel", "notification_id", "channel", unique=True),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     notification_id: Mapped[int] = mapped_column(ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -439,6 +493,9 @@ ALL_MODELS = (
     Household,
     Child,
     User,
+    AuthSession,
+    LoginAttempt,
+    SecurityAuditEvent,
     Module,
     HouseholdModuleAccess,
     UserModuleAccess,

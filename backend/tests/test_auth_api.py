@@ -210,8 +210,8 @@ def test_child_login_rejects_duplicate_child_names(tmp_path: Path, monkeypatch) 
             },
         )
 
-    assert response.status_code == 409
-    assert response.json()["detail"] == "Multiple children have that name. Ask a parent to use a unique child name."
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid child login credentials."
 
 
 def test_child_login_rejects_inactive_child(tmp_path: Path, monkeypatch) -> None:
@@ -318,7 +318,7 @@ def test_login_sets_expected_cookie_attributes(tmp_path: Path, monkeypatch) -> N
 
 
 
-def test_login_sets_secure_cookies_for_forwarded_https(tmp_path: Path, monkeypatch) -> None:
+def test_login_ignores_forwarded_https_from_untrusted_peer(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     user, password = _create_parent_user()
 
@@ -333,8 +333,8 @@ def test_login_sets_secure_cookies_for_forwarded_https(tmp_path: Path, monkeypat
     set_cookie_headers = response.headers.get_list("set-cookie")
     session_cookie_header = next(header for header in set_cookie_headers if header.startswith("chore_tracker_session="))
     csrf_cookie_header = next(header for header in set_cookie_headers if header.startswith(f"{CSRF_COOKIE_NAME}="))
-    assert "Secure" in session_cookie_header
-    assert "Secure" in csrf_cookie_header
+    assert "Secure" not in session_cookie_header
+    assert "Secure" not in csrf_cookie_header
 
 def test_me_rejects_tampered_session_cookie(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)

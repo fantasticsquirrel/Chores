@@ -1,11 +1,15 @@
 import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { apiClient } from "../api";
+import { useAuth } from "../auth/useAuth";
 import { formatApiError } from "../lib/errors";
 import { Button, Card, FormField, InlineNotice, TextInput } from "../ui";
 
 export function AccountSecurityPage(): ReactElement {
+  const navigate = useNavigate();
+  const { clearSession } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,7 +59,9 @@ export function AccountSecurityPage(): ReactElement {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSubmitSuccess("Password changed successfully.");
+      window.sessionStorage.setItem("family-manager.password-changed", "1");
+      navigate("/login?passwordChanged=1", { replace: true, flushSync: true });
+      clearSession();
     } catch (error: unknown) {
       setSubmitError(formatApiError(error));
     } finally {

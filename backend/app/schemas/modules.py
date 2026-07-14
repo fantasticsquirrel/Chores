@@ -9,6 +9,7 @@ class ModuleResponse(BaseModel):
     key: str
     name: str
     description: str
+    can_manage: bool
 
 
 class MyModulesResponse(BaseModel):

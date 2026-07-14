@@ -46,6 +46,7 @@ describe("Notifications page", () => {
       settings: { ...notificationSettings.chores, push_enabled: true },
     });
     vi.spyOn(apiClient, "markNotificationRead").mockResolvedValue(undefined);
+    vi.spyOn(apiClient, "disablePushSubscriptions").mockResolvedValue(undefined);
     vi.spyOn(apiClient, "createPushSubscription").mockResolvedValue({
       id: 1,
       endpoint: "https://push.example.test/sub/1",
@@ -62,7 +63,7 @@ describe("Notifications page", () => {
 
   it("shows notifications in the app shell and lets the user mark one read", async () => {
     render(
-      <MemoryRouter initialEntries={["/notifications"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/notifications"]}>
         <App />
       </MemoryRouter>,
     );
@@ -78,8 +79,8 @@ describe("Notifications page", () => {
 
   it("saves chore reminder settings and registers browser push when supported", async () => {
     const subscribe = vi.fn().mockResolvedValue({
-      endpoint: "https://push.example.test/sub/1",
-      toJSON: () => ({ endpoint: "https://push.example.test/sub/1", keys: { p256dh: "p256", auth: "auth" } }),
+      endpoint: "https://fcm.googleapis.com/fcm/send/sub-1",
+      toJSON: () => ({ endpoint: "https://fcm.googleapis.com/fcm/send/sub-1", keys: { p256dh: "p256", auth: "auth" } }),
     });
     Object.defineProperty(window, "Notification", {
       configurable: true,
@@ -91,7 +92,7 @@ describe("Notifications page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/notifications"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/notifications"]}>
         <App />
       </MemoryRouter>,
     );
@@ -107,5 +108,31 @@ describe("Notifications page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enable app push notifications" }));
     await waitFor(() => expect(apiClient.createPushSubscription).toHaveBeenCalled());
     expect(subscribe).toHaveBeenCalledWith({ applicationServerKey: expect.any(Uint8Array), userVisibleOnly: true });
+  });
+
+  it("detects and disables an existing browser push subscription", async () => {
+    const unsubscribe = vi.fn().mockResolvedValue(true);
+    const getSubscription = vi.fn().mockResolvedValue({ unsubscribe });
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { ready: Promise.resolve({ pushManager: { getSubscription } }) },
+    });
+    vi.mocked(apiClient.updateNotificationSettings).mockResolvedValueOnce({
+      module_key: "chores",
+      settings: { ...notificationSettings.chores, push_enabled: false },
+    });
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/notifications"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const disable = await screen.findByRole("button", { name: "Disable app push notifications" });
+    fireEvent.click(disable);
+    await waitFor(() => expect(apiClient.disablePushSubscriptions).toHaveBeenCalled());
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(apiClient.updateNotificationSettings).toHaveBeenCalledWith("chores", { push_enabled: false });
+    expect(await screen.findByText("App push notifications are disabled for this account.")).toBeVisible();
   });
 });

@@ -81,6 +81,7 @@ def _login(client: TestClient, email: str) -> str:
 
 def test_notification_inbox_settings_and_push_subscription(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
+    monkeypatch.setattr("socket.getaddrinfo", lambda *_a, **_k: [(2, 1, 6, "", ("93.184.216.34", 443))])
     seed = _seed_household()
 
     with TestClient(app) as client:
@@ -113,14 +114,17 @@ def test_notification_inbox_settings_and_push_subscription(tmp_path: Path, monke
             "/chore-api/push/subscriptions",
             headers={CSRF_HEADER_NAME: csrf},
             json={
-                "endpoint": "https://push.example.test/sub/1",
+                "endpoint": "https://fcm.googleapis.com/sub/1",
                 "keys": {"p256dh": "p256", "auth": "auth"},
                 "device_label": "Test Browser",
             },
         )
         assert subscription.status_code == 201
-        assert subscription.json()["endpoint"] == "https://push.example.test/sub/1"
+        assert subscription.json()["endpoint"] == "https://fcm.googleapis.com/sub/1"
         assert subscription.json()["enabled"] is True
+
+        disabled = client.delete("/chore-api/push/subscriptions", headers={CSRF_HEADER_NAME: csrf})
+        assert disabled.status_code == 204
 
 
 def test_submission_and_approval_create_chore_notifications(tmp_path: Path, monkeypatch) -> None:
@@ -142,6 +146,7 @@ def test_submission_and_approval_create_chore_notifications(tmp_path: Path, monk
         assert parent_inbox.status_code == 200
         assert parent_inbox.json()["unread_count"] == 1
         assert parent_inbox.json()["items"][0]["title"] == "Chore ready for review"
+        assert parent_inbox.json()["items"][0]["link_url"] == "/chore/board"
         assert "Riley submitted 1 chore" in parent_inbox.json()["items"][0]["body"]
 
         approval = client.post(f"/chore-api/submissions/{submission_id}/approve-all", headers={CSRF_HEADER_NAME: parent_csrf})
@@ -152,6 +157,7 @@ def test_submission_and_approval_create_chore_notifications(tmp_path: Path, monk
         assert child_inbox.status_code == 200
         assert child_inbox.json()["unread_count"] == 1
         assert child_inbox.json()["items"][0]["title"] == "Chore approved"
+        assert child_inbox.json()["items"][0]["link_url"] == "/chore/child/today"
         assert "Dishes" in child_inbox.json()["items"][0]["body"]
 
 

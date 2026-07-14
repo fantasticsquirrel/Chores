@@ -24,8 +24,9 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 - `mobile/`: Expo + React Native TypeScript app for Android and iPhone
 - `docs/`: product and feature specifications
 - `docs/architecture-and-change-standards.md`: standing architecture, structure, and verification standards for future changes
+- `docs/implementation/family-manager-hardening-and-product-finish.md`: active audit-remediation and product-finish tracker
 - `docs/standard-module-creation-guide.md`: standing guide for adding module-gated feature areas
-- `IMPLEMENTATION_PLAN.md`: checklist-driven delivery plan
+- `IMPLEMENTATION_PLAN.md` and dated files under `docs/plans/`: historical/reference plans; the active tracker above governs current delivery
 
 ## Exact Production URLs
 

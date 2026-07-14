@@ -25,7 +25,7 @@ describe("Login page", () => {
     listChildrenSpy.mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/login"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -45,7 +45,7 @@ describe("Login page", () => {
       }),
     );
     expect(
-      await screen.findByRole("heading", { name: "Parent Dashboard" }),
+      await screen.findByRole("heading", { name: "Today" }),
     ).toBeVisible();
   });
 
@@ -68,7 +68,7 @@ describe("Login page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/login"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -107,7 +107,7 @@ describe("Login page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/login"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -143,7 +143,7 @@ describe("Login page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/login"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -189,7 +189,7 @@ describe("Login page", () => {
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/login"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -211,7 +211,7 @@ describe("Login page", () => {
 
     await waitFor(() => expect(loginSpy).toHaveBeenCalledTimes(1));
     expect(
-      await screen.findByRole("heading", { name: "Parent Dashboard" }),
+      await screen.findByRole("heading", { name: "Today" }),
     ).toBeVisible();
   });
 });

@@ -72,8 +72,22 @@ def _build_test_app() -> FastAPI:
     return app
 
 
+def _create_token(user_id: int) -> str:
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        token = create_session_token(
+            session,
+            user_id,
+            max_age_seconds=settings.session_max_age_seconds,
+        )
+        session.commit()
+        return token
+
+
 def test_get_current_user_requires_valid_session_cookie(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
+    initialize_database(get_settings())
     app = _build_test_app()
 
     with TestClient(app) as client:
@@ -91,16 +105,15 @@ def test_require_roles_enforces_user_role(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     parent_user, child_user = _create_users()
     app = _build_test_app()
-    settings = get_settings()
 
     with TestClient(app) as client:
-        child_token = create_session_token(settings.secret_key, child_user.id)
+        child_token = _create_token(child_user.id)
         client.cookies.set(SESSION_COOKIE_NAME, child_token)
         child_response = client.get("/parent-only")
         assert child_response.status_code == 403
         assert child_response.json()["detail"] == "Forbidden."
 
-        parent_token = create_session_token(settings.secret_key, parent_user.id)
+        parent_token = _create_token(parent_user.id)
         client.cookies.set(SESSION_COOKIE_NAME, parent_token)
         parent_response = client.get("/parent-only")
         assert parent_response.status_code == 200

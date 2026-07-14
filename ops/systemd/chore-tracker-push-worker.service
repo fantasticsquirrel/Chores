@@ -1,0 +1,16 @@
+[Unit]
+Description=Deliver queued Family Manager browser push notifications
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/ralph-projects/chore_tracking/backend
+EnvironmentFile=/etc/chore-tracker/chore-tracker.env
+ExecStart=/var/ralph-projects/chore_tracking/.venv/bin/python -m scripts.process_push_deliveries
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/ralph-projects/chore_tracking/data

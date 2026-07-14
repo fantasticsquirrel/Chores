@@ -23,7 +23,6 @@ import {
   completionOptions,
   eligibilityLabel,
   type MobileChoreFormState,
-  parseNonNegativeInteger,
   parseOptionalPositiveInteger,
   scheduleLabel,
   scheduleOptions,
@@ -32,7 +31,7 @@ import {
 } from "../../features/chores/lib/chorePresentation";
 import { styles } from "../../styles/layout";
 import { todayDateString } from "../../utils/date";
-import { formatCents, formatError } from "../../utils/format";
+import { formatError } from "../../utils/format";
 
 type ChoresState = {
   chores: Chore[];
@@ -331,7 +330,6 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
     setEditingId(chore.id);
     setForm({
       name: chore.name,
-      reward_cents: chore.reward_cents.toString(),
       start_date: chore.start_date,
       expires_at: chore.expires_at ?? "",
       timeout_days: chore.timeout_days?.toString() ?? "",
@@ -358,11 +356,9 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
       return;
     }
 
-    let rewardCents: number;
     let timeoutDays: number | null;
     let scheduleInterval: number | null;
     try {
-      rewardCents = parseNonNegativeInteger(form.reward_cents, "Reward cents");
       timeoutDays = parseOptionalPositiveInteger(form.timeout_days, "Timeout");
       const needsInterval = showInterval;
       scheduleInterval = needsInterval
@@ -393,7 +389,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
         await apiClient.updateChore(editingId, {
           household_id: householdId,
           name,
-          reward_cents: rewardCents,
+          reward_cents: 0,
           start_date: form.start_date,
           expires_at: expiresAt,
           timeout_days: timeoutDays,
@@ -411,7 +407,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
         await apiClient.createChore({
           household_id: householdId,
           name,
-          reward_cents: rewardCents,
+          reward_cents: 0,
           start_date: form.start_date,
           expires_at: expiresAt,
           timeout_days: timeoutDays,
@@ -711,7 +707,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
           <View key={chore.id} style={styles.reviewItem}>
             <Text style={styles.rowTitle}>{chore.name}</Text>
             <Text style={styles.rowMeta}>
-              {formatCents(chore.reward_cents)} · {scheduleLabel(chore)} ·{" "}
+              {scheduleLabel(chore)} ·{" "}
               {chore.completion_mode === "SHARED" ? "Shared" : "Per child"}
             </Text>
             <Text style={styles.rowMeta}>{eligibilityLabel(chore, childrenState.children)}</Text>
@@ -807,15 +803,6 @@ function ChoreForm({
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={form.name}
-        />
-        <FieldLabel label="Reward Cents" />
-        <TextInput
-          keyboardType="number-pad"
-          onChangeText={(value) => setField("reward_cents", value)}
-          placeholder="0"
-          placeholderTextColor="#94a3b8"
-          style={styles.input}
-          value={form.reward_cents}
         />
         <FieldLabel label="Start Date" />
         <TextInput

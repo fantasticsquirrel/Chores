@@ -17,7 +17,7 @@ describe("Protected routes", () => {
     listChildrenSpy.mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -42,7 +42,7 @@ describe("Protected routes", () => {
     listEligibleChoresSpy.mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -68,12 +68,12 @@ describe("Protected routes", () => {
     const listEligibleChoresSpy = vi.spyOn(apiClient, "listEligibleChores");
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
     await waitFor(() => expect(listEligibleChoresSpy).not.toHaveBeenCalled());
   });
@@ -93,21 +93,22 @@ describe("Protected routes", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Parent Dashboard" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Parent Dashboard" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Children" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Board" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Today" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Children" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Board" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("link", { name: "Children" }));
+    fireEvent.click(screen.getByRole("link", { name: "Manage Children" }));
     expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
 
-    fireEvent.click(screen.getByRole("link", { name: "Board" }));
+    fireEvent.click(screen.getByRole("link", { name: "Today" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Open Board" }));
     expect(await screen.findByRole("heading", { name: "Submission Review" })).toBeVisible();
   });
 
@@ -125,7 +126,7 @@ describe("Protected routes", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
@@ -138,6 +139,27 @@ describe("Protected routes", () => {
   });
 
 
+  it("renders view-only modules without management controls", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: { id: 16, household_id: 1, email: "viewer@example.com", role: "PARENT", child_id: null },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
+      modules: [{ key: "chores", name: "Chores", description: "", can_manage: false }],
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("You have view-only access. Management controls are hidden.")).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
+    expect(document.querySelector(".module-read-only")).not.toBeNull();
+  });
+
   it("blocks direct access to disabled parent modules without loading module data", async () => {
     vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
       modules: [{ key: "chores", name: "Chores", description: "" }],
@@ -145,7 +167,7 @@ describe("Protected routes", () => {
     const listSemestersSpy = vi.spyOn(apiClient, "listHomeschoolSemesters");
 
     render(
-      <MemoryRouter initialEntries={["/homeschool"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -170,7 +192,7 @@ describe("Protected routes", () => {
     const listEligibleChoresSpy = vi.spyOn(apiClient, "listEligibleChores");
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );

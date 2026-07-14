@@ -72,7 +72,7 @@ describe("Admin dashboard module access", () => {
       });
 
     render(
-      <MemoryRouter initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -126,7 +126,7 @@ describe("Admin dashboard module access", () => {
       });
 
     render(
-      <MemoryRouter initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -182,7 +182,7 @@ describe("Admin dashboard module access", () => {
     ]);
 
     render(
-      <MemoryRouter initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -218,7 +218,7 @@ describe("Admin dashboard module access", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );

@@ -24,6 +24,7 @@ export function NotificationsPage(): ReactElement {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [pushStatus, setPushStatus] = useState<string | null>(null);
+  const [pushRegistered, setPushRegistered] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,6 +44,22 @@ export function NotificationsPage(): ReactElement {
       })
       .finally(() => {
         if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    if (!("serviceWorker" in navigator)) return () => { active = false; };
+    void navigator.serviceWorker.ready
+      .then((registration) => registration.pushManager.getSubscription())
+      .then((subscription) => {
+        if (active) setPushRegistered(subscription !== null);
+      })
+      .catch(() => {
+        if (active) setPushRegistered(false);
       });
     return () => {
       active = false;
@@ -106,9 +123,27 @@ export function NotificationsPage(): ReactElement {
       });
       const response = await apiClient.updateNotificationSettings("chores", { push_enabled: true });
       setSettings(response.settings);
+      setPushRegistered(true);
       setPushStatus("App push notifications are enabled for this browser.");
     } catch (pushError: unknown) {
       setError(`Could not enable app push notifications: ${formatApiError(pushError)}`);
+    }
+  }
+
+  async function disablePush(): Promise<void> {
+    setError(null);
+    setPushStatus(null);
+    try {
+      const registration = "serviceWorker" in navigator ? await navigator.serviceWorker.ready : null;
+      const subscription = registration ? await registration.pushManager.getSubscription() : null;
+      if (subscription) await subscription.unsubscribe();
+      await apiClient.disablePushSubscriptions();
+      const response = await apiClient.updateNotificationSettings("chores", { push_enabled: false });
+      setSettings(response.settings);
+      setPushRegistered(false);
+      setPushStatus("App push notifications are disabled for this account.");
+    } catch (pushError: unknown) {
+      setError(`Could not disable app push notifications: ${formatApiError(pushError)}`);
     }
   }
 
@@ -160,6 +195,14 @@ export function NotificationsPage(): ReactElement {
             <input type="checkbox" checked={settings.daily_digest_enabled} onChange={(event) => setSettings({ ...settings, daily_digest_enabled: event.target.checked })} />
             Daily chore digest
           </label>
+          <label className="checkbox-row">
+            <input type="checkbox" checked={settings.due_soon_enabled} onChange={(event) => setSettings({ ...settings, due_soon_enabled: event.target.checked })} />
+            Upcoming chore reminders
+          </label>
+          <label className="checkbox-row">
+            <input type="checkbox" checked={settings.approval_notifications_enabled} onChange={(event) => setSettings({ ...settings, approval_notifications_enabled: event.target.checked })} />
+            Submission and approval alerts
+          </label>
           <FormField label="Daily digest time">
             <input id="daily-digest-time" type="time" value={settings.daily_digest_time} onChange={(event) => setSettings({ ...settings, daily_digest_time: event.target.value })} />
           </FormField>
@@ -174,7 +217,11 @@ export function NotificationsPage(): ReactElement {
           </FormField>
           <div className="button-row">
             <Button type="button" onClick={() => void saveSettings()} disabled={saving}>{saving ? "Saving..." : "Save reminder settings"}</Button>
-            <Button type="button" onClick={() => void enablePush()}>Enable app push notifications</Button>
+            {pushRegistered ? (
+              <Button type="button" onClick={() => void disablePush()}>Disable app push notifications</Button>
+            ) : (
+              <Button type="button" onClick={() => void enablePush()}>Enable app push notifications</Button>
+            )}
           </div>
         </section>
       </div>

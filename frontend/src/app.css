@@ -1404,3 +1404,11 @@ body {
 .badge.muted {
   opacity: 0.7;
 }
+
+.module-read-only form,
+.module-read-only button,
+.module-read-only input,
+.module-read-only select,
+.module-read-only textarea {
+  display: none !important;
+}

@@ -38,10 +38,7 @@ test("parent can link a child account without email, reset email, and child can 
   await signIn(page, fixture.parent_email, fixture.parent_password);
   await expect(page).toHaveURL(/\/chore\/parent\/dashboard$/);
 
-  await page
-    .getByRole("navigation", { name: "Primary" })
-    .getByRole("link", { name: "Children", exact: true })
-    .click();
+  await page.getByRole("link", { name: "Manage Children" }).click();
   await expect(page).toHaveURL(/\/chore\/parent\/children$/);
 
   // Create child profile first

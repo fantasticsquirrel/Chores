@@ -34,7 +34,7 @@ describe("Child today page", () => {
     ]);
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
@@ -73,7 +73,7 @@ describe("Child today page", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
@@ -98,7 +98,7 @@ describe("Child today page", () => {
       .mockResolvedValueOnce([]);
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
@@ -125,7 +125,7 @@ describe("Child today page", () => {
     );
 
     render(
-      <MemoryRouter initialEntries={["/child/today"]}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );

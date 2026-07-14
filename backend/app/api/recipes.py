@@ -158,7 +158,7 @@ def list_recipes(
     current_user: User = Depends(_require_recipes_access),
     session: Session = Depends(get_db_session),
 ) -> list[dict[str, object]]:
-    stmt = select(Recipe).where(Recipe.owner_user_id == current_user.id)
+    stmt = select(Recipe).where(Recipe.household_id == current_user.household_id)
     if active_only:
         stmt = stmt.where(Recipe.archived_at.is_(None))
     if favorite is not None:
@@ -213,20 +213,23 @@ def import_recipe_url(payload: ImportRecipeUrlRequest, current_user: User = Depe
 
 @router.get("/backup", response_model=dict)
 def export_recipe_backup(current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
-    recipes = session.scalars(select(Recipe).where(Recipe.owner_user_id == current_user.id).order_by(Recipe.title)).unique().all()
+    recipes = session.scalars(select(Recipe).where(Recipe.household_id == current_user.household_id).order_by(Recipe.title)).unique().all()
     return {"version": 1, "recipes": [_detail_dict(session, recipe) for recipe in recipes]}
 
 
 @router.post("/backup/import", response_model=ImportRecipeBackupResponse, status_code=status.HTTP_201_CREATED)
 def import_recipe_backup(payload: ImportRecipeBackupRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
-    imported: list[dict[str, object]] = []
+    imported_rows: list[Recipe] = []
     for recipe_payload in payload.recipes:
         _validate_owned_refs(session, current_user, recipe_payload)
         recipe = Recipe(household_id=current_user.household_id, owner_user_id=current_user.id, title=recipe_payload.title)
         session.add(recipe)
         session.flush()
         _apply_recipe_payload(session, recipe, recipe_payload)
-        session.commit()
+        imported_rows.append(recipe)
+    session.commit()
+    imported: list[dict[str, object]] = []
+    for recipe in imported_rows:
         session.refresh(recipe)
         imported.append(_detail_dict(session, recipe))
     return {"imported_count": len(imported), "recipes": imported}
@@ -283,7 +286,7 @@ def upsert_recipe_feedback(recipe_id: int, payload: UpsertRecipeFeedbackRequest,
 
 @router.put("/{recipe_id}", response_model=RecipeDetailResponse)
 def update_recipe(recipe_id: int, payload: UpdateRecipeRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
-    recipe = _get_recipe(session, recipe_id, current_user)
+    recipe = _get_recipe(session, recipe_id, current_user, manage=True)
     _validate_owned_refs(session, current_user, payload, recipe_id=recipe.id)
     _apply_recipe_payload(session, recipe, payload)
     session.commit()
@@ -293,7 +296,7 @@ def update_recipe(recipe_id: int, payload: UpdateRecipeRequest, current_user: Us
 
 @router.patch("/{recipe_id}/archive", response_model=RecipeDetailResponse)
 def archive_recipe(recipe_id: int, payload: ArchiveRecipeRequest, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> dict[str, object]:
-    recipe = _get_recipe(session, recipe_id, current_user)
+    recipe = _get_recipe(session, recipe_id, current_user, manage=True)
     recipe.archived_at = datetime.now(UTC) if payload.archived else None
     session.commit()
     session.refresh(recipe)
@@ -302,7 +305,7 @@ def archive_recipe(recipe_id: int, payload: ArchiveRecipeRequest, current_user: 
 
 @router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_recipe(recipe_id: int, current_user: User = Depends(_require_recipes_access), session: Session = Depends(get_db_session)) -> None:
-    recipe = _get_recipe(session, recipe_id, current_user)
+    recipe = _get_recipe(session, recipe_id, current_user, manage=True)
     session.delete(recipe)
     session.commit()
 
