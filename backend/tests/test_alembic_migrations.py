@@ -287,3 +287,48 @@ def test_security_migration_reserves_occurrence_keys_only_for_approved_records(
             "SELECT id, occurrence_key FROM completion_records ORDER BY id"
         ).all()
     assert rows == [(1, None), (2, "household:1:chore:1:date:2026-01-02")]
+
+
+def test_forward_migration_quarantines_legacy_unsent_delivery_attempts(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'legacy-notification-queue.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-with-at-least-32-characters")
+    get_settings.cache_clear()
+
+    alembic_config = Config(str(BACKEND_ROOT / "alembic.ini"))
+    alembic_config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    alembic_config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(alembic_config, "20260715_0014")
+
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            """INSERT INTO notifications
+            (id, household_id, user_id, child_id, module_key, category, severity, title, body,
+             link_url, read_at, expires_at, dedup_key, created_at, in_app_visible)
+            VALUES (1, 1, 1, NULL, 'chores', 'approval', 'info', 'Title', 'Body',
+                    '/chore/', NULL, NULL, NULL, '2026-01-01 00:00:00', 1)"""
+        )
+        connection.exec_driver_sql(
+            """INSERT INTO notification_delivery_attempts
+            (id, notification_id, channel, status, attempted_at, error_message)
+            VALUES
+              (1, 1, 'push:1', 'pending', '2026-01-01 00:00:00', ''),
+              (2, 1, 'push:2', 'sent', '2026-01-01 00:01:00', '')"""
+        )
+    engine.dispose()
+
+    command.upgrade(alembic_config, "head")
+
+    engine = create_engine(database_url)
+    with engine.connect() as connection:
+        rows = connection.exec_driver_sql(
+            "SELECT id, status, error_message FROM notification_delivery_attempts ORDER BY id"
+        ).all()
+    assert rows == [
+        (1, "dead", "legacy-dedup-audit-required"),
+        (2, "sent", ""),
+    ]
