@@ -6,11 +6,11 @@ from pathlib import Path
 from sqlite3 import Connection as SQLiteConnection
 from urllib.parse import urlparse
 
-from sqlalchemy import DateTime, MetaData, create_engine, event
+from sqlalchemy import DateTime, MetaData, create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 
-from app.config import Settings
+from app.config import Settings, SettingsError
 
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
@@ -73,8 +73,37 @@ def _ensure_sqlite_directory(database_url: str) -> None:
 
 
 def initialize_database(settings: Settings) -> None:
+    _ensure_sqlite_directory(settings.database_url)
+    engine = get_engine(settings.database_url)
+
+    if settings.is_production:
+        _require_current_alembic_schema(engine)
+        return
+
     from app.models import ALL_MODELS  # Imported lazily so metadata is fully registered.
 
     _ = ALL_MODELS
-    _ensure_sqlite_directory(settings.database_url)
-    Base.metadata.create_all(bind=get_engine(settings.database_url))
+    Base.metadata.create_all(bind=engine)
+
+
+def _require_current_alembic_schema(engine: Engine) -> None:
+    """Fail closed when production was not migrated through the repository head."""
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
+    inspector = inspect(engine)
+    if "alembic_version" not in inspector.get_table_names():
+        raise SettingsError("Production database is not migrated; run alembic upgrade head before startup.")
+
+    with engine.connect() as connection:
+        current_revision = connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one_or_none()
+
+    backend_root = Path(__file__).resolve().parents[1]
+    config = Config(str(backend_root / "alembic.ini"))
+    config.set_main_option("script_location", str(backend_root / "alembic"))
+    expected_revision = ScriptDirectory.from_config(config).get_current_head()
+    if current_revision != expected_revision:
+        raise SettingsError(
+            "Production database schema is not current; run alembic upgrade head before startup "
+            f"(current={current_revision or 'none'}, expected={expected_revision})."
+        )

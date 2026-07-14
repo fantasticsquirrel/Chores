@@ -7,11 +7,56 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, text
 
 from app.config import get_settings
-from app.db import get_engine, get_session_factory
+from app.db import Base, get_engine, get_session_factory
+from app.models import ALL_MODELS
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKEND_ROOT = REPO_ROOT / "backend"
+
+CRITICAL_CHECK_CONSTRAINTS = {
+    "users": {"ck_users_user_role_child_link"},
+    "chores": {
+        "ck_chores_reward_non_negative",
+        "ck_chores_positive_schedule_interval",
+        "ck_chores_positive_timeout_days",
+    },
+    "recipes": {
+        "ck_recipes_recipe_prep_minutes_non_negative",
+        "ck_recipes_recipe_cook_minutes_non_negative",
+        "ck_recipes_recipe_servings_positive",
+        "ck_recipes_recipe_yield_quantity_positive",
+        "ck_recipes_recipe_rating_range",
+    },
+    "recipe_feedback": {
+        "ck_recipe_feedback_recipe_feedback_rating_range",
+        "ck_recipe_feedback_recipe_feedback_reviewer_type",
+        "ck_recipe_feedback_recipe_feedback_reviewer_target",
+    },
+}
+CRITICAL_UNIQUE_CONSTRAINTS = {
+    "users": {"uq_users_household_id", "uq_users_email"},
+    "tags": {"uq_tags_household_id"},
+    "chore_rotation_members": {"uq_chore_rotation_members_chore_id"},
+    "completion_records": {"uq_completion_records_child_id"},
+    "homeschool_attendance": {"uq_homeschool_attendance_child_subject_date"},
+    "notifications": {"uq_notifications_user_dedup_key"},
+    "push_subscriptions": {"uq_push_subscriptions_user_endpoint"},
+}
+CRITICAL_INDEXES = {
+    "children": {"ix_children_household_id"},
+    "users": {"ix_users_household_id", "ix_users_child_id", "ux_users_email"},
+    "chores": {"ix_chores_household_id"},
+    "submissions": {"ix_submissions_household_id", "ix_submissions_child_id", "ix_submissions_for_date"},
+    "completion_records": {
+        "ix_completion_records_household_id",
+        "ix_completion_records_child_id",
+        "ix_completion_records_chore_id",
+    },
+    "transactions": {"ix_transactions_household_id", "ix_transactions_child_id"},
+    "recipes": {"ix_recipes_household_id", "ix_recipes_owner_user_id", "ix_recipes_title"},
+    "notifications": {"ix_notifications_household_id", "ix_notifications_user_id", "ix_notifications_read_at"},
+}
 
 
 def test_alembic_upgrade_head_creates_family_manager_schema(tmp_path: Path, monkeypatch) -> None:
@@ -33,17 +78,20 @@ def test_alembic_upgrade_head_creates_family_manager_schema(tmp_path: Path, monk
     command.upgrade(alembic_config, "head")
 
     inspector = inspect(create_engine(database_url))
-    table_names = set(inspector.get_table_names())
-    assert {
-        "modules",
-        "household_module_access",
-        "user_module_access",
-        "homeschool_semesters",
-        "homeschool_subjects",
-        "homeschool_attendance",
-        "homeschool_day_comments",
-        "homeschool_grades",
-    }.issubset(table_names)
+    _ = ALL_MODELS
+    assert set(inspector.get_table_names()) - {"alembic_version"} == set(Base.metadata.tables)
+
+    for table_name, expected_names in CRITICAL_CHECK_CONSTRAINTS.items():
+        actual_names = {constraint["name"] for constraint in inspector.get_check_constraints(table_name)}
+        assert expected_names <= actual_names, table_name
+
+    for table_name, expected_names in CRITICAL_UNIQUE_CONSTRAINTS.items():
+        actual_names = {constraint["name"] for constraint in inspector.get_unique_constraints(table_name)}
+        assert expected_names <= actual_names, table_name
+
+    for table_name, expected_names in CRITICAL_INDEXES.items():
+        actual_names = {index["name"] for index in inspector.get_indexes(table_name)}
+        assert expected_names <= actual_names, table_name
 
 
 def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, monkeypatch) -> None:
