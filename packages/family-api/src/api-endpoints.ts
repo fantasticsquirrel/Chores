@@ -1,6 +1,9 @@
 import type { RequestQuery } from "./client-core";
 import type {
   AuthSessionResponse,
+  BillingActionRequest,
+  BillingActionResponse,
+  BillingStatusResponse,
   ChangePasswordRequest,
   Child,
   ChildAccount,
@@ -18,6 +21,7 @@ import type {
   DuplicateRecipeRequest,
   EligibleChore,
   HealthResponse,
+  HouseholdOwnershipResponse,
   HomeschoolAttendance,
   HomeschoolDayComment,
   HomeschoolGrade,
@@ -53,6 +57,7 @@ import type {
   SubmissionRequest,
   SubmissionResponse,
   SubmissionReview,
+  TransferHouseholdOwnershipRequest,
   UpdateChildRequest,
   UpdateChoreRequest,
   UpdateHomeschoolSemesterRequest,
@@ -64,6 +69,12 @@ import type {
   UpsertRecipeFeedbackRequest,
   UserModuleAccess,
 } from "./models";
+
+export const familyApiRoutes = {
+  householdOwnership: "/households/me/ownership",
+  billing: "/billing",
+  billingActions: "/billing/actions",
+} as const;
 
 export abstract class FamilyCoreApiEndpoints {
   protected abstract get<TResponse>(path: string, query?: RequestQuery): Promise<TResponse>;
@@ -118,6 +129,22 @@ export abstract class FamilyCoreApiEndpoints {
 
   async changePassword(payload: ChangePasswordRequest): Promise<void> {
     await this.postNoContentWithBody("/auth/change-password", payload);
+  }
+
+  async getHouseholdOwnership(): Promise<HouseholdOwnershipResponse> {
+    return this.get<HouseholdOwnershipResponse>(familyApiRoutes.householdOwnership);
+  }
+
+  async transferHouseholdOwnership(payload: TransferHouseholdOwnershipRequest): Promise<HouseholdOwnershipResponse> {
+    return this.post<HouseholdOwnershipResponse, TransferHouseholdOwnershipRequest>(familyApiRoutes.householdOwnership, payload);
+  }
+
+  async getBillingStatus(): Promise<BillingStatusResponse> {
+    return this.get<BillingStatusResponse>(familyApiRoutes.billing);
+  }
+
+  async performBillingAction(payload: BillingActionRequest): Promise<BillingActionResponse> {
+    return this.post<BillingActionResponse, BillingActionRequest>(familyApiRoutes.billingActions, payload);
   }
 
   async getMyModules(): Promise<MyModulesResponse> {

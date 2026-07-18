@@ -11,8 +11,9 @@ import { SectionCard } from "../../components/SectionCard";
 import { styles } from "../../styles/layout";
 import { formatError } from "../../utils/format";
 import { ChangePasswordScreen } from "./ChangePasswordScreen";
+import { SubscriptionScreen } from "./SubscriptionScreen";
 
-type AccountMode = "profile" | "security";
+type AccountMode = "profile" | "security" | "subscription";
 
 export function AccountScreen({
   modules,
@@ -48,11 +49,15 @@ export function AccountScreen({
           options={[
             { label: "Profile", value: "profile" },
             { label: "Security", value: "security" },
+            ...(session.user.is_household_owner
+              ? [{ label: "Subscription", value: "subscription" as const }]
+              : []),
           ]}
           value={mode}
         />
       </SectionCard>
       {mode === "security" ? <ChangePasswordScreen /> : null}
+      {mode === "subscription" && session.user.is_household_owner ? <SubscriptionScreen /> : null}
       {mode === "profile" ? (
         <>
           <SectionCard title="Profile">

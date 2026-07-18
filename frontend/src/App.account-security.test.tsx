@@ -20,7 +20,7 @@ describe("Account security page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(await screen.findByRole("link", { name: "Account Security" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Account" }));
     expect(await screen.findByRole("heading", { name: "Account Security" })).toBeVisible();
 
     fireEvent.change(screen.getByLabelText("Current Password"), { target: { value: "password123" } });
@@ -101,6 +101,6 @@ describe("Account security page", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Account Security" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Account Security" })).toHaveAttribute("href", "/account/security");
+    expect(screen.getByRole("link", { name: "Account" })).toHaveAttribute("href", "/account");
   });
 });

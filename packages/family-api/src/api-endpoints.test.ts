@@ -1,8 +1,9 @@
-import { describe, expectTypeOf, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type { RequestQuery } from "./client-core";
 import type {
   AuthSessionResponse,
+  BillingStatusResponse,
   Chore,
   CreateChildRequest,
   CreateRecipeRequest,
@@ -14,6 +15,7 @@ import type {
 import {
   FamilyCoreApiEndpoints,
   FamilyRecipeApiEndpoints,
+  familyApiRoutes,
 } from "./api-endpoints";
 
 class CoreHarness extends FamilyCoreApiEndpoints {
@@ -73,6 +75,11 @@ class RecipeHarness extends FamilyRecipeApiEndpoints {
 }
 
 describe("shared API endpoint method contracts", () => {
+  it("centralizes the deployed household ownership and billing routes", () => {
+    expect(familyApiRoutes.householdOwnership).toBe("/households/me/ownership");
+    expect(familyApiRoutes.billing).toBe("/billing");
+  });
+
   it("exposes common auth, module, child, chore, workflow, and homeschool methods", () => {
     expectTypeOf<CoreHarness["login"]>().parameter(0).toMatchTypeOf<{ email: string; password: string }>();
     expectTypeOf<CoreHarness["login"]>().returns.resolves.toEqualTypeOf<AuthSessionResponse>();
@@ -80,6 +87,7 @@ describe("shared API endpoint method contracts", () => {
     expectTypeOf<CoreHarness["listChores"]>().parameter(0).toEqualTypeOf<ListChoresParams>();
     expectTypeOf<CoreHarness["listChores"]>().returns.resolves.toEqualTypeOf<Chore[]>();
     expectTypeOf<CoreHarness["listHomeschoolSemesters"]>().returns.resolves.toEqualTypeOf<HomeschoolSemester[]>();
+    expectTypeOf<CoreHarness["getBillingStatus"]>().returns.resolves.toEqualTypeOf<BillingStatusResponse>();
   });
 
   it("keeps recipe methods in the web-only endpoint base", () => {

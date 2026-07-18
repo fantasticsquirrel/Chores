@@ -8,6 +8,8 @@
     "./api-endpoints": "./src/api-endpoints.ts",
     "./client-core": "./src/client-core.ts",
     "./models": "./src/models.ts",
-    "./modules": "./src/modules.ts"
+    "./modules": "./src/modules.ts",
+    "./ops-endpoints": "./src/ops-endpoints.ts",
+    "./ops-models": "./src/ops-models.ts"
   }
 }
