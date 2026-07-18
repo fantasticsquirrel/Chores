@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
 from app.api.ops_dependencies import PlatformPrincipal, get_platform_principal, require_platform_roles
-from app.models.billing import BillingEvent
+from app.models.billing import BillingEvent, HouseholdEntitlement
 from app.models.core import Household, User
 from app.models.enums import EntitlementStatus, PlatformRole
 from app.models.platform import PlatformAuditEvent, PlatformSession, PlatformUser, SupportCase, SupportCaseNote
@@ -36,6 +36,79 @@ def _redact_email(email: str) -> str:
     return f"{local[:1]}***@{domain}" if domain else "***"
 
 
+def _platform_email(db: Session, platform_user_id: int) -> str:
+    operator = db.get(PlatformUser, platform_user_id)
+    return _redact_email(operator.email) if operator is not None else "***"
+
+
+def _billing_status(entitlement: HouseholdEntitlement) -> dict[str, object]:
+    return {
+        "status": entitlement.status.value,
+        "provider": None,
+        "plan_name": "Family Plus" if entitlement.status != EntitlementStatus.NONE else None,
+        "expires_at": entitlement.valid_until,
+        "current_period_ends_at": None,
+        "available_actions": [],
+    }
+
+
+def _household_detail(db: Session, household: Household) -> dict[str, object]:
+    owner = db.get(User, household.owner_user_id) if household.owner_user_id else None
+    owner_email = _redact_email(owner.email) if owner else "***"
+    entitlement = entitlement_for_household(db, household.id)
+    cases = db.scalars(
+        select(SupportCase)
+        .where(SupportCase.household_id == household.id)
+        .order_by(SupportCase.id.desc())
+    ).all()
+    support_cases: list[dict[str, object]] = []
+    for case in cases:
+        notes = db.scalars(
+            select(SupportCaseNote)
+            .where(SupportCaseNote.case_id == case.id)
+            .order_by(SupportCaseNote.id)
+        ).all()
+        support_cases.append(
+            {
+                "id": case.id,
+                "subject": case.reason,
+                "status": case.status,
+                "created_at": case.created_at,
+                "notes": [
+                    {
+                        "id": note.id,
+                        "author_email": _platform_email(
+                            db, note.author_platform_user_id
+                        ),
+                        "body": note.body,
+                        "created_at": note.created_at,
+                    }
+                    for note in notes
+                ],
+            }
+        )
+    return {
+        "id": household.id,
+        "name": household.name,
+        "owner_email": owner_email,
+        "billing_status": entitlement.status.value,
+        "ownership": {
+            "household_id": household.id,
+            "owner_user_id": household.owner_user_id,
+            "owner_email": owner_email,
+        },
+        "billing": _billing_status(entitlement),
+        "entitlements": [
+            {
+                "key": entitlement.plan_key,
+                "status": entitlement.status.value,
+                "expires_at": entitlement.valid_until,
+            }
+        ],
+        "support_cases": support_cases,
+    }
+
+
 @router.post("/auth/login")
 def login(payload: OpsLoginRequest, request: Request, response: Response, db: Session = Depends(get_db_session)) -> dict[str, object]:
     user = db.scalar(select(PlatformUser).where(PlatformUser.email == payload.email.lower()))
@@ -48,12 +121,12 @@ def login(payload: OpsLoginRequest, request: Request, response: Response, db: Se
     secure = get_settings().session_cookie_secure or request.url.scheme == "https"
     response.set_cookie(OPS_SESSION_COOKIE_NAME, token, httponly=True, secure=secure, samesite="strict", max_age=8 * 3600, path="/ops-api")
     response.set_cookie(OPS_CSRF_COOKIE_NAME, csrf, httponly=False, secure=secure, samesite="strict", max_age=8 * 3600, path="/ops-api")
-    return {"user": {"id": user.id, "email": user.email, "role": user.role.value, "mfa_verified": True}, "csrf_token": csrf}
+    return {"user": {"id": user.id, "email": user.email, "role": user.role.value, "mfa_required": True, "mfa_verified": True}, "csrf_token": csrf}
 
 
 @router.get("/auth/me")
 def me(principal: PlatformPrincipal = Depends(get_platform_principal)) -> dict[str, object]:
-    return {"user": {"id": principal.user.id, "email": principal.user.email, "role": principal.user.role.value, "mfa_verified": True}, "recent_reauth": has_recent_reauth(principal.auth_session)}
+    return {"user": {"id": principal.user.id, "email": principal.user.email, "role": principal.user.role.value, "mfa_required": True, "mfa_verified": True}, "recent_reauth": has_recent_reauth(principal.auth_session)}
 
 
 @router.post("/auth/reauth", status_code=status.HTTP_204_NO_CONTENT)
@@ -84,9 +157,80 @@ def search_households(query: str = Query(min_length=1, max_length=200), db: Sess
     for home in homes:
         owner = db.get(User, home.owner_user_id) if home.owner_user_id else None
         entitlement = entitlement_for_household(db, home.id)
-        result.append({"household_id": home.id, "name": home.name, "owner_email_redacted": _redact_email(owner.email) if owner else "***", "entitlement_status": entitlement.status.value})
+        result.append({"id": home.id, "name": home.name, "owner_email": _redact_email(owner.email) if owner else "***", "billing_status": entitlement.status.value})
     db.commit()
     return result
+
+
+@router.get("/households/{household_id}")
+def view_household(
+    household_id: int,
+    db: Session = Depends(get_db_session),
+    _: PlatformPrincipal = Depends(
+        require_platform_roles(PlatformRole.OWNER, PlatformRole.SUPPORT)
+    ),
+) -> dict[str, object]:
+    household = db.get(Household, household_id)
+    if household is None:
+        raise HTTPException(status_code=404, detail="Household not found.")
+    detail = _household_detail(db, household)
+    db.commit()
+    return detail
+
+
+@router.get("/households/{household_id}/events")
+def list_household_events(
+    household_id: int,
+    db: Session = Depends(get_db_session),
+    _: PlatformPrincipal = Depends(
+        require_platform_roles(PlatformRole.OWNER, PlatformRole.SUPPORT)
+    ),
+) -> list[dict[str, object]]:
+    events = db.scalars(
+        select(BillingEvent)
+        .where(BillingEvent.household_id == household_id)
+        .order_by(BillingEvent.id.desc())
+        .limit(100)
+    ).all()
+    return [
+        {
+            "id": str(event.id),
+            "type": event.event_type,
+            "occurred_at": event.occurred_at,
+            "summary": event.event_type.replace(".", " "),
+        }
+        for event in events
+    ]
+
+
+@router.get("/households/{household_id}/audit")
+def list_household_audit(
+    household_id: int,
+    db: Session = Depends(get_db_session),
+    _: PlatformPrincipal = Depends(
+        require_platform_roles(PlatformRole.OWNER, PlatformRole.SUPPORT)
+    ),
+) -> list[dict[str, object]]:
+    events = db.scalars(
+        select(PlatformAuditEvent)
+        .where(PlatformAuditEvent.household_id == household_id)
+        .order_by(PlatformAuditEvent.id.desc())
+        .limit(100)
+    ).all()
+    return [
+        {
+            "id": str(event.id),
+            "actor_email": (
+                _platform_email(db, event.actor_platform_user_id)
+                if event.actor_platform_user_id is not None
+                else "system"
+            ),
+            "action": event.event_type,
+            "occurred_at": event.created_at,
+            "reason": event.reason or None,
+        }
+        for event in events
+    ]
 
 
 @router.get("/households/{household_id}/billing")
@@ -103,7 +247,8 @@ def view_household_billing(household_id: int, db: Session = Depends(get_db_sessi
 def grant_complimentary(household_id: int, payload: ComplimentaryRequest, db: Session = Depends(get_db_session), principal: PlatformPrincipal = Depends(require_platform_roles(PlatformRole.OWNER))) -> dict[str, object]:
     if not has_recent_reauth(principal.auth_session):
         raise HTTPException(status_code=403, detail="Recent reauthentication required.")
-    if db.get(Household, household_id) is None:
+    household = db.get(Household, household_id)
+    if household is None:
         raise HTTPException(status_code=404, detail="Household not found.")
     expiry = _aware(payload.expires_at)
     now = datetime.now(UTC)
@@ -117,7 +262,16 @@ def grant_complimentary(household_id: int, payload: ComplimentaryRequest, db: Se
     if not replay:
         _audit(db, principal, "complimentary.granted", household_id=household_id, reason=payload.reason, details={"billing_event_id": event.id, "expires_at": expiry.isoformat()})
     db.commit()
-    return {"event_id": event.id, "household_id": household_id, "status": entitlement.status.value, "expires_at": entitlement.valid_until}
+    detail = _household_detail(db, household)
+    detail.update(
+        {
+            "event_id": event.id,
+            "household_id": household_id,
+            "status": entitlement.status.value,
+            "expires_at": entitlement.valid_until,
+        }
+    )
+    return detail
 
 
 @router.post("/support/cases", status_code=status.HTTP_201_CREATED)
@@ -129,7 +283,14 @@ def create_case(payload: SupportCaseCreate, db: Session = Depends(get_db_session
     db.flush()
     _audit(db, principal, "support.case_opened", household_id=payload.household_id, reason=payload.reason, details={"case_id": case.id})
     db.commit()
-    return {"id": case.id, "household_id": case.household_id, "status": case.status, "reason": case.reason}
+    return {
+        "id": case.id,
+        "household_id": case.household_id,
+        "subject": case.reason,
+        "status": case.status,
+        "created_at": case.created_at,
+        "notes": [],
+    }
 
 
 @router.post("/support/cases/{case_id}/notes", status_code=status.HTTP_201_CREATED)
@@ -142,7 +303,13 @@ def add_note(case_id: int, payload: SupportNoteCreate, db: Session = Depends(get
     db.flush()
     _audit(db, principal, "support.note_added", household_id=case.household_id, reason="case note", details={"case_id": case.id, "note_id": note.id})
     db.commit()
-    return {"id": note.id, "case_id": case.id, "body": note.body}
+    return {
+        "id": note.id,
+        "case_id": case.id,
+        "author_email": _platform_email(db, principal.user.id),
+        "body": note.body,
+        "created_at": note.created_at,
+    }
 
 
 @router.post("/households/{household_id}/reconcile")
@@ -150,7 +317,12 @@ def reconcile(household_id: int, payload: ReconcileRequest, db: Session = Depend
     case = db.get(SupportCase, payload.case_id)
     if case is None or case.household_id != household_id or case.status != "open":
         raise HTTPException(status_code=403, detail="An open support case for this household is required.")
+    household = db.get(Household, household_id)
+    if household is None:
+        raise HTTPException(status_code=404, detail="Household not found.")
     entitlement = entitlement_for_household(db, household_id)
     _audit(db, principal, "billing.reconciled", household_id=household_id, reason=payload.reason, details={"case_id": case.id, "projected_event_id": entitlement.projected_event_id})
     db.commit()
-    return {"household_id": household_id, "status": entitlement.status.value, "projected_event_id": entitlement.projected_event_id}
+    detail = _household_detail(db, household)
+    detail["projected_event_id"] = entitlement.projected_event_id
+    return detail

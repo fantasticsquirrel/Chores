@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class OwnershipResponse(BaseModel):
     household_id: int
     owner_user_id: int
+    owner_email: str
 
 
 class OwnershipTransferRequest(BaseModel):

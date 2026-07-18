@@ -56,7 +56,8 @@ export interface HouseholdOwnershipResponse {
 
 export interface TransferHouseholdOwnershipRequest {
   new_owner_user_id: number;
-  reason: string;
+  current_password: string;
+  confirmation: "TRANSFER OWNERSHIP";
 }
 
 export interface BillingStatusResponse {

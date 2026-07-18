@@ -3,9 +3,8 @@ import type { BillingStatusResponse, HouseholdOwnershipResponse } from "./models
 export type OpsRole = "OWNER" | "SUPPORT";
 export interface OpsUser { id: number; email: string; role: OpsRole; mfa_required: boolean; mfa_verified: boolean }
 export interface OpsSessionResponse { user: OpsUser; csrf_token?: string | null }
-export interface OpsLoginRequest { email: string; password: string }
-export interface OpsMfaRequest { code: string }
-export interface OpsReauthRequest { password: string }
+export interface OpsLoginRequest { email: string; password: string; totp_code: string }
+export interface OpsReauthRequest { password: string; totp_code: string }
 export interface OpsHouseholdSummary { id: number; name: string; owner_email: string; billing_status: BillingStatusResponse["status"] }
 export interface OpsEntitlementSummary { key: string; status: string; expires_at: string | null }
 export interface OpsEventSummary { id: string; type: string; occurred_at: string; summary: string }
@@ -18,7 +17,7 @@ export interface OpsHouseholdDetail extends OpsHouseholdSummary {
   entitlements: OpsEntitlementSummary[];
   support_cases: OpsSupportCase[];
 }
-export interface CreateOpsSupportCaseRequest { subject: string; reason: string }
+export interface CreateOpsSupportCaseRequest { reason: string }
 export interface AppendOpsSupportNoteRequest { body: string }
-export interface OpsReasonedCommand { reason: string; idempotency_key: string }
-export interface ComplimentaryEntitlementRequest extends OpsReasonedCommand { expires_at: string }
+export interface OpsReconcileRequest { case_id: number; reason: string }
+export interface ComplimentaryEntitlementRequest { reason: string; idempotency_key: string; expires_at: string }

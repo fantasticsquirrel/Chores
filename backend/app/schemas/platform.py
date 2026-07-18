@@ -12,7 +12,11 @@ class BillingStatusResponse(BaseModel):
     billing_account_id: str
     plan_key: str
     status: EntitlementStatus
-    valid_until: datetime | None
+    provider: str | None = None
+    plan_name: str | None = None
+    expires_at: datetime | None = None
+    current_period_ends_at: datetime | None = None
+    available_actions: list[dict[str, str]] = Field(default_factory=list)
 
 
 class OpsLoginRequest(BaseModel):

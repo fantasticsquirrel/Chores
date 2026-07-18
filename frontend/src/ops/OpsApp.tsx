@@ -69,7 +69,6 @@ function OpsLoginPage(): ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
-  const [needsMfa, setNeedsMfa] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (status === "authenticated") return <Navigate to="/ops/households" replace />;
@@ -77,20 +76,21 @@ function OpsLoginPage(): ReactElement {
     event.preventDefault();
     setPending(true); setError(null);
     try {
-      const session = needsMfa ? await opsApi.verifyMfa({ code: mfaCode }) : await opsApi.login({ email: email.trim(), password });
-      if (session.user.mfa_required && !session.user.mfa_verified) {
-        setNeedsMfa(true);
-      } else {
-        setSession(session); navigate("/ops/households", { replace: true });
-      }
+      const session = await opsApi.login({
+        email: email.trim(),
+        password,
+        totp_code: mfaCode.trim(),
+      });
+      setSession(session);
+      navigate("/ops/households", { replace: true });
     } catch (loginError) { setError(formatApiError(loginError)); }
     finally { setPending(false); }
   }
   return (
     <main className="ops-login"><Card as="section"><h1>Operations sign in</h1><p>Operator credentials are separate from household accounts.</p>
       <form className="auth-form" onSubmit={(event) => void submit(event)}>
-        {!needsMfa ? <><FormField label="Operator email"><TextInput type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></FormField><FormField label="Password"><TextInput type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></FormField></> : <FormField label="MFA code"><TextInput inputMode="numeric" autoComplete="one-time-code" required value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></FormField>}
-        <Button disabled={pending} type="submit">{pending ? "Signing in…" : needsMfa ? "Verify MFA" : "Sign in"}</Button>
+        <FormField label="Operator email"><TextInput type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></FormField><FormField label="Password"><TextInput type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></FormField><FormField label="MFA code"><TextInput inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" required value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></FormField>
+        <Button disabled={pending} type="submit">{pending ? "Signing in…" : "Sign in"}</Button>
       </form>{error ? <InlineNotice variant="error">Could not sign in: {error}</InlineNotice> : null}</Card></main>
   );
 }
@@ -134,16 +134,17 @@ function OpsHouseholdDetailPage(): ReactElement {
 }
 
 function SupportCases({ detail, onDetail }: { detail: OpsHouseholdDetail; onDetail: (value: OpsHouseholdDetail) => void }): ReactElement {
-  const [note, setNote] = useState(""); const [caseId, setCaseId] = useState(detail.support_cases[0]?.id ?? 0); const [error, setError] = useState<string | null>(null); const [message, setMessage] = useState<string | null>(null);
+  const [note, setNote] = useState(""); const [caseId, setCaseId] = useState(detail.support_cases[0]?.id ?? 0); const [newCaseReason, setNewCaseReason] = useState(""); const [reconcileReason, setReconcileReason] = useState(""); const [error, setError] = useState<string | null>(null); const [message, setMessage] = useState<string | null>(null);
+  async function openCase() { if (!newCaseReason.trim()) { setError("Enter a reason for the support case."); return; } setError(null); try { const created = await opsApi.createSupportCase(detail.id, { reason: newCaseReason.trim() }); onDetail({ ...detail, support_cases: [created, ...detail.support_cases] }); setCaseId(created.id); setNewCaseReason(""); setMessage("Support case opened."); } catch (caseError) { setError(formatApiError(caseError)); } }
   async function append() { if (!caseId || !note.trim()) { setError("Choose a case and enter a note."); return; } setError(null); try { const result = await opsApi.appendSupportNote(caseId, { body: note.trim() }); onDetail({ ...detail, support_cases: detail.support_cases.map((item) => item.id === caseId ? { ...item, notes: [...item.notes, result] } : item) }); setNote(""); setMessage("Note appended."); } catch (noteError) { setError(formatApiError(noteError)); } }
-  return <Card as="section"><h3>Support cases</h3>{detail.support_cases.length === 0 ? <p>No support cases.</p> : <label>Case<select value={caseId} onChange={(event) => setCaseId(Number(event.target.value))}>{detail.support_cases.map((item) => <option key={item.id} value={item.id}>{item.subject}</option>)}</select></label>}<FormField label="Append-only note"><TextInput value={note} onChange={(event) => setNote(event.target.value)} /></FormField><Button type="button" onClick={() => void append()}>Append note</Button>{error ? <InlineNotice variant="error">{error}</InlineNotice> : null}{message ? <InlineNotice variant="info">{message}</InlineNotice> : null}</Card>;
+  async function reconcile() { if (!caseId || !reconcileReason.trim()) { setError("Choose a case and enter a reconciliation reason."); return; } setError(null); try { onDetail(await opsApi.reconcileHousehold(detail.id, { case_id: caseId, reason: reconcileReason.trim() })); setMessage("Billing projection reconciled."); } catch (reconcileError) { setError(formatApiError(reconcileError)); } }
+  return <Card as="section"><h3>Support cases</h3><FormField label="New case reason"><TextInput value={newCaseReason} onChange={(event) => setNewCaseReason(event.target.value)} /></FormField><Button type="button" onClick={() => void openCase()}>Open support case</Button>{detail.support_cases.length === 0 ? <p>No support cases.</p> : <label>Case<select value={caseId} onChange={(event) => setCaseId(Number(event.target.value))}>{detail.support_cases.map((item) => <option key={item.id} value={item.id}>{item.subject}</option>)}</select></label>}<FormField label="Append-only note"><TextInput value={note} onChange={(event) => setNote(event.target.value)} /></FormField><Button type="button" onClick={() => void append()}>Append note</Button><FormField label="Reconciliation reason"><TextInput value={reconcileReason} onChange={(event) => setReconcileReason(event.target.value)} /></FormField><Button type="button" onClick={() => void reconcile()}>Reconcile billing</Button>{error ? <InlineNotice variant="error">{error}</InlineNotice> : null}{message ? <InlineNotice variant="info">{message}</InlineNotice> : null}</Card>;
 }
 
 function OwnerControls({ detail, onDetail }: { detail: OpsHouseholdDetail; onDetail: (value: OpsHouseholdDetail) => void }): ReactElement {
-  const [expiresAt, setExpiresAt] = useState(""); const [reason, setReason] = useState(""); const [idempotency, setIdempotency] = useState(""); const [error, setError] = useState<string | null>(null); const [message, setMessage] = useState<string | null>(null);
-  async function grant() { if (!expiresAt || !reason.trim() || !idempotency.trim()) { setError("Expiry, reason, and idempotency key are required"); return; } const expiry = new Date(expiresAt); if (Number.isNaN(expiry.getTime()) || expiry.getTime() <= Date.now()) { setError("Expiry must be a valid future date and time"); return; } setError(null); try { onDetail(await opsApi.grantComplimentary(detail.id, { expires_at: expiry.toISOString(), reason: reason.trim(), idempotency_key: idempotency.trim() })); setMessage("Complimentary access updated."); } catch (grantError) { setError(formatApiError(grantError)); } }
-  async function reconcile() { if (!reason.trim() || !idempotency.trim()) { setError("Reason and idempotency key are required"); return; } setError(null); try { onDetail(await opsApi.reconcileHousehold(detail.id, { reason: reason.trim(), idempotency_key: idempotency.trim() })); setMessage("Reconciliation requested safely."); } catch (reconcileError) { setError(formatApiError(reconcileError)); } }
-  return <Card as="section"><h3>Complimentary access</h3><div className="ops-form-grid"><FormField label="Expires at"><TextInput type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></FormField><FormField label="Reason"><TextInput value={reason} onChange={(event) => setReason(event.target.value)} /></FormField><FormField label="Idempotency key"><TextInput value={idempotency} onChange={(event) => setIdempotency(event.target.value)} /></FormField></div><div className="ops-actions"><Button type="button" onClick={() => void grant()}>Grant or extend</Button><Button type="button" onClick={() => void reconcile()}>Reconcile billing</Button></div>{error ? <InlineNotice variant="error">{error}</InlineNotice> : null}{message ? <InlineNotice variant="info">{message}</InlineNotice> : null}</Card>;
+  const [expiresAt, setExpiresAt] = useState(""); const [reason, setReason] = useState(""); const [idempotency, setIdempotency] = useState(""); const [password, setPassword] = useState(""); const [mfaCode, setMfaCode] = useState(""); const [error, setError] = useState<string | null>(null); const [message, setMessage] = useState<string | null>(null);
+  async function grant() { if (!expiresAt || !reason.trim() || !idempotency.trim() || !password || !/^\d{6}$/.test(mfaCode)) { setError("Expiry, reason, idempotency key, password, and six-digit MFA code are required"); return; } const expiry = new Date(expiresAt); if (Number.isNaN(expiry.getTime()) || expiry.getTime() <= Date.now()) { setError("Expiry must be a valid future date and time"); return; } setError(null); try { await opsApi.reauthenticate({ password, totp_code: mfaCode }); onDetail(await opsApi.grantComplimentary(detail.id, { expires_at: expiry.toISOString(), reason: reason.trim(), idempotency_key: idempotency.trim() })); setPassword(""); setMfaCode(""); setMessage("Complimentary access updated."); } catch (grantError) { setError(formatApiError(grantError)); } }
+  return <Card as="section"><h3>Complimentary access</h3><div className="ops-form-grid"><FormField label="Expires at"><TextInput type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></FormField><FormField label="Reason"><TextInput value={reason} onChange={(event) => setReason(event.target.value)} /></FormField><FormField label="Idempotency key"><TextInput value={idempotency} onChange={(event) => setIdempotency(event.target.value)} /></FormField><FormField label="Owner password"><TextInput type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></FormField><FormField label="MFA code"><TextInput inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" value={mfaCode} onChange={(event) => setMfaCode(event.target.value)} /></FormField></div><div className="ops-actions"><Button type="button" onClick={() => void grant()}>Grant or extend</Button></div>{error ? <InlineNotice variant="error">{error}</InlineNotice> : null}{message ? <InlineNotice variant="info">{message}</InlineNotice> : null}</Card>;
 }
 
 function SummaryList({ title, empty, items }: { title: string; empty: string; items: string[] }): ReactElement { return <Card as="section"><h3>{title}</h3>{items.length === 0 ? <p>{empty}</p> : <ul>{items.map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul>}</Card>; }

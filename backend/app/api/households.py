@@ -16,7 +16,12 @@ PARENTS = (UserRole.PARENT_ADMIN, UserRole.PARENT)
 @router.get("", response_model=OwnershipResponse)
 def read_ownership(session: Session = Depends(get_db_session), user: User = Depends(require_roles(*PARENTS))) -> OwnershipResponse:
     household = get_owned_household(session, user)
-    return OwnershipResponse(household_id=household.id, owner_user_id=household.owner_user_id)  # type: ignore[arg-type]
+    owner = session.get(User, household.owner_user_id)
+    return OwnershipResponse(
+        household_id=household.id,
+        owner_user_id=household.owner_user_id,  # type: ignore[arg-type]
+        owner_email=owner.email,  # type: ignore[union-attr]
+    )
 
 
 @router.post("/transfer", response_model=OwnershipResponse)
@@ -24,4 +29,9 @@ def transfer(payload: OwnershipTransferRequest, request: Request, session: Sessi
     _ = request
     household = transfer_ownership(session, user, payload.new_owner_user_id, payload.current_password)
     session.commit()
-    return OwnershipResponse(household_id=household.id, owner_user_id=household.owner_user_id)  # type: ignore[arg-type]
+    owner = session.get(User, household.owner_user_id)
+    return OwnershipResponse(
+        household_id=household.id,
+        owner_user_id=household.owner_user_id,  # type: ignore[arg-type]
+        owner_email=owner.email,  # type: ignore[union-attr]
+    )

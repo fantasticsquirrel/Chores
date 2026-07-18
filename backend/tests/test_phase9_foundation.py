@@ -74,7 +74,11 @@ def test_auth_projects_owner_and_transfer_requires_owner_reauth_confirmation(tmp
         me = client.get("/chore-api/auth/me")
         assert me.json()["user"]["is_household_owner"] is True
         ownership = client.get("/chore-api/households/me/ownership")
-        assert ownership.json() == {"household_id": seeded["household_id"], "owner_user_id": seeded["owner_id"]}
+        assert ownership.json() == {
+            "household_id": seeded["household_id"],
+            "owner_user_id": seeded["owner_id"],
+            "owner_email": seeded["owner_email"],
+        }
 
         denied = client.post("/chore-api/households/me/ownership/transfer", headers=headers, json={"new_owner_user_id": seeded["target_id"], "current_password": "wrong", "confirmation": "TRANSFER OWNERSHIP"})
         assert denied.status_code == 400
@@ -153,9 +157,15 @@ def test_support_is_redacted_case_scoped_append_only_and_cannot_grant(tmp_path: 
         headers = login_ops(client, support)
         search = client.get("/ops-api/households", params={"query": "Home"})
         assert search.status_code == 200
-        assert search.json()[0] == {"household_id": household["household_id"], "name": "Home", "owner_email_redacted": "o***@example.com", "entitlement_status": "none"}
+        assert search.json()[0] == {"id": household["household_id"], "name": "Home", "owner_email": "o***@example.com", "billing_status": "none"}
+        detail = client.get(f"/ops-api/households/{household['household_id']}")
+        assert detail.status_code == 200
+        assert detail.json()["billing"]["status"] == "none"
+        assert detail.json()["support_cases"] == []
         case = client.post("/ops-api/support/cases", headers=headers, json={"household_id": household["household_id"], "reason": "Customer requested billing check"})
         assert case.status_code == 201
+        assert case.json()["subject"] == "Customer requested billing check"
+        assert case.json()["notes"] == []
         case_id = case.json()["id"]
         note = client.post(f"/ops-api/support/cases/{case_id}/notes", headers=headers, json={"body": "Verified local event state."})
         assert note.status_code == 201
@@ -215,6 +225,7 @@ def test_ops_csrf_reauth_logout_and_cookie_security_are_isolated(tmp_path: Path,
         assert login.status_code == 200
         assert all("Secure" in value for value in login.headers.get_list("set-cookie"))
         assert "chore_tracker_session" not in client.cookies
+        assert client.get("/chore-api/billing").status_code == 401
         denied = client.post("/ops-api/auth/reauth", json={"password": "platform-password", "totp_code": totp_code(str(owner["secret"]))})
         assert denied.status_code == 403
         headers = {"X-Ops-CSRF-Token": login.json()["csrf_token"]}
@@ -260,6 +271,7 @@ def test_non_owner_cannot_transfer_ownership(tmp_path: Path, monkeypatch) -> Non
             json={"new_owner_user_id": seeded["owner_id"], "current_password": "target-password", "confirmation": "TRANSFER OWNERSHIP"},
         )
         assert response.status_code == 403
+        assert client.get("/chore-api/billing").status_code == 403
 
 
 def test_sqlite_owner_and_append_only_database_guards(tmp_path: Path, monkeypatch) -> None:

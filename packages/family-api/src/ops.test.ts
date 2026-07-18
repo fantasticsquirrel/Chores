@@ -48,9 +48,9 @@ describe("ops API contracts", () => {
     await api.getHousehold(42);
     await api.listHouseholdEvents(42);
     await api.listAuditEntries(42);
-    await api.createSupportCase(42, { subject: "Access issue", reason: "Customer requested help" });
+    await api.createSupportCase(42, { reason: "Customer requested help" });
     await api.appendSupportNote(7, { body: "Verified identity" });
-    await api.reconcileHousehold(42, { reason: "Entitlement drift", idempotency_key: "reconcile-42-a" });
+    await api.reconcileHousehold(42, { case_id: 7, reason: "Entitlement drift" });
     await api.grantComplimentary(42, {
       expires_at: "2027-01-01T00:00:00Z",
       reason: "Service recovery",
@@ -63,9 +63,9 @@ describe("ops API contracts", () => {
       { method: "GET", path: "/households/42", query: undefined },
       { method: "GET", path: "/households/42/events", query: undefined },
       { method: "GET", path: "/households/42/audit", query: undefined },
-      { method: "POST", path: "/support/cases", body: { household_id: 42, subject: "Access issue", reason: "Customer requested help" } },
+      { method: "POST", path: "/support/cases", body: { household_id: 42, reason: "Customer requested help" } },
       { method: "POST", path: "/support/cases/7/notes", body: { body: "Verified identity" } },
-      { method: "POST", path: "/households/42/billing/reconcile", body: { reason: "Entitlement drift", idempotency_key: "reconcile-42-a" } },
+      { method: "POST", path: "/households/42/reconcile", body: { case_id: 7, reason: "Entitlement drift" } },
       { method: "POST", path: "/households/42/complimentary", body: { expires_at: "2027-01-01T00:00:00Z", reason: "Service recovery", idempotency_key: "grant-42-a" } },
     ]);
   });

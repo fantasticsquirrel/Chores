@@ -30,6 +30,26 @@ function renderDetail() {
 describe("separate ops routes", () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it("signs in through the separate ops domain with password and MFA", async () => {
+    vi.spyOn(opsApi, "getCurrentOpsSession").mockRejectedValue(new Error("Unauthorized"));
+    const login = vi.spyOn(opsApi, "login").mockResolvedValue({
+      user: { id: 1, email: "owner@example.com", role: "OWNER", mfa_required: true, mfa_verified: true },
+      csrf_token: "ops-csrf",
+    });
+    render(<MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/ops/login"]}><App /></MemoryRouter>);
+
+    fireEvent.change(await screen.findByLabelText("Operator email"), { target: { value: "owner@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "platform-password" } });
+    fireEvent.change(screen.getByLabelText("MFA code"), { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    await waitFor(() => expect(login).toHaveBeenCalledWith({
+      email: "owner@example.com",
+      password: "platform-password",
+      totp_code: "123456",
+    }));
+  });
+
   it("uses ops auth and never renders household navigation", async () => {
     mockOps("SUPPORT");
     renderDetail();
@@ -49,20 +69,24 @@ describe("separate ops routes", () => {
     expect(screen.getByRole("button", { name: "Append note" })).toBeVisible();
   });
 
-  it("requires finite expiry, reason, and idempotency for owner complimentary grants", async () => {
+  it("requires finite expiry, reason, idempotency, and recent owner reauthentication for complimentary grants", async () => {
     mockOps("OWNER");
+    const reauthenticate = vi.spyOn(opsApi, "reauthenticate").mockResolvedValue();
     const grant = vi.spyOn(opsApi, "grantComplimentary").mockResolvedValue(detail);
     renderDetail();
 
     expect(await screen.findByRole("heading", { name: "Complimentary access" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Grant or extend" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Expiry, reason, and idempotency key are required");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Expiry, reason, idempotency key, password, and six-digit MFA code are required");
     expect(grant).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByLabelText("Expires at"), { target: { value: "2027-01-01T12:00" } });
     fireEvent.change(screen.getByLabelText("Reason"), { target: { value: "Service recovery" } });
     fireEvent.change(screen.getByLabelText("Idempotency key"), { target: { value: "grant-42-2027" } });
+    fireEvent.change(screen.getByLabelText("Owner password"), { target: { value: "owner-password" } });
+    fireEvent.change(screen.getByLabelText("MFA code"), { target: { value: "123456" } });
     fireEvent.click(screen.getByRole("button", { name: "Grant or extend" }));
+    await waitFor(() => expect(reauthenticate).toHaveBeenCalledWith({ password: "owner-password", totp_code: "123456" }));
     await waitFor(() => expect(grant).toHaveBeenCalledWith(42, {
       expires_at: new Date("2027-01-01T12:00").toISOString(),
       reason: "Service recovery",

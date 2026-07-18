@@ -72,6 +72,7 @@ import type {
 
 export const familyApiRoutes = {
   householdOwnership: "/households/me/ownership",
+  householdOwnershipTransfer: "/households/me/ownership/transfer",
   billing: "/billing",
   billingActions: "/billing/actions",
 } as const;
@@ -136,7 +137,7 @@ export abstract class FamilyCoreApiEndpoints {
   }
 
   async transferHouseholdOwnership(payload: TransferHouseholdOwnershipRequest): Promise<HouseholdOwnershipResponse> {
-    return this.post<HouseholdOwnershipResponse, TransferHouseholdOwnershipRequest>(familyApiRoutes.householdOwnership, payload);
+    return this.post<HouseholdOwnershipResponse, TransferHouseholdOwnershipRequest>(familyApiRoutes.householdOwnershipTransfer, payload);
   }
 
   async getBillingStatus(): Promise<BillingStatusResponse> {
