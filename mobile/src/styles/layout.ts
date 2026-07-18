@@ -433,34 +433,6 @@ export const styles = StyleSheet.create({
   buttonTextDisabled: {
     color: colors.surfaceMuted,
   },
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: "row",
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-  },
-  tabButton: {
-    alignItems: "center",
-    borderRadius: 8,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 42,
-    paddingHorizontal: 6,
-  },
-  tabButtonActive: {
-    backgroundColor: colors.primarySoft,
-  },
-  tabButtonText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: "800",
-    textAlign: "center",
-  },
-  tabButtonTextActive: {
-    color: colors.primary,
-  },
   compactStack: {
     gap: 10,
   },

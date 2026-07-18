@@ -1,9 +1,7 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   View,
@@ -11,9 +9,15 @@ import {
 
 import { apiClient } from "./api/client";
 import { InlineNotice } from "./components/InlineNotice";
+import { SafeAreaScreen } from "./components/SafeAreaScreen";
 import { useModules } from "./hooks/useModules";
 import { useSessionBootstrap } from "./hooks/useSessionBootstrap";
-import { buildTabs, defaultTabForRole } from "./navigation/tabs";
+import { BottomNavigation } from "./navigation/BottomNavigation";
+import { OverflowMenu } from "./navigation/OverflowMenu";
+import {
+  buildNavigationLayout,
+  resolveActiveTab,
+} from "./navigation/tabs";
 import { AccountScreen } from "./screens/account/AccountScreen";
 import { AdminScreen } from "./screens/admin/AdminScreen";
 import { LoginScreen } from "./screens/auth/LoginScreen";
@@ -39,32 +43,40 @@ export function AppShell() {
     setActiveTab,
   } = useSessionBootstrap({ loadModules, setModules });
 
-  const tabs = useMemo(
-    () => (session === null ? [] : buildTabs(session.user.role, modules)),
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreButtonRef = useRef<View>(null);
+  const navigation = useMemo(
+    () =>
+      session === null
+        ? { overflow: [], primary: [] }
+        : buildNavigationLayout(session.user.role, modules),
     [modules, session],
   );
 
   useEffect(() => {
-    if (session === null || tabs.length === 0) {
+    if (session === null) {
+      setMoreOpen(false);
       return;
     }
-    if (!tabs.some((tab) => tab.key === activeTab)) {
-      const defaultTab = defaultTabForRole(session.user.role);
-      setActiveTab(
-        tabs.some((tab) => tab.key === defaultTab) ? defaultTab : tabs[0].key,
-      );
+    const nextTab = resolveActiveTab(navigation, activeTab, session.user.role);
+    if (nextTab !== activeTab) {
+      setActiveTab(nextTab);
     }
-  }, [activeTab, session, setActiveTab, tabs]);
+  }, [activeTab, navigation, session, setActiveTab]);
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [navigation, session?.user.id, session?.user.role]);
 
   if (bootstrapping) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaScreen>
         <StatusBar style="dark" />
         <View style={styles.centeredPanel}>
           <ActivityIndicator color="#0f766e" size="large" />
           <Text style={styles.mutedText}>Opening Family Manager</Text>
         </View>
-      </SafeAreaView>
+      </SafeAreaScreen>
     );
   }
 
@@ -114,7 +126,7 @@ export function AppShell() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaScreen bottom={false}>
       <StatusBar style="dark" />
       <View style={styles.appHeader}>
         <View>
@@ -138,28 +150,24 @@ export function AppShell() {
       >
         {renderedTab}
       </ScrollView>
-      <View style={styles.tabBar}>
-        {tabs.map((tab) => (
-          <Pressable
-            key={tab.key}
-            accessibilityRole="button"
-            onPress={() => setActiveTab(tab.key)}
-            style={[
-              styles.tabButton,
-              activeTab === tab.key ? styles.tabButtonActive : null,
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === tab.key ? styles.tabButtonTextActive : null,
-              ]}
-            >
-              {tab.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </SafeAreaView>
+      <BottomNavigation
+        activeTab={activeTab}
+        layout={navigation}
+        moreButtonRef={moreButtonRef}
+        onNavigate={(tab) => {
+          setActiveTab(tab);
+          setMoreOpen(false);
+        }}
+        onOpenMore={() => setMoreOpen(true)}
+      />
+      <OverflowMenu
+        activeTab={activeTab}
+        items={navigation.overflow}
+        onClose={() => setMoreOpen(false)}
+        onNavigate={setActiveTab}
+        returnFocusRef={moreButtonRef}
+        visible={moreOpen}
+      />
+    </SafeAreaScreen>
   );
 }
