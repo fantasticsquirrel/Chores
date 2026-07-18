@@ -2,9 +2,9 @@
 
 > **For Hermes:** Execute this tracker with strict TDD and independent review. Mark boxes only after revision-specific tests, CI, deployment, and live proof.
 
-**Goal:** Close the July 2026 architecture/security/operations audit, clean production hygiene, and turn the deployed chore-era shell into a coherent task-first Family Manager without removing working chores, homeschool, recipes, notifications, web, or mobile behavior.
+**Goal:** Close the July 2026 architecture/security/operations audit, clean production hygiene, turn the deployed chore-era shell into a coherent task-first Family Manager, and prepare a household subscription service with explicit customer ownership and least-privilege platform operations without removing working chores, homeschool, recipes, notifications, web, or mobile behavior.
 
-**Architecture:** Alembic becomes the authoritative schema path; security-sensitive network/session/permission/workflow behavior receives explicit policy services and negative tests; production jobs use systemd timers; the parent home becomes a cross-module Today projection; secondary workflows use progressive disclosure. Existing `/chore/` and `/chore-api/` routes remain stable during this delivery, with one canonical public hostname.
+**Architecture:** Alembic becomes the authoritative schema path; security-sensitive network/session/permission/workflow behavior receives explicit policy services and negative tests; production jobs use systemd timers; the parent home becomes a cross-module Today projection; secondary workflows use progressive disclosure. Existing `/chore/` and `/chore-api/` routes remain stable during this delivery, with one canonical public hostname. Subscription state is household-scoped and backend-authoritative, provider events project into entitlements, and platform owner/support identities remain separate from household roles and content authorization.
 
 **Tech stack:** FastAPI, SQLAlchemy, Alembic, SQLite/WAL, React/Vite, Expo/React Native, Pytest, Vitest, Playwright, systemd, nginx, GitHub Actions.
 
@@ -94,6 +94,48 @@
 - [ ] Remove frontend module fail-open presentation on module-load errors.
 - [ ] Add Playwright coverage for Homeschool, Admin permissions, Notifications, recipe import/delete/backup, and one cross-module family-day flow.
 - [x] Eliminate React test `act(...)` warnings and adopt React Router future flags or upgrade safely.
+
+## Phase 9 — Household subscriptions, ownership, and platform operations
+
+### Approved authority model
+
+- [ ] Add exactly one explicit, transferable `owner_user_id` to each household; migrate existing households by a deterministic, reviewed rule and reject ownerless or cross-household ownership.
+- [ ] Keep `PARENT_ADMIN` as a household operations role, not ownership: parent admins may manage children, parent logins, and modules but cannot transfer ownership, delete the household, or change/cancel billing unless separately delegated by the household owner.
+- [ ] Add a backend-generated household billing-account identity that survives email changes, device changes, parent changes, and future iOS support.
+- [ ] Add an audited ownership-transfer workflow requiring an eligible active parent, explicit confirmation, session reauthentication, and rollback-safe database constraints.
+- [ ] Keep platform identities in a separate authentication/authorization domain from `PARENT_ADMIN`, `PARENT`, and `CHILD`; platform roles must never gain household content access merely by having an operations role.
+
+### Subscription and entitlement foundation
+
+- [ ] Start with one household-wide `Family Plus` entitlement offered as monthly and annual products, plus an optional trial; keep provider product IDs mapped through configuration rather than scattered through clients.
+- [ ] Integrate Google Play purchases through RevenueCat for Android and Stripe Billing for web checkout/customer portal; verify current store rules before launch and leave room for iOS without changing household identity.
+- [ ] Add `billing_accounts`, provider-customer links, subscriptions, normalized idempotent billing events, and projected entitlements through Alembic migrations with household isolation and audit fields.
+- [ ] Make the backend entitlement projection authoritative: provider webhooks report transactions, while every paid API capability enforces `entitlement AND module can_view/can_manage AND household/role authorization` server-side.
+- [ ] Model trialing, active, grace period, billing retry, canceled-but-active, expired, refunded, and revoked states without deleting household data; define read-only/degraded behavior explicitly for expired plans.
+- [ ] Add signed webhook verification, duplicate/out-of-order delivery handling, transactional projections, bounded retries, dead-letter visibility, and scheduled provider reconciliation.
+- [ ] Add parent-owner billing APIs and UI for plan status, renewal date, purchase/checkout, restore purchases, billing portal, cancellation, and ownership transfer; children must never see billing controls or purchase prompts.
+
+### Platform owner role
+
+- [ ] Add a separately authenticated `PLATFORM_OWNER` role with mandatory MFA, short/revocable sessions, reauthentication for destructive actions, and complete audit logging.
+- [ ] Give platform owners authority to manage platform operators, subscription products/mappings, provider configuration references, entitlement policy, refunds/revocations, complimentary access policy, household suspension/deletion workflows, reconciliation, and global operational settings.
+- [ ] Build a protected `/ops` owner console covering households, subscription lifecycle, entitlements, provider linkage, failed webhooks, reconciliation, audit history, and operational health without exposing payment credentials or secrets.
+
+### Least-privilege support role
+
+- [ ] Add a separate `PLATFORM_SUPPORT` role; it may search customers/households, view contact/account metadata, view plan/subscription/entitlement state, inspect redacted provider identifiers and webhook/reconciliation outcomes, add support notes, and invoke explicitly safe retry/reconciliation actions.
+- [ ] Deny support access to platform-user/role management, product pricing/configuration, provider secrets, raw payment instruments, refunds, permanent complimentary grants, entitlement-policy edits, household ownership transfer, account deletion/export, and global operational settings.
+- [ ] Deny support access to child details and private chores, homeschool, recipes, notifications, or other household content by default. Any exceptional content access or impersonation must use an owner-approved, case-linked, time-limited break-glass grant with visible reason, automatic expiry, and audit trail.
+- [ ] Require support actions to include a case/reason where they affect customer state; make support notes append-only/audited and keep sensitive values redacted in UI, logs, exports, and API responses.
+- [ ] Add a permission matrix and negative tests proving `PLATFORM_SUPPORT` cannot call owner-only or household-content endpoints, cannot widen its own permissions, and cannot cross support-case scope.
+
+### Operations, verification, and release gates
+
+- [ ] Add sandbox fixtures and deterministic tests for purchase, renewal, cancellation, grace period, expiration, refund/revocation, restore purchase, duplicate/out-of-order webhooks, failed reconciliation, household ownership transfer, and cross-household denial.
+- [ ] Add owner/support end-to-end journeys proving separate navigation, least privilege, MFA/reauthentication, redaction, audit events, safe retries, and break-glass expiry; include direct API negative tests rather than relying on hidden UI.
+- [ ] Add billing/provider dashboards, alerts, reconciliation metrics, webhook dead-letter alerts, runbooks, backup/restore coverage, and credential-rotation procedures.
+- [ ] Independently review billing correctness, authorization, privacy, provider-policy compliance, and support-role boundaries before enabling real purchases.
+- [ ] Launch behind a feature flag; prove sandbox Android and web purchases against the deployed app, then perform a controlled production rollout with provider/backend readbacks and rollback steps.
 
 ## Release gates
 
