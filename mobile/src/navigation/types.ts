@@ -8,7 +8,19 @@ export type AppTab =
   | "today"
   | "account";
 
-export type TabDefinition = {
+export type NavigationItem = {
   key: AppTab;
   label: string;
+};
+
+export type PrimaryNavigationItem =
+  | NavigationItem
+  | {
+      key: "more";
+      label: "More";
+    };
+
+export type NavigationLayout = {
+  primary: PrimaryNavigationItem[];
+  overflow: NavigationItem[];
 };

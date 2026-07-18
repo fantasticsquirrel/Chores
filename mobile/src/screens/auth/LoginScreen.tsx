@@ -2,7 +2,6 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
 import { ActionButton } from "../../components/ActionButton";
 import { FieldLabel } from "../../components/FieldLabel";
 import { InlineNotice } from "../../components/InlineNotice";
+import { SafeAreaScreen } from "../../components/SafeAreaScreen";
 import type {
   ChildLoginInput,
   ParentLoginInput,
@@ -76,7 +76,7 @@ export function LoginScreen({
         !loading;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaScreen>
       <StatusBar style="dark" />
       <ScrollView
         contentContainerStyle={styles.loginContent}
@@ -227,6 +227,6 @@ export function LoginScreen({
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaScreen>
   );
 }

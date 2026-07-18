@@ -1,5 +1,7 @@
 # Family Manager Mobile Feature Parity Plan
 
+> **Historical reference (2026-06-06):** This document records the initial mobile parity pass on `feature/mobile-family-app`. It is not the active delivery checklist. Current work is tracked in [`docs/implementation/family-manager-hardening-and-product-finish.md`](implementation/family-manager-hardening-and-product-finish.md).
+
 Created: 2026-06-06
 Branch: `feature/mobile-family-app`
 
