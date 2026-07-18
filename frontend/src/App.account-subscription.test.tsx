@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -55,7 +55,7 @@ describe("household account subscription", () => {
     expect(billing).not.toHaveBeenCalled();
   });
 
-  it("renders only server-advertised billing actions", async () => {
+  it("defers server-advertised billing actions without calling the absent action endpoint", async () => {
     vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
       user: { id: 1, household_id: 2, email: "owner@example.com", role: "PARENT_ADMIN", child_id: null, is_household_owner: true },
       csrf_token: null,
@@ -68,13 +68,14 @@ describe("household account subscription", () => {
       current_period_ends_at: null,
       available_actions: [{ key: "start_subscription", label: "Choose a plan" }],
     });
-    vi.spyOn(apiClient, "performBillingAction").mockResolvedValue({ message: "Continue in billing" });
+    const performAction = vi.spyOn(apiClient, "performBillingAction");
 
     renderAccount();
     const action = await screen.findByRole("button", { name: "Choose a plan" });
+    expect(action).toBeDisabled();
     expect(screen.queryByRole("button", { name: /manage/i })).not.toBeInTheDocument();
     fireEvent.click(action);
-    await waitFor(() => expect(apiClient.performBillingAction).toHaveBeenCalledWith({ action: "start_subscription" }));
-    expect(await screen.findByText("Continue in billing")).toBeVisible();
+    expect(performAction).not.toHaveBeenCalled();
+    expect(screen.getByText("Billing actions are not available yet.")).toBeVisible();
   });
 });

@@ -13,12 +13,14 @@ class OpsApiClient extends OpsApiEndpoints {
   private readonly fetchImpl = globalThis.fetch.bind(globalThis);
   private csrfToken: string | null = null;
 
-  protected async get<T>(path: string, query?: RequestQuery): Promise<T> { return this.request(path, { method: "GET" }, query); }
+  protected async get<T>(path: string, query?: RequestQuery): Promise<T> {
+    const response = await this.request<T>(path, { method: "GET" }, query);
+    this.captureAuthCsrf(path, response);
+    return response;
+  }
   protected async post<T, B>(path: string, body: B): Promise<T> {
     const response = await this.request<T>(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (path.startsWith("/auth/") && response && typeof response === "object" && "csrf_token" in response) {
-      this.csrfToken = (response as { csrf_token?: string | null }).csrf_token ?? this.csrfToken;
-    }
+    this.captureAuthCsrf(path, response);
     return response;
   }
   protected async postNoContent(path: string): Promise<void> { await this.request(path, { method: "POST" }); if (path === "/auth/logout") this.csrfToken = null; }
@@ -33,6 +35,12 @@ class OpsApiClient extends OpsApiEndpoints {
     const json = response.status === 204 ? undefined : await response.json().catch(() => undefined);
     if (!response.ok) throw new Error(extractErrorDetail(json, response.statusText));
     return json as T;
+  }
+
+  private captureAuthCsrf(path: string, response: unknown): void {
+    if (path.startsWith("/auth/") && response && typeof response === "object" && "csrf_token" in response) {
+      this.csrfToken = (response as { csrf_token?: string | null }).csrf_token ?? this.csrfToken;
+    }
   }
 }
 

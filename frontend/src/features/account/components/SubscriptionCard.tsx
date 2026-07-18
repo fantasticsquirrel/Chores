@@ -21,8 +21,6 @@ const statusLabels: Record<BillingStatus, string> = {
 export function SubscriptionCard(): ReactElement {
   const [billing, setBilling] = useState<BillingStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -34,20 +32,6 @@ export function SubscriptionCard(): ReactElement {
     return () => { active = false; };
   }, []);
 
-  async function performAction(action: string): Promise<void> {
-    setPendingAction(action);
-    setError(null);
-    setMessage(null);
-    try {
-      const response = await apiClient.performBillingAction({ action });
-      setMessage(response.message);
-      if (response.redirect_url) window.location.assign(response.redirect_url);
-    } catch (actionError: unknown) {
-      setError(formatApiError(actionError));
-    } finally {
-      setPendingAction(null);
-    }
-  }
 
   return (
     <Card as="section" className="subscription-card">
@@ -64,15 +48,16 @@ export function SubscriptionCard(): ReactElement {
           {billing.available_actions.length === 0 ? <p>No subscription actions are currently available.</p> : (
             <div className="subscription-actions" aria-label="Subscription actions">
               {billing.available_actions.map((action) => (
-                <Button key={action.key} type="button" disabled={pendingAction !== null} onClick={() => void performAction(action.key)}>
-                  {pendingAction === action.key ? "Working…" : action.label}
+                <Button key={action.key} type="button" disabled>
+                  {action.label}
                 </Button>
               ))}
             </div>
           )}
+          {billing.available_actions.length > 0 ? <p>Billing actions are not available yet.</p> : null}
         </>
       ) : null}
-      {message !== null ? <InlineNotice variant="info">{message}</InlineNotice> : null}
+
     </Card>
   );
 }
