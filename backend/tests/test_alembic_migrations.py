@@ -332,3 +332,39 @@ def test_forward_migration_quarantines_legacy_unsent_delivery_attempts(
         (1, "dead", "legacy-dedup-audit-required"),
         (2, "sent", ""),
     ]
+
+
+def _phase9_alembic_config(database_url: str) -> Config:
+    config = Config(str(BACKEND_ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
+    config.set_main_option("sqlalchemy.url", database_url)
+    return config
+
+
+def test_phase9_upgrade_backfills_lowest_active_admin_and_preserves_household(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    database_url = f"sqlite:///{tmp_path / 'phase9-existing.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    get_settings.cache_clear()
+    config = _phase9_alembic_config(database_url)
+    command.upgrade(config, "20260715_0015")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql("INSERT INTO households (id,name,timezone,created_at) VALUES (1,'Preserved','UTC','2026-01-01')")
+        connection.exec_driver_sql("INSERT INTO users (id,household_id,email,password_hash,role,child_id,active,created_at) VALUES (9,1,'parent@test','x','PARENT',NULL,1,'2026-01-01'),(4,1,'admin@test','x','PARENT_ADMIN',NULL,1,'2026-01-01'),(2,1,'inactive@test','x','PARENT_ADMIN',NULL,0,'2026-01-01')")
+    command.upgrade(config, "head")
+    with engine.connect() as connection:
+        assert connection.exec_driver_sql("SELECT name, owner_user_id FROM households WHERE id=1").one() == ("Preserved", 4)
+        assert {"platform_users", "platform_sessions", "billing_accounts", "billing_events", "household_entitlements", "support_cases", "support_case_notes", "platform_audit_events"} <= set(inspect(connection).get_table_names())
+
+
+def test_phase9_upgrade_fails_clearly_for_ownerless_household(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    database_url = f"sqlite:///{tmp_path / 'phase9-ownerless.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    get_settings.cache_clear()
+    config = _phase9_alembic_config(database_url)
+    command.upgrade(config, "20260715_0015")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql("INSERT INTO households (id,name,timezone,created_at) VALUES (1,'No Parent','UTC','2026-01-01')")
+    with pytest.raises(Exception, match="no active parent eligible for ownership"):
+        command.upgrade(config, "head")

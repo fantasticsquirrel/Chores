@@ -24,6 +24,12 @@ class Household(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="UTC")
+    # SQLite cannot defer a NOT NULL cyclic household/users bootstrap. This is
+    # nullable only while both rows are created; migration and services require
+    # an eligible owner before exposing the household.
+    owner_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT", use_alter=True), nullable=True, unique=True, index=True
+    )
 
 
 class Child(TimestampMixin, Base):

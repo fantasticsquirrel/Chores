@@ -33,6 +33,7 @@ class AuthUserResponse(BaseModel):
     email: str
     role: UserRole
     child_id: int | None = None
+    is_household_owner: bool = False
 
 
 class AuthSessionResponse(BaseModel):

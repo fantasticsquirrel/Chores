@@ -9,6 +9,23 @@ class UserRole(str, Enum):
     CHILD = "CHILD"
 
 
+class PlatformRole(str, Enum):
+    OWNER = "OWNER"
+    SUPPORT = "SUPPORT"
+
+
+class EntitlementStatus(str, Enum):
+    NONE = "none"
+    TRIALING = "trialing"
+    ACTIVE = "active"
+    GRACE = "grace"
+    CANCELED_ACTIVE = "canceled-active"
+    EXPIRED = "expired"
+    REFUNDED = "refunded"
+    REVOKED = "revoked"
+    COMPLIMENTARY = "complimentary"
+
+
 class ScheduleMode(str, Enum):
     NONE = "NONE"
     EVERY = "EVERY"
