@@ -22,7 +22,7 @@ export function FormField({ label, className, children }: FormFieldProps): React
 }
 
 export function TextInput(props: TextInputProps): ReactElement {
-  return <input {...props} />;
+  return <input type="text" {...props} />;
 }
 
 export function DateInput(props: TextInputProps): ReactElement {

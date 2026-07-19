@@ -42,7 +42,9 @@ describe("separate ops routes", () => {
 
     fireEvent.change(await screen.findByLabelText("Operator email"), { target: { value: "owner@example.com" } });
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "platform-password" } });
-    fireEvent.change(screen.getByLabelText("MFA code"), { target: { value: "123456" } });
+    const mfaInput = screen.getByLabelText("MFA code");
+    expect(mfaInput).toHaveAttribute("type", "text");
+    fireEvent.change(mfaInput, { target: { value: "123456" } });
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
     await waitFor(() => expect(login).toHaveBeenCalledWith({
