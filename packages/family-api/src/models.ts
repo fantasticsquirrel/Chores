@@ -474,6 +474,15 @@ export interface MyModulesResponse {
   modules: FamilyModule[];
 }
 
+export interface HouseholdModuleAccess extends FamilyModule {
+  enabled: boolean;
+  can_disable: boolean;
+}
+
+export interface SetHouseholdModuleAccessRequest {
+  enabled: boolean;
+}
+
 export interface HomeschoolSemester {
   id: number;
   household_id: number;

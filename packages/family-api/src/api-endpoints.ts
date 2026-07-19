@@ -20,6 +20,7 @@ import type {
   EligibleChore,
   HealthResponse,
   HouseholdOwnershipResponse,
+  HouseholdModuleAccess,
   HomeschoolAttendance,
   HomeschoolDayComment,
   HomeschoolGrade,
@@ -51,6 +52,7 @@ import type {
   ResetChildAccountEmailRequest,
   ResetChildAccountPasswordRequest,
   SetUserModuleAccessRequest,
+  SetHouseholdModuleAccessRequest,
   SubmissionItemDecisionRequest,
   SubmissionRequest,
   SubmissionResponse,
@@ -144,6 +146,14 @@ export abstract class FamilyCoreApiEndpoints {
 
   async getMyModules(): Promise<MyModulesResponse> {
     return this.get<MyModulesResponse>("/modules/me");
+  }
+
+  async listHouseholdModules(): Promise<HouseholdModuleAccess[]> {
+    return this.get<HouseholdModuleAccess[]>("/modules/household");
+  }
+
+  async setHouseholdModuleAccess(moduleKey: string, payload: SetHouseholdModuleAccessRequest): Promise<HouseholdModuleAccess> {
+    return this.put<HouseholdModuleAccess, SetHouseholdModuleAccessRequest>(`/modules/household/${moduleKey}`, payload);
   }
 
   async listUserModuleAccess(): Promise<UserModuleAccess[]> {
