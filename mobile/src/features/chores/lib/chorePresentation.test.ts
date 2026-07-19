@@ -11,7 +11,7 @@ import {
 } from "./chorePresentation";
 
 const children: Child[] = [
-  { id: 1, household_id: 1, name: "Ava", active: true },
+  { id: 1, household_id: 1, name: "Jordan", active: true },
   { id: 2, household_id: 1, name: "Ben", active: true },
 ];
 
@@ -56,7 +56,7 @@ describe("mobile chore presentation helpers", () => {
 
   it("formats schedule, assignment, and timing labels", () => {
     expect(scheduleLabel(chore({ schedule_mode: "EVERY", schedule_interval: 2, schedule_unit: "WEEK" }))).toBe("Every 2 WEEK");
-    expect(eligibilityLabel(chore({ allowed_child_ids: [1, 2] }), children)).toBe("Ava, Ben");
+    expect(eligibilityLabel(chore({ allowed_child_ids: [1, 2] }), children)).toBe("Jordan, Ben");
     expect(timingLabel(chore({ expires_at: "2026-02-01", timeout_days: 3 }))).toBe("Ends 2026-02-01 · Window 3 days");
   });
 

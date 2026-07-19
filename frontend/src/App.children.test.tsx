@@ -273,13 +273,13 @@ describe("Parent children page", () => {
   it("resets a linked child account password and shows the login email", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy.mockResolvedValue([
-      { id: 1, household_id: 1, name: "Ava", active: true },
+      { id: 1, household_id: 1, name: "Jordan", active: true },
     ]);
     const resetPasswordSpy = vi.spyOn(apiClient, "resetChildAccountPassword");
     resetPasswordSpy.mockResolvedValue({
       id: 10,
       household_id: 1,
-      email: "ava-login@example.com",
+      email: "jordan-login@example.com",
       role: "CHILD",
       child_id: 1,
     });
@@ -309,14 +309,14 @@ describe("Parent children page", () => {
     );
     expect(
       await screen.findByText(
-        "Updated password for Ava. Child can sign in with a parent login email, Ava, and the new child password. Legacy email ava-login@example.com still works.",
+        "Updated password for Jordan. Child can sign in with a parent login email, Jordan, and the new child password. Legacy email jordan-login@example.com still works.",
       ),
     ).toBeVisible();
   });
 
   it("validates child password reset confirmation before calling the API", async () => {
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([
-      { id: 1, household_id: 1, name: "Ava", active: true },
+      { id: 1, household_id: 1, name: "Jordan", active: true },
     ]);
     const resetPasswordSpy = vi.spyOn(apiClient, "resetChildAccountPassword");
 

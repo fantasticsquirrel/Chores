@@ -59,7 +59,7 @@ describe("Login page", () => {
       user: {
         id: 7,
         household_id: 1,
-        email: "generated-ava@example.com",
+        email: "generated-jordan@example.com",
         role: "CHILD",
         child_id: 4,
       },
@@ -74,11 +74,12 @@ describe("Login page", () => {
     );
 
     fireEvent.click(screen.getByRole("tab", { name: "Child" }));
+    expect(screen.getByPlaceholderText("Enter child name")).toBeVisible();
     fireEvent.change(screen.getByLabelText("Parent Login Email"), {
       target: { value: " parent@example.com " },
     });
     fireEvent.change(screen.getByLabelText("Child Name"), {
-      target: { value: " Ava " },
+      target: { value: " Jordan " },
     });
     fireEvent.change(screen.getByLabelText("Child Password"), {
       target: { value: "kid-password-123" },
@@ -88,7 +89,7 @@ describe("Login page", () => {
     await waitFor(() =>
       expect(childLoginSpy).toHaveBeenCalledWith({
         parent_email: "parent@example.com",
-        child_name: "Ava",
+        child_name: "Jordan",
         password: "kid-password-123",
       }),
     );
@@ -153,7 +154,7 @@ describe("Login page", () => {
       target: { value: "parent@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Child Name"), {
-      target: { value: "Ava" },
+      target: { value: "Jordan" },
     });
     fireEvent.change(screen.getByLabelText("Child Password"), {
       target: { value: "wrong-pass" },

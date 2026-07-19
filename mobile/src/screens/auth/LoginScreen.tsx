@@ -196,7 +196,7 @@ export function LoginScreen({
                   setChildName(value);
                   setError(null);
                 }}
-                placeholder="Ava"
+                placeholder="Enter child name"
                 placeholderTextColor="#94a3b8"
                 style={styles.input}
                 textContentType="username"

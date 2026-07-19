@@ -94,15 +94,15 @@ def test_child_password_reset_and_disable_revoke_copied_session(tmp_path: Path, 
     admin, password = _setup(tmp_path, monkeypatch)
     factory = get_session_factory(get_settings().database_url)
     with factory() as session:
-        child = Child(household_id=admin.household_id, name="Ava", active=True)
+        child = Child(household_id=admin.household_id, name="Jordan", active=True)
         session.add(child)
         session.flush()
-        child_user = User(household_id=admin.household_id, email="ava@example.com", password_hash=hash_password("kid-password"), role=UserRole.CHILD, child_id=child.id)
+        child_user = User(household_id=admin.household_id, email="jordan@example.com", password_hash=hash_password("kid-password"), role=UserRole.CHILD, child_id=child.id)
         session.add(child_user)
         session.commit()
         child_id = child.id
     with TestClient(app) as child_client:
-        login = child_client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Ava", "password": "kid-password"})
+        login = child_client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Jordan", "password": "kid-password"})
         assert login.status_code == 200
         child_token = login.cookies[SESSION_COOKIE_NAME]
     with TestClient(app) as admin_client:
@@ -112,7 +112,7 @@ def test_child_password_reset_and_disable_revoke_copied_session(tmp_path: Path, 
     with _copied_client(child_token) as copied:
         assert copied.get("/chore-api/auth/me").status_code == 401
     with TestClient(app) as child_client:
-        login = child_client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Ava", "password": "kid-password-new"})
+        login = child_client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Jordan", "password": "kid-password-new"})
         assert login.status_code == 200
         child_token = login.cookies[SESSION_COOKIE_NAME]
     with TestClient(app) as admin_client:
@@ -186,13 +186,13 @@ def test_duplicate_child_name_failure_is_publicly_indistinguishable(tmp_path: Pa
     factory = get_session_factory(get_settings().database_url)
     with factory() as session:
         for i in range(2):
-            child = Child(household_id=admin.household_id, name="Ava", active=True)
+            child = Child(household_id=admin.household_id, name="Jordan", active=True)
             session.add(child)
             session.flush()
-            session.add(User(household_id=admin.household_id, email=f"ava{i}@example.com", password_hash=hash_password("kid-password"), role=UserRole.CHILD, child_id=child.id))
+            session.add(User(household_id=admin.household_id, email=f"jordan{i}@example.com", password_hash=hash_password("kid-password"), role=UserRole.CHILD, child_id=child.id))
         session.commit()
     with TestClient(app) as client:
-        duplicate = client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Ava", "password": "kid-password"})
+        duplicate = client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Jordan", "password": "kid-password"})
         unknown = client.post("/chore-api/auth/child-login", json={"parent_email": admin.email, "child_name": "Nobody", "password": "kid-password"})
     assert duplicate.status_code == unknown.status_code == 401
     assert duplicate.json() == unknown.json()
