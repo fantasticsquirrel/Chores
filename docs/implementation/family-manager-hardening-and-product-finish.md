@@ -149,12 +149,12 @@
 
 ## Phase 10 — Household-wide module controls
 
-- [ ] RED: prove only `PARENT_ADMIN` users with Admin manage access can read or change household-wide module state.
-- [ ] Make a disabled household module a backend-authoritative ceiling that per-user grants cannot bypass.
-- [ ] Prevent disabling the Admin module so every household retains an administrative recovery path.
-- [ ] Add audited household module list/update APIs and aligned shared contracts.
-- [ ] Add clearly separated global module toggles to the web Admin Dashboard, with pending, retry, error, and success states.
-- [ ] Add equivalent accessible module management to Android and refresh effective navigation after changes.
+- [x] RED: prove only `PARENT_ADMIN` users with Admin manage access can read or change household-wide module state.
+- [x] Make a disabled household module a backend-authoritative ceiling that per-user grants cannot bypass.
+- [x] Prevent disabling the Admin module so every household retains an administrative recovery path.
+- [x] Add audited household module list/update APIs and aligned shared contracts.
+- [x] Add clearly separated global module toggles to the web Admin Dashboard, with pending, retry, error, and success states.
+- [x] Add equivalent accessible module management to Android and refresh effective navigation after changes.
 - [ ] Run backend, shared, frontend, mobile, browser, CI, independent review, deployment, and live readback gates.
 
 ## Release gates
