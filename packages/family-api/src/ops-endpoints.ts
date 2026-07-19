@@ -1,7 +1,7 @@
 import type { RequestQuery } from "./client-core";
 import type {
   AppendOpsSupportNoteRequest, ComplimentaryEntitlementRequest, CreateOpsSupportCaseRequest,
-  OpsAuditEntry, OpsEventSummary, OpsHouseholdDetail, OpsHouseholdSummary, OpsLoginRequest,
+  OpsAuditEntry, OpsBillingDetail, OpsEventSummary, OpsHouseholdDetail, OpsHouseholdSummary, OpsLoginRequest,
   OpsReauthRequest, OpsReconcileRequest, OpsSessionResponse, OpsSupportCase, OpsSupportNote,
 } from "./ops-models";
 
@@ -29,7 +29,7 @@ export abstract class OpsApiEndpoints {
   reauthenticate(payload: OpsReauthRequest): Promise<void> { return this.post(opsApiRoutes.auth.reauthenticate, payload); }
   searchHouseholds(query: string): Promise<OpsHouseholdSummary[]> { return this.get(opsApiRoutes.households(), { query }); }
   getHousehold(id: number): Promise<OpsHouseholdDetail> { return this.get(opsApiRoutes.household(id)); }
-  getHouseholdBilling(id: number): Promise<OpsHouseholdDetail> { return this.get(opsApiRoutes.householdBilling(id)); }
+  getHouseholdBilling(id: number): Promise<OpsBillingDetail> { return this.get(opsApiRoutes.householdBilling(id)); }
   listHouseholdEvents(id: number): Promise<OpsEventSummary[]> { return this.get(opsApiRoutes.householdEvents(id)); }
   listAuditEntries(id: number): Promise<OpsAuditEntry[]> { return this.get(opsApiRoutes.householdAudit(id)); }
   createSupportCase(id: number, payload: CreateOpsSupportCaseRequest): Promise<OpsSupportCase> { return this.post(opsApiRoutes.supportCases(), { ...payload, household_id: id }); }

@@ -1,6 +1,6 @@
 import type { BillingStatusResponse, HouseholdOwnershipResponse } from "./models";
 
-export type OpsRole = "OWNER" | "SUPPORT";
+export type OpsRole = "PLATFORM_OWNER" | "PLATFORM_SUPPORT";
 export interface OpsUser { id: number; email: string; role: OpsRole; mfa_required: boolean; mfa_verified: boolean }
 export interface OpsSessionResponse { user: OpsUser; csrf_token?: string | null }
 export interface OpsLoginRequest { email: string; password: string; totp_code: string }
@@ -16,6 +16,11 @@ export interface OpsHouseholdDetail extends OpsHouseholdSummary {
   billing: BillingStatusResponse;
   entitlements: OpsEntitlementSummary[];
   support_cases: OpsSupportCase[];
+}
+export interface OpsBillingDetail {
+  household_id: number;
+  entitlement: { plan_key: string; status: string; valid_until: string | null };
+  events: Array<{ id: number; source: string; event_type: string; occurred_at: string }>;
 }
 export interface CreateOpsSupportCaseRequest { reason: string }
 export interface AppendOpsSupportNoteRequest { body: string }

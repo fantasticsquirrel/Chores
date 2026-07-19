@@ -16,8 +16,15 @@ def account_for_household(session: Session, household_id: int) -> BillingAccount
     account = session.scalar(select(BillingAccount).where(BillingAccount.household_id == household_id))
     if account is None:
         account = BillingAccount(household_id=household_id, public_id=str(uuid.uuid4()))
-        session.add(account)
-        session.flush()
+        try:
+            with session.begin_nested():
+                session.add(account)
+                session.flush()
+        except IntegrityError:
+            session.expire_all()
+            account = session.scalar(select(BillingAccount).where(BillingAccount.household_id == household_id))
+            if account is None:
+                raise
     return account
 
 

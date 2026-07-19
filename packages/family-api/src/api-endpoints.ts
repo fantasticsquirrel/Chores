@@ -1,8 +1,6 @@
 import type { RequestQuery } from "./client-core";
 import type {
   AuthSessionResponse,
-  BillingActionRequest,
-  BillingActionResponse,
   BillingStatusResponse,
   ChangePasswordRequest,
   Child,
@@ -74,7 +72,6 @@ export const familyApiRoutes = {
   householdOwnership: "/households/me/ownership",
   householdOwnershipTransfer: "/households/me/ownership/transfer",
   billing: "/billing",
-  billingActions: "/billing/actions",
 } as const;
 
 export abstract class FamilyCoreApiEndpoints {
@@ -144,9 +141,6 @@ export abstract class FamilyCoreApiEndpoints {
     return this.get<BillingStatusResponse>(familyApiRoutes.billing);
   }
 
-  async performBillingAction(payload: BillingActionRequest): Promise<BillingActionResponse> {
-    return this.post<BillingActionResponse, BillingActionRequest>(familyApiRoutes.billingActions, payload);
-  }
 
   async getMyModules(): Promise<MyModulesResponse> {
     return this.get<MyModulesResponse>("/modules/me");

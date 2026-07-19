@@ -3,7 +3,6 @@ import { Text } from "react-native";
 
 import { apiClient } from "../../api/client";
 import type { BillingStatus, BillingStatusResponse } from "../../api/models";
-import { ActionButton } from "../../components/ActionButton";
 import { InfoRow } from "../../components/InfoRow";
 import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
@@ -27,8 +26,6 @@ const statusLabels: Record<BillingStatus, string> = {
 export function SubscriptionScreen() {
   const [billing, setBilling] = useState<BillingStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -39,20 +36,6 @@ export function SubscriptionScreen() {
     });
     return () => { active = false; };
   }, []);
-
-  async function performAction(action: string) {
-    setPendingAction(action);
-    setError(null);
-    setMessage(null);
-    try {
-      const result = await apiClient.performBillingAction({ action });
-      setMessage(result.message);
-    } catch (actionError) {
-      setError(formatError(actionError));
-    } finally {
-      setPendingAction(null);
-    }
-  }
 
   return (
     <SectionCard title="Subscription" subtitle="Household billing and access">
@@ -65,17 +48,9 @@ export function SubscriptionScreen() {
           {billing.expires_at !== null ? <InfoRow label="Access expires" value={formatDate(billing.expires_at)} /> : null}
           {billing.expires_at === null && billing.current_period_ends_at !== null ? <InfoRow label="Current period ends" value={formatDate(billing.current_period_ends_at)} /> : null}
           {billing.provider === null ? <Text style={styles.mutedText}>No payment provider is connected.</Text> : null}
-          {billing.available_actions.length === 0 ? <Text style={styles.mutedText}>No subscription actions are currently available.</Text> : billing.available_actions.map((action) => (
-            <ActionButton
-              key={action.key}
-              disabled={pendingAction !== null}
-              label={pendingAction === action.key ? "Working…" : action.label}
-              onPress={() => { void performAction(action.key); }}
-            />
-          ))}
+          <Text style={styles.mutedText}>No subscription actions are currently available.</Text>
         </>
       ) : null}
-      {message !== null ? <InlineNotice tone="success" message={message} /> : null}
     </SectionCard>
   );
 }

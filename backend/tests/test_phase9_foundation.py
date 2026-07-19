@@ -32,14 +32,13 @@ def configure(tmp_path: Path, monkeypatch) -> None:
 def seed_household(*, second: bool = False) -> dict[str, object]:
     sf = get_session_factory(get_settings().database_url)
     with sf() as db:
-        home = Household(name="Other" if second else "Home", timezone="UTC")
-        db.add(home)
-        db.flush()
-        owner = User(household_id=home.id, email=f"owner{home.id}@example.com", password_hash=hash_password("owner-password"), role=UserRole.PARENT_ADMIN, active=True)
-        target = User(household_id=home.id, email=f"target{home.id}@example.com", password_hash=hash_password("target-password"), role=UserRole.PARENT, active=True)
-        db.add_all([owner, target])
-        db.flush()
-        home.owner_user_id = owner.id
+        home_id = 1002 if second else 1001
+        owner_id = 2002 if second else 2001
+        target_id = 3002 if second else 3001
+        home = Household(id=home_id, name="Other" if second else "Home", timezone="UTC", owner_user_id=owner_id)
+        owner = User(id=owner_id, household_id=home_id, email=f"owner{home_id}@example.com", password_hash=hash_password("owner-password"), role=UserRole.PARENT_ADMIN, active=True)
+        target = User(id=target_id, household_id=home_id, email=f"target{home_id}@example.com", password_hash=hash_password("target-password"), role=UserRole.PARENT, active=True)
+        db.add_all([home, owner, target])
         db.commit()
         return {"household_id": home.id, "owner_id": owner.id, "owner_email": owner.email, "target_id": target.id}
 
