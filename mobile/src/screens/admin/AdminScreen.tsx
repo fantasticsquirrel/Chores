@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { apiClient } from "../../api/client";
-import type { UserModuleAccess, UserRole } from "../../api/models";
+import type {
+  HouseholdModuleAccess,
+  UserModuleAccess,
+  UserRole,
+} from "../../api/models";
 import { ActionButton } from "../../components/ActionButton";
 import { ChoiceGroup } from "../../components/ChoiceGroup";
 import { FieldLabel } from "../../components/FieldLabel";
@@ -16,6 +20,12 @@ import { formatError } from "../../utils/format";
 
 type AdminState = {
   users: UserModuleAccess[];
+  loading: boolean;
+  error: string | null;
+};
+
+type HouseholdModuleState = {
+  modules: HouseholdModuleAccess[];
   loading: boolean;
   error: string | null;
 };
@@ -39,7 +49,11 @@ function isLastAdminAccess(
   );
 }
 
-export function AdminScreen() {
+export function AdminScreen({
+  onModulesChanged,
+}: {
+  onModulesChanged?: () => void | Promise<void>;
+}) {
   const [state, setState] = useState<AdminState>({
     users: [],
     loading: true,
@@ -53,6 +67,21 @@ export function AdminScreen() {
     useState<Extract<UserRole, "PARENT" | "PARENT_ADMIN">>("PARENT");
   const [creatingParent, setCreatingParent] = useState(false);
   const [updatingAccess, setUpdatingAccess] = useState<string | null>(null);
+  const [householdState, setHouseholdState] = useState<HouseholdModuleState>({
+    modules: [],
+    loading: true,
+    error: null,
+  });
+  const [updatingHouseholdModule, setUpdatingHouseholdModule] = useState<
+    string | null
+  >(null);
+  const [householdActionError, setHouseholdActionError] = useState<{
+    module: HouseholdModuleAccess;
+    message: string;
+  } | null>(null);
+  const [householdActionMessage, setHouseholdActionMessage] = useState<
+    string | null
+  >(null);
 
   const refresh = useCallback(async () => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
@@ -64,9 +93,68 @@ export function AdminScreen() {
     }
   }, []);
 
+  const refreshHouseholdModules = useCallback(async () => {
+    setHouseholdState((previous) => ({
+      ...previous,
+      loading: true,
+      error: null,
+    }));
+    try {
+      const modules = await apiClient.listHouseholdModules();
+      setHouseholdState({ modules, loading: false, error: null });
+    } catch (error) {
+      setHouseholdState((previous) => ({
+        ...previous,
+        loading: false,
+        error: formatError(error),
+      }));
+    }
+  }, []);
+
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    void refreshHouseholdModules();
+  }, [refreshHouseholdModules]);
+
+  async function toggleHouseholdModule(module: HouseholdModuleAccess) {
+    if (!module.can_disable || updatingHouseholdModule !== null) {
+      return;
+    }
+
+    const enabled = !module.enabled;
+    setHouseholdActionError(null);
+    setHouseholdActionMessage(null);
+    setUpdatingHouseholdModule(module.key);
+    try {
+      const updated = await apiClient.setHouseholdModuleAccess(module.key, {
+        enabled,
+      });
+      setHouseholdState((previous) => ({
+        ...previous,
+        modules: previous.modules.map((row) =>
+          row.key === updated.key ? updated : row,
+        ),
+      }));
+      setHouseholdActionMessage(
+        `${updated.name} is now ${updated.enabled ? "enabled" : "disabled"} for the household.`,
+      );
+      try {
+        await onModulesChanged?.();
+      } catch (error) {
+        setHouseholdActionError({
+          module: updated,
+          message: `The household setting was saved, but effective modules could not refresh: ${formatError(error)}`,
+        });
+      }
+    } catch (error) {
+      setHouseholdActionError({ module, message: formatError(error) });
+    } finally {
+      setUpdatingHouseholdModule(null);
+    }
+  }
 
   async function createParent() {
     setActionError(null);
@@ -141,18 +229,114 @@ export function AdminScreen() {
   return (
     <View>
       <ScreenHeader
-        subtitle="Parent users and module access"
+        subtitle="Household modules, parent users, and access"
         title="Admin"
         trailing={
           <ActionButton
             compact
-            disabled={state.loading}
-            label={state.loading ? "Loading" : "Refresh"}
-            onPress={refresh}
+            disabled={state.loading || householdState.loading}
+            label={state.loading || householdState.loading ? "Loading" : "Refresh"}
+            onPress={() => {
+              void Promise.all([refresh(), refreshHouseholdModules()]);
+            }}
             variant="secondary"
           />
         }
       />
+      <SectionCard
+        title="Household Modules"
+        subtitle="These settings apply to everyone in your household. Individual access can still be managed below."
+      >
+        {householdState.loading ? (
+          <LoadingRow label="Loading household modules" />
+        ) : null}
+        {!householdState.loading && householdState.error !== null ? (
+          <>
+            <InlineNotice
+              tone="error"
+              message={`Could not load household modules: ${householdState.error}`}
+            />
+            <ActionButton
+              compact
+              label="Retry household modules"
+              onPress={refreshHouseholdModules}
+              variant="secondary"
+            />
+          </>
+        ) : null}
+        {!householdState.loading &&
+        householdState.error === null &&
+        householdState.modules.length === 0 ? (
+          <Text style={styles.mutedText}>No household modules found.</Text>
+        ) : null}
+        {householdState.modules.map((module) => {
+          const disabled =
+            !module.can_disable || updatingHouseholdModule !== null;
+          return (
+            <View key={module.key} style={styles.selectableRow}>
+              <View style={styles.rowMain}>
+                <Text style={styles.rowTitle}>{module.name}</Text>
+                <Text style={styles.rowMeta}>{module.description}</Text>
+                {!module.can_disable ? (
+                  <Text style={styles.lockedModuleText}>
+                    Admin stays enabled so household administrators cannot be locked out.
+                  </Text>
+                ) : null}
+                {householdActionError?.module.key === module.key ? (
+                  <View style={styles.moduleActionFeedback}>
+                    <InlineNotice
+                      tone="error"
+                      message={`Could not update ${module.name}: ${householdActionError.message}`}
+                    />
+                    <ActionButton
+                      compact
+                      disabled={updatingHouseholdModule !== null}
+                      label={`Retry ${module.name} update`}
+                      onPress={() => toggleHouseholdModule(module)}
+                      variant="secondary"
+                    />
+                  </View>
+                ) : null}
+              </View>
+              <Pressable
+                accessibilityLabel={`${module.name} household access`}
+                accessibilityHint={
+                  module.can_disable
+                    ? `Double tap to ${module.enabled ? "disable" : "enable"} ${module.name} for the household.`
+                    : "Admin access is required and cannot be disabled."
+                }
+                accessibilityRole="switch"
+                accessibilityState={{ checked: module.enabled, disabled }}
+                disabled={disabled}
+                onPress={() => toggleHouseholdModule(module)}
+                style={[
+                  styles.moduleToggle,
+                  module.enabled ? styles.moduleToggleEnabled : null,
+                  disabled && module.can_disable ? styles.moduleToggleBusy : null,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.moduleToggleThumb,
+                    module.enabled ? styles.moduleToggleThumbEnabled : null,
+                  ]}
+                />
+                <Text style={styles.moduleToggleLabel}>
+                  {updatingHouseholdModule === module.key
+                    ? "Saving"
+                    : module.enabled
+                      ? "On"
+                      : "Off"}
+                </Text>
+              </Pressable>
+            </View>
+          );
+        })}
+      </SectionCard>
+
+      {householdActionMessage !== null ? (
+        <InlineNotice tone="success" message={householdActionMessage} />
+      ) : null}
       <SectionCard title="Add Parent Login">
         <FieldLabel label="Email" />
         <TextInput

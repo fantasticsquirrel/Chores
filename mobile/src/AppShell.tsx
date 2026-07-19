@@ -106,7 +106,9 @@ export function AppShell() {
       {activeTab === "homeschool" ? (
         <HomeschoolScreen modules={modules} session={session} />
       ) : null}
-      {activeTab === "admin" ? <AdminScreen /> : null}
+      {activeTab === "admin" ? (
+        <AdminScreen onModulesChanged={async () => { await loadModules(); }} />
+      ) : null}
       {activeTab === "account" ? (
         <AccountScreen
           modules={modules}
