@@ -85,6 +85,35 @@ def initialize_database(settings: Settings) -> None:
 
     _ = ALL_MODELS
     Base.metadata.create_all(bind=engine)
+    _install_sqlite_runtime_guards(engine)
+
+
+def _install_sqlite_runtime_guards(engine: Engine) -> None:
+    if engine.dialect.name != "sqlite":
+        return
+    statements = [
+
+        """CREATE TRIGGER IF NOT EXISTS trg_households_owner_update BEFORE UPDATE OF owner_user_id ON households
+        WHEN NEW.owner_user_id IS NULL OR NOT EXISTS (
+          SELECT 1 FROM users WHERE id=NEW.owner_user_id AND household_id=NEW.id AND active=1
+            AND role IN ('PARENT_ADMIN','PARENT'))
+        BEGIN SELECT RAISE(ABORT, 'owner must be an active parent in the same household'); END""",
+        """CREATE TRIGGER IF NOT EXISTS trg_users_protect_owner_update BEFORE UPDATE OF household_id, active, role ON users
+        WHEN EXISTS (SELECT 1 FROM households WHERE owner_user_id=OLD.id)
+          AND (NEW.household_id != OLD.household_id OR NEW.active != 1 OR NEW.role NOT IN ('PARENT_ADMIN','PARENT'))
+        BEGIN SELECT RAISE(ABORT, 'current owner cannot be moved, deactivated, or demoted'); END""",
+        """CREATE TRIGGER IF NOT EXISTS trg_users_protect_owner_delete BEFORE DELETE ON users
+        WHEN EXISTS (SELECT 1 FROM households WHERE owner_user_id=OLD.id)
+        BEGIN SELECT RAISE(ABORT, 'current owner cannot be deleted'); END""",
+    ]
+    for table in ("billing_events", "platform_audit_events", "support_case_notes"):
+        statements.extend((
+            f"CREATE TRIGGER IF NOT EXISTS trg_{table}_append_only_update BEFORE UPDATE ON {table} BEGIN SELECT RAISE(ABORT, 'append-only record'); END",
+            f"CREATE TRIGGER IF NOT EXISTS trg_{table}_append_only_delete BEFORE DELETE ON {table} BEGIN SELECT RAISE(ABORT, 'append-only record'); END",
+        ))
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.exec_driver_sql(statement)
 
 
 def _require_current_alembic_schema(engine: Engine) -> None:

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 import os
 from dataclasses import dataclass
 from functools import lru_cache
@@ -20,6 +22,8 @@ class Settings:
     session_max_age_seconds: int = 60 * 60 * 24 * 14
     login_max_attempts: int = 5
     login_window_seconds: int = 300
+    platform_totp_encryption_keys: tuple[tuple[str, str], ...] = ()
+    platform_totp_active_key_version: str = ""
     push_vapid_public_key: str = ""
     push_vapid_private_key: str = ""
     push_vapid_claims_sub: str = "mailto:admin@multihost.ing"
@@ -80,6 +84,25 @@ def get_settings() -> Settings:
     if min(session_max_age_seconds, login_max_attempts, login_window_seconds) <= 0:
         raise SettingsError("Session and login limit settings must be positive integers.")
 
+    if app_env == "production" and not session_cookie_secure:
+        raise SettingsError("SESSION_COOKIE_SECURE must be true in production.")
+    raw_totp_keys = os.getenv("PLATFORM_TOTP_ENCRYPTION_KEYS", "").strip()
+    totp_keys: list[tuple[str, str]] = []
+    for item in filter(None, raw_totp_keys.split(",")):
+        version, separator, key = item.strip().partition(":")
+        if not separator or not version or not key:
+            raise SettingsError("PLATFORM_TOTP_ENCRYPTION_KEYS must contain version:key entries.")
+        totp_keys.append((version, key))
+    active_totp_version = os.getenv("PLATFORM_TOTP_ACTIVE_KEY_VERSION", "").strip()
+    if app_env != "production" and not totp_keys and not active_totp_version:
+        derived = base64.urlsafe_b64encode(hashlib.sha256(secret_key.encode()).digest()).decode()
+        totp_keys = [("development", derived)]
+        active_totp_version = "development"
+    if active_totp_version and active_totp_version not in dict(totp_keys):
+        raise SettingsError("PLATFORM_TOTP_ACTIVE_KEY_VERSION is not configured.")
+    if app_env == "production" and (not totp_keys or not active_totp_version):
+        raise SettingsError("PLATFORM_TOTP_ENCRYPTION_KEYS and PLATFORM_TOTP_ACTIVE_KEY_VERSION are required in production.")
+
     return Settings(
         app_env=app_env,
         database_url=database_url,
@@ -89,6 +112,8 @@ def get_settings() -> Settings:
         session_max_age_seconds=session_max_age_seconds,
         login_max_attempts=login_max_attempts,
         login_window_seconds=login_window_seconds,
+        platform_totp_encryption_keys=tuple(totp_keys),
+        platform_totp_active_key_version=active_totp_version,
         push_vapid_public_key=os.getenv("PUSH_VAPID_PUBLIC_KEY", "").strip(),
         push_vapid_private_key=os.getenv("PUSH_VAPID_PRIVATE_KEY", "").strip(),
         push_vapid_claims_sub=os.getenv("PUSH_VAPID_CLAIMS_SUB", "mailto:admin@multihost.ing").strip(),

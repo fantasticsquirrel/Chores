@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactElement } from "react";
-import { Navigate, NavLink, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
@@ -7,7 +7,7 @@ import { ParentChoresPage } from "./pages/ParentChoresPage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
-import { AccountSecurityPage } from "./pages/AccountSecurityPage";
+import { AccountPage } from "./pages/AccountPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { HomeschoolPage } from "./pages/HomeschoolPage";
 import { RecipeDetailPage, RecipeOrganizerPage } from "./pages/RecipeOrganizerPage";
@@ -18,6 +18,7 @@ import { type UserRole, apiClient } from "./api";
 import { formatApiError } from "./lib/errors";
 import type { FamilyModuleKey } from "./modules/registry";
 import { Button, Card, InlineNotice } from "./ui";
+import { OpsApp } from "./ops/OpsApp";
 
 type RouteCardProps = {
   title: string;
@@ -38,7 +39,7 @@ const navItems: NavItem[] = [
   { to: "/recipes", label: "Recipes", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "recipes" },
   { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
 
-  { to: "/account/security", label: "Account Security", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
+  { to: "/account", label: "Account", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
   { to: "/notifications", label: "Notifications", roles: ["PARENT_ADMIN", "PARENT", "CHILD"], moduleKey: "chores" },
   { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
 ];
@@ -232,6 +233,11 @@ function AppShell(): ReactElement {
 }
 
 export default function App(): ReactElement {
+  const { pathname } = useLocation();
+  return pathname === "/ops" || pathname.startsWith("/ops/") ? <OpsApp /> : <HouseholdApp />;
+}
+
+function HouseholdApp(): ReactElement {
   return (
     <AuthProvider>
       <Routes>
@@ -239,7 +245,8 @@ export default function App(): ReactElement {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/account/security" element={<AccountSecurityPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/account/security" element={<AccountPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/chore/account/security" element={<Navigate to="/account/security" replace />} />
             <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>

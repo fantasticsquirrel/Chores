@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db_session
 from app.config import get_settings
-from app.models.core import User
+from app.models.core import Household, User
 from app.schemas.auth import AuthSessionResponse, AuthUserResponse, ChangePasswordRequest, ChildLoginRequest, LoginRequest
 from app.security.audit import account_key_hash, audit, record_login_attempt, request_ip, retry_after_seconds
 from app.security.csrf import CSRF_COOKIE_NAME, create_csrf_token
@@ -18,8 +18,11 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 _service = AuthService()
 
 
-def _build_session_response(user: object, *, csrf_token: str | None = None) -> AuthSessionResponse:
-    return AuthSessionResponse(user=AuthUserResponse.model_validate(user), csrf_token=csrf_token)
+def _build_session_response(user: User, session: Session, *, csrf_token: str | None = None) -> AuthSessionResponse:
+    projected = AuthUserResponse.model_validate(user)
+    household = session.get(Household, user.household_id)
+    projected.is_household_owner = household is not None and household.owner_user_id == user.id
+    return AuthSessionResponse(user=projected, csrf_token=csrf_token)
 
 
 def _request_uses_https(request: Request) -> bool:
@@ -81,7 +84,7 @@ def login(payload: LoginRequest, request: Request, response: Response, session: 
     audit(session, "login.success", request=request, actor=user)
     csrf_token = _set_session_cookies(user, request, response, session)
     session.commit()
-    return _build_session_response(user, csrf_token=csrf_token)
+    return _build_session_response(user, session, csrf_token=csrf_token)
 
 
 @router.post("/child-login", response_model=AuthSessionResponse)
@@ -96,7 +99,7 @@ def child_login(payload: ChildLoginRequest, request: Request, response: Response
     audit(session, "login.success", request=request, actor=result.user)
     csrf_token = _set_session_cookies(result.user, request, response, session)
     session.commit()
-    return _build_session_response(result.user, csrf_token=csrf_token)
+    return _build_session_response(result.user, session, csrf_token=csrf_token)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -115,8 +118,8 @@ def logout(request: Request, response: Response, session: Session = Depends(get_
 
 
 @router.get("/me", response_model=AuthSessionResponse)
-def get_current_session(request: Request, user: User = Depends(get_current_user)) -> AuthSessionResponse:
-    return _build_session_response(user, csrf_token=request.cookies.get(CSRF_COOKIE_NAME))
+def get_current_session(request: Request, session: Session = Depends(get_db_session), user: User = Depends(get_current_user)) -> AuthSessionResponse:
+    return _build_session_response(user, session, csrf_token=request.cookies.get(CSRF_COOKIE_NAME))
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)

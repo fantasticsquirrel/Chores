@@ -115,6 +115,16 @@
 - [ ] Add signed webhook verification, duplicate/out-of-order delivery handling, transactional projections, bounded retries, dead-letter visibility, and scheduled provider reconciliation.
 - [ ] Add parent-owner billing APIs and UI for plan status, renewal date, purchase/checkout, restore purchases, billing portal, cancellation, and ownership transfer; children must never see billing controls or purchase prompts.
 
+### Implemented provider-neutral slice
+
+- [x] Add deterministic household-owner migration/backfill, ownership constraints, owner projection, and password-confirmed transfer with audit.
+- [x] Add provider-neutral billing accounts, customer references, subscriptions, append-only billing events, projected household entitlements, and disabled Stripe/RevenueCat/Google Play adapter seams.
+- [x] Add separate owner/support identities, cookies, CSRF boundary, mandatory TOTP login, revocable sessions, recent reauthentication, append-only audit, and secure bootstrap tooling.
+- [x] Add finite, reasoned, idempotent complimentary grant/extension transactions restricted to `PLATFORM_OWNER`, with support denial and immutable event/audit readback.
+- [x] Add redacted household lookup, case-linked support notes/reconciliation, separate `/ops` navigation, and owner-only complimentary controls.
+- [x] Add household-owner subscription status on web and Android while hiding billing status and controls from non-owners and children.
+- [ ] Enable live checkout, store/webhook processing, refunds, provider reconciliation/dead-letter operations, and paid-entitlement enforcement only after provider accounts, credentials, and final product policy exist.
+
 ### Platform owner role
 
 - [ ] Add a separately authenticated `PLATFORM_OWNER` role with mandatory MFA, short/revocable sessions, reauthentication for destructive actions, and complete audit logging.
