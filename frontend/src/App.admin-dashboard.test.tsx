@@ -20,6 +20,30 @@ const allModules = [
   { key: "admin" as const, name: "Admin", description: "Admin module" },
 ];
 
+const householdModules = [
+  {
+    key: "chores" as const,
+    name: "Chores",
+    description: "Chores module",
+    enabled: true,
+    can_disable: true,
+  },
+  {
+    key: "homeschool" as const,
+    name: "Homeschool",
+    description: "Homeschool module",
+    enabled: true,
+    can_disable: true,
+  },
+  {
+    key: "admin" as const,
+    name: "Admin",
+    description: "Admin module",
+    enabled: true,
+    can_disable: false,
+  },
+];
+
 function mockAdminSession(): void {
   vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
     user: {
@@ -34,6 +58,10 @@ function mockAdminSession(): void {
 }
 
 describe("Admin dashboard module access", () => {
+  beforeEach(() => {
+    vi.spyOn(apiClient, "listHouseholdModules").mockResolvedValue(householdModules);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -100,6 +128,157 @@ describe("Admin dashboard module access", () => {
     expect(
       await screen.findByText("parent@example.com can now access homeschool."),
     ).toBeVisible();
+  });
+
+  it("loads household-wide module states alongside the per-user matrix", async () => {
+    mockAdminSession();
+    const listUsersSpy = vi
+      .spyOn(apiClient, "listUserModuleAccess")
+      .mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: "Household Module Toggles" }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/These controls affect everyone in the household/i),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("switch", { name: "Chores household module" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("switch", { name: "Homeschool household module" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(apiClient.listHouseholdModules).toHaveBeenCalledTimes(1);
+    expect(listUsersSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("toggles a household module and refreshes the per-user matrix", async () => {
+    mockAdminSession();
+    const listUsersSpy = vi
+      .spyOn(apiClient, "listUserModuleAccess")
+      .mockResolvedValue([]);
+    let resolveToggle!: (value: (typeof householdModules)[number]) => void;
+    const togglePromise = new Promise<(typeof householdModules)[number]>((resolve) => {
+      resolveToggle = resolve;
+    });
+    const setHouseholdSpy = vi
+      .spyOn(apiClient, "setHouseholdModuleAccess")
+      .mockReturnValue(togglePromise);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const choresToggle = await screen.findByRole("switch", {
+      name: "Chores household module",
+    });
+    fireEvent.click(choresToggle);
+
+    expect(setHouseholdSpy).toHaveBeenCalledWith("chores", { enabled: false });
+    expect(choresToggle).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Updating Chores for the whole household…",
+    );
+
+    resolveToggle({ ...householdModules[0], enabled: false });
+
+    await waitFor(() => expect(listUsersSpy).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Chores is now disabled for the whole household.",
+    );
+    expect(choresToggle).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("locks the household admin module with an explanation", async () => {
+    mockAdminSession();
+    vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([]);
+    const setHouseholdSpy = vi.spyOn(apiClient, "setHouseholdModuleAccess");
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const adminToggle = await screen.findByRole("switch", {
+      name: "Admin household module",
+    });
+    expect(adminToggle).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Required for household administration; it cannot be disabled.",
+      ),
+    ).toBeVisible();
+    fireEvent.click(adminToggle);
+    expect(setHouseholdSpy).not.toHaveBeenCalled();
+  });
+
+  it("announces household module load errors and retries without hiding the user matrix", async () => {
+    mockAdminSession();
+    vi.mocked(apiClient.listHouseholdModules)
+      .mockRejectedValueOnce(new ApiClientError(503, "Modules unavailable.", null))
+      .mockResolvedValueOnce(householdModules);
+    vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([
+      {
+        id: 2,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+        modules: [allModules[0]],
+      },
+    ]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("parent@example.com")).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load household module toggles: Modules unavailable.",
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retry household modules" }),
+    );
+
+    expect(
+      await screen.findByRole("switch", { name: "Chores household module" }),
+    ).toBeVisible();
+    expect(apiClient.listHouseholdModules).toHaveBeenCalledTimes(2);
+  });
+
+  it("announces household toggle errors and preserves the server state", async () => {
+    mockAdminSession();
+    vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([]);
+    vi.spyOn(apiClient, "setHouseholdModuleAccess").mockRejectedValue(
+      new ApiClientError(409, "Module is required.", null),
+    );
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const choresToggle = await screen.findByRole("switch", {
+      name: "Chores household module",
+    });
+    fireEvent.click(choresToggle);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not update household module: Module is required.",
+    );
+    expect(choresToggle).toHaveAttribute("aria-checked", "true");
   });
 
   it("creates an additional parent login in the household", async () => {
