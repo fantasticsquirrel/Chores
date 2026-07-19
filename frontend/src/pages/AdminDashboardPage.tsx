@@ -388,10 +388,12 @@ export function AdminDashboardPage(): ReactElement {
                 >
                   {familyModules.map((module) => {
                     const enabled = hasModule(user, module.key);
+                    const householdStateUnavailable =
+                      householdModules.loading || householdModules.error !== null;
                     const globallyDisabled = householdModules.modules.some(
                       (row) => row.key === module.key && !row.enabled,
                     );
-                    const disabled = globallyDisabled || isLastAdminAccess(
+                    const disabled = householdStateUnavailable || globallyDisabled || isLastAdminAccess(
                         state.users,
                         user,
                         module.key,
@@ -403,7 +405,9 @@ export function AdminDashboardPage(): ReactElement {
                         className={`jewel-button button-reset${enabled ? "" : " danger-button"}`}
                         disabled={disabled}
                         title={
-                          globallyDisabled
+                          householdStateUnavailable
+                            ? "Household module state is unavailable; retry before changing user access."
+                            : globallyDisabled
                             ? "This module is disabled for the whole household."
                             : disabled
                               ? "At least one admin must keep Admin access."
@@ -411,7 +415,13 @@ export function AdminDashboardPage(): ReactElement {
                         }
                         onClick={() => void toggleAccess(user, module.key)}
                       >
-                        {globallyDisabled ? "Globally off" : enabled ? "✓" : "—"} {module.label}
+                        {householdStateUnavailable
+                          ? "Household state unavailable"
+                          : globallyDisabled
+                            ? "Globally off"
+                            : enabled
+                              ? "✓"
+                              : "—"} {module.label}
                       </button>
                     );
                   })}

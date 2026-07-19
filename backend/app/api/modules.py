@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db_session, require_module_access, require_module_manage
-from app.models.core import User
+from app.models.core import HouseholdModuleAccess, User
 from app.models.enums import UserRole
 from app.modules import MODULE_ADMIN
 from app.schemas.modules import (
@@ -77,8 +77,11 @@ def set_household_module_access(
     current_user: User = Depends(_require_admin_module_manage),
     session: Session = Depends(get_db_session),
 ) -> HouseholdModuleAccessResponse:
-    household_access = _service.list_household_access(session, current_user.household_id)
-    previous = next((enabled for module, enabled in household_access if module.key == module_key), None)
+    previous_access = session.get(
+        HouseholdModuleAccess,
+        {"household_id": current_user.household_id, "module_key": module_key},
+    )
+    previous = previous_access.enabled if previous_access is not None else True
     try:
         module, enabled = _service.set_household_access(
             session,

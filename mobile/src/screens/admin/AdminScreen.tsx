@@ -414,16 +414,19 @@ export function AdminScreen({
             <View style={styles.choiceGrid}>
               {familyModules.map((module) => {
                 const enabled = hasModule(user, module.key);
+                const householdStateUnavailable =
+                  householdState.loading || householdState.error !== null;
                 const globallyDisabled = householdState.modules.some(
                   (row) => row.key === module.key && !row.enabled,
                 );
                 const disabled =
                   updatingAccess !== null ||
+                  householdStateUnavailable ||
                   globallyDisabled ||
                   isLastAdminAccess(state.users, user, module.key);
                 return (
                   <Pressable
-                    accessibilityLabel={`${globallyDisabled ? "Globally Off" : enabled ? "On" : "Off"} ${module.label}`}
+                    accessibilityLabel={`${householdStateUnavailable ? "Household State Unavailable" : globallyDisabled ? "Globally Off" : enabled ? "On" : "Off"} ${module.label}`}
                     accessibilityRole="button"
                     accessibilityState={{ disabled }}
                     disabled={disabled}
@@ -441,7 +444,13 @@ export function AdminScreen({
                         enabled ? styles.choiceButtonTextSelected : null,
                       ]}
                     >
-                      {globallyDisabled ? "Globally Off" : enabled ? "On" : "Off"} {module.label}
+                      {householdStateUnavailable
+                        ? "Household State Unavailable"
+                        : globallyDisabled
+                          ? "Globally Off"
+                          : enabled
+                            ? "On"
+                            : "Off"} {module.label}
                     </Text>
                   </Pressable>
                 );

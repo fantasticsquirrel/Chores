@@ -48,7 +48,7 @@ describe("AdminScreen household modules", () => {
 
     expect(screen.getByText("Loading household modules")).toBeTruthy();
     expect(await screen.findByText("Household Modules")).toBeTruthy();
-    expect(screen.getByText("Chore assignments and rewards.")).toBeTruthy();
+    expect(await screen.findByText("Chore assignments and rewards.")).toBeTruthy();
     expect(screen.getByRole("switch", { name: "Chores household access" }).props.accessibilityState).toMatchObject({
       checked: true,
       disabled: false,
@@ -116,8 +116,23 @@ describe("AdminScreen household modules", () => {
     ).toMatchObject({ checked: true, disabled: false });
   });
 
-  it("shows a household load error and retries only that section", async () => {
-    jest.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([]);
+  it("shows a household load error, fails per-user controls closed, and retries only that section", async () => {
+    jest.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([
+      {
+        id: 2,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+        modules: [
+          {
+            key: "chores",
+            name: "Chores",
+            description: "Chore assignments and rewards.",
+          },
+        ],
+      },
+    ]);
     const listModules = jest
       .spyOn(apiClient, "listHouseholdModules")
       .mockRejectedValueOnce(new Error("network unavailable"))
@@ -130,6 +145,10 @@ describe("AdminScreen household modules", () => {
         "Could not load household modules: network unavailable",
       ),
     ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Household State Unavailable Chores" })
+        .props.accessibilityState,
+    ).toMatchObject({ disabled: true });
     fireEvent.press(screen.getByRole("button", { name: "Retry household modules" }));
 
     expect(await screen.findByText("Chore assignments and rewards.")).toBeTruthy();

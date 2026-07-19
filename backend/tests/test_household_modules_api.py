@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Household, SecurityAuditEvent, User
+from app.models.core import Household, Module, SecurityAuditEvent, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.services.modules import ModuleService
@@ -233,6 +233,30 @@ def test_admin_module_cannot_be_disabled_household_wide(tmp_path: Path, monkeypa
 
     assert response.status_code == 400
     assert response.json()["detail"] == "The admin module cannot be disabled for a household."
+
+
+def test_catalog_disabled_module_cannot_gain_latent_household_enablement(tmp_path: Path, monkeypatch) -> None:
+    admin, _, password = _configure(tmp_path, monkeypatch)
+    factory = get_session_factory(get_settings().database_url)
+    with factory() as session:
+        ModuleService().ensure_catalog(session)
+        module = session.get(Module, "chores")
+        assert module is not None
+        module.enabled = False
+        session.commit()
+
+    with TestClient(app) as client:
+        headers = _login(client, admin, password)
+        response = client.put(
+            "/chore-api/modules/household/chores",
+            headers=headers,
+            json={"enabled": True},
+        )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "This module is disabled globally and cannot be enabled for a household."
+    )
 
 
 def test_unknown_household_module_key_is_rejected(tmp_path: Path, monkeypatch) -> None:

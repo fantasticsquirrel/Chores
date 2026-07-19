@@ -95,6 +95,9 @@ class ModuleService:
             raise ValueError("Unknown module key.")
         if module_key == MODULE_ADMIN and not enabled:
             raise ValueError("The admin module cannot be disabled for a household.")
+        globally_enabled = session.scalar(select(Module.enabled).where(Module.key == module_key))
+        if enabled and not globally_enabled:
+            raise ValueError("This module is disabled globally and cannot be enabled for a household.")
         access = session.get(
             HouseholdModuleAccess,
             {"household_id": household_id, "module_key": module_key},
@@ -109,7 +112,6 @@ class ModuleService:
         else:
             access.enabled = enabled
         session.flush()
-        globally_enabled = session.scalar(select(Module.enabled).where(Module.key == module_key))
         return module, bool(globally_enabled and enabled)
 
     def set_user_access(self, session: Session, target_user: User, module_key: str, can_view: bool, can_manage: bool = False) -> UserModuleAccess:

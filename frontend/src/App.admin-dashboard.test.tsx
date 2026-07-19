@@ -286,6 +286,9 @@ describe("Admin dashboard module access", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not load household module toggles: Modules unavailable.",
     );
+    expect(
+      screen.getByRole("button", { name: "Household state unavailable Chores" }),
+    ).toBeDisabled();
     fireEvent.click(
       screen.getByRole("button", { name: "Retry household modules" }),
     );
