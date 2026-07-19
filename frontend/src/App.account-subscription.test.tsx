@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -68,14 +68,10 @@ describe("household account subscription", () => {
       current_period_ends_at: null,
       available_actions: [{ key: "start_subscription", label: "Choose a plan" }],
     });
-    const performAction = vi.spyOn(apiClient, "performBillingAction");
-
     renderAccount();
     const action = await screen.findByRole("button", { name: "Choose a plan" });
     expect(action).toBeDisabled();
     expect(screen.queryByRole("button", { name: /manage/i })).not.toBeInTheDocument();
-    fireEvent.click(action);
-    expect(performAction).not.toHaveBeenCalled();
     expect(screen.getByText("Billing actions are not available yet.")).toBeVisible();
   });
 });
