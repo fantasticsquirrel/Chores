@@ -10,20 +10,24 @@ class UserRole(str, Enum):
 
 
 class PlatformRole(str, Enum):
-    OWNER = "OWNER"
-    SUPPORT = "SUPPORT"
+    PLATFORM_OWNER = "PLATFORM_OWNER"
+    PLATFORM_SUPPORT = "PLATFORM_SUPPORT"
+    OWNER = "PLATFORM_OWNER"
+    SUPPORT = "PLATFORM_SUPPORT"
 
 
 class EntitlementStatus(str, Enum):
     NONE = "none"
     TRIALING = "trialing"
     ACTIVE = "active"
-    GRACE = "grace"
-    CANCELED_ACTIVE = "canceled-active"
+    GRACE_PERIOD = "grace_period"
+    BILLING_RETRY = "billing_retry"
+    CANCELED_ACTIVE = "canceled_active"
     EXPIRED = "expired"
     REFUNDED = "refunded"
     REVOKED = "revoked"
     COMPLIMENTARY = "complimentary"
+    GRACE = "grace_period"
 
 
 class ScheduleMode(str, Enum):

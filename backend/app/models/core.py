@@ -28,7 +28,7 @@ class Household(TimestampMixin, Base):
     # nullable only while both rows are created; migration and services require
     # an eligible owner before exposing the household.
     owner_user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id", ondelete="RESTRICT", use_alter=True), nullable=True, unique=True, index=True
+        ForeignKey("users.id", ondelete="RESTRICT", use_alter=True, deferrable=True, initially="DEFERRED"), nullable=True, unique=True, index=True
     )
 
 

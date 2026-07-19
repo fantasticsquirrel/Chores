@@ -5,6 +5,7 @@ import json
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.billing import BillingAccount, BillingEvent, HouseholdEntitlement, Subscription
@@ -50,8 +51,18 @@ def apply_event(
         return existing, entitlement_for_household(session, household_id), True
     account = account_for_household(session, household_id)
     event = BillingEvent(billing_account_id=account.id, household_id=household_id, source=source, idempotency_key=idempotency_key, event_type=event_type, occurred_at=occurred_at, payload_json=canonical)
-    session.add(event)
-    session.flush()
+    try:
+        with session.begin_nested():
+            session.add(event)
+            session.flush()
+    except IntegrityError:
+        session.expire_all()
+        winner = session.scalar(select(BillingEvent).where(BillingEvent.source == source, BillingEvent.idempotency_key == idempotency_key))
+        if winner is None:
+            raise
+        if winner.household_id != household_id or winner.event_type != event_type or winner.payload_json != canonical:
+            raise ValueError("Idempotency key was already used for a different event.")
+        return winner, entitlement_for_household(session, household_id), True
     entitlement = entitlement_for_household(session, household_id)
     projected_at = entitlement.projected_occurred_at
     if projected_at is not None and projected_at.tzinfo is None:

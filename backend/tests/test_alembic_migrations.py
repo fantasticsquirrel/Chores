@@ -368,3 +368,42 @@ def test_phase9_upgrade_fails_clearly_for_ownerless_household(tmp_path: Path, mo
         connection.exec_driver_sql("INSERT INTO households (id,name,timezone,created_at) VALUES (1,'No Parent','UTC','2026-01-01')")
     with pytest.raises(Exception, match="no active parent eligible for ownership"):
         command.upgrade(config, "head")
+
+
+def test_phase9_schema_enforces_owner_and_provider_identity_contracts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    database_url = f"sqlite:///{tmp_path / 'phase9-contracts.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    get_settings.cache_clear()
+    config = _phase9_alembic_config(database_url)
+    command.upgrade(config, "20260715_0015")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql("INSERT INTO households (id,name,timezone,created_at) VALUES (1,'Owned','UTC','2026-01-01')")
+        connection.exec_driver_sql("INSERT INTO users (id,household_id,email,password_hash,role,child_id,active,created_at) VALUES (4,1,'admin@test','x','PARENT_ADMIN',NULL,1,'2026-01-01')")
+    command.upgrade(config, "head")
+    inspector = inspect(engine)
+    owner_column = next(column for column in inspector.get_columns("households") if column["name"] == "owner_user_id")
+    role_column = next(column for column in inspector.get_columns("platform_users") if column["name"] == "role")
+    assert owner_column["nullable"] is False
+    assert role_column["type"].length >= len("PLATFORM_SUPPORT")
+    assert "billing_customer_references" in inspector.get_table_names()
+    assert {"provider", "provider_subscription_id"} <= {column["name"] for column in inspector.get_columns("subscriptions")}
+    with engine.begin() as connection:
+        with pytest.raises(Exception, match="owner"):
+            connection.exec_driver_sql("UPDATE households SET owner_user_id=NULL WHERE id=1")
+
+
+def test_phase9_upgrade_rejects_sparse_schema_instead_of_stamping_head(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    database_url = f"sqlite:///{tmp_path / 'phase9-sparse.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    get_settings.cache_clear()
+    config = _phase9_alembic_config(database_url)
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version VALUES ('20260715_0015')")
+        connection.exec_driver_sql("CREATE TABLE households (id INTEGER PRIMARY KEY, name VARCHAR(255), timezone VARCHAR(64), created_at DATETIME)")
+    with pytest.raises(Exception, match="requires core tables.*users"):
+        command.upgrade(config, "head")
+    with engine.connect() as connection:
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260715_0015"

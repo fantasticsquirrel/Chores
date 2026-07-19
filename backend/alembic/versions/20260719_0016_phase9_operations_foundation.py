@@ -22,11 +22,7 @@ def _install_sqlite_guards() -> None:
     if op.get_bind().dialect.name != "sqlite":
         return
     statements = (
-        """CREATE TRIGGER trg_households_owner_insert BEFORE INSERT ON households
-        WHEN NEW.owner_user_id IS NOT NULL AND NOT EXISTS (
-          SELECT 1 FROM users WHERE id=NEW.owner_user_id AND household_id=NEW.id
-            AND active=1 AND role IN ('PARENT_ADMIN','PARENT'))
-        BEGIN SELECT RAISE(ABORT, 'owner must be an active parent in the same household'); END""",
+
         """CREATE TRIGGER trg_households_owner_update BEFORE UPDATE OF owner_user_id ON households
         WHEN NEW.owner_user_id IS NULL OR NOT EXISTS (
           SELECT 1 FROM users WHERE id=NEW.owner_user_id AND household_id=NEW.id
@@ -52,10 +48,11 @@ def _install_sqlite_guards() -> None:
 def upgrade() -> None:
     bind = op.get_bind()
     inspector = sa.inspect(bind)
-    # Some legacy compatibility tests/databases were stamped at a later revision
-    # with only the subsystem tables they used. Preserve that sparse upgrade path;
-    # Phase 9 requires the core household/user pair before it can be installed.
-    if not {"households", "users"} <= set(inspector.get_table_names()):
+    tables = set(inspector.get_table_names())
+    if "households" in tables and "users" not in tables:
+        raise RuntimeError("Phase 9 requires core tables; missing: users")
+    if not {"households", "users"} <= tables:
+        # Legacy subsystem-only fixtures contain no household data to migrate.
         return
     if "owner_user_id" not in {column["name"] for column in inspector.get_columns("households")}:
         op.add_column("households", sa.Column("owner_user_id", sa.Integer(), nullable=True))
@@ -71,7 +68,8 @@ def upgrade() -> None:
         raise RuntimeError(f"household {ownerless} has no active parent eligible for ownership")
 
     with op.batch_alter_table("households") as batch:
-        batch.create_foreign_key("fk_households_owner_user_id_users", "users", ["owner_user_id"], ["id"], ondelete="RESTRICT")
+        batch.alter_column("owner_user_id", existing_type=sa.Integer(), nullable=False)
+        batch.create_foreign_key("fk_households_owner_user_id_users", "users", ["owner_user_id"], ["id"], ondelete="RESTRICT", deferrable=True, initially="DEFERRED")
         batch.create_unique_constraint("uq_households_owner_user_id", ["owner_user_id"])
     op.create_index("ix_households_owner_user_id", "households", ["owner_user_id"], unique=False)
 
@@ -80,8 +78,9 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("email", sa.String(320), nullable=False),
         sa.Column("password_hash", sa.String(512), nullable=False),
-        sa.Column("role", sa.String(7), nullable=False),
-        sa.Column("totp_secret", sa.String(128), nullable=False),
+        sa.Column("role", sa.String(32), nullable=False),
+        sa.Column("totp_secret_ciphertext", sa.Text(), nullable=False),
+        sa.Column("totp_key_version", sa.String(32), nullable=False),
         sa.Column("active", sa.Boolean(), nullable=False),
         *_timestamps(),
         sa.PrimaryKeyConstraint("id", name="pk_platform_users"),
@@ -118,12 +117,22 @@ def upgrade() -> None:
     op.create_table(
         "subscriptions",
         sa.Column("id", sa.Integer(), nullable=False), sa.Column("billing_account_id", sa.Integer(), nullable=False),
+        sa.Column("provider", sa.String(64), nullable=True), sa.Column("provider_subscription_id", sa.String(255), nullable=True),
         sa.Column("plan_key", sa.String(64), nullable=False), sa.Column("status", sa.String(15), nullable=False),
         sa.Column("current_period_end", sa.DateTime(timezone=True), nullable=True), *_timestamps(),
         sa.ForeignKeyConstraint(["billing_account_id"], ["billing_accounts.id"], ondelete="CASCADE", name="fk_subscriptions_billing_account_id_billing_accounts"),
         sa.PrimaryKeyConstraint("id", name="pk_subscriptions"),
     )
     op.create_index("ix_subscriptions_billing_account_id", "subscriptions", ["billing_account_id"])
+    op.create_table(
+        "billing_customer_references",
+        sa.Column("id", sa.Integer(), nullable=False), sa.Column("billing_account_id", sa.Integer(), nullable=False),
+        sa.Column("provider", sa.String(64), nullable=False), sa.Column("provider_customer_id", sa.String(255), nullable=False), *_timestamps(),
+        sa.ForeignKeyConstraint(["billing_account_id"], ["billing_accounts.id"], ondelete="CASCADE", name="fk_billing_customer_references_billing_account_id_billing_accounts"),
+        sa.PrimaryKeyConstraint("id", name="pk_billing_customer_references"),
+        sa.UniqueConstraint("provider", "provider_customer_id", name="uq_billing_customer_references_provider_customer"),
+    )
+    op.create_index("ix_billing_customer_references_billing_account_id", "billing_customer_references", ["billing_account_id"])
     op.create_table(
         "billing_events",
         sa.Column("id", sa.Integer(), nullable=False), sa.Column("billing_account_id", sa.Integer(), nullable=False),
@@ -193,7 +202,7 @@ def downgrade() -> None:
             "trg_platform_audit_events_append_only_delete", "trg_support_case_notes_append_only_update", "trg_support_case_notes_append_only_delete",
         ):
             op.execute(sa.text(f"DROP TRIGGER IF EXISTS {name}"))
-    for table in ("support_case_notes", "support_cases", "platform_audit_events", "household_entitlements", "billing_events", "subscriptions", "billing_accounts", "platform_sessions", "platform_users"):
+    for table in ("support_case_notes", "support_cases", "platform_audit_events", "household_entitlements", "billing_events", "billing_customer_references", "subscriptions", "billing_accounts", "platform_sessions", "platform_users"):
         if table in existing_tables:
             op.drop_table(table)
     if "households" not in existing_tables:

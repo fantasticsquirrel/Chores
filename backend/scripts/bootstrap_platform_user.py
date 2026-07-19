@@ -2,18 +2,19 @@
 """Bootstrap a platform owner or support operator without provider credentials.
 
 The password is read with getpass so it is not exposed in process arguments or
-shell history. The TOTP secret is emitted once; redirect stdout to a mode-0600
-credential file or enroll it immediately in an authenticator.
+shell history. The TOTP secret is written atomically to a caller-selected
+mode-0600 enrollment file and is never printed or logged.
 """
 from __future__ import annotations
 
 import argparse
 from getpass import getpass
+from pathlib import Path
 
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.models.enums import PlatformRole
-from app.services.platform_bootstrap import create_platform_user
+from app.services.platform_bootstrap import create_platform_user, write_enrollment_secret
 
 
 def main() -> None:
@@ -22,8 +23,9 @@ def main() -> None:
     parser.add_argument(
         "--role",
         choices=[role.value for role in PlatformRole],
-        default=PlatformRole.OWNER.value,
+        default=PlatformRole.PLATFORM_OWNER.value,
     )
+    parser.add_argument("--enrollment-file", required=True, type=Path)
     args = parser.parse_args()
     password = getpass("Platform password: ")
     confirmation = getpass("Confirm platform password: ")
@@ -41,10 +43,11 @@ def main() -> None:
             role=PlatformRole(args.role),
         )
         session.commit()
+        write_enrollment_secret(args.enrollment_file, totp_secret)
         print(f"platform_user_id={user.id}")
         print(f"email={user.email}")
         print(f"role={user.role.value}")
-        print(f"totp_secret={totp_secret}")
+        print(f"enrollment_file={args.enrollment_file}")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-from sqlalchemy import or_, select
+from sqlalchemy import String, cast, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
@@ -18,6 +18,8 @@ from app.schemas.platform import ComplimentaryRequest, OpsLoginRequest, OpsReaut
 from app.security.passwords import verify_password
 from app.security.platform_sessions import OPS_CSRF_COOKIE_NAME, OPS_SESSION_COOKIE_NAME, create_platform_session, has_recent_reauth
 from app.security.totp import verify_totp
+from app.security.totp_crypto import decrypt_totp_secret
+from app.security.audit import account_key_hash, record_login_attempt, request_ip, retry_after_seconds
 from app.services.billing import apply_event, entitlement_for_household
 
 router = APIRouter(tags=["platform-operations"])
@@ -111,11 +113,25 @@ def _household_detail(db: Session, household: Household) -> dict[str, object]:
 
 @router.post("/auth/login")
 def login(payload: OpsLoginRequest, request: Request, response: Response, db: Session = Depends(get_db_session)) -> dict[str, object]:
+    settings = get_settings()
+    key_hash = account_key_hash("platform", payload.email)
+    ip = request_ip(request)
+    retry_after = retry_after_seconds(db, settings, key_hash, ip)
+    if retry_after is not None:
+        db.commit()
+        raise HTTPException(status_code=429, detail="Too many attempts. Try again later.", headers={"Retry-After": str(retry_after)})
     user = db.scalar(select(PlatformUser).where(PlatformUser.email == payload.email.lower()))
-    if user is None or not user.active or not verify_password(payload.password, user.password_hash) or not verify_totp(user.totp_secret, payload.totp_code):
+    valid = user is not None and user.active and verify_password(payload.password, user.password_hash)
+    if valid:
+        valid = verify_totp(decrypt_totp_secret(user.totp_secret_ciphertext, user.totp_key_version), payload.totp_code)
+    if not valid:
+        record_login_attempt(db, key_hash, ip, succeeded=False)
+        db.add(PlatformAuditEvent(event_type="platform.login_failure", actor_platform_user_id=None, household_id=None, reason="", details_json=json.dumps({"account_key_hash": key_hash})))
+        db.commit()
         raise HTTPException(status_code=401, detail="Invalid platform credentials or MFA code.")
+    record_login_attempt(db, key_hash, ip, succeeded=True)
     token, csrf, auth_session = create_platform_session(db, user.id)
-    principal = PlatformPrincipal(user=user, auth_session=auth_session)
+    principal = PlatformPrincipal(user=user, auth_session=auth_session, csrf_token=csrf)
     _audit(db, principal, "platform.login")
     db.commit()
     secure = get_settings().session_cookie_secure or request.url.scheme == "https"
@@ -126,7 +142,7 @@ def login(payload: OpsLoginRequest, request: Request, response: Response, db: Se
 
 @router.get("/auth/me")
 def me(principal: PlatformPrincipal = Depends(get_platform_principal)) -> dict[str, object]:
-    return {"user": {"id": principal.user.id, "email": principal.user.email, "role": principal.user.role.value, "mfa_required": True, "mfa_verified": True}, "recent_reauth": has_recent_reauth(principal.auth_session)}
+    return {"user": {"id": principal.user.id, "email": principal.user.email, "role": principal.user.role.value, "mfa_required": True, "mfa_verified": True}, "recent_reauth": has_recent_reauth(principal.auth_session), "csrf_token": principal.csrf_token}
 
 
 @router.post("/auth/reauth", status_code=status.HTTP_204_NO_CONTENT)
@@ -152,7 +168,8 @@ def logout(response: Response, db: Session = Depends(get_db_session), principal:
 
 @router.get("/households")
 def search_households(query: str = Query(min_length=1, max_length=200), db: Session = Depends(get_db_session), _: PlatformPrincipal = Depends(require_platform_roles(PlatformRole.OWNER, PlatformRole.SUPPORT))) -> list[dict[str, object]]:
-    homes = db.scalars(select(Household).where(Household.name.ilike(f"%{query}%")).order_by(Household.id).limit(50)).all()
+    normalized = query.strip().lower()
+    homes = db.scalars(select(Household).outerjoin(User, User.id == Household.owner_user_id).where(or_(Household.name.ilike(f"%{normalized}%"), User.email.ilike(f"%{normalized}%"), cast(Household.id, String) == normalized)).order_by(Household.id).limit(50)).all()
     result = []
     for home in homes:
         owner = db.get(User, home.owner_user_id) if home.owner_user_id else None

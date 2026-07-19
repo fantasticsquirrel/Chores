@@ -16,8 +16,21 @@ class PlatformUser(TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
     role: Mapped[PlatformRole] = mapped_column(Enum(PlatformRole, native_enum=False), nullable=False)
-    totp_secret: Mapped[str] = mapped_column(String(128), nullable=False)
+    totp_secret_ciphertext: Mapped[str] = mapped_column(Text, nullable=False)
+    totp_key_version: Mapped[str] = mapped_column(String(32), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    @property
+    def totp_secret(self) -> str:
+        from app.security.totp_crypto import decrypt_totp_secret
+        return decrypt_totp_secret(self.totp_secret_ciphertext, self.totp_key_version)
+
+    @totp_secret.setter
+    def totp_secret(self, value: str) -> None:
+        from app.config import get_settings
+        from app.security.totp_crypto import encrypt_totp_secret
+        self.totp_secret_ciphertext = encrypt_totp_secret(value)
+        self.totp_key_version = get_settings().platform_totp_active_key_version
 
 
 class PlatformSession(TimestampMixin, Base):

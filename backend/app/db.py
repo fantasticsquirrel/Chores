@@ -92,11 +92,7 @@ def _install_sqlite_runtime_guards(engine: Engine) -> None:
     if engine.dialect.name != "sqlite":
         return
     statements = [
-        """CREATE TRIGGER IF NOT EXISTS trg_households_owner_insert BEFORE INSERT ON households
-        WHEN NEW.owner_user_id IS NOT NULL AND NOT EXISTS (
-          SELECT 1 FROM users WHERE id=NEW.owner_user_id AND household_id=NEW.id AND active=1
-            AND role IN ('PARENT_ADMIN','PARENT'))
-        BEGIN SELECT RAISE(ABORT, 'owner must be an active parent in the same household'); END""",
+
         """CREATE TRIGGER IF NOT EXISTS trg_households_owner_update BEFORE UPDATE OF owner_user_id ON households
         WHEN NEW.owner_user_id IS NULL OR NOT EXISTS (
           SELECT 1 FROM users WHERE id=NEW.owner_user_id AND household_id=NEW.id AND active=1

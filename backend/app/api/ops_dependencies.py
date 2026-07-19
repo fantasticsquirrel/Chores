@@ -16,6 +16,7 @@ from app.security.platform_sessions import OPS_CSRF_COOKIE_NAME, OPS_CSRF_HEADER
 class PlatformPrincipal:
     user: PlatformUser
     auth_session: PlatformSession
+    csrf_token: str
 
 
 def get_platform_principal(
@@ -34,7 +35,7 @@ def get_platform_principal(
         header = request.headers.get(OPS_CSRF_HEADER_NAME)
         if not csrf or not header or not __import__("hmac").compare_digest(csrf, header):
             raise HTTPException(status_code=403, detail="CSRF token missing or invalid.")
-    return PlatformPrincipal(user=user, auth_session=auth_session)
+    return PlatformPrincipal(user=user, auth_session=auth_session, csrf_token=csrf or "")
 
 
 def require_platform_roles(*roles: PlatformRole) -> Callable[..., PlatformPrincipal]:

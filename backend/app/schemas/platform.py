@@ -32,12 +32,14 @@ class OpsReauthRequest(BaseModel):
 
 
 class ComplimentaryRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     expires_at: datetime
     reason: str = Field(min_length=3, max_length=1000)
     idempotency_key: str = Field(min_length=3, max_length=255)
 
 
 class SupportCaseCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     household_id: int = Field(gt=0)
     reason: str = Field(min_length=3, max_length=1000)
 
@@ -47,5 +49,6 @@ class SupportNoteCreate(BaseModel):
 
 
 class ReconcileRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     case_id: int = Field(gt=0)
     reason: str = Field(min_length=3, max_length=1000)

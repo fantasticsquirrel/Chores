@@ -22,9 +22,21 @@ class Subscription(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     billing_account_id: Mapped[int] = mapped_column(ForeignKey("billing_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    provider_subscription_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     plan_key: Mapped[str] = mapped_column(String(64), nullable=False, default="family_plus")
     status: Mapped[EntitlementStatus] = mapped_column(Enum(EntitlementStatus, native_enum=False), nullable=False)
     current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class BillingCustomerReference(TimestampMixin, Base):
+    __tablename__ = "billing_customer_references"
+    __table_args__ = (UniqueConstraint("provider", "provider_customer_id", name="uq_billing_customer_references_provider_customer"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    billing_account_id: Mapped[int] = mapped_column(ForeignKey("billing_accounts.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    provider_customer_id: Mapped[str] = mapped_column(String(255), nullable=False)
 
 
 class BillingEvent(TimestampMixin, Base):

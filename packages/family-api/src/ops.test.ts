@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import type { RequestQuery } from "./client-core";
-import type { OpsHouseholdDetail, OpsSessionResponse } from "./ops-models";
+import type { OpsBillingDetail, OpsHouseholdDetail, OpsSessionResponse } from "./ops-models";
 import { OpsApiEndpoints, opsApiRoutes } from "./ops-endpoints";
 
 class OpsHarness extends OpsApiEndpoints {
@@ -32,13 +32,17 @@ describe("ops API contracts", () => {
 
   it("keeps ops identity separate from household roles", () => {
     expectTypeOf<OpsSessionResponse>().toMatchTypeOf<{
-      user: { id: number; email: string; role: "OWNER" | "SUPPORT" };
+      user: { id: number; email: string; role: "PLATFORM_OWNER" | "PLATFORM_SUPPORT" };
       csrf_token?: string | null;
     }>();
     expectTypeOf<OpsHouseholdDetail>().toMatchTypeOf<{
       id: number;
       billing: { available_actions: Array<{ key: string; label: string }> };
     }>();
+  });
+
+  it("keeps the billing endpoint contract distinct from household detail", () => {
+    expectTypeOf<ReturnType<OpsHarness["getHouseholdBilling"]>>().toEqualTypeOf<Promise<OpsBillingDetail>>();
   });
 
   it("maps auth, lookup, audit, support, reconcile, and complimentary methods", async () => {
