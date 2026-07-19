@@ -7,6 +7,7 @@ import {
   type UserModuleAccess,
   type UserRole,
 } from "../api";
+import { useAuth } from "../auth/useAuth";
 import { formatApiError } from "../lib/errors";
 import { familyModules, type FamilyModuleKey } from "../modules/registry";
 import {
@@ -53,6 +54,7 @@ function isLastAdminAccess(
 }
 
 export function AdminDashboardPage(): ReactElement {
+  const { refreshModuleAccess } = useAuth();
   const [state, setState] = useState<AdminState>({
     users: [],
     loading: true,
@@ -132,6 +134,15 @@ export function AdminDashboardPage(): ReactElement {
         ),
       }));
       refresh();
+      try {
+        await refreshModuleAccess();
+      } catch (error: unknown) {
+        setHouseholdActionMessage(null);
+        setHouseholdActionError(
+          `The household setting was saved, but navigation could not refresh: ${formatApiError(error)}`,
+        );
+        return;
+      }
       setHouseholdActionMessage(
         `${updated.name} is now ${updated.enabled ? "enabled" : "disabled"} for the whole household.`,
       );

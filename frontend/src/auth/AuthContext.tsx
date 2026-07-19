@@ -81,17 +81,31 @@ export function AuthProvider({ children }: AuthProviderProps): ReactElement {
     clearSession();
   }, [clearSession]);
 
+  const refreshModuleAccess = useCallback(async (): Promise<void> => {
+    if (user === null) {
+      return;
+    }
+    const response = await apiClient.getMyModules();
+    setModuleKeys(response.modules.map((module) => module.key));
+    setManageableModuleKeys(
+      response.modules
+        .filter((module) => module.can_manage !== false)
+        .map((module) => module.key),
+    );
+  }, [user]);
+
   const contextValue = useMemo<AuthContextValue>(
     () => ({
       status,
       user,
       moduleKeys,
       manageableModuleKeys,
+      refreshModuleAccess,
       setAuthenticatedSession,
       clearSession,
       logout,
     }),
-    [clearSession, logout, manageableModuleKeys, moduleKeys, setAuthenticatedSession, status, user],
+    [clearSession, logout, manageableModuleKeys, moduleKeys, refreshModuleAccess, setAuthenticatedSession, status, user],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

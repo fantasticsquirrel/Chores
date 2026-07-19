@@ -60,6 +60,7 @@ function mockAdminSession(): void {
 describe("Admin dashboard module access", () => {
   beforeEach(() => {
     vi.spyOn(apiClient, "listHouseholdModules").mockResolvedValue(householdModules);
+    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({ modules: allModules });
   });
 
   afterEach(() => {
@@ -228,6 +229,7 @@ describe("Admin dashboard module access", () => {
     resolveToggle({ ...householdModules[0], enabled: false });
 
     await waitFor(() => expect(listUsersSpy).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(apiClient.getMyModules).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Chores is now disabled for the whole household.",
     );

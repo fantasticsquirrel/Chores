@@ -10,6 +10,7 @@ export type AuthContextValue = {
   setAuthenticatedSession: (session: AuthSessionResponse) => void;
   moduleKeys: string[];
   manageableModuleKeys: string[];
+  refreshModuleAccess: () => Promise<void>;
   clearSession: () => void;
   logout: () => Promise<void>;
 };
