@@ -64,6 +64,33 @@ describe("AdminScreen household modules", () => {
     expect(screen.getByText("Admin stays enabled so household administrators cannot be locked out.")).toBeTruthy();
   });
 
+  it("disables per-user controls while a module is globally off", async () => {
+    jest.spyOn(apiClient, "listHouseholdModules").mockResolvedValue(householdModules);
+    jest.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([
+      {
+        id: 2,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+        modules: [
+          {
+            key: "homeschool",
+            name: "Homeschool",
+            description: "School records and reporting.",
+          },
+        ],
+      },
+    ]);
+
+    render(<AdminScreen />);
+
+    const control = await screen.findByRole("button", {
+      name: "Globally Off Homeschool",
+    });
+    expect(control.props.accessibilityState).toMatchObject({ disabled: true });
+  });
+
   it("updates a toggle, announces success, and refreshes effective modules", async () => {
     arrangeLoads();
     const setAccess = jest

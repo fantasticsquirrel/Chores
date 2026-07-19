@@ -158,6 +158,43 @@ describe("Admin dashboard module access", () => {
     expect(listUsersSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("disables per-user controls while a module is globally off", async () => {
+    mockAdminSession();
+    vi.mocked(apiClient.listHouseholdModules).mockResolvedValue(
+      householdModules.map((module) =>
+        module.key === "chores" ? { ...module, enabled: false } : module,
+      ),
+    );
+    vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([
+      {
+        id: 2,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+        modules: [allModules[0]],
+      },
+    ]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const parentControls = await screen.findByLabelText(
+      "Module access for parent@example.com",
+    );
+    const globallyOff = within(parentControls).getByRole("button", {
+      name: "Globally off Chores",
+    });
+    expect(globallyOff).toBeDisabled();
+    expect(globallyOff).toHaveAttribute(
+      "title",
+      "This module is disabled for the whole household.",
+    );
+  });
+
   it("toggles a household module and refreshes the per-user matrix", async () => {
     mockAdminSession();
     const listUsersSpy = vi

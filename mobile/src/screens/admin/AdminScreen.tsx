@@ -216,8 +216,9 @@ export function AdminScreen({
           row.id === updated.id ? updated : row,
         ),
       }));
+      const nowEnabled = hasModule(updated, moduleKey);
       setActionMessage(
-        `${updated.email} ${nextCanView ? "can now access" : "lost access to"} ${moduleKey}.`,
+        `${updated.email} ${nowEnabled ? "can now access" : "cannot access"} ${moduleKey}.`,
       );
     } catch (error) {
       setActionError(formatError(error));
@@ -413,12 +414,18 @@ export function AdminScreen({
             <View style={styles.choiceGrid}>
               {familyModules.map((module) => {
                 const enabled = hasModule(user, module.key);
+                const globallyDisabled = householdState.modules.some(
+                  (row) => row.key === module.key && !row.enabled,
+                );
                 const disabled =
                   updatingAccess !== null ||
+                  globallyDisabled ||
                   isLastAdminAccess(state.users, user, module.key);
                 return (
                   <Pressable
+                    accessibilityLabel={`${globallyDisabled ? "Globally Off" : enabled ? "On" : "Off"} ${module.label}`}
                     accessibilityRole="button"
+                    accessibilityState={{ disabled }}
                     disabled={disabled}
                     key={module.key}
                     onPress={() => toggleAccess(user, module.key)}
@@ -434,7 +441,7 @@ export function AdminScreen({
                         enabled ? styles.choiceButtonTextSelected : null,
                       ]}
                     >
-                      {enabled ? "On" : "Off"} {module.label}
+                      {globallyDisabled ? "Globally Off" : enabled ? "On" : "Off"} {module.label}
                     </Text>
                   </Pressable>
                 );

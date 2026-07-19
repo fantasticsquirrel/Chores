@@ -160,8 +160,9 @@ export function AdminDashboardPage(): ReactElement {
         ...prev,
         users: prev.users.map((row) => (row.id === updated.id ? updated : row)),
       }));
+      const nowEnabled = hasModule(updated, moduleKey);
       setActionMessage(
-        `${updated.email} ${nextCanView ? "can now access" : "lost access to"} ${moduleKey}.`,
+        `${updated.email} ${nowEnabled ? "can now access" : "cannot access"} ${moduleKey}.`,
       );
     } catch (error: unknown) {
       setActionError(formatApiError(error));
@@ -376,11 +377,14 @@ export function AdminDashboardPage(): ReactElement {
                 >
                   {familyModules.map((module) => {
                     const enabled = hasModule(user, module.key);
-                    const disabled = isLastAdminAccess(
-                      state.users,
-                      user,
-                      module.key,
+                    const globallyDisabled = householdModules.modules.some(
+                      (row) => row.key === module.key && !row.enabled,
                     );
+                    const disabled = globallyDisabled || isLastAdminAccess(
+                        state.users,
+                        user,
+                        module.key,
+                      );
                     return (
                       <button
                         key={module.key}
@@ -388,13 +392,15 @@ export function AdminDashboardPage(): ReactElement {
                         className={`jewel-button button-reset${enabled ? "" : " danger-button"}`}
                         disabled={disabled}
                         title={
-                          disabled
-                            ? "At least one admin must keep Admin access."
+                          globallyDisabled
+                            ? "This module is disabled for the whole household."
+                            : disabled
+                              ? "At least one admin must keep Admin access."
                             : undefined
                         }
                         onClick={() => void toggleAccess(user, module.key)}
                       >
-                        {enabled ? "✓" : "—"} {module.label}
+                        {globallyDisabled ? "Globally off" : enabled ? "✓" : "—"} {module.label}
                       </button>
                     );
                   })}
