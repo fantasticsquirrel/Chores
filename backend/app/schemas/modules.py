@@ -16,6 +16,15 @@ class MyModulesResponse(BaseModel):
     modules: list[ModuleResponse]
 
 
+class HouseholdModuleAccessResponse(ModuleResponse):
+    enabled: bool
+    can_disable: bool
+
+
+class SetHouseholdModuleAccessRequest(BaseModel):
+    enabled: bool
+
+
 class UserModuleAccessResponse(BaseModel):
     id: int
     household_id: int

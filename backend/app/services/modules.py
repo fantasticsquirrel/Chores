@@ -33,18 +33,20 @@ class ModuleService:
                 select(HouseholdModuleAccess).where(HouseholdModuleAccess.household_id == user.household_id)
             ).all()
         }
+        household_enabled_keys = set(enabled_catalog_keys)
         for key, enabled in household_overrides.items():
             if enabled and key in enabled_catalog_keys:
                 allowed_keys.add(key)
             else:
                 allowed_keys.discard(key)
+                household_enabled_keys.discard(key)
 
         user_overrides = {
             row.module_key: row
             for row in session.scalars(select(UserModuleAccess).where(UserModuleAccess.user_id == user.id)).all()
         }
         for key, override in user_overrides.items():
-            if override.can_view and key in enabled_catalog_keys:
+            if override.can_view and key in household_enabled_keys:
                 allowed_keys.add(key)
             else:
                 allowed_keys.discard(key)
@@ -64,6 +66,53 @@ class ModuleService:
     def list_household_user_access(self, session: Session, household_id: int) -> list[tuple[User, list[AppModule]]]:
         users = session.scalars(select(User).where(User.household_id == household_id).order_by(User.email)).all()
         return [(user, self.list_effective_modules(session, user)) for user in users]
+
+    def list_household_access(self, session: Session, household_id: int) -> list[tuple[AppModule, bool]]:
+        self.ensure_catalog(session)
+        globally_enabled = set(session.scalars(select(Module.key).where(Module.enabled.is_(True))).all())
+        overrides = {
+            row.module_key: row.enabled
+            for row in session.scalars(
+                select(HouseholdModuleAccess).where(HouseholdModuleAccess.household_id == household_id)
+            ).all()
+        }
+        return [
+            (module, module.key in globally_enabled and overrides.get(module.key, True))
+            for module in AVAILABLE_MODULES
+        ]
+
+    def set_household_access(
+        self,
+        session: Session,
+        *,
+        household_id: int,
+        module_key: str,
+        enabled: bool,
+    ) -> tuple[AppModule, bool]:
+        self.ensure_catalog(session)
+        module = next((item for item in AVAILABLE_MODULES if item.key == module_key), None)
+        if module is None:
+            raise ValueError("Unknown module key.")
+        if module_key == MODULE_ADMIN and not enabled:
+            raise ValueError("The admin module cannot be disabled for a household.")
+        globally_enabled = session.scalar(select(Module.enabled).where(Module.key == module_key))
+        if enabled and not globally_enabled:
+            raise ValueError("This module is disabled globally and cannot be enabled for a household.")
+        access = session.get(
+            HouseholdModuleAccess,
+            {"household_id": household_id, "module_key": module_key},
+        )
+        if access is None:
+            access = HouseholdModuleAccess(
+                household_id=household_id,
+                module_key=module_key,
+                enabled=enabled,
+            )
+            session.add(access)
+        else:
+            access.enabled = enabled
+        session.flush()
+        return module, bool(globally_enabled and enabled)
 
     def set_user_access(self, session: Session, target_user: User, module_key: str, can_view: bool, can_manage: bool = False) -> UserModuleAccess:
         self.ensure_catalog(session)

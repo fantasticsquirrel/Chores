@@ -5,14 +5,16 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user, get_db_session, require_module_access
-from app.models.core import User
+from app.api.dependencies import get_current_user, get_db_session, require_module_access, require_module_manage
+from app.models.core import HouseholdModuleAccess, User
 from app.models.enums import UserRole
 from app.modules import MODULE_ADMIN
 from app.schemas.modules import (
     CreateParentUserRequest,
+    HouseholdModuleAccessResponse,
     ModuleResponse,
     MyModulesResponse,
+    SetHouseholdModuleAccessRequest,
     SetUserModuleAccessRequest,
     UserModuleAccessResponse,
 )
@@ -23,6 +25,7 @@ from app.services.modules import ModuleService
 router = APIRouter(prefix="/modules", tags=["modules"])
 _service = ModuleService()
 _require_admin_module_access = require_module_access(MODULE_ADMIN, UserRole.PARENT_ADMIN)
+_require_admin_module_manage = require_module_manage(MODULE_ADMIN, UserRole.PARENT_ADMIN)
 
 
 def _module_response(module, session: Session, user: User) -> ModuleResponse:
@@ -42,6 +45,65 @@ def get_my_modules(
     return MyModulesResponse(
         modules=[_module_response(module, session, current_user) for module in _service.list_effective_modules(session, current_user)]
     )
+
+
+def _household_module_response(module, *, enabled: bool) -> HouseholdModuleAccessResponse:
+    return HouseholdModuleAccessResponse(
+        key=module.key,
+        name=module.name,
+        description=module.description,
+        can_manage=True,
+        enabled=enabled,
+        can_disable=module.key != MODULE_ADMIN,
+    )
+
+
+@router.get("/household", response_model=list[HouseholdModuleAccessResponse])
+def list_household_modules(
+    current_user: User = Depends(_require_admin_module_manage),
+    session: Session = Depends(get_db_session),
+) -> list[HouseholdModuleAccessResponse]:
+    return [
+        _household_module_response(module, enabled=enabled)
+        for module, enabled in _service.list_household_access(session, current_user.household_id)
+    ]
+
+
+@router.put("/household/{module_key}", response_model=HouseholdModuleAccessResponse)
+def set_household_module_access(
+    module_key: str,
+    payload: SetHouseholdModuleAccessRequest,
+    request: Request,
+    current_user: User = Depends(_require_admin_module_manage),
+    session: Session = Depends(get_db_session),
+) -> HouseholdModuleAccessResponse:
+    previous_access = session.get(
+        HouseholdModuleAccess,
+        {"household_id": current_user.household_id, "module_key": module_key},
+    )
+    previous = previous_access.enabled if previous_access is not None else True
+    try:
+        module, enabled = _service.set_household_access(
+            session,
+            household_id=current_user.household_id,
+            module_key=module_key,
+            enabled=payload.enabled,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    audit(
+        session,
+        "module.household_access_changed",
+        request=request,
+        actor=current_user,
+        details={
+            "module_key": module_key,
+            "previous_enabled": previous,
+            "enabled": enabled,
+        },
+    )
+    session.commit()
+    return _household_module_response(module, enabled=enabled)
 
 
 @router.get("/users", response_model=list[UserModuleAccessResponse])

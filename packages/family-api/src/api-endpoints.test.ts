@@ -8,9 +8,11 @@ import type {
   CreateChildRequest,
   CreateRecipeRequest,
   HomeschoolSemester,
+  HouseholdModuleAccess,
   ListChoresParams,
   RecipeDetail,
   RecipeSummary,
+  SetHouseholdModuleAccessRequest,
 } from "./models";
 import {
   FamilyCoreApiEndpoints,
