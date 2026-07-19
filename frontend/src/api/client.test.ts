@@ -124,7 +124,7 @@ describe("ApiClient", () => {
           user: {
             id: 12,
             household_id: 2,
-            email: "generated-ava@example.com",
+            email: "generated-jordan@example.com",
             role: "CHILD",
             child_id: 4,
           },
@@ -142,7 +142,7 @@ describe("ApiClient", () => {
     });
     await client.childLogin({
       parent_email: "parent@example.com",
-      child_name: "Ava",
+      child_name: "Jordan",
       password: "kid-password-123",
     });
 
@@ -157,7 +157,7 @@ describe("ApiClient", () => {
         }),
         body: JSON.stringify({
           parent_email: "parent@example.com",
-          child_name: "Ava",
+          child_name: "Jordan",
           password: "kid-password-123",
         }),
       }),
@@ -325,7 +325,7 @@ describe("ApiClient", () => {
           JSON.stringify({
             id: 21,
             household_id: 2,
-            email: "ava@example.com",
+            email: "jordan@example.com",
             role: "CHILD",
             child_id: 7,
           }),
@@ -348,7 +348,7 @@ describe("ApiClient", () => {
       new_password: "new-password-456",
     });
 
-    expect(account.email).toBe("ava@example.com");
+    expect(account.email).toBe("jordan@example.com");
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       "/chore-api/children/7/account-password",

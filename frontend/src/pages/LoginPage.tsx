@@ -203,7 +203,7 @@ export function LoginPage(): ReactElement {
                 type="text"
                 value={childName}
                 onChange={(event) => handleChildNameChange(event.target.value)}
-                placeholder="Ava"
+                placeholder="Enter child name"
                 autoComplete="username"
                 disabled={submitting}
                 maxLength={255}

@@ -116,7 +116,7 @@ describe("mobile ApiClient", () => {
           csrf_token: "child-csrf-token",
           user: {
             child_id: 20,
-            email: "generated-ava@example.com",
+            email: "generated-jordan@example.com",
             household_id: 7,
             id: 31,
             role: "CHILD",
@@ -136,7 +136,7 @@ describe("mobile ApiClient", () => {
 
     await client.childLogin({
       parent_email: "parent@example.com",
-      child_name: "Ava",
+      child_name: "Jordan",
       password: "kid-password-123",
     });
 
@@ -145,7 +145,7 @@ describe("mobile ApiClient", () => {
       expect.objectContaining({
         body: JSON.stringify({
           parent_email: "parent@example.com",
-          child_name: "Ava",
+          child_name: "Jordan",
           password: "kid-password-123",
         }),
         credentials: "include",
@@ -183,7 +183,7 @@ describe("mobile ApiClient", () => {
         new Response(
           JSON.stringify({
             child_id: 20,
-            email: "ava@example.com",
+            email: "jordan@example.com",
             household_id: 7,
             id: 31,
             role: "CHILD",
@@ -211,7 +211,7 @@ describe("mobile ApiClient", () => {
       }),
     ).resolves.toMatchObject({
       child_id: 20,
-      email: "ava@example.com",
+      email: "jordan@example.com",
     });
 
     expect(fetchMock).toHaveBeenNthCalledWith(

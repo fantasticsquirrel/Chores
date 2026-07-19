@@ -49,8 +49,8 @@ def _create_parent_user(email: str = "parent@example.com", password: str = "pass
 def _create_child_user(
     *,
     household_id: int,
-    child_name: str = "Ava",
-    child_email: str = "ava@example.com",
+    child_name: str = "Jordan",
+    child_email: str = "jordan@example.com",
     child_password: str = "kid-password-123",
     active: bool = True,
 ) -> tuple[Child, User, str]:
@@ -122,8 +122,8 @@ def test_child_login_uses_parent_email_child_name_and_child_password(tmp_path: P
     parent, _parent_password = _create_parent_user(email="parent@example.com")
     child, child_user, child_password = _create_child_user(
         household_id=parent.household_id,
-        child_name="Ava",
-        child_email="generated-ava@example.com",
+        child_name="Jordan",
+        child_email="generated-jordan@example.com",
     )
 
     with TestClient(app) as client:
@@ -131,7 +131,7 @@ def test_child_login_uses_parent_email_child_name_and_child_password(tmp_path: P
             "/chore-api/auth/child-login",
             json={
                 "parent_email": " PARENT@example.com ",
-                "child_name": " ava ",
+                "child_name": " jordan ",
                 "password": child_password,
             },
         )
@@ -158,7 +158,7 @@ def test_child_login_rejects_unknown_parent_email(tmp_path: Path, monkeypatch) -
             "/chore-api/auth/child-login",
             json={
                 "parent_email": "missing-parent@example.com",
-                "child_name": "Ava",
+                "child_name": "Jordan",
                 "password": "kid-password-123",
             },
         )
@@ -170,14 +170,14 @@ def test_child_login_rejects_unknown_parent_email(tmp_path: Path, monkeypatch) -
 def test_child_login_rejects_wrong_child_password(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     parent, _parent_password = _create_parent_user(email="parent@example.com")
-    _create_child_user(household_id=parent.household_id, child_name="Ava")
+    _create_child_user(household_id=parent.household_id, child_name="Jordan")
 
     with TestClient(app) as client:
         response = client.post(
             "/chore-api/auth/child-login",
             json={
                 "parent_email": "parent@example.com",
-                "child_name": "Ava",
+                "child_name": "Jordan",
                 "password": "wrong-password",
             },
         )
@@ -191,13 +191,13 @@ def test_child_login_rejects_duplicate_child_names(tmp_path: Path, monkeypatch) 
     parent, _parent_password = _create_parent_user(email="parent@example.com")
     _create_child_user(
         household_id=parent.household_id,
-        child_name="Ava",
-        child_email="ava-one@example.com",
+        child_name="Jordan",
+        child_email="jordan-one@example.com",
     )
     _create_child_user(
         household_id=parent.household_id,
-        child_name=" ava ",
-        child_email="ava-two@example.com",
+        child_name=" jordan ",
+        child_email="jordan-two@example.com",
     )
 
     with TestClient(app) as client:
@@ -219,7 +219,7 @@ def test_child_login_rejects_inactive_child(tmp_path: Path, monkeypatch) -> None
     parent, _parent_password = _create_parent_user(email="parent@example.com")
     _create_child_user(
         household_id=parent.household_id,
-        child_name="Ava",
+        child_name="Jordan",
         active=False,
     )
 
@@ -228,7 +228,7 @@ def test_child_login_rejects_inactive_child(tmp_path: Path, monkeypatch) -> None
             "/chore-api/auth/child-login",
             json={
                 "parent_email": "parent@example.com",
-                "child_name": "Ava",
+                "child_name": "Jordan",
                 "password": "kid-password-123",
             },
         )
