@@ -33,9 +33,9 @@ export function ChangePasswordScreen() {
       return;
     }
 
-    if (newPassword.length < 8) {
+    if (newPassword.length < 15) {
       setSuccess(null);
-      setError("New password must be at least 8 characters.");
+      setError("New password must be at least 15 characters.");
       return;
     }
 
@@ -88,7 +88,7 @@ export function ChangePasswordScreen() {
             setNewPassword(value);
             clearNotices();
           }}
-          placeholder="At least 8 characters"
+          placeholder="At least 15 characters"
           placeholderTextColor="#94a3b8"
           secureTextEntry
           style={styles.input}

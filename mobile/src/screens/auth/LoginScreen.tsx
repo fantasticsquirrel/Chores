@@ -1,6 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
+  Linking,
   Pressable,
   ScrollView,
   Text,
@@ -20,6 +21,10 @@ import { styles } from "../../styles/layout";
 import { formatError } from "../../utils/format";
 
 type LoginMode = "parent" | "child";
+
+// Keep recovery in the hardened browser route: native apps never receive or
+// retain reset capabilities, and the endpoint is intentionally not configurable.
+const PARENT_PASSWORD_RECOVERY_URL = "https://family.multihost.ing/chore/forgot-password";
 
 export function LoginScreen({
   apiBaseUrl,
@@ -170,6 +175,19 @@ export function LoginScreen({
                 textContentType="password"
                 value={password}
               />
+              <Pressable
+                accessibilityRole="button"
+                disabled={loading}
+                onPress={() => {
+                  void Linking.openURL(PARENT_PASSWORD_RECOVERY_URL);
+                }}
+                style={({ pressed }) => [
+                  styles.recoveryLink,
+                  pressed ? styles.recoveryLinkPressed : null,
+                ]}
+              >
+                <Text style={styles.recoveryLinkText}>Forgot password?</Text>
+              </Pressable>
             </>
           ) : (
             <>
@@ -202,6 +220,9 @@ export function LoginScreen({
                 textContentType="username"
                 value={childName}
               />
+              <Text style={styles.recoveryGuidance}>
+                Ask a parent for help resetting your password.
+              </Text>
               <FieldLabel label="Child Password" />
               <TextInput
                 onChangeText={(value) => {
