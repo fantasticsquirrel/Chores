@@ -22,6 +22,23 @@ export interface ChangePasswordRequest {
   new_password: string;
 }
 
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetRequestResponse {
+  detail: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  token: string;
+  new_password: string;
+}
+
+export interface PasswordResetConfirmResponse {
+  detail: string;
+}
+
 export interface AuthUser {
   id: number;
   household_id: number;

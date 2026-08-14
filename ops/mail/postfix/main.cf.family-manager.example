@@ -1,0 +1,46 @@
+# Family Manager password-reset MTA — APPROVAL-GATED TEMPLATE ONLY.
+#
+# Install only after the deployment preflight in docs/operations/password-reset-mail.md.
+# This host is intentionally outbound-only: do not add public SMTP, submission,
+# smtps, MX, mailbox, or relay hosting responsibilities to this configuration.
+
+compatibility_level = 3.6
+myhostname = mail.family.multihost.ing
+mydomain = family.multihost.ing
+myorigin = $mydomain
+
+# No network SMTP listener. The application reaches Postfix only through the
+# local sendmail command and pickup service described in master.cf.
+inet_interfaces = loopback-only
+inet_protocols = all
+mydestination =
+relay_domains =
+
+# Local submission is limited to the hardened worker account and root for
+# recovery operations. The worker constructs the fixed From identity:
+# no-reply@family.multihost.ing
+mynetworks = 127.0.0.0/8 [::1]/128
+authorized_submit_users = static:root, www-data
+smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
+smtpd_client_restrictions = permit_mynetworks, reject
+smtpd_delay_reject = yes
+
+# Direct-to-MX delivery. TLS is opportunistic for compatibility, logged for
+# review; do not silently replace this MTA with a SaaS relay.
+smtp_tls_security_level = may
+smtp_tls_loglevel = 1
+smtp_dns_support_level = enabled
+smtp_host_lookup = dns, native
+
+# Sign sendmail/non-SMTP injected recovery mail. A signer outage must defer
+# delivery rather than silently sending unsigned credential-security mail.
+non_smtpd_milters = unix:/run/opendkim/opendkim.sock
+milter_default_action = tempfail
+milter_protocol = 6
+
+# Keep queues and diagnostics local. Application code supplies RFC 5322
+# content; never add URL rewriting, tracking, or recipient expansion here.
+message_size_limit = 10485760
+mailbox_size_limit = 0
+append_dot_mydomain = no

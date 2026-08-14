@@ -95,6 +95,28 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 3,
   },
+  recoveryLink: {
+    alignSelf: "flex-start",
+    marginTop: 2,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingVertical: 6,
+  },
+  recoveryLinkPressed: {
+    opacity: 0.72,
+  },
+  recoveryLinkText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "800",
+    textDecorationLine: "underline",
+  },
+  recoveryGuidance: {
+    color: colors.textSubtle,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 4,
+  },
   appHeader: {
     alignItems: "center",
     backgroundColor: colors.surface,

@@ -1,0 +1,2 @@
+# selector._domainkey.domain domain:selector:private-key-path
+fm2026._domainkey.family.multihost.ing family.multihost.ing:fm2026:__REPLACE_WITH_MODE_0600_DKIM_PRIVATE_KEY_PATH__

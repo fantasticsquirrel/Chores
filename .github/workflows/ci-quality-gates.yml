@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "20.19.4"
           cache: npm
 
       - name: Install workspace dependencies
@@ -34,14 +34,17 @@ jobs:
       - name: Shared API contract tests
         run: npx vitest run packages/family-api/src/*.test.ts --environment node
 
-      - name: Mobile typecheck
-        run: npm run mobile:typecheck
+      - name: Mobile quality and Expo dependency alignment
+        run: npm run mobile:gate
 
-      - name: Mobile tests
-        run: npm run mobile:test
+      - name: Dependency-audit exception contract tests
+        run: node --test scripts/*.test.mjs
 
-      - name: JavaScript runtime dependency audit
-        run: npm audit --omit=dev --audit-level=high
+      - name: Frontend runtime dependency audit
+        run: npm audit --workspace frontend --omit=dev --audit-level=high
+
+      - name: Mobile runtime dependency audit
+        run: bash scripts/audit-mobile-runtime-dependencies.sh
 
   backend-quality:
     runs-on: ubuntu-latest

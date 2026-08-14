@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import UserRole
+from app.security.passwords import PARENT_PASSWORD_MIN_LENGTH
 
 
 class ModuleResponse(BaseModel):
@@ -38,7 +39,7 @@ class CreateParentUserRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     email: str = Field(min_length=3, max_length=320)
-    password: str = Field(min_length=8, max_length=1024)
+    password: str = Field(min_length=PARENT_PASSWORD_MIN_LENGTH, max_length=1024)
     role: UserRole = UserRole.PARENT
 
     @model_validator(mode="after")

@@ -16,17 +16,28 @@ def check_database(database_url: str) -> tuple[bool, str | None]:
     return True, None
 
 
+def smoke_run_id_payload() -> dict[str, str]:
+    """Expose only the wrapper nonce required to prove local smoke ownership."""
+    run_id = get_settings().playwright_smoke_run_id
+    return {"playwright_smoke_run_id": run_id} if run_id else {}
+
+
 def build_readiness_payload() -> tuple[int, dict[str, object]]:
     settings = get_settings()
     database_ok, database_error = check_database(settings.database_url)
 
     if database_ok:
-        return 200, {"status": "ok", "checks": {"database": {"status": "ok"}}}
+        return 200, {
+            "status": "ok",
+            "checks": {"database": {"status": "ok"}},
+            **smoke_run_id_payload(),
+        }
 
     return (
         503,
         {
             "status": "degraded",
             "checks": {"database": {"status": "error", "message": database_error}},
+            **smoke_run_id_payload(),
         },
     )

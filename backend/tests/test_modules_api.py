@@ -117,7 +117,11 @@ def test_parent_admin_can_create_additional_parent_user(tmp_path: Path, monkeypa
         create_response = client.post(
             "/chore-api/modules/users",
             headers={"X-CSRF-Token": csrf_token},
-            json={"email": "Second.Parent@Example.com", "password": "password456", "role": "PARENT"},
+            json={
+                "email": "Second.Parent@Example.com",
+                "password": "a sufficiently long second parent password",
+                "role": "PARENT",
+            },
         )
         assert create_response.status_code == 201
         payload = create_response.json()
@@ -130,7 +134,10 @@ def test_parent_admin_can_create_additional_parent_user(tmp_path: Path, monkeypa
         client.post("/chore-api/auth/logout", headers={"X-CSRF-Token": csrf_token})
         login_created_response = client.post(
             "/chore-api/auth/login",
-            json={"email": "second.parent@example.com", "password": "password456"},
+            json={
+                "email": "second.parent@example.com",
+                "password": "a sufficiently long second parent password",
+            },
         )
         assert login_created_response.status_code == 200
         assert login_created_response.json()["user"]["household_id"] == admin.household_id
@@ -148,7 +155,11 @@ def test_parent_admin_can_create_additional_parent_admin_user(tmp_path: Path, mo
         create_response = client.post(
             "/chore-api/modules/users",
             headers={"X-CSRF-Token": csrf_token},
-            json={"email": "other.admin@example.com", "password": "password456", "role": "PARENT_ADMIN"},
+            json={
+                "email": "other.admin@example.com",
+                "password": "a sufficiently long admin password",
+                "role": "PARENT_ADMIN",
+            },
         )
 
     assert create_response.status_code == 201
@@ -168,7 +179,11 @@ def test_parent_admin_cannot_create_duplicate_parent_email(tmp_path: Path, monke
         response = client.post(
             "/chore-api/modules/users",
             headers={"X-CSRF-Token": csrf_token},
-            json={"email": admin.email.upper(), "password": "password456", "role": "PARENT"},
+            json={
+                "email": admin.email.upper(),
+                "password": "a sufficiently long duplicate password",
+                "role": "PARENT",
+            },
         )
 
     assert response.status_code == 409

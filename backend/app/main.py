@@ -8,13 +8,34 @@ from fastapi.responses import JSONResponse
 from app.api import auth_router, billing_router, children_router, chores_router, homeschool_router, households_router, modules_router, notifications_router, ops_router, recipes_router, workflow_router
 from app.config import get_settings
 from app.db import initialize_database
-from app.error_handling import CsrfProtectionMiddleware, RequestLoggingMiddleware, register_exception_handlers
+from app.error_handling import (
+    CsrfProtectionMiddleware,
+    PublicPasswordResetContainmentMiddleware,
+    RequestLoggingMiddleware,
+    register_exception_handlers,
+)
 from app.health import build_readiness_payload
 from app.logging_config import configure_logging
 from app.startup import run_startup_checks
 
 API_PREFIX = "/chore-api"
 FRONTEND_BASE_PATH = "/chore"
+RESET_FRONTEND_PATHS = frozenset(
+    {
+        f"{FRONTEND_BASE_PATH}/reset-password",
+        f"{FRONTEND_BASE_PATH}/reset-password/",
+    }
+)
+RESET_PUBLIC_API_PATHS = frozenset(
+    {
+        f"{API_PREFIX}/auth/password-reset/request",
+        f"{API_PREFIX}/auth/password-reset/confirm",
+    }
+)
+RESET_CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; "
+    "object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self';"
+)
 DEFAULT_FRONTEND_DIST_DIR = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 
@@ -35,13 +56,25 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
         response: Response = await call_next(request)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")
-        response.headers.setdefault("Referrer-Policy", "same-origin")
-        if request.headers.get("x-forwarded-proto", "").split(",", 1)[0].strip().lower() == "https" or request.url.scheme == "https":
-            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        if request.url.path in RESET_FRONTEND_PATHS | RESET_PUBLIC_API_PATHS:
+            # Public recovery responses are deliberately non-cacheable and may
+            # never become a referrer source. The fragment remains client-only,
+            # while the endpoint policy prevents response-state leaks too.
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Referrer-Policy"] = "no-referrer"
+            if request.url.path in RESET_FRONTEND_PATHS:
+                response.headers["Content-Security-Policy"] = RESET_CONTENT_SECURITY_POLICY
+        else:
+            response.headers.setdefault("Referrer-Policy", "same-origin")
+        # HSTS is owned by the HTTPS edge.  The ASGI app must not infer trusted
+        # transport state from client-controlled forwarding headers.
         return response
 
     app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
+    # Added last so it wraps logging/CSRF/security while remaining inside
+    # Starlette's ServerErrorMiddleware.
+    app.add_middleware(PublicPasswordResetContainmentMiddleware)
     register_exception_handlers(app)
     app.include_router(auth_router, prefix=API_PREFIX)
     app.include_router(billing_router, prefix=API_PREFIX)

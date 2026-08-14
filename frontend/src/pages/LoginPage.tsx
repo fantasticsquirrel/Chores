@@ -1,6 +1,6 @@
 import type { FormEvent, ReactElement } from "react";
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiClient, type AuthSessionResponse } from "../api";
 import { useAuth } from "../auth/useAuth";
@@ -21,6 +21,7 @@ export function LoginPage(): ReactElement {
     window.sessionStorage.removeItem("family-manager.password-changed");
     return changed;
   });
+  const [passwordReset] = useState(() => searchParams.get("passwordReset") === "1");
   const { setAuthenticatedSession } = useAuth();
   const [mode, setMode] = useState<LoginMode>("parent");
   const [email, setEmail] = useState("");
@@ -130,6 +131,9 @@ export function LoginPage(): ReactElement {
       {passwordChanged ? (
         <InlineNotice variant="info">Password changed. Sign in again with your new password.</InlineNotice>
       ) : null}
+      {passwordReset ? (
+        <InlineNotice variant="info">Try signing in. If you cannot sign in, request a new reset link.</InlineNotice>
+      ) : null}
       <div className="auth-mode-switch" role="tablist" aria-label="Login mode">
         <button
           aria-selected={mode === "parent"}
@@ -181,6 +185,9 @@ export function LoginPage(): ReactElement {
                 required
               />
             </FormField>
+            <Link className="password-reset-link" to="/forgot-password">
+              Forgot password?
+            </Link>
           </>
         ) : (
           <>
@@ -225,6 +232,11 @@ export function LoginPage(): ReactElement {
             </FormField>
           </>
         )}
+        {mode === "child" ? (
+          <p className="password-reset-guidance">
+            Ask a parent to reset their password from the Parent sign-in screen.
+          </p>
+        ) : null}
         <Button type="submit" disabled={submitting}>
           {submitting ? "Signing In..." : "Sign In"}
         </Button>

@@ -14,7 +14,8 @@ dependencies = [
   "itsdangerous>=2.2.0",
   "python-multipart>=0.0.27",
   "python-dotenv>=1.2.2",
-  "pywebpush>=2.0.3"
+  "pywebpush>=2.0.3",
+  "email-validator>=2.2.0"
 ]
 
 [project.optional-dependencies]

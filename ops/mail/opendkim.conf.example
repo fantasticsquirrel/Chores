@@ -1,0 +1,19 @@
+# Family Manager password-reset OpenDKIM — APPROVAL-GATED TEMPLATE ONLY.
+# Place the private key outside the repository with owner root:opendkim and
+# mode 0640 or stricter, then substitute the KeyTable placeholder.
+
+Syslog yes
+SyslogSuccess yes
+LogWhy yes
+UMask 007
+Mode s
+Canonicalization relaxed/simple
+Domain family.multihost.ing
+Selector fm2026
+KeyTable refile:/etc/opendkim/KeyTable
+SigningTable refile:/etc/opendkim/SigningTable
+InternalHosts refile:/etc/opendkim/TrustedHosts
+ExternalIgnoreList refile:/etc/opendkim/TrustedHosts
+Socket local:/run/opendkim/opendkim.sock
+RequireSafeKeys true
+OversignHeaders From

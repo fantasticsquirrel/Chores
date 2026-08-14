@@ -1,4 +1,4 @@
-from app.security.passwords import hash_password, needs_rehash, verify_password
+from app.security.passwords import hash_parent_password, hash_password, needs_rehash, verify_password
 from app.security.sessions import (
     SESSION_COOKIE_MAX_AGE_SECONDS,
     SESSION_COOKIE_NAME,
@@ -12,6 +12,7 @@ __all__ = [
     "SESSION_COOKIE_MAX_AGE_SECONDS",
     "SESSION_COOKIE_NAME",
     "create_session_token",
+    "hash_parent_password",
     "hash_password",
     "needs_rehash",
     "resolve_session",
