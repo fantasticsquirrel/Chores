@@ -215,6 +215,8 @@ def test_password_reset_migration_round_trip_and_sparse_identity_fixture(tmp_pat
     command.downgrade(config, "20260719_0016")
     downgraded = inspect(create_engine(database_url))
     assert "password_resets" not in downgraded.get_table_names()
+    assert "session_generation" not in {column["name"] for column in downgraded.get_columns("users")}
+    assert "session_generation" not in {column["name"] for column in downgraded.get_columns("auth_sessions")}
     command.upgrade(config, "head")
     upgraded = inspect(create_engine(database_url))
     assert {"password_resets", "password_reset_requests", "password_reset_deliveries"} <= set(upgraded.get_table_names())
@@ -227,3 +229,315 @@ def test_password_reset_migration_round_trip_and_sparse_identity_fixture(tmp_pat
         connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260719_0016')")
     command.upgrade(sparse_config, "head")
     assert "password_resets" not in inspect(sparse_engine).get_table_names()
+    # A subsystem-only historical fixture can reach this revision without
+    # identity tables. Its downgrade must be as harmless as its no-op upgrade.
+    command.downgrade(sparse_config, "20260719_0016")
+    assert "password_resets" not in inspect(sparse_engine).get_table_names()
+
+
+def test_session_generation_migration_round_trip_preserves_password_reset_schema(tmp_path: Path, monkeypatch) -> None:
+    """The new revision alone owns the two generation columns it removes."""
+    database_url = f"sqlite:///{tmp_path / 'session-generation-round-trip.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+
+    command.upgrade(config, "20260811_0017")
+    before = inspect(create_engine(database_url))
+    assert "session_generation" not in {column["name"] for column in before.get_columns("users")}
+    assert "session_generation" not in {column["name"] for column in before.get_columns("auth_sessions")}
+    assert {"password_resets", "password_reset_requests", "password_reset_deliveries"} <= set(before.get_table_names())
+
+    command.upgrade(config, "head")
+    upgraded = inspect(create_engine(database_url))
+    assert "session_generation" in {column["name"] for column in upgraded.get_columns("users")}
+    assert "session_generation" in {column["name"] for column in upgraded.get_columns("auth_sessions")}
+
+    command.downgrade(config, "20260811_0017")
+    downgraded = inspect(create_engine(database_url))
+    assert "session_generation" not in {column["name"] for column in downgraded.get_columns("users")}
+    assert "session_generation" not in {column["name"] for column in downgraded.get_columns("auth_sessions")}
+    assert {"password_resets", "password_reset_requests", "password_reset_deliveries"} <= set(downgraded.get_table_names())
+
+
+def test_password_reset_session_generation_migration_rejects_preexisting_columns(tmp_path: Path, monkeypatch) -> None:
+    """The migration must not claim rollback ownership of schema-drifted columns."""
+    database_url = f"sqlite:///{tmp_path / 'preexisting-session-generation.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260811_0017')")
+        connection.exec_driver_sql("CREATE TABLE households (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY, session_generation INTEGER NOT NULL)")
+        connection.exec_driver_sql("CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY, session_generation INTEGER NOT NULL)")
+        connection.exec_driver_sql("CREATE TABLE password_resets (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE password_reset_requests (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE password_reset_deliveries (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("INSERT INTO users (id, session_generation) VALUES (1, 7)")
+        connection.exec_driver_sql("INSERT INTO auth_sessions (id, session_generation) VALUES (1, 7)")
+
+    with pytest.raises(RuntimeError, match="refuses schema drift: tables already contain"):
+        command.upgrade(config, "head")
+
+    with engine.connect() as connection:
+        inspector = inspect(connection)
+        assert "session_generation" in {column["name"] for column in inspector.get_columns("users")}
+        assert "session_generation" in {column["name"] for column in inspector.get_columns("auth_sessions")}
+        assert connection.exec_driver_sql("SELECT session_generation FROM users WHERE id = 1").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT session_generation FROM auth_sessions WHERE id = 1").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260811_0017"
+
+
+@pytest.mark.parametrize(
+    ("starting_revision", "operation"),
+    (("20260811_0017", "upgrade"), ("20260813_0018", "downgrade")),
+)
+def test_session_generation_migration_rejects_an_orphan_auth_sessions_artifact(
+    tmp_path: Path,
+    monkeypatch,
+    starting_revision: str,
+    operation: str,
+) -> None:
+    """A sparse no-op is safe only when both identity and session artifacts are absent."""
+    database_url = f"sqlite:///{tmp_path / f'orphan-auth-sessions-{operation}.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql(f"INSERT INTO alembic_version (version_num) VALUES ('{starting_revision}')")
+        connection.exec_driver_sql("CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY, session_generation INTEGER NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO auth_sessions (id, session_generation) VALUES (1, 7)")
+
+    action = command.upgrade if operation == "upgrade" else command.downgrade
+    target = "head" if operation == "upgrade" else "20260811_0017"
+    with pytest.raises(RuntimeError, match="refuses incomplete identity schema.*auth_sessions"):
+        action(config, target)
+
+    with engine.connect() as connection:
+        assert connection.exec_driver_sql("SELECT session_generation FROM auth_sessions WHERE id = 1").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == starting_revision
+
+
+def test_session_generation_downgrade_rejects_partial_identity_before_mutation(tmp_path: Path, monkeypatch) -> None:
+    """A stale partial 0018 footprint must keep its data and version untouched."""
+    database_url = f"sqlite:///{tmp_path / 'partial-identity-downgrade.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260813_0018')")
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY, session_generation INTEGER NOT NULL)")
+        connection.exec_driver_sql("CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY, session_generation INTEGER NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO users (id, session_generation) VALUES (1, 7)")
+        connection.exec_driver_sql("INSERT INTO auth_sessions (id, session_generation) VALUES (1, 7)")
+
+    with pytest.raises(RuntimeError, match="refuses incomplete identity schema"):
+        command.downgrade(config, "20260719_0016")
+
+    with engine.connect() as connection:
+        inspector = inspect(connection)
+        assert "session_generation" in {column["name"] for column in inspector.get_columns("users")}
+        assert "session_generation" in {column["name"] for column in inspector.get_columns("auth_sessions")}
+        assert connection.exec_driver_sql("SELECT session_generation FROM users WHERE id = 1").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT session_generation FROM auth_sessions WHERE id = 1").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260813_0018"
+
+
+def test_password_reset_migration_rejects_partial_identity_schema_on_upgrade(tmp_path: Path, monkeypatch) -> None:
+    """A reset migration may no-op only for a truly absent identity subsystem."""
+    database_url = f"sqlite:///{tmp_path / 'partial-identity-upgrade.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260719_0016')")
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY)")
+
+    with pytest.raises(RuntimeError, match="refuses incomplete identity schema"):
+        command.upgrade(config, "head")
+
+    with engine.connect() as connection:
+        tables = set(inspect(connection).get_table_names())
+        assert not ({"password_resets", "password_reset_requests", "password_reset_deliveries"} & tables)
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260719_0016"
+
+
+def test_password_reset_migration_rejects_missing_auth_sessions_before_mutation(tmp_path: Path, monkeypatch) -> None:
+    """0017 must not stamp/reset-extend an identity schema missing its session artifact."""
+    database_url = f"sqlite:///{tmp_path / 'identity-without-auth-sessions.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260719_0016')")
+        connection.exec_driver_sql("CREATE TABLE households (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY)")
+
+    with pytest.raises(RuntimeError, match="refuses incomplete identity schema.*auth_sessions"):
+        command.upgrade(config, "20260811_0017")
+
+    with engine.connect() as connection:
+        tables = set(inspect(connection).get_table_names())
+        assert not ({"password_resets", "password_reset_requests", "password_reset_deliveries"} & tables)
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260719_0016"
+
+
+@pytest.mark.parametrize(
+    ("operation", "starting_revision", "session_generation_column"),
+    (
+        ("upgrade", "20260811_0017", ""),
+        ("downgrade", "20260813_0018", ", session_generation INTEGER NOT NULL"),
+    ),
+)
+@pytest.mark.parametrize("reset_tables", ((), ("password_resets",)))
+def test_session_generation_migration_rejects_missing_reset_footprint_before_mutation(
+    tmp_path: Path,
+    monkeypatch,
+    operation: str,
+    starting_revision: str,
+    session_generation_column: str,
+    reset_tables: tuple[str, ...],
+) -> None:
+    """0018 cannot claim session-column ownership when 0017's footprint is absent or partial."""
+    database_url = f"sqlite:///{tmp_path / f'missing-reset-{operation}-{len(reset_tables)}.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql(f"INSERT INTO alembic_version (version_num) VALUES ('{starting_revision}')")
+        connection.exec_driver_sql("CREATE TABLE households (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql(f"CREATE TABLE users (id INTEGER PRIMARY KEY{session_generation_column})")
+        connection.exec_driver_sql(f"CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY{session_generation_column})")
+        for table in reset_tables:
+            connection.exec_driver_sql(f"CREATE TABLE {table} (id INTEGER PRIMARY KEY)")
+
+    action = command.upgrade if operation == "upgrade" else command.downgrade
+    target = "head" if operation == "upgrade" else "20260811_0017"
+    with pytest.raises(RuntimeError, match="refuses incomplete password reset schema"):
+        action(config, target)
+
+    with engine.connect() as connection:
+        inspector = inspect(connection)
+        assert ("session_generation" in {column["name"] for column in inspector.get_columns("users")}) is (
+            operation == "downgrade"
+        )
+        assert ("session_generation" in {column["name"] for column in inspector.get_columns("auth_sessions")}) is (
+            operation == "downgrade"
+        )
+        assert set(reset_tables) <= set(inspector.get_table_names())
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == starting_revision
+
+
+def test_password_reset_migration_rejects_preexisting_reset_tables(tmp_path: Path, monkeypatch) -> None:
+    """Revision 0017 must not claim tables it did not create for rollback."""
+    database_url = f"sqlite:///{tmp_path / 'preexisting-reset-table.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260719_0016')")
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE households (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE password_resets (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("INSERT INTO password_resets (id) VALUES (7)")
+
+    with pytest.raises(RuntimeError, match="refuses schema drift: reset tables already exist"):
+        command.upgrade(config, "head")
+
+    with engine.connect() as connection:
+        assert connection.exec_driver_sql("SELECT id FROM password_resets").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260719_0016"
+
+
+def test_password_reset_downgrade_rejects_partial_reset_schema(tmp_path: Path, monkeypatch) -> None:
+    """A damaged/stamped reset revision must not delete its surviving table."""
+    database_url = f"sqlite:///{tmp_path / 'partial-reset-downgrade.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    get_settings.cache_clear()
+    get_engine.cache_clear()
+    get_session_factory.cache_clear()
+    config = _alembic_config(database_url)
+    engine = create_engine(database_url)
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
+        connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260811_0017')")
+        connection.exec_driver_sql("CREATE TABLE users (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE households (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE auth_sessions (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("CREATE TABLE password_resets (id INTEGER PRIMARY KEY)")
+        connection.exec_driver_sql("INSERT INTO password_resets (id) VALUES (7)")
+
+    with pytest.raises(RuntimeError, match="refuses incomplete schema"):
+        command.downgrade(config, "20260719_0016")
+
+    with engine.connect() as connection:
+        assert connection.exec_driver_sql("SELECT id FROM password_resets").scalar_one() == 7
+        assert connection.exec_driver_sql("SELECT version_num FROM alembic_version").scalar_one() == "20260811_0017"

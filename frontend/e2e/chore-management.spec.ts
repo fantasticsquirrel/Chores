@@ -27,11 +27,18 @@ function seedChoreFixture(): ChoreFixture {
   );
 
   const databaseUrl = process.env.DATABASE_URL;
-  if (databaseUrl === undefined || process.env.PLAYWRIGHT_ISOLATED_DB !== "1") {
-    throw new Error("Chore management E2E requires an explicitly isolated database.");
+  const pythonBin = process.env.PLAYWRIGHT_BACKEND_PYTHON;
+  if (
+    databaseUrl === undefined ||
+    pythonBin === undefined ||
+    process.env.PLAYWRIGHT_ISOLATED_DB !== "1"
+  ) {
+    throw new Error(
+      "Chore management E2E requires an explicitly isolated database and configured backend Python.",
+    );
   }
   const output = execFileSync(
-    path.join(rootDir, ".venv/bin/python"),
+    pythonBin,
     [seedScript],
     {
       encoding: "utf-8",

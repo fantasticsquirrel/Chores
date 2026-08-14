@@ -39,6 +39,34 @@ def test_readiness_healthcheck_returns_database_check(tmp_path: Path, monkeypatc
     assert response.json() == {"status": "ok", "checks": {"database": {"status": "ok"}}}
 
 
+def test_readiness_healthcheck_echoes_the_wrapper_nonce_only_for_an_owned_smoke_backend(tmp_path: Path, monkeypatch) -> None:
+    smoke_dir = tmp_path / "family-manager-playwright-health"
+    smoke_dir.mkdir(mode=0o700)
+    smoke_dir.chmod(0o700)
+    marker = smoke_dir / ".family-manager-smoke"
+    marker.touch(mode=0o600)
+    marker.chmod(0o600)
+    nonce = "n" * 32
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{smoke_dir / 'health_api.db'}")
+    monkeypatch.setenv("SECRET_KEY", "a" * 32)
+    monkeypatch.setenv("LOG_LEVEL", "INFO")
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    monkeypatch.setenv("PLAYWRIGHT_ISOLATED_DB", "1")
+    monkeypatch.setenv("PLAYWRIGHT_SMOKE_RUN_ID", nonce)
+    get_settings.cache_clear()
+
+    with TestClient(app) as client:
+        response = client.get("/chore-api/health/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok",
+        "checks": {"database": {"status": "ok"}},
+        "playwright_smoke_run_id": nonce,
+    }
+
+
 def test_readiness_healthcheck_returns_503_when_database_unavailable(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
 

@@ -6,9 +6,9 @@ from pathlib import Path
 from sqlite3 import Connection as SQLiteConnection
 from urllib.parse import urlparse
 
-from sqlalchemy import DateTime, MetaData, create_engine, event, inspect, text
+from sqlalchemy import DateTime, MetaData, create_engine, event, inspect, select, text, update
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 from app.config import Settings, SettingsError
 
@@ -58,6 +58,63 @@ def get_engine(database_url: str) -> Engine:
 @lru_cache(maxsize=1)
 def get_session_factory(database_url: str) -> sessionmaker:
     return sessionmaker(bind=get_engine(database_url), autoflush=False, autocommit=False, expire_on_commit=False)
+
+
+def _invalidate_parent_resets_after_email_change(session: Session, flush_context, instances: object) -> None:
+    """Invalidate recovery capability when a parent login identity changes.
+
+    The reset tables may be absent when a historical migration fixture is in use;
+    production starts only at Alembic head, while ordinary app sessions simply
+    skip the safeguard until the reset migration exists.
+    """
+    del flush_context, instances
+    from app.models.core import PasswordReset, PasswordResetDelivery, User
+    from app.models.enums import UserRole
+
+    changed_parent_ids = [
+        user.id
+        for user in session.dirty
+        if isinstance(user, User)
+        and user.id is not None
+        and user.role in {UserRole.PARENT, UserRole.PARENT_ADMIN}
+        and inspect(user).attrs.email.history.has_changes()
+    ]
+    if not changed_parent_ids:
+        return
+
+    connection = session.connection()
+    if not inspect(connection).has_table("password_resets"):
+        return
+
+    now = datetime.now(UTC)
+    reset_ids = list(
+        session.scalars(
+            select(PasswordReset.id).where(
+                PasswordReset.user_id.in_(changed_parent_ids),
+                PasswordReset.consumed_at.is_(None),
+                PasswordReset.invalidated_at.is_(None),
+            )
+        )
+    )
+    if not reset_ids:
+        return
+    session.execute(
+        update(PasswordReset)
+        .where(PasswordReset.id.in_(reset_ids))
+        .values(invalidated_at=now)
+    )
+    session.execute(
+        update(PasswordResetDelivery)
+        .where(
+            PasswordResetDelivery.password_reset_id.in_(reset_ids),
+            PasswordResetDelivery.kind == "reset_link",
+            PasswordResetDelivery.status.in_(("pending", "retry", "processing")),
+        )
+        .values(status="cancelled", terminal_at=now, lease_expires_at=None, last_error_code="identity-changed")
+    )
+
+
+event.listen(Session, "before_flush", _invalidate_parent_resets_after_email_change)
 
 
 def _ensure_sqlite_directory(database_url: str) -> None:

@@ -2,6 +2,9 @@
   "name": "chore_tracking",
   "version": "1.0.8",
   "private": true,
+  "engines": {
+    "node": ">=20.19.4 <21"
+  },
   "workspaces": [
     "frontend",
     "mobile",

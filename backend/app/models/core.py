@@ -59,6 +59,10 @@ class User(TimestampMixin, Base):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole, native_enum=False), nullable=False)
     child_id: Mapped[int | None] = mapped_column(ForeignKey("children.id", ondelete="SET NULL"), nullable=True, index=True)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Bumped atomically whenever credentials change. Every session is bound to
+    # this value, so a session created by a concurrent stale-password login is
+    # rejected even if it was inserted after the revocation sweep.
+    session_generation: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
 
 
 class AuthSession(TimestampMixin, Base):
@@ -66,6 +70,9 @@ class AuthSession(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Snapshot of User.session_generation at issue time. Resolution requires an
+    # exact match, making a missed concurrent revocation fail closed.
+    session_generation: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)

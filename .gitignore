@@ -1,4 +1,5 @@
 node_modules/
+.expo/
 dist/
 .venv/
 __pycache__/
@@ -11,6 +12,7 @@ data/
 *.db-shm
 *.db-wal
 *.egg-info/
+*.tsbuildinfo
 test-results/
 frontend/data/
 backend/data/

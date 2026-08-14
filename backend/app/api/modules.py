@@ -18,7 +18,7 @@ from app.schemas.modules import (
     SetUserModuleAccessRequest,
     UserModuleAccessResponse,
 )
-from app.security import hash_password
+from app.security import hash_parent_password
 from app.security.audit import audit
 from app.services.modules import ModuleService
 
@@ -140,7 +140,7 @@ def create_parent_user(
     user = User(
         household_id=current_user.household_id,
         email=normalized_email,
-        password_hash=hash_password(payload.password),
+        password_hash=hash_parent_password(payload.password),
         role=payload.role,
         child_id=None,
     )

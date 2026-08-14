@@ -1,0 +1,2 @@
+# Only the fixed recovery sender is signed by this dedicated MTA.
+no-reply@family.multihost.ing fm2026._domainkey.family.multihost.ing

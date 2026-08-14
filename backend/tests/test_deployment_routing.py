@@ -4,6 +4,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app import error_handling
+from app.api import auth as auth_api
 from app.config import get_settings
 from app.main import create_app
 
@@ -56,7 +58,106 @@ def test_chore_path_serves_frontend_assets_and_spa_fallback(tmp_path: Path, monk
     assert asset_response.status_code == 200
     assert "console.log('ok');" in asset_response.text
 
-def test_security_headers_are_added_for_forwarded_https(tmp_path: Path, monkeypatch) -> None:
+def test_reset_route_uses_no_store_no_referrer_restrictive_csp_and_never_trusts_forwarded_hsts(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    app = create_app(frontend_dist_dir=_create_dist_tree(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.get("/chore/reset-password", headers={"X-Forwarded-Proto": "https"})
+
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["Content-Security-Policy"] == (
+        "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; "
+        "object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self';"
+    )
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert "Strict-Transport-Security" not in response.headers
+
+
+def test_unhandled_reset_request_keeps_public_security_headers(tmp_path: Path, monkeypatch) -> None:
+    """The app middleware stack must decorate generic reset failures too."""
+    _configure_test_settings(tmp_path, monkeypatch)
+
+    def failing_password_reset_service() -> object:
+        raise RuntimeError("reset service unavailable")
+
+    monkeypatch.setattr(auth_api, "_password_reset_service", failing_password_reset_service)
+    app = create_app(frontend_dist_dir=_create_dist_tree(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/password-reset/request",
+            json={"email": "parent@example.com"},
+            headers={"X-Request-ID": "req-reset-security-headers"},
+        )
+
+    assert response.status_code == 202
+    assert response.headers["X-Request-ID"] == "req-reset-security-headers"
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+
+
+def test_last_resort_reset_failure_stays_inside_asgi_boundary(tmp_path: Path, monkeypatch) -> None:
+    """A broken normal acknowledgement must not reach ServerErrorMiddleware."""
+    _configure_test_settings(tmp_path, monkeypatch)
+    original_acknowledgement = error_handling._password_reset_request_acknowledgement
+    acknowledgement_calls = 0
+
+    async def fail_once_then_acknowledge(*, request_id: str | None = None):
+        nonlocal acknowledgement_calls
+        acknowledgement_calls += 1
+        if acknowledgement_calls == 1:
+            raise RuntimeError("normal acknowledgement unavailable")
+        return await original_acknowledgement(request_id=request_id)
+
+    def failing_password_reset_service() -> object:
+        raise RuntimeError("reset service unavailable")
+
+    monkeypatch.setattr(error_handling, "_password_reset_request_acknowledgement", fail_once_then_acknowledge)
+    monkeypatch.setattr(auth_api, "_password_reset_service", failing_password_reset_service)
+    app = create_app(frontend_dist_dir=_create_dist_tree(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/password-reset/request",
+            json={"email": "parent@example.com"},
+            headers={"X-Request-ID": "req-last-resort"},
+        )
+
+    assert acknowledgement_calls == 1
+    assert response.status_code == 202
+    assert response.headers["X-Request-ID"] == "req-last-resort"
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+
+
+def test_reset_route_trailing_slash_uses_the_same_no_store_no_referrer_and_restrictive_csp(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    app = create_app(frontend_dist_dir=_create_dist_tree(tmp_path))
+
+    with TestClient(app) as client:
+        response = client.get("/chore/reset-password/", headers={"X-Forwarded-Proto": "https"})
+
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert response.headers["Content-Security-Policy"] == (
+        "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; "
+        "object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self';"
+    )
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert "Strict-Transport-Security" not in response.headers
+
+
+def test_security_headers_exclude_hsts_when_forwarded_proto_is_spoofed(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     dist_dir = tmp_path / "dist"
     dist_dir.mkdir()
@@ -70,5 +171,5 @@ def test_security_headers_are_added_for_forwarded_https(tmp_path: Path, monkeypa
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "same-origin"
-    assert response.headers["Strict-Transport-Security"] == "max-age=31536000; includeSubDomains"
+    assert "Strict-Transport-Security" not in response.headers
 

@@ -11,14 +11,14 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from sqlalchemy import select
+from sqlalchemy import func, select  # noqa: E402
 
-from app.config import get_settings
-from app.db import get_session_factory, initialize_database
-from app.models.core import Child, Chore, Household, User
-from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, UserRole
-from app.security import hash_password
-from scripts.smoke_safety import require_isolated_smoke_database
+from app.config import get_settings  # noqa: E402
+from app.db import get_session_factory, initialize_database  # noqa: E402
+from app.models.core import Child, Chore, Household, User  # noqa: E402
+from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, UserRole  # noqa: E402
+from app.security import hash_password  # noqa: E402
+from scripts.smoke_safety import require_isolated_smoke_database  # noqa: E402
 
 
 @dataclass(frozen=True)
@@ -46,26 +46,35 @@ def main() -> None:
     chore_name = f"Playwright Smoke Chore {run_suffix}"
 
     with session_factory() as session:
-        household = Household(name=f"Playwright Smoke Household {run_suffix}", timezone="UTC")
+        next_household_id = (session.scalar(select(func.coalesce(func.max(Household.id), 0))) or 0) + 1
+        next_user_id = (session.scalar(select(func.coalesce(func.max(User.id), 0))) or 0) + 1
+        household = Household(
+            id=next_household_id,
+            name=f"Playwright Smoke Household {run_suffix}",
+            timezone="UTC",
+            owner_user_id=next_user_id,
+        )
         session.add(household)
-        session.flush()
 
         parent_email = f"playwright.parent.{run_suffix}@example.com"
         child_email = f"playwright.child.{run_suffix}@example.com"
 
-        child = Child(household_id=household.id, name=child_name, active=True)
-        session.add(child)
-        session.flush()
-
         session.add(
             User(
-                household_id=household.id,
+                id=next_user_id,
+                household_id=next_household_id,
                 email=parent_email,
                 password_hash=hash_password(parent_password),
                 role=UserRole.PARENT,
                 child_id=None,
             )
         )
+        session.flush()
+
+        child = Child(household_id=household.id, name=child_name, active=True)
+        session.add(child)
+        session.flush()
+
         session.add(
             User(
                 household_id=household.id,

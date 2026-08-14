@@ -7,6 +7,8 @@ import { useAuth } from "../auth/useAuth";
 import { formatApiError } from "../lib/errors";
 import { Button, Card, FormField, InlineNotice, TextInput } from "../ui";
 
+const PARENT_PASSWORD_MIN_LENGTH = 15;
+
 export function AccountSecurityPage(): ReactElement {
   const navigate = useNavigate();
   const { clearSession } = useAuth();
@@ -35,9 +37,9 @@ export function AccountSecurityPage(): ReactElement {
       return;
     }
 
-    if (newPassword.length < 8) {
+    if (newPassword.length < PARENT_PASSWORD_MIN_LENGTH) {
       setSubmitSuccess(null);
-      setSubmitError("New password must be at least 8 characters.");
+      setSubmitError(`New password must be at least ${PARENT_PASSWORD_MIN_LENGTH} characters.`);
       return;
     }
 

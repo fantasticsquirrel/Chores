@@ -1,6 +1,10 @@
 import { defineConfig } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:8501";
+import { requireIsolatedPlaywrightSmokeConfiguration } from "./scripts/playwright-smoke-isolation";
+
+const { baseURL, executablePath } = requireIsolatedPlaywrightSmokeConfiguration(
+  process.env,
+);
 
 export default defineConfig({
   testDir: "./e2e",
@@ -14,6 +18,10 @@ export default defineConfig({
   use: {
     baseURL,
     headless: true,
-    ignoreHTTPSErrors: true,
+    trace: "off",
+    screenshot: "off",
+    video: "off",
+    launchOptions:
+      executablePath === undefined ? undefined : { executablePath },
   },
 });

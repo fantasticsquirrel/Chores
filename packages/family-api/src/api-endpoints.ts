@@ -37,6 +37,10 @@ import type {
   NotificationListResponse,
   NotificationSettingResponse,
   NotificationSettingsByModule,
+  PasswordResetConfirmRequest,
+  PasswordResetConfirmResponse,
+  PasswordResetRequest,
+  PasswordResetRequestResponse,
   NotificationSettingUpdate,
   PushConfigResponse,
   PushSubscriptionCreate,
@@ -71,6 +75,8 @@ import type {
 } from "./models";
 
 export const familyApiRoutes = {
+  passwordResetRequest: "/auth/password-reset/request",
+  passwordResetConfirm: "/auth/password-reset/confirm",
   householdOwnership: "/households/me/ownership",
   householdOwnershipTransfer: "/households/me/ownership/transfer",
   billing: "/billing",
@@ -129,6 +135,14 @@ export abstract class FamilyCoreApiEndpoints {
 
   async changePassword(payload: ChangePasswordRequest): Promise<void> {
     await this.postNoContentWithBody("/auth/change-password", payload);
+  }
+
+  async requestPasswordReset(payload: PasswordResetRequest): Promise<PasswordResetRequestResponse> {
+    return this.post<PasswordResetRequestResponse, PasswordResetRequest>(familyApiRoutes.passwordResetRequest, payload);
+  }
+
+  async confirmPasswordReset(payload: PasswordResetConfirmRequest): Promise<PasswordResetConfirmResponse> {
+    return this.post<PasswordResetConfirmResponse, PasswordResetConfirmRequest>(familyApiRoutes.passwordResetConfirm, payload);
   }
 
   async getHouseholdOwnership(): Promise<HouseholdOwnershipResponse> {

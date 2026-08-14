@@ -114,6 +114,28 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
         connection.execute(
             text(
                 """
+                CREATE TABLE households (
+                    id INTEGER PRIMARY KEY,
+                    name VARCHAR(255) NOT NULL,
+                    timezone VARCHAR(64) NOT NULL,
+                    created_at DATETIME
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO households (id, name, timezone, created_at)
+                VALUES
+                    (10, 'First Household', 'UTC', '2026-01-01 00:00:00'),
+                    (11, 'Second Household', 'UTC', '2026-01-01 00:00:00')
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
                 CREATE TABLE users (
                     id INTEGER PRIMARY KEY,
                     household_id INTEGER NOT NULL,
@@ -134,7 +156,9 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
                 INSERT INTO users (id, household_id, email, password_hash, role, child_id)
                 VALUES
                     (1, 10, 'shared@example.com', 'hash', 'CHILD', 100),
-                    (2, 11, 'shared@example.com', 'hash', 'CHILD', 200)
+                    (2, 11, 'shared@example.com', 'hash', 'CHILD', 200),
+                    (3, 10, 'owner-one@example.com', 'hash', 'PARENT', NULL),
+                    (4, 11, 'owner-two@example.com', 'hash', 'PARENT', NULL)
                 """
             )
         )
@@ -146,7 +170,7 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
     command.upgrade(alembic_config, "head")
 
     with engine.connect() as connection:
-        rows = connection.execute(text("SELECT id, email FROM users ORDER BY id")).all()
+        rows = connection.execute(text("SELECT id, email FROM users WHERE id IN (1, 2) ORDER BY id")).all()
         duplicate_count = connection.execute(
             text("SELECT count(*) FROM (SELECT lower(email) FROM users GROUP BY lower(email) HAVING count(*) > 1)")
         ).scalar_one()
