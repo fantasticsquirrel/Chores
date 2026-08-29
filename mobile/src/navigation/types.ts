@@ -3,6 +3,7 @@ export type AppTab =
   | "children"
   | "chores"
   | "review"
+  | "money"
   | "homeschool"
   | "admin"
   | "today"

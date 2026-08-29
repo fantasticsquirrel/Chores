@@ -93,6 +93,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
   const [submittingForm, setSubmittingForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
+  const [myTasks, setMyTasks] = useState<Chore[]>([]);
 
   const activeChildren = useMemo(
     () => childrenState.children.filter((child) => child.active),
@@ -121,6 +122,10 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
       setChoresState({ chores: [], loading: false, error: formatError(error) });
     }
   }, [householdId]);
+
+  const loadMyTasks = useCallback(async () => {
+    try { setMyTasks(await apiClient.listMyParentTasks(targetDate)); } catch (error) { setSubmitError(formatError(error)); }
+  }, [targetDate]);
 
   const refreshEligibleForChild = useCallback(
     async (childId: number, options: { preserveMessage?: boolean } = {}) => {
@@ -231,6 +236,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
   useEffect(() => {
     void loadChores();
   }, [loadChores]);
+  useEffect(() => { void loadMyTasks(); }, [loadMyTasks]);
 
   useEffect(() => {
     void loadChildrenAndEligible();
@@ -370,6 +376,8 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
     const scheduleUnit: ScheduleUnit | null =
       scheduleInterval !== null ? form.schedule_unit : null;
     const expiresAt = form.expires_at.trim().length > 0 ? form.expires_at : null;
+    const rewardCents = Math.round(Number.parseFloat(form.reward_dollars || "0") * 100);
+    if (!Number.isFinite(rewardCents) || rewardCents < 0) { setSubmitError("Reward must be a non-negative amount."); return; }
 
     setSubmittingForm(true);
     setSubmitError(null);
@@ -377,8 +385,9 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
       if (editingId !== null) {
         await apiClient.updateChore(editingId, {
           household_id: householdId,
+          owner_user_id: form.task_scope === "PARENT" ? session.user.id : null,
           name,
-          reward_cents: form.preserved_reward_cents,
+          reward_cents: form.task_scope === "PARENT" ? 0 : rewardCents,
           start_date: form.start_date,
           expires_at: expiresAt,
           timeout_days: timeoutDays,
@@ -386,7 +395,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
           schedule_interval: scheduleInterval,
           schedule_unit: scheduleUnit,
           completion_mode: form.completion_mode,
-          assignment_mode: form.assignment_mode,
+          assignment_mode: form.task_scope === "PARENT" ? "STATIC" : form.assignment_mode,
           allowed_child_ids:
             form.assignment_mode === "ROTATING" ? null : form.allowed_child_ids,
           rotation_order:
@@ -395,8 +404,9 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
       } else {
         await apiClient.createChore({
           household_id: householdId,
+          owner_user_id: form.task_scope === "PARENT" ? session.user.id : null,
           name,
-          reward_cents: 0,
+          reward_cents: form.task_scope === "PARENT" ? 0 : rewardCents,
           start_date: form.start_date,
           expires_at: expiresAt,
           timeout_days: timeoutDays,
@@ -404,17 +414,18 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
           schedule_interval: scheduleInterval,
           schedule_unit: scheduleUnit,
           completion_mode: form.completion_mode,
-          assignment_mode: form.assignment_mode,
+          assignment_mode: form.task_scope === "PARENT" ? "STATIC" : form.assignment_mode,
           allowed_child_ids:
-            form.assignment_mode === "ROTATING" ? [] : form.allowed_child_ids,
+            form.task_scope === "PARENT" || form.assignment_mode === "ROTATING" ? [] : form.allowed_child_ids,
           rotation_order:
-            form.assignment_mode === "ROTATING" ? form.rotation_order : [],
+            form.task_scope === "CHILD" && form.assignment_mode === "ROTATING" ? form.rotation_order : [],
         });
       }
 
       setShowForm(false);
       setEditingId(null);
       await loadChores();
+      await loadMyTasks();
       await loadChildrenAndEligible();
     } catch (error) {
       setSubmitError(formatError(error));
@@ -501,6 +512,12 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
             message={`Could not load children: ${childrenState.error}`}
           />
         ) : null}
+      </SectionCard>
+
+      <SectionCard subtitle="Money-free recurring chores" title="My To-Do List">
+        {myTasks.length === 0 ? <Text style={styles.mutedText}>No personal chores due.</Text> : myTasks.map((task) => (
+          <View key={task.id} style={styles.reviewItem}><View style={styles.splitRow}><Text style={styles.rowTitle}>{task.name}</Text><ActionButton compact label="Done" onPress={() => { void apiClient.completeParentTask(task.id, targetDate).then(loadMyTasks); }} variant="secondary" /></View></View>
+        ))}
       </SectionCard>
 
       {childrenState.loading ? (
@@ -699,7 +716,8 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
               {scheduleLabel(chore)} ·{" "}
               {chore.completion_mode === "SHARED" ? "Shared" : "Per child"}
             </Text>
-            <Text style={styles.rowMeta}>{eligibilityLabel(chore, childrenState.children)}</Text>
+            <Text style={styles.rowMeta}>{chore.owner_user_id === null ? `Reward $${(chore.reward_cents / 100).toFixed(2)}` : "Personal parent to-do · no finance"}</Text>
+            {chore.owner_user_id === null ? <Text style={styles.rowMeta}>{eligibilityLabel(chore, childrenState.children)}</Text> : null}
             {timingLabel(chore).length > 0 ? (
               <Text style={styles.rowMeta}>{timingLabel(chore)}</Text>
             ) : null}
@@ -784,6 +802,8 @@ function ChoreForm({
   return (
     <SectionCard title={editingId !== null ? "Edit Chore" : "New Chore"}>
       <View style={styles.compactStack}>
+        <FieldLabel label="Used by" />
+        <ChoiceGroup disabled={submitting || editingId !== null} onChange={(value) => setField("task_scope", value as "CHILD" | "PARENT")} options={[{ label: "Children (reward)", value: "CHILD" }, { label: "My account (to-do)", value: "PARENT" }]} value={form.task_scope} />
         <FieldLabel label="Name" />
         <TextInput
           maxLength={255}
@@ -793,6 +813,7 @@ function ChoreForm({
           style={styles.input}
           value={form.name}
         />
+        {form.task_scope === "CHILD" ? <><FieldLabel label="Reward ($)" /><TextInput keyboardType="decimal-pad" onChangeText={(value) => setField("reward_dollars", value)} style={styles.input} value={form.reward_dollars} /></> : <InlineNotice tone="info" message="Parent chores are personal to-dos and do not affect child balances." />}
         <FieldLabel label="Start Date" />
         <TextInput
           autoCapitalize="none"

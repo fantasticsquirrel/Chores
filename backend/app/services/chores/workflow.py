@@ -64,6 +64,7 @@ def _eligible_chores_for_child(session: Session, child: Child, target_date: date
             select(Chore)
             .where(
                 Chore.household_id == child.household_id,
+                Chore.owner_user_id.is_(None),
                 Chore.archived_at.is_(None),
                 Chore.start_date <= target_date,
                 or_(Chore.expires_at.is_(None), Chore.expires_at >= target_date),

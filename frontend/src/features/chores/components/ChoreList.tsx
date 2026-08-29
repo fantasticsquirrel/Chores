@@ -49,8 +49,9 @@ export function ChoreList({ archivingId, children, choresState, onArchive, onCre
                     {!chore.is_active ? <span className="muted-inline">archived</span> : null}
                   </p>
                   <p className="balance-meta">{scheduleLabel(chore)} - {completionLabel(chore.completion_mode)}</p>
+                  <p className="balance-meta">{chore.owner_user_id === null ? `Reward: $${chore.reward_dollars.toFixed(2)}` : "Personal parent to-do · no finance"}</p>
                   {timingLabel.length > 0 ? <p className="balance-meta">{timingLabel}</p> : null}
-                  <p className="balance-meta">Assigned: {eligibilityLabel(chore, children)}</p>
+                  {chore.owner_user_id === null ? <p className="balance-meta">Assigned: {eligibilityLabel(chore, children)}</p> : null}
                 </div>
                 {chore.is_active ? (
                   <div className="item-actions">

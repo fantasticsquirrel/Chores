@@ -837,3 +837,51 @@ def test_authenticated_parent_child_approve_reject_flow_updates_balance_for_appr
             )
         ).all()
         assert len(transactions) == 1
+
+
+def test_parent_personal_chore_is_money_free_and_excluded_from_child_workflow(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    target_date = date(2026, 8, 29)
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf = _login_parent(client)
+        child_id = _create_child(client, household_id, csrf, "Riley")
+        settings = get_settings()
+        with get_session_factory(settings.database_url)() as session:
+            parent_id = session.scalar(select(User.id).where(User.email == "parent@example.com"))
+        response = client.post("/chore-api/chores", headers={CSRF_HEADER_NAME: csrf}, json={
+            "household_id": household_id, "owner_user_id": parent_id, "name": "Weekly planning",
+            "reward_cents": 0, "start_date": target_date.isoformat(), "schedule_mode": "EVERY",
+            "schedule_interval": 1, "schedule_unit": "WEEK", "completion_mode": "PER_CHILD",
+            "assignment_mode": "STATIC", "allowed_child_ids": [], "rotation_order": [],
+        })
+        assert response.status_code == 201
+        chore_id = response.json()["id"]
+        assert client.get(f"/chore-api/children/me/eligible-chores?date={target_date}&child_id={child_id}").json() == []
+        assert [row["id"] for row in client.get(f"/chore-api/chores/me/today?date={target_date}").json()] == [chore_id]
+        done = client.post(f"/chore-api/chores/{chore_id}/complete?date={target_date}", headers={CSRF_HEADER_NAME: csrf})
+        assert done.status_code == 204
+        assert client.get(f"/chore-api/chores/me/today?date={target_date}").json() == []
+
+
+def test_finance_balances_payments_bonuses_and_adjustments(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf = _login_parent(client)
+        child_id = _create_child(client, household_id, csrf, "Riley")
+        settings = get_settings()
+        with get_session_factory(settings.database_url)() as session:
+            session.add(Transaction(household_id=household_id, child_id=child_id, amount_cents=500, type=TransactionType.CHORE_APPROVAL))
+            session.commit()
+        for kind, amount in [("PAYMENT", 200), ("BONUS", 50), ("ADJUSTMENT", -25)]:
+            response = client.post("/chore-api/finance/transactions", headers={CSRF_HEADER_NAME: csrf}, json={
+                "child_id": child_id, "amount_cents": amount, "type": kind, "memo": kind.lower(),
+            })
+            assert response.status_code == 201
+        balances = client.get("/chore-api/finance/balances").json()
+        assert balances == [{"child_id": child_id, "child_name": "Riley", "balance_cents": 325}]
+        history = client.get(f"/chore-api/finance/transactions?child_id={child_id}").json()
+        assert {row["type"] for row in history} == {"CHORE_APPROVAL", "PAYMENT", "BONUS", "ADJUSTMENT"}

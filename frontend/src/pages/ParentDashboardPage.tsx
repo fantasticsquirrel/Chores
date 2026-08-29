@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-import { apiClient, type Child } from "../api";
+import { apiClient, type Child, type ChildBalance } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { formatApiError } from "../lib/errors";
 import { Badge, ButtonLink, Card, InlineNotice } from "../ui";
@@ -12,6 +12,7 @@ type DashboardState = {
   pendingSubmissionsCount: number;
   loading: boolean;
   error: string | null;
+  balances: ChildBalance[];
 };
 
 export function ParentDashboardPage(): ReactElement {
@@ -23,6 +24,7 @@ export function ParentDashboardPage(): ReactElement {
     pendingSubmissionsCount: 0,
     loading: true,
     error: null,
+    balances: [],
   });
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export function ParentDashboardPage(): ReactElement {
         pendingSubmissionsCount: 0,
         loading: false,
         error: "Could not determine household scope.",
+        balances: [],
       });
       return () => {
         isMounted = false;
@@ -44,8 +47,9 @@ export function ParentDashboardPage(): ReactElement {
     Promise.all([
       apiClient.listChildren({ household_id: householdId }),
       apiClient.listSubmissions({ status: "PENDING" }),
+      apiClient.listChildBalances(),
     ])
-      .then(async ([children, submissions]) => {
+      .then(async ([children, submissions, balances]) => {
         const today = new Date().toISOString().slice(0, 10);
         const choreRows = await Promise.all(
           children
@@ -65,6 +69,7 @@ export function ParentDashboardPage(): ReactElement {
           pendingSubmissionsCount: submissions.length,
           loading: false,
           error: null,
+          balances,
         });
       })
       .catch((error: unknown) => {
@@ -78,6 +83,7 @@ export function ParentDashboardPage(): ReactElement {
           pendingSubmissionsCount: 0,
           loading: false,
           error: formatApiError(error),
+          balances: [],
         });
       });
 
@@ -97,6 +103,11 @@ export function ParentDashboardPage(): ReactElement {
         <p className="metric-label">Pending Submissions</p>
         <p className="metric-value">{state.loading ? "-" : state.pendingSubmissionsCount}</p>
         <p className="metric-footnote">Review approvals on the Board page.</p>
+      </Card>
+      <Card className="metric-card">
+        <p className="metric-label">Total Amount Owed</p>
+        <p className="metric-value">{state.loading ? "-" : `$${(state.balances.reduce((sum, row) => sum + row.balance_cents, 0) / 100).toFixed(2)}`}</p>
+        <p className="metric-footnote">Across all child allowance balances.</p>
       </Card>
 
       <Card className="metric-card">
@@ -156,6 +167,7 @@ export function ParentDashboardPage(): ReactElement {
           <ButtonLink to="/board">
             Open Board
           </ButtonLink>
+          <ButtonLink to="/parent/money">Money & History</ButtonLink>
           {moduleKeys.includes("homeschool") ? <ButtonLink to="/homeschool">Open Homeschool</ButtonLink> : null}
           {moduleKeys.includes("recipes") ? <ButtonLink to="/recipes">Open Cookbook</ButtonLink> : null}
         </div>

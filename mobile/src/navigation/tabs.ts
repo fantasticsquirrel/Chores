@@ -23,6 +23,7 @@ export function buildNavigationLayout(
     return {
       primary: [
         { key: "today", label: "Today" },
+        { key: "money", label: "My Money" },
         { key: "account", label: "Account" },
       ],
       overflow: [],
@@ -47,6 +48,7 @@ export function buildNavigationLayout(
 
   if (choresEnabled) {
     overflow.push({ key: "review", label: "Review" });
+    overflow.push({ key: "money", label: "Money" });
   }
 
   if (role === "PARENT_ADMIN" && hasModule(modules, "admin")) {

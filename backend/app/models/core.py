@@ -237,6 +237,11 @@ class Chore(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    # Null means a child/household chore. A parent user id means a personal,
+    # money-free recurring task owned by that parent account.
+    owner_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     reward_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -309,6 +314,17 @@ class CompletionRecord(Base):
     status: Mapped[CompletionStatus] = mapped_column(Enum(CompletionStatus, native_enum=False), nullable=False)
 
 
+class ParentChoreCompletion(TimestampMixin, Base):
+    __tablename__ = "parent_chore_completions"
+    __table_args__ = (UniqueConstraint("chore_id", "user_id", "date"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    chore_id: Mapped[int] = mapped_column(ForeignKey("chores.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+
+
 class Transaction(TimestampMixin, Base):
     __tablename__ = "transactions"
 
@@ -320,6 +336,10 @@ class Transaction(TimestampMixin, Base):
     )
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
     type: Mapped[TransactionType] = mapped_column(Enum(TransactionType, native_enum=False), nullable=False)
+    memo: Mapped[str] = mapped_column(String(500), nullable=False, default="", server_default="")
+    created_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
 
 class HomeschoolSemester(TimestampMixin, Base):
@@ -614,6 +634,7 @@ ALL_MODELS = (
     Submission,
     SubmissionItem,
     CompletionRecord,
+    ParentChoreCompletion,
     Transaction,
     HomeschoolSemester,
     HomeschoolSubject,

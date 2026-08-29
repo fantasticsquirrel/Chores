@@ -25,6 +25,7 @@ function buildChore(overrides: Partial<Chore> = {}): Chore {
   return {
     id: 21,
     household_id: 1,
+    owner_user_id: null,
     name: "Laundry",
     reward_cents: 250,
     reward_dollars: 2.5,
@@ -58,6 +59,7 @@ function buildEligibleChore(
 }
 
 describe("Parent chores page", () => {
+  beforeEach(() => { vi.spyOn(apiClient, "listMyParentTasks").mockResolvedValue([]); });
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -84,14 +86,14 @@ describe("Parent chores page", () => {
     await waitFor(() =>
       expect(screen.getAllByText("Riley").length).toBeGreaterThan(0),
     );
-    expect(screen.queryByLabelText("Reward ($)")).not.toBeInTheDocument();
+    expect(screen.getByText("Reward: $2.50")).toBeVisible();
     expect(listChoresSpy).toHaveBeenCalledWith({
       household_id: 1,
       active_only: false,
     });
   });
 
-  it("creates a static chore with selected children and zero reward", async () => {
+  it("creates a rewarded child chore with selected children", async () => {
     const createdChore = buildChore({
       id: 31,
       name: "Vacuum",
@@ -118,15 +120,16 @@ describe("Parent chores page", () => {
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Vacuum" },
     });
-    expect(screen.queryByLabelText("Reward ($)")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Reward ($)"), { target: { value: "2.75" } });
     fireEvent.click(screen.getByRole("checkbox", { name: "Riley" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Chore" }));
 
     await waitFor(() =>
       expect(createChoreSpy).toHaveBeenCalledWith({
         household_id: 1,
+        owner_user_id: null,
         name: "Vacuum",
-        reward_cents: 0,
+        reward_cents: 275,
         start_date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/u),
         expires_at: null,
         timeout_days: null,
@@ -142,7 +145,7 @@ describe("Parent chores page", () => {
     expect(await screen.findByText("Vacuum")).toBeVisible();
   });
 
-  it("updates an existing chore without sending reward fields", async () => {
+  it("updates an existing child chore with its reward", async () => {
     const updatedChore = buildChore({ name: "Fold towels" });
     vi.spyOn(apiClient, "listChores")
       .mockResolvedValueOnce([buildChore()])
@@ -164,13 +167,15 @@ describe("Parent chores page", () => {
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Fold towels" },
     });
-    expect(screen.queryByLabelText("Reward ($)")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Reward ($)")).toHaveValue(2.5);
     fireEvent.click(screen.getByRole("button", { name: "Save Changes" }));
 
     await waitFor(() => expect(updateChoreSpy).toHaveBeenCalled());
     expect(updateChoreSpy).toHaveBeenCalledWith(21, {
       household_id: 1,
+      owner_user_id: null,
       name: "Fold towels",
+      reward_cents: 250,
       start_date: "2026-02-23",
       expires_at: null,
       timeout_days: null,
@@ -182,9 +187,6 @@ describe("Parent chores page", () => {
       allowed_child_ids: [11],
       rotation_order: null,
     });
-    expect(updateChoreSpy.mock.calls[0]?.[1]).not.toHaveProperty(
-      "reward_cents",
-    );
     expect(await screen.findByText("Fold towels")).toBeVisible();
   });
 

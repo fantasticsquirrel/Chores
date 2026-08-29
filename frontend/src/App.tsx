@@ -4,6 +4,7 @@ import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } fr
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 import { ParentChoresPage } from "./pages/ParentChoresPage";
+import { ChoreFinancePage } from "./pages/ChoreFinancePage";
 import { ChildTodayPage } from "./pages/ChildTodayPage";
 import { ParentSubmissionReviewPage } from "./pages/ParentSubmissionReviewPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -37,6 +38,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { to: "/parent/dashboard", label: "Today", roles: ["PARENT_ADMIN", "PARENT"] },
   { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
+  { to: "/parent/money", label: "Money", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
   { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
   { to: "/recipes", label: "Recipes", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "recipes" },
   { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
@@ -44,6 +46,7 @@ const navItems: NavItem[] = [
   { to: "/account", label: "Account", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
   { to: "/notifications", label: "Notifications", roles: ["PARENT_ADMIN", "PARENT", "CHILD"], moduleKey: "chores" },
   { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
+  { to: "/child/history", label: "My Money", roles: ["CHILD"], moduleKey: "chores" },
 ];
 
 function getDefaultRouteForRole(role: UserRole): string {
@@ -262,6 +265,7 @@ function HouseholdApp(): ReactElement {
                 />
                 <Route path="/parent/chores" element={<ParentChoresPage />} />
                 <Route path="/parent/children" element={<ParentChildrenPage />} />
+                <Route path="/parent/money" element={<ChoreFinancePage />} />
               </Route>
               <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
                 <Route path="/homeschool" element={<HomeschoolPage />} />
@@ -291,10 +295,7 @@ function HouseholdApp(): ReactElement {
                 path="/child/calendar"
                 element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
               />
-              <Route
-                path="/child/history"
-                element={<RouteCard title="Child History" description="History and balance timeline will be wired after core API tasks." />}
-              />
+              <Route path="/child/history" element={<ChoreFinancePage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Route>
