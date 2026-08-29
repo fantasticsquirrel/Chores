@@ -62,6 +62,8 @@ function buildTodayIsoDate(): string {
 function buildDefaultForm(): ChoreFormState {
   return {
     name: "",
+    task_scope: "CHILD",
+    reward_dollars: "0.00",
     start_date: buildTodayIsoDate(),
     expires_at: "",
     timeout_days: "",
@@ -107,6 +109,7 @@ export function ParentChoresPage(): ReactElement {
   const [submittingForm, setSubmittingForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
+  const [myTasks, setMyTasks] = useState<Chore[]>([]);
 
   const activeChildren = useMemo(
     () => childrenState.children.filter((child) => child.active),
@@ -143,6 +146,11 @@ export function ParentChoresPage(): ReactElement {
       setChoresState({ chores: [], loading: false, error: formatApiError(error) });
     }
   }, [householdId]);
+
+  const loadMyTasks = useCallback(async (): Promise<void> => {
+    if (user === null) return;
+    setMyTasks(await apiClient.listMyParentTasks(targetDate));
+  }, [targetDate, user]);
 
   const refreshEligibleForChild = useCallback(
     async (
@@ -275,6 +283,8 @@ export function ParentChoresPage(): ReactElement {
     void loadChores();
   }, [loadChores]);
 
+  useEffect(() => { void loadMyTasks(); }, [loadMyTasks]);
+
   useEffect(() => {
     void loadChildrenAndEligible();
   }, [loadChildrenAndEligible]);
@@ -385,6 +395,8 @@ export function ParentChoresPage(): ReactElement {
     setEditingId(chore.id);
     setForm({
       name: chore.name,
+      task_scope: chore.owner_user_id === null ? "CHILD" : "PARENT",
+      reward_dollars: (chore.reward_cents / 100).toFixed(2),
       start_date: chore.start_date,
       expires_at: chore.expires_at ?? "",
       timeout_days: chore.timeout_days?.toString() ?? "",
@@ -427,6 +439,11 @@ export function ParentChoresPage(): ReactElement {
 
     let timeoutDays: number | null;
     let scheduleInterval: number | null;
+    const rewardCents = Math.round(Number.parseFloat(form.reward_dollars || "0") * 100);
+    if (!Number.isFinite(rewardCents) || rewardCents < 0) {
+      setSubmitError("Reward must be a non-negative dollar amount.");
+      return;
+    }
     try {
       timeoutDays = parseOptionalPositiveInteger(form.timeout_days, "Timeout");
       const needsInterval =
@@ -459,7 +476,9 @@ export function ParentChoresPage(): ReactElement {
       if (editingId !== null) {
         await apiClient.updateChore(editingId, {
           household_id: householdId,
+          owner_user_id: form.task_scope === "PARENT" ? user?.id ?? null : null,
           name,
+          reward_cents: form.task_scope === "PARENT" ? 0 : rewardCents,
           start_date: form.start_date,
           expires_at:
             form.expires_at.trim().length > 0 ? form.expires_at : null,
@@ -477,8 +496,9 @@ export function ParentChoresPage(): ReactElement {
       } else {
         await apiClient.createChore({
           household_id: householdId,
+          owner_user_id: form.task_scope === "PARENT" ? user?.id ?? null : null,
           name,
-          reward_cents: 0,
+          reward_cents: form.task_scope === "PARENT" ? 0 : rewardCents,
           start_date: form.start_date,
           expires_at:
             form.expires_at.trim().length > 0 ? form.expires_at : null,
@@ -487,17 +507,18 @@ export function ParentChoresPage(): ReactElement {
           schedule_interval: scheduleInterval,
           schedule_unit: scheduleUnit,
           completion_mode: form.completion_mode,
-          assignment_mode: form.assignment_mode,
+          assignment_mode: form.task_scope === "PARENT" ? "STATIC" : form.assignment_mode,
           allowed_child_ids:
-            form.assignment_mode === "ROTATING" ? [] : form.allowed_child_ids,
+            form.task_scope === "PARENT" || form.assignment_mode === "ROTATING" ? [] : form.allowed_child_ids,
           rotation_order:
-            form.assignment_mode === "ROTATING" ? form.rotation_order : [],
+            form.task_scope === "CHILD" && form.assignment_mode === "ROTATING" ? form.rotation_order : [],
         });
       }
 
       setShowForm(false);
       setEditingId(null);
       await loadChores();
+      await loadMyTasks();
       await loadChildrenAndEligible();
     } catch (error: unknown) {
       setSubmitError(formatApiError(error));
@@ -560,6 +581,15 @@ export function ParentChoresPage(): ReactElement {
             Add Chore
           </Button>
         </div>
+      </Card>
+
+      <Card className="dashboard-panel">
+        <div className="panel-header-row"><h2>My To-Do List</h2><Badge>No finance</Badge></div>
+        {myTasks.length === 0 ? <p>No personal chores due for {targetDate}.</p> : (
+          <ul className="balance-list" aria-label="My parent chores">{myTasks.map((task) => (
+            <li className="balance-item" key={task.id}><div><p className="balance-name">{task.name}</p><p className="balance-meta">Personal recurring task</p></div><Button type="button" onClick={() => void apiClient.completeParentTask(task.id, targetDate).then(loadMyTasks)}>Mark Done</Button></li>
+          ))}</ul>
+        )}
       </Card>
 
       <Card className="dashboard-panel">

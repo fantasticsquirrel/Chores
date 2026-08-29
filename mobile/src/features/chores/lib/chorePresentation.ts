@@ -9,7 +9,8 @@ import type {
 
 export type MobileChoreFormState = {
   name: string;
-  preserved_reward_cents: number;
+  task_scope: "CHILD" | "PARENT";
+  reward_dollars: string;
   start_date: string;
   expires_at: string;
   timeout_days: string;
@@ -48,7 +49,8 @@ export const assignmentOptions = [
 export function buildDefaultChoreForm(startDate: string): MobileChoreFormState {
   return {
     name: "",
-    preserved_reward_cents: 0,
+    task_scope: "CHILD",
+    reward_dollars: "0.00",
     start_date: startDate,
     expires_at: "",
     timeout_days: "",
@@ -65,7 +67,8 @@ export function buildDefaultChoreForm(startDate: string): MobileChoreFormState {
 export function buildEditChoreForm(chore: Chore): MobileChoreFormState {
   return {
     name: chore.name,
-    preserved_reward_cents: chore.reward_cents,
+    task_scope: chore.owner_user_id === null ? "CHILD" : "PARENT",
+    reward_dollars: (chore.reward_cents / 100).toFixed(2),
     start_date: chore.start_date,
     expires_at: chore.expires_at ?? "",
     timeout_days: chore.timeout_days?.toString() ?? "",

@@ -17,7 +17,7 @@ const modules = (...keys: FamilyModuleKey[]): FamilyModule[] =>
   }));
 
 describe("buildNavigationLayout", () => {
-  it("keeps child navigation limited to Today and Account", () => {
+  it("gives children Today, allowance history, and Account", () => {
     const layout = buildNavigationLayout(
       "CHILD",
       modules("chores", "homeschool", "admin"),
@@ -26,11 +26,12 @@ describe("buildNavigationLayout", () => {
     expect(layout).toEqual({
       primary: [
         { key: "today", label: "Today" },
+        { key: "money", label: "My Money" },
         { key: "account", label: "Account" },
       ],
       overflow: [],
     });
-    expect(navigationDestinations(layout)).toEqual(["today", "account"]);
+    expect(navigationDestinations(layout)).toEqual(["today", "money", "account"]);
   });
 
   it("keeps Children primary when chores is the only enabled work module", () => {
@@ -43,6 +44,7 @@ describe("buildNavigationLayout", () => {
       ],
       overflow: [
         { key: "review", label: "Review" },
+        { key: "money", label: "Money" },
         { key: "account", label: "Account" },
       ],
     });
@@ -61,6 +63,7 @@ describe("buildNavigationLayout", () => {
       overflow: [
         { key: "children", label: "Children" },
         { key: "review", label: "Review" },
+        { key: "money", label: "Money" },
         { key: "account", label: "Account" },
       ],
     });

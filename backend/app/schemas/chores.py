@@ -12,6 +12,7 @@ class ChoreResponse(BaseModel):
 
     id: int
     household_id: int
+    owner_user_id: int | None
     name: str
     reward_cents: int
     start_date: date
@@ -42,6 +43,7 @@ class CreateChoreRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     household_id: int = Field(gt=0)
+    owner_user_id: int | None = Field(default=None, gt=0)
     name: str = Field(min_length=1, max_length=255)
     reward_cents: int = Field(ge=0)
     start_date: date
@@ -59,6 +61,11 @@ class CreateChoreRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_schedule_and_assignment(self) -> "CreateChoreRequest":
+        if self.owner_user_id is not None:
+            if self.reward_cents != 0:
+                raise ValueError("Parent-owned chores cannot have a financial reward.")
+            if self.assignment_mode != AssignmentMode.STATIC or self.allowed_child_ids or self.rotation_order:
+                raise ValueError("Parent-owned chores cannot be assigned to children or rotations.")
         if self.schedule_mode == ScheduleMode.EVERY:
             if self.schedule_interval is None or self.schedule_unit is None:
                 raise ValueError("schedule_interval and schedule_unit are required when schedule_mode is EVERY.")
@@ -79,6 +86,7 @@ class UpdateChoreRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     household_id: int = Field(gt=0)
+    owner_user_id: int | None = Field(default=None, gt=0)
     name: str | None = Field(default=None, min_length=1, max_length=255)
     reward_cents: int | None = Field(default=None, ge=0)
     start_date: date | None = None

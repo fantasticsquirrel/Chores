@@ -19,6 +19,7 @@ function chore(patch: Partial<Chore>): Chore {
   return {
     id: 1,
     household_id: 1,
+    owner_user_id: null,
     name: "Laundry",
     reward_cents: 0,
     reward_dollars: 0,
@@ -47,10 +48,10 @@ describe("mobile chore presentation helpers", () => {
     });
   });
 
-  it("preserves a legacy reward when building an edit form", () => {
+  it("loads a reward into the editable dollar field", () => {
     expect(buildEditChoreForm(chore({ reward_cents: 275 }))).toMatchObject({
       name: "Laundry",
-      preserved_reward_cents: 275,
+      reward_dollars: "2.75",
     });
   });
 

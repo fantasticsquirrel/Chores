@@ -5,6 +5,8 @@ import { Button, Card, DateInput, FormField, InlineNotice, TextInput } from "../
 
 export type ChoreFormState = {
   name: string;
+  task_scope: "CHILD" | "PARENT";
+  reward_dollars: string;
   start_date: string;
   expires_at: string;
   timeout_days: string;
@@ -110,9 +112,18 @@ export function ChoreForm({ children, editingId, form, onCancel, onSubmit, setFi
     <Card className="dashboard-panel">
       <div className="panel-header-row"><h2>{editingId !== null ? "Edit Chore" : "New Chore"}</h2></div>
       <form className="children-form chore-management-form" onSubmit={onSubmit}>
+        <FormField label="Used by">
+          <select value={form.task_scope} onChange={(event) => setField("task_scope", event.target.value as "CHILD" | "PARENT")} disabled={submitting || editingId !== null} className="text-input">
+            <option value="CHILD">Children (reward/allowance)</option>
+            <option value="PARENT">My account (money-free to-do)</option>
+          </select>
+        </FormField>
         <FormField label="Name">
           <TextInput type="text" value={form.name} onChange={(event) => setField("name", event.target.value)} placeholder="Take out trash" maxLength={255} disabled={submitting} />
         </FormField>
+        {form.task_scope === "CHILD" ? (
+          <FormField label="Reward ($)"><TextInput type="number" min="0" step="0.01" value={form.reward_dollars} onChange={(event) => setField("reward_dollars", event.target.value)} disabled={submitting} /></FormField>
+        ) : <InlineNotice variant="info">Parent chores are recurring personal to-dos and never affect a child balance.</InlineNotice>}
         <FormField label="Start Date"><DateInput value={form.start_date} onChange={(event) => setField("start_date", event.target.value)} disabled={submitting} /></FormField>
         <FormField label="Global End Date"><DateInput value={form.expires_at} onChange={(event) => setField("expires_at", event.target.value)} disabled={submitting} /></FormField>
         <FormField label="Completion Window Days"><TextInput type="number" min="1" value={form.timeout_days} onChange={(event) => setField("timeout_days", event.target.value)} disabled={submitting} /></FormField>
@@ -131,21 +142,21 @@ export function ChoreForm({ children, editingId, form, onCancel, onSubmit, setFi
             </div>
           </FormField>
         ) : null}
-        <FormField label="Completion">
+        {form.task_scope === "CHILD" ? <FormField label="Completion">
           <select value={form.completion_mode} onChange={(event) => setField("completion_mode", event.target.value as CompletionMode)} disabled={submitting} className="text-input">
             <option value="PER_CHILD">Per child</option><option value="SHARED">Shared</option>
           </select>
-        </FormField>
-        <FormField label="Assignment">
+        </FormField> : null}
+        {form.task_scope === "CHILD" ? <FormField label="Assignment">
           <select value={form.assignment_mode} onChange={(event) => setField("assignment_mode", event.target.value as AssignmentMode)} disabled={submitting} className="text-input">
             <option value="STATIC">Static</option><option value="ROTATING">Rotating</option>
           </select>
-        </FormField>
-        {form.assignment_mode === "ROTATING" ? (
+        </FormField> : null}
+        {form.task_scope === "CHILD" && form.assignment_mode === "ROTATING" ? (
           <fieldset className="plain-fieldset"><legend>Rotation Order</legend><RotationOrderList children={children} order={form.rotation_order} onChange={(ids) => setField("rotation_order", ids)} disabled={submitting} /></fieldset>
-        ) : (
+        ) : form.task_scope === "CHILD" ? (
           <fieldset className="plain-fieldset"><legend>Who can complete? Empty means all children.</legend><ChildChecklist children={children} selected={form.allowed_child_ids} onChange={(ids) => setField("allowed_child_ids", ids)} disabled={submitting} /></fieldset>
-        )}
+        ) : null}
         <div className="quick-actions">
           <Button type="submit" disabled={submitting}>{submitting ? "Saving..." : editingId !== null ? "Save Changes" : "Create Chore"}</Button>
           <Button type="button" onClick={onCancel} disabled={submitting}>Cancel</Button>

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
-from app.models.core import Child, Chore, ChoreAllowedChild, ChoreRotationMember, ChoreRotationState, User
-from app.models.enums import AssignmentMode, ScheduleMode, UserRole
+from app.models.core import Child, Chore, ChoreAllowedChild, ChoreRotationMember, ChoreRotationState, ParentChoreCompletion, User
+from app.models.enums import AssignmentMode, ScheduleMode, ScheduleUnit, UserRole
 from app.modules import MODULE_CHORES
 from app.schemas.chores import ChoreResponse, CreateChoreRequest, UpdateChoreRequest
 
@@ -77,6 +77,39 @@ def _chore_to_response(session: Session, chore: Chore) -> ChoreResponse:
     resp.allowed_child_ids = allowed
     resp.rotation_order = rotation
     return resp
+
+
+def _validate_parent_owner(session: Session, owner_user_id: int, actor: User) -> None:
+    owner = session.get(User, owner_user_id)
+    if owner is None or owner.household_id != actor.household_id or owner.role == UserRole.CHILD or not owner.active:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Active parent owner not found in this household.")
+    if actor.role != UserRole.PARENT_ADMIN and owner_user_id != actor.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Parents can only manage their own personal chores.")
+
+
+def _parent_task_due(session: Session, chore: Chore, user_id: int, target_date: date) -> bool:
+    if target_date < chore.start_date or (chore.expires_at is not None and target_date > chore.expires_at):
+        return False
+    completed_today = session.scalar(select(ParentChoreCompletion.id).where(
+        ParentChoreCompletion.chore_id == chore.id,
+        ParentChoreCompletion.user_id == user_id,
+        ParentChoreCompletion.date == target_date,
+    ))
+    if completed_today is not None:
+        return False
+    if chore.schedule_mode == ScheduleMode.ONCE:
+        return target_date == chore.start_date
+    if chore.schedule_mode == ScheduleMode.NONE:
+        return True
+    multiplier = 1 if chore.schedule_unit == ScheduleUnit.DAY else 7 if chore.schedule_unit == ScheduleUnit.WEEK else 30
+    interval_days = (chore.schedule_interval or 1) * multiplier
+    if chore.schedule_mode == ScheduleMode.EVERY:
+        return (target_date - chore.start_date).days % interval_days == 0
+    latest = session.scalar(select(ParentChoreCompletion.date).where(
+        ParentChoreCompletion.chore_id == chore.id,
+        ParentChoreCompletion.user_id == user_id,
+    ).order_by(ParentChoreCompletion.date.desc()))
+    return latest is None or target_date >= latest + timedelta(days=interval_days)
 
 
 def _required_update_value(value, field_name: str):
@@ -189,6 +222,7 @@ def create_chore(
 
     chore = Chore(
         household_id=payload.household_id,
+        owner_user_id=payload.owner_user_id,
         name=payload.name,
         reward_cents=payload.reward_cents,
         start_date=payload.start_date,
@@ -203,7 +237,9 @@ def create_chore(
     session.add(chore)
     session.flush()  # get chore.id
 
-    if payload.assignment_mode == AssignmentMode.ROTATING:
+    if payload.owner_user_id is not None:
+        _validate_parent_owner(session, payload.owner_user_id, _user)
+    elif payload.assignment_mode == AssignmentMode.ROTATING:
         _sync_rotation_members(session, chore.id, payload.rotation_order)
         # Rotation members are also the allowed set
         _sync_allowed_children(session, chore.id, payload.rotation_order)
@@ -227,6 +263,10 @@ def update_chore(
     chore = _get_chore_or_404(session, chore_id, payload.household_id)
 
     fields = payload.model_fields_set
+    if "owner_user_id" in fields:
+        if payload.owner_user_id is not None:
+            _validate_parent_owner(session, payload.owner_user_id, _user)
+        chore.owner_user_id = payload.owner_user_id
     if "name" in fields:
         chore.name = _required_update_value(payload.name, "name")
     if "reward_cents" in fields:
@@ -248,8 +288,15 @@ def update_chore(
     if "assignment_mode" in fields:
         chore.assignment_mode = _required_update_value(payload.assignment_mode, "assignment_mode")
 
+    if chore.owner_user_id is not None:
+        if chore.reward_cents != 0:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Parent-owned chores cannot have a financial reward.")
+        chore.assignment_mode = AssignmentMode.STATIC
+        _sync_allowed_children(session, chore.id, [])
+        _sync_rotation_members(session, chore.id, [])
+    else:
+        _sync_effective_assignment(session, chore, payload)
     _validate_effective_schedule(chore, payload)
-    _sync_effective_assignment(session, chore, payload)
 
     session.commit()
     session.refresh(chore)
@@ -269,4 +316,34 @@ def archive_chore(
     if chore.archived_at is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore is already archived.")
     chore.archived_at = datetime.now(timezone.utc)
+    session.commit()
+
+
+@router.get("/me/today", response_model=list[ChoreResponse])
+def list_my_parent_tasks(
+    target_date: date = Query(alias="date"),
+    session: Session = Depends(get_db_session),
+    user: User = Depends(_REQUIRE_CHORES_PARENT),
+) -> list[ChoreResponse]:
+    chores = list(session.scalars(select(Chore).where(
+        Chore.household_id == user.household_id,
+        Chore.owner_user_id == user.id,
+        Chore.archived_at.is_(None),
+    ).order_by(Chore.id.asc())).all())
+    return [_chore_to_response(session, chore) for chore in chores if _parent_task_due(session, chore, user.id, target_date)]
+
+
+@router.post("/{chore_id}/complete", status_code=status.HTTP_204_NO_CONTENT)
+def complete_parent_task(
+    chore_id: int = Path(gt=0),
+    target_date: date = Query(alias="date"),
+    session: Session = Depends(get_db_session),
+    user: User = Depends(_REQUIRE_CHORES_PARENT),
+) -> None:
+    chore = _get_chore_or_404(session, chore_id, user.household_id)
+    if chore.owner_user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This personal chore belongs to another parent.")
+    if not _parent_task_due(session, chore, user.id, target_date):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This personal chore is not due.")
+    session.add(ParentChoreCompletion(household_id=user.household_id, chore_id=chore.id, user_id=user.id, date=target_date))
     session.commit()

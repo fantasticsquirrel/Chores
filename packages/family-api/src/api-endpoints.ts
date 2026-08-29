@@ -7,9 +7,12 @@ import type {
   ChildAccount,
   ChildLoginRequest,
   Chore,
+  ChoreTransaction,
+  ChildBalance,
   CreateChildAccountRequest,
   CreateChildRequest,
   CreateChoreRequest,
+  CreateChoreTransactionRequest,
   CreateHomeschoolSemesterRequest,
   CreateHomeschoolSubjectRequest,
   CreateParentUserRequest,
@@ -320,6 +323,26 @@ export abstract class FamilyCoreApiEndpoints {
 
   async archiveChore(choreId: number, householdId: number): Promise<void> {
     return this.delete(`/chores/${choreId}`, { household_id: householdId });
+  }
+
+  async listMyParentTasks(date: string): Promise<Chore[]> {
+    return this.get<Chore[]>("/chores/me/today", { date });
+  }
+
+  async completeParentTask(choreId: number, date: string): Promise<void> {
+    await this.postNoContent(`/chores/${choreId}/complete?date=${encodeURIComponent(date)}`);
+  }
+
+  async listChildBalances(): Promise<ChildBalance[]> {
+    return this.get<ChildBalance[]>("/finance/balances");
+  }
+
+  async listChoreTransactions(childId: number): Promise<ChoreTransaction[]> {
+    return this.get<ChoreTransaction[]>("/finance/transactions", { child_id: childId });
+  }
+
+  async createChoreTransaction(payload: CreateChoreTransactionRequest): Promise<ChoreTransaction> {
+    return this.post<ChoreTransaction, CreateChoreTransactionRequest>("/finance/transactions", payload);
   }
 
   async listEligibleChores(params: ListEligibleChoresParams): Promise<EligibleChore[]> {

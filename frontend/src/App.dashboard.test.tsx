@@ -5,11 +5,12 @@ import App from "./App";
 import { ApiClientError, apiClient } from "./api";
 
 describe("Parent dashboard", () => {
+  beforeEach(() => { vi.spyOn(apiClient, "listChildBalances").mockResolvedValue([]); });
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("renders a task-first Today queue without finance or reports concepts", async () => {
+  it("renders Today chores and allowance totals", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy.mockResolvedValue([{ id: 1, household_id: 1, name: "Maya", active: true }]);
     const listSubmissionsSpy = vi.spyOn(apiClient, "listSubmissions");
@@ -39,8 +40,8 @@ describe("Parent dashboard", () => {
     expect(screen.getByText("Pending Submissions").closest("article")).toHaveTextContent("1");
     expect(screen.getByRole("link", { name: "Manage Children" })).toHaveAttribute("href", "/parent/children");
     expect(screen.getByRole("link", { name: "Open Board" })).toHaveAttribute("href", "/board");
-    expect(screen.queryByText(/balance/iu)).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /reports/iu })).not.toBeInTheDocument();
+    expect(screen.getByText("Total Amount Owed")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Money & History" })).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 1 });
     expect(listSubmissionsSpy).toHaveBeenCalledWith({ status: "PENDING" });
   });

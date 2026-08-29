@@ -5,6 +5,10 @@ import App from "./App";
 import { ApiClientError, apiClient } from "./api";
 
 describe("Auth bootstrap and logout", () => {
+  beforeEach(() => {
+    vi.spyOn(apiClient, "listChildBalances").mockResolvedValue([]);
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

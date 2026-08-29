@@ -215,6 +215,7 @@ export type AssignmentMode = "STATIC" | "ROTATING";
 export interface Chore {
   id: number;
   household_id: number;
+  owner_user_id: number | null;
   name: string;
   reward_cents: number;
   reward_dollars: number;
@@ -239,6 +240,7 @@ export interface ListChoresParams {
 
 export interface CreateChoreRequest {
   household_id: number;
+  owner_user_id?: number | null;
   name: string;
   reward_cents: number;
   start_date: string;
@@ -255,6 +257,7 @@ export interface CreateChoreRequest {
 
 export interface UpdateChoreRequest {
   household_id: number;
+  owner_user_id?: number | null;
   name?: string;
   reward_cents?: number;
   start_date?: string;
@@ -267,6 +270,30 @@ export interface UpdateChoreRequest {
   assignment_mode?: AssignmentMode;
   allowed_child_ids?: number[] | null;
   rotation_order?: number[] | null;
+}
+
+export type ChoreTransactionType = "CHORE_APPROVAL" | "BONUS" | "PAYMENT" | "ADJUSTMENT";
+
+export interface ChildBalance {
+  child_id: number;
+  child_name: string;
+  balance_cents: number;
+}
+
+export interface ChoreTransaction {
+  id: number;
+  child_id: number;
+  amount_cents: number;
+  type: ChoreTransactionType;
+  memo: string;
+  created_at: string;
+}
+
+export interface CreateChoreTransactionRequest {
+  child_id: number;
+  amount_cents: number;
+  type: Exclude<ChoreTransactionType, "CHORE_APPROVAL">;
+  memo?: string;
 }
 
 export interface RecipeCategory {

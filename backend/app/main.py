@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 
-from app.api import auth_router, billing_router, children_router, chores_router, homeschool_router, households_router, modules_router, notifications_router, ops_router, recipes_router, workflow_router
+from app.api import auth_router, billing_router, children_router, chores_router, finance_router, homeschool_router, households_router, modules_router, notifications_router, ops_router, recipes_router, workflow_router
 from app.config import get_settings
 from app.db import initialize_database
 from app.error_handling import (
@@ -81,6 +81,7 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
     app.include_router(households_router, prefix=API_PREFIX)
     app.include_router(children_router, prefix=API_PREFIX)
     app.include_router(chores_router, prefix=API_PREFIX)
+    app.include_router(finance_router, prefix=API_PREFIX)
     app.include_router(homeschool_router, prefix=API_PREFIX)
     app.include_router(modules_router, prefix=API_PREFIX)
     app.include_router(notifications_router, prefix=API_PREFIX)

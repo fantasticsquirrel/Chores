@@ -27,6 +27,7 @@ import { ChildrenScreen } from "./screens/parent/ChildrenScreen";
 import { ChoresScreen } from "./screens/parent/ChoresScreen";
 import { ParentHomeScreen } from "./screens/parent/ParentHomeScreen";
 import { ParentReviewScreen } from "./screens/parent/ReviewScreen";
+import { MoneyScreen } from "./screens/parent/MoneyScreen";
 import { styles } from "./styles/layout";
 import { isParentRole } from "./utils/format";
 
@@ -103,6 +104,7 @@ export function AppShell() {
       {activeTab === "children" ? <ChildrenScreen session={session} /> : null}
       {activeTab === "chores" ? <ChoresScreen session={session} /> : null}
       {activeTab === "review" ? <ParentReviewScreen /> : null}
+      {activeTab === "money" ? <MoneyScreen /> : null}
       {activeTab === "homeschool" ? (
         <HomeschoolScreen modules={modules} session={session} />
       ) : null}
@@ -123,7 +125,7 @@ export function AppShell() {
       onLogout={handleLogout}
       session={session}
     />
-  ) : (
+  ) : activeTab === "money" ? <MoneyScreen readOnly /> : (
     <ChildTodayScreen />
   );
 
