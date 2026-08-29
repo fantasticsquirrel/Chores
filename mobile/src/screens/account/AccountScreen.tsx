@@ -12,6 +12,7 @@ import { styles } from "../../styles/layout";
 import { formatError } from "../../utils/format";
 import { ChangePasswordScreen } from "./ChangePasswordScreen";
 import { SubscriptionScreen } from "./SubscriptionScreen";
+import { ThemePicker } from "../../theme/ThemePicker";
 
 type AccountMode = "profile" | "security" | "subscription";
 
@@ -55,6 +56,9 @@ export function AccountScreen({
           ]}
           value={mode}
         />
+      </SectionCard>
+      <SectionCard title="Appearance" subtitle="Saved on this device">
+        <ThemePicker />
       </SectionCard>
       {mode === "security" ? <ChangePasswordScreen /> : null}
       {mode === "subscription" && session.user.is_household_owner ? <SubscriptionScreen /> : null}
