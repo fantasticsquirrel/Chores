@@ -30,8 +30,10 @@ import { ParentReviewScreen } from "./screens/parent/ReviewScreen";
 import { MoneyScreen } from "./screens/parent/MoneyScreen";
 import { styles } from "./styles/layout";
 import { isParentRole } from "./utils/format";
+import { useTheme } from "./theme/ThemeContext";
 
 export function AppShell() {
+  const { definition, theme } = useTheme();
   const { loadModules, modules, setModules } = useModules();
   const {
     activeTab,
@@ -72,7 +74,7 @@ export function AppShell() {
   if (bootstrapping) {
     return (
       <SafeAreaScreen>
-        <StatusBar style="dark" />
+        <StatusBar style={definition.dark ? "light" : "dark"} />
         <View style={styles.centeredPanel}>
           <ActivityIndicator color="#0f766e" size="large" />
           <Text style={styles.mutedText}>Opening Family Manager</Text>
@@ -130,8 +132,8 @@ export function AppShell() {
   );
 
   return (
-    <SafeAreaScreen bottom={false}>
-      <StatusBar style="dark" />
+    <SafeAreaScreen bottom={false} key={theme}>
+      <StatusBar style={definition.dark ? "light" : "dark"} />
       <View style={styles.appHeader}>
         <View>
           <Text style={styles.appTitle}>Family Manager</Text>

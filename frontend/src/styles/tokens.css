@@ -1,18 +1,71 @@
 :root {
-  --font-ui: "Sora", "Avenir Next", "Trebuchet MS", sans-serif;
-  --text-main: #fff8ff;
-  --text-muted: #ecdfff;
-  --surface-border: #ffffff3a;
-  --surface-bg: linear-gradient(145deg, #ffffff2f 0%, #ffffff11 100%);
-  --surface-shadow: 0 14px 32px #0c062f7a;
-  --surface-shadow-strong: 0 20px 38px #09031f99;
-  --accent-cyan: #20d3ff;
-  --accent-sky: #6892ff;
-  --accent-pink: #ff4f9e;
+  color-scheme: light;
+  --font-ui: Inter, "Avenir Next", "Trebuchet MS", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --page-bg: #f3eee2;
+  --page-bg-alt: #e9e2d3;
+  --nav-bg: #173c32;
+  --nav-text: #f3f8ed;
+  --text-main: #19342d;
+  --text-muted: #68766d;
+  --surface-solid: #fffdf6;
+  --surface-soft: #e4eddc;
+  --surface-border: #d8d4c6;
+  --surface-bg: #fffdf6;
+  --surface-shadow: 0 14px 36px #433a2618;
+  --surface-shadow-strong: 0 22px 48px #433a2624;
+  --accent-cyan: #ec6b4f;
+  --accent-sky: #d95a43;
+  --accent-pink: #ec6b4f;
   --accent-danger-a: #ff7ca0;
   --accent-danger-b: #f34a69;
-  --ring-focus: #72deff;
-  --radius-card: 1.25rem;
+  --ring-focus: #ec6b4f;
+  --radius-card: 1rem;
   --radius-pill: 999px;
   --radius-button: 0.9rem;
+}
+
+:root[data-theme="clearline"] {
+  --font-display: Inter, "Avenir Next", sans-serif;
+  --page-bg: #f4f7fb;
+  --page-bg-alt: #dfe7f2;
+  --nav-bg: #111b38;
+  --nav-text: #e5ecff;
+  --text-main: #17213c;
+  --text-muted: #6c7892;
+  --surface-solid: #fff;
+  --surface-soft: #e8eefb;
+  --surface-border: #dbe2ee;
+  --surface-bg: #fff;
+  --surface-shadow: 0 12px 30px #17213c12;
+  --surface-shadow-strong: 0 20px 44px #17213c20;
+  --accent-cyan: #356dff;
+  --accent-sky: #2359e5;
+  --accent-pink: #356dff;
+  --ring-focus: #356dff;
+  --radius-card: .75rem;
+  --radius-button: .65rem;
+}
+
+:root[data-theme="orbit-club"] {
+  color-scheme: dark;
+  --font-display: "Arial Rounded MT Bold", Inter, sans-serif;
+  --page-bg: #211e39;
+  --page-bg-alt: #17152b;
+  --nav-bg: #151329;
+  --nav-text: #fff9ef;
+  --text-main: #fff9ef;
+  --text-muted: #bcb4d3;
+  --surface-solid: #2c2849;
+  --surface-soft: #3c365f;
+  --surface-border: #4e476c;
+  --surface-bg: #2c2849;
+  --surface-shadow: 5px 5px 0 #100e24;
+  --surface-shadow-strong: 8px 8px 0 #100e24;
+  --accent-cyan: #d8ff5f;
+  --accent-sky: #a5cf31;
+  --accent-pink: #806df0;
+  --ring-focus: #d8ff5f;
+  --radius-card: 1.35rem;
+  --radius-button: .85rem;
 }

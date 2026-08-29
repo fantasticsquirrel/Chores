@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 
 import { colors } from "./colors";
 
-export const navigationStyles = StyleSheet.create({
+function createNavigationStyles() { return StyleSheet.create({
   bottomBar: {
     backgroundColor: colors.surface,
     borderTopColor: colors.border,
@@ -96,4 +96,7 @@ export const navigationStyles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
   },
-});
+}); }
+
+export let navigationStyles = createNavigationStyles();
+export function refreshNavigationStyles() { navigationStyles = createNavigationStyles(); }

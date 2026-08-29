@@ -2,7 +2,8 @@ import { StyleSheet } from "react-native";
 
 import { colors } from "./colors";
 
-export const styles = StyleSheet.create({
+function createStyles() {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
@@ -623,4 +624,11 @@ export const styles = StyleSheet.create({
   dangerText: {
     color: colors.danger,
   },
-});
+  });
+}
+
+export let styles = createStyles();
+
+export function refreshStyles() {
+  styles = createStyles();
+}

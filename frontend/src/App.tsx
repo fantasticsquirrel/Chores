@@ -22,6 +22,7 @@ import { formatApiError } from "./lib/errors";
 import type { FamilyModuleKey } from "./modules/registry";
 import { Button, Card, InlineNotice } from "./ui";
 import { OpsApp } from "./ops/OpsApp";
+import { ThemePicker, ThemeProvider } from "./theme";
 
 type RouteCardProps = {
   title: string;
@@ -195,17 +196,23 @@ function AppShell(): ReactElement {
     <div className="app-shell">
       <div className="background-orb orb-one" />
       <div className="background-orb orb-two" />
-      <header className="top-bar glass-card">
+      <header className="top-bar glass-card app-brand-bar">
         <div>
           <p className="eyebrow">Family Manager</p>
           <h2>Household Workspace</h2>
         </div>
-        <nav aria-label="Primary">
-          {visibleNavItems.map((item) => (
+        {status === "authenticated" && user !== null ? (
+          <div className="app-brand-session"><span>Signed in as {user.email}</span><ThemePicker compact /></div>
+        ) : null}
+      </header>
+      <div className={`workspace-layout${status === "authenticated" ? " workspace-layout--authenticated" : ""}`}>
+        {status === "authenticated" ? <aside className="workspace-sidebar glass-card">
+        <nav aria-label="Primary" className="workspace-nav">
+          {visibleNavItems.map((item, index) => (
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => `nav-chip${isActive ? " active" : ""}`}
+              className={({ isActive }) => `nav-chip ${index < 3 ? "mobile-primary" : "mobile-secondary"}${isActive ? " active" : ""}`}
             >
               {item.label === "Notifications" && unreadNotifications > 0 ? `${item.label} (${unreadNotifications})` : item.label}
             </NavLink>
@@ -222,17 +229,36 @@ function AppShell(): ReactElement {
               {loggingOut ? "Logging Out..." : "Log Out"}
             </Button>
           ) : null}
+          <details className="mobile-more">
+            <summary>More</summary>
+            <div className="mobile-more-panel">
+              {visibleNavItems.slice(3).map((item) => (
+                <NavLink
+                  key={`mobile-${item.to}`}
+                  to={item.to}
+                  aria-label={`${item.label} in More menu`}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+              <button
+                type="button"
+                aria-label="Log out from More menu"
+                onClick={() => { void handleLogout(); }}
+              >
+                {loggingOut ? "Logging out..." : "Log out"}
+              </button>
+            </div>
+          </details>
         </nav>
-      </header>
-      {status === "authenticated" && user !== null ? (
-        <p className="eyebrow">Signed in as {user.email}</p>
-      ) : null}
-      {logoutError !== null ? (
-        <InlineNotice variant="error">Could not sign out: {logoutError}</InlineNotice>
-      ) : null}
-      <main className="content-grid">
-        <Outlet />
-      </main>
+        </aside> : null}
+        <div className="workspace-main">
+          {logoutError !== null ? (
+            <InlineNotice variant="error">Could not sign out: {logoutError}</InlineNotice>
+          ) : null}
+          <main className="content-grid"><Outlet /></main>
+        </div>
+      </div>
     </div>
   );
 }
@@ -244,7 +270,7 @@ export default function App(): ReactElement {
 
 function HouseholdApp(): ReactElement {
   return (
-    <AuthProvider>
+    <ThemeProvider><AuthProvider>
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -301,6 +327,6 @@ function HouseholdApp(): ReactElement {
           </Route>
         </Route>
       </Routes>
-    </AuthProvider>
+    </AuthProvider></ThemeProvider>
   );
 }
