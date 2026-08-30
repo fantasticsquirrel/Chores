@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from app.models.enums import UserRole
-from app.security.passwords import PARENT_PASSWORD_MIN_LENGTH
+from app.security.passwords import PARENT_PASSWORD_MIN_LENGTH, validate_parent_password
 
 
 class LoginRequest(BaseModel):
@@ -41,6 +42,32 @@ class PasswordResetConfirmPayload(BaseModel):
 
 class PasswordResetResponse(BaseModel):
     detail: str
+
+
+class RegistrationRequestPayload(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    email: str = Field(min_length=3, max_length=320)
+    password: str = Field(min_length=PARENT_PASSWORD_MIN_LENGTH, max_length=1024)
+    household_name: str = Field(min_length=1, max_length=255)
+    timezone: str = Field(default="UTC", min_length=1, max_length=64)
+
+    @field_validator("password")
+    @classmethod
+    def valid_parent_password(cls, value: str) -> str:
+        return validate_parent_password(value)
+
+    @field_validator("timezone")
+    @classmethod
+    def valid_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except ZoneInfoNotFoundError as exc:
+            raise ValueError("Choose a valid timezone.") from exc
+        return value
+
+
+class RegistrationVerifyPayload(BaseModel):
+    token: Any = ""
 
 
 class AuthUserResponse(BaseModel):

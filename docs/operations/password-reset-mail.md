@@ -1,10 +1,10 @@
-# Password-reset local mail operations
+# Account registration and password-reset local mail operations
 
 > **Status:** repository design and approval-gated templates only. This document
 > does **not** authorize package installation, DNS changes, firewall changes,
 > `/etc` writes, migration, service restart, or production activation.
 
-Family Manager password recovery uses an opaque fragment capability, a
+Family Manager email verification and password recovery use opaque fragment capabilities, a
 secret-free delivery outbox, a local `sendmail` handoff, and an outbound-only
 Postfix/OpenDKIM MTA. There is no automatic production activation.
 
@@ -42,7 +42,7 @@ policy, and DNS ownership. Never guess the production upstream or database URL.
 ## DNS and delivery readiness
 
 The dedicated sender must have all of the following before enabling
-`PASSWORD_RESET_ENABLED=true`:
+`PASSWORD_RESET_ENABLED=true` or `REGISTRATION_ENABLED=true`:
 
 - A forward A/AAAA record for `mail.family.multihost.ing` and matching provider
   managed PTR/rDNS for its public address.
@@ -142,7 +142,7 @@ Only after approval and with a dedicated owner-controlled external mailbox:
 
 ### Normal rollback
 
-1. Set `PASSWORD_RESET_ENABLED=false` in the secure environment file.
+1. Set `PASSWORD_RESET_ENABLED=false` and `REGISTRATION_ENABLED=false` in the secure environment file.
 2. Stop/disable the password-reset timer and restart only the application after
    its normal configuration validation.
 3. Leave the additive database migration in place; do **not** blindly roll it

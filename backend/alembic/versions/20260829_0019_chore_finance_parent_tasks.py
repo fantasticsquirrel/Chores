@@ -13,6 +13,11 @@ depends_on = None
 
 
 def upgrade() -> None:
+    tables = set(sa.inspect(op.get_bind()).get_table_names())
+    # Historical identity-only migration fixtures legitimately omit the chore
+    # subsystem. Preserve the existing no-op migration convention for them.
+    if not {"chores", "transactions"}.issubset(tables):
+        return
     with op.batch_alter_table("chores") as batch:
         batch.add_column(sa.Column("owner_user_id", sa.Integer(), nullable=True))
         batch.create_foreign_key("fk_chores_owner_user_id_users", "users", ["owner_user_id"], ["id"], ondelete="CASCADE")
@@ -40,6 +45,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    tables = set(sa.inspect(op.get_bind()).get_table_names())
+    if "parent_chore_completions" not in tables:
+        return
     op.drop_table("parent_chore_completions")
     with op.batch_alter_table("transactions") as batch:
         batch.drop_index("ix_transactions_created_by_user_id")

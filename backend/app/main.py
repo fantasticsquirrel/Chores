@@ -24,12 +24,18 @@ RESET_FRONTEND_PATHS = frozenset(
     {
         f"{FRONTEND_BASE_PATH}/reset-password",
         f"{FRONTEND_BASE_PATH}/reset-password/",
+        f"{FRONTEND_BASE_PATH}/register",
+        f"{FRONTEND_BASE_PATH}/register/",
+        f"{FRONTEND_BASE_PATH}/verify-email",
+        f"{FRONTEND_BASE_PATH}/verify-email/",
     }
 )
 RESET_PUBLIC_API_PATHS = frozenset(
     {
         f"{API_PREFIX}/auth/password-reset/request",
         f"{API_PREFIX}/auth/password-reset/confirm",
+        f"{API_PREFIX}/auth/registration/request",
+        f"{API_PREFIX}/auth/registration/verify",
     }
 )
 RESET_CONTENT_SECURITY_POLICY = (

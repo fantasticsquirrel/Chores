@@ -23,7 +23,7 @@ def _validate_security(settings: Settings) -> None:
     if settings.is_production and settings.secret_key == "dev-secret-key-change-me":
         raise SettingsError("SECRET_KEY must be overridden in production.")
     _validate_playwright_smoke_settings(settings)
-    if settings.password_reset_enabled:
+    if settings.password_reset_enabled or settings.registration_enabled:
         _validate_password_reset_settings(settings)
 
 

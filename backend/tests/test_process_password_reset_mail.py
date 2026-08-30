@@ -27,6 +27,7 @@ def test_worker_process_runs_the_same_startup_validation_before_constructing_mai
     settings = object()
     calls: list[object] = []
     workers: list[_Worker] = []
+    registration_workers: list[_Worker] = []
 
     monkeypatch.setattr(process_password_reset_mail, "get_settings", lambda: settings)
     monkeypatch.setattr(process_password_reset_mail, "run_startup_checks", calls.append)
@@ -36,14 +37,24 @@ def test_worker_process_runs_the_same_startup_validation_before_constructing_mai
         workers.append(worker)
         return worker
 
-    monkeypatch.setattr(process_password_reset_mail, "PasswordResetMailWorker", create_worker)
+    def create_registration_worker(*, settings: object) -> _Worker:
+        worker = _Worker(settings=settings)
+        registration_workers.append(worker)
+        return worker
 
-    assert process_password_reset_mail.run(["--batch-size", "7", "--cleanup"]) == {"accepted": 1, "pruned": 2}
+    monkeypatch.setattr(process_password_reset_mail, "PasswordResetMailWorker", create_worker)
+    monkeypatch.setattr(process_password_reset_mail, "RegistrationMailWorker", create_registration_worker)
+
+    assert process_password_reset_mail.run(["--batch-size", "7", "--cleanup"]) == {"accepted": 2, "pruned": 4}
     assert calls == [settings]
     assert len(workers) == 1
     assert workers[0].settings is settings
     assert workers[0].process_calls == [7]
     assert workers[0].cleanup_calls == 1
+    assert len(registration_workers) == 1
+    assert registration_workers[0].settings is settings
+    assert registration_workers[0].process_calls == [7]
+    assert registration_workers[0].cleanup_calls == 1
 
 
 def test_worker_process_fails_closed_when_startup_validation_rejects_configuration(

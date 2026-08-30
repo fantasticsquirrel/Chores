@@ -39,6 +39,15 @@ export interface PasswordResetConfirmResponse {
   detail: string;
 }
 
+export interface RegistrationRequest {
+  email: string;
+  password: string;
+  household_name: string;
+  timezone: string;
+}
+
+export interface RegistrationVerifyRequest { token: string; }
+
 export interface AuthUser {
   id: number;
   household_id: number;

@@ -19,6 +19,8 @@ from app.schemas.auth import (
     PasswordResetConfirmPayload,
     PasswordResetRequestPayload,
     PasswordResetResponse,
+    RegistrationRequestPayload,
+    RegistrationVerifyPayload,
 )
 from app.security import passwords as password_security
 from app.security.audit import account_key_hash, audit, record_login_attempt, request_ip, retry_after_seconds
@@ -27,16 +29,53 @@ from app.security.passwords import PASSWORD_MAX_LENGTH, PARENT_PASSWORD_MIN_LENG
 from app.security.sessions import SESSION_COOKIE_NAME, create_session_token, resolve_session, revoke_session, revoke_user_sessions
 from app.services.auth import AuthService
 from app.services.password_resets import PasswordResetService
+from app.services.registrations import RegistrationService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 _service = AuthService()
 
 PASSWORD_RESET_REQUEST_ACK = "If an eligible account exists for that address, reset instructions will arrive shortly."
 PASSWORD_RESET_CONFIRM_ACK = "Try signing in. If you cannot sign in, request a new reset link."
+REGISTRATION_REQUEST_ACK = "Check your email for a verification link. If the address is already registered, sign in or reset your password."
+REGISTRATION_VERIFY_ACK = "Verification processed. Try signing in; if it does not work, register again."
 
 
 def _password_reset_service() -> PasswordResetService:
     return PasswordResetService(settings=get_settings())
+
+
+@router.post("/registration/request", response_model=PasswordResetResponse, status_code=status.HTTP_202_ACCEPTED)
+async def request_registration(payload: RegistrationRequestPayload, request: Request, session: Session = Depends(get_db_session)) -> PasswordResetResponse:
+    started_at = time.perf_counter()
+    try:
+        RegistrationService(settings=get_settings()).request(
+            session,
+            email=payload.email,
+            password=payload.password,
+            household_name=payload.household_name,
+            timezone=payload.timezone,
+            ip_address=request_ip(request),
+        )
+        session.commit()
+    except Exception:
+        session.rollback()
+    finally:
+        await _password_reset_response_floor(started_at)
+    return PasswordResetResponse(detail=REGISTRATION_REQUEST_ACK)
+
+
+@router.post("/registration/verify", response_model=PasswordResetResponse, status_code=status.HTTP_202_ACCEPTED)
+def verify_registration(payload: RegistrationVerifyPayload, session: Session = Depends(get_db_session)) -> PasswordResetResponse:
+    token = payload.token if isinstance(payload.token, str) and len(payload.token) <= 1024 else ""
+    try:
+        user = RegistrationService(settings=get_settings()).verify(session, token=token)
+        if user is not None:
+            session.commit()
+        else:
+            session.rollback()
+    except Exception:
+        session.rollback()
+    return PasswordResetResponse(detail=REGISTRATION_VERIFY_ACK)
 
 
 async def _password_reset_response_floor(started_at: float) -> None:
