@@ -2,11 +2,11 @@ import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClient } from "../api";
-import { clearPasswordResetFragment, readPasswordResetTokenFromLocation } from "../lib/password-reset-token";
+import { clearPasswordResetFragment, readEmailVerificationTokenFromLocation } from "../lib/password-reset-token";
 import { ButtonLink, Card, InlineNotice } from "../ui";
 
 export function VerifyEmailPage(): ReactElement {
-  const [token] = useState(readPasswordResetTokenFromLocation);
+  const [token] = useState(readEmailVerificationTokenFromLocation);
   const [state, setState] = useState<"working" | "done" | "missing">(token ? "working" : "missing");
   useEffect(() => {
     clearPasswordResetFragment();
