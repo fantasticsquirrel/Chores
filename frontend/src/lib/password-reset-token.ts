@@ -53,22 +53,21 @@ export function expectedPasswordResetPathname(): string {
   return `${normalizedBasePath}/reset-password`;
 }
 
-/**
- * Parses one opaque reset capability from the exact reset route's fragment.
- * URL fragments are never sent in HTTP requests, and callers keep a valid
- * capability only in component memory for the lifetime of the reset form.
- */
-export function readPasswordResetTokenFromLocation(): string | null {
+/** Return the canonical application path that may carry an email-verification fragment. */
+export function expectedEmailVerificationPathname(): string {
+  const basePath = import.meta.env.BASE_URL;
+  const normalizedBasePath = basePath === "/" ? "" : basePath.replace(/\/$/, "");
+  return `${normalizedBasePath}/verify-email`;
+}
+
+function readTokenFromLocation(expectedPathname: string): string | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  // A recovery link is valid only at the application-owned canonical route. A
-  // query-bearing or trailing-slash variant is cleared but never accepted, so a
-  // capability cannot be carried into an alternate navigation context.
   if (
     !isTrustedPasswordResetOrigin(window.location.origin)
-    || window.location.pathname !== expectedPasswordResetPathname()
+    || window.location.pathname !== expectedPathname
     || window.location.search.length !== 0
   ) {
     return null;
@@ -79,15 +78,26 @@ export function readPasswordResetTokenFromLocation(): string | null {
     return null;
   }
 
-  // The capability alphabet is intentionally URL-fragment safe. Parsing the
-  // raw remainder rather than URLSearchParams rejects duplicates, extra
-  // parameters, percent-encoding, and malformed fragment syntax.
   const token = rawFragment.slice(RESET_TOKEN_FRAGMENT_PREFIX.length);
   if (token.length === 0 || token.length > MAX_RESET_TOKEN_LENGTH || !RESET_TOKEN_PATTERN.test(token)) {
     return null;
   }
 
   return token;
+}
+
+/**
+ * Parses one opaque reset capability from the exact reset route's fragment.
+ * URL fragments are never sent in HTTP requests, and callers keep a valid
+ * capability only in component memory for the lifetime of the reset form.
+ */
+export function readPasswordResetTokenFromLocation(): string | null {
+  return readTokenFromLocation(expectedPasswordResetPathname());
+}
+
+/** Parse one opaque registration capability from the exact verification route. */
+export function readEmailVerificationTokenFromLocation(): string | null {
+  return readTokenFromLocation(expectedEmailVerificationPathname());
 }
 
 /**
