@@ -44,6 +44,8 @@ import type {
   PasswordResetConfirmResponse,
   PasswordResetRequest,
   PasswordResetRequestResponse,
+  RegistrationRequest,
+  RegistrationVerifyRequest,
   NotificationSettingUpdate,
   PushConfigResponse,
   PushSubscriptionCreate,
@@ -146,6 +148,14 @@ export abstract class FamilyCoreApiEndpoints {
 
   async confirmPasswordReset(payload: PasswordResetConfirmRequest): Promise<PasswordResetConfirmResponse> {
     return this.post<PasswordResetConfirmResponse, PasswordResetConfirmRequest>(familyApiRoutes.passwordResetConfirm, payload);
+  }
+
+  async requestRegistration(payload: RegistrationRequest): Promise<PasswordResetRequestResponse> {
+    return this.post<PasswordResetRequestResponse, RegistrationRequest>("/auth/registration/request", payload);
+  }
+
+  async verifyRegistration(payload: RegistrationVerifyRequest): Promise<PasswordResetRequestResponse> {
+    return this.post<PasswordResetRequestResponse, RegistrationVerifyRequest>("/auth/registration/verify", payload);
   }
 
   async getHouseholdOwnership(): Promise<HouseholdOwnershipResponse> {

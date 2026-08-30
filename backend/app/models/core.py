@@ -192,6 +192,62 @@ class PasswordResetDelivery(TimestampMixin, Base):
     last_error_code: Mapped[str] = mapped_column(String(64), nullable=False, default="")
 
 
+class AccountRegistration(TimestampMixin, Base):
+    """Unverified household-owner signup; no household/user exists until consumption."""
+
+    __tablename__ = "account_registrations"
+    __table_args__ = (
+        UniqueConstraint("token_digest", name="uq_account_registrations_token_digest"),
+        CheckConstraint("length(token_digest) = 64", name="account_registration_token_digest_length"),
+        Index("ix_account_registrations_email_created", "email_key_hash", "created_at"),
+        Index("ix_account_registrations_ip_created", "ip_key_hash", "created_at"),
+        Index("ix_account_registrations_expires_at", "expires_at"),
+        Index(
+            "uq_account_registrations_one_active_email",
+            "email_key_hash",
+            unique=True,
+            sqlite_where=text("consumed_at IS NULL AND invalidated_at IS NULL"),
+            postgresql_where=text("consumed_at IS NULL AND invalidated_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_password_reset_id)
+    email: Mapped[str] = mapped_column(String(320), nullable=False)
+    email_key_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    ip_key_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    household_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="UTC")
+    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    token_key_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    token_digest: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    invalidated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class AccountRegistrationDelivery(TimestampMixin, Base):
+    __tablename__ = "account_registration_deliveries"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'processing', 'retry', 'accepted', 'cancelled', 'dead')",
+            name="account_registration_delivery_status",
+        ),
+        UniqueConstraint("registration_id", name="uq_account_registration_deliveries_registration"),
+        Index("ix_account_registration_deliveries_status_available", "status", "available_at"),
+        Index("ix_account_registration_deliveries_lease_expires_at", "lease_expires_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    registration_id: Mapped[str] = mapped_column(ForeignKey("account_registrations.id", ondelete="CASCADE"), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="pending")
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    available_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    accepted_by_mta_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    terminal_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error_code: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
 class Module(Base):
     __tablename__ = "modules"
 
@@ -623,6 +679,8 @@ ALL_MODELS = (
     PasswordReset,
     PasswordResetRequest,
     PasswordResetDelivery,
+    AccountRegistration,
+    AccountRegistrationDelivery,
     Module,
     HouseholdModuleAccess,
     UserModuleAccess,

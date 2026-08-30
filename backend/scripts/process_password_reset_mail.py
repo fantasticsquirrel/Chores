@@ -8,6 +8,7 @@ from collections.abc import Sequence
 
 from app.config import get_settings
 from app.services.password_reset_mail import PasswordResetMailWorker
+from app.services.registration_mail import RegistrationMailWorker
 from app.startup import run_startup_checks
 
 
@@ -39,8 +40,13 @@ def _run_worker(args: argparse.Namespace) -> dict[str, int]:
     run_startup_checks(settings)
     worker = PasswordResetMailWorker(settings=settings)
     counts = worker.process_pending(limit=args.batch_size)
+    registration_worker = RegistrationMailWorker(settings=settings)
+    for name, count in registration_worker.process_pending(limit=args.batch_size).items():
+        counts[name] = counts.get(name, 0) + count
     if args.cleanup:
         for name, count in worker.cleanup().items():
+            counts[name] = counts.get(name, 0) + count
+        for name, count in registration_worker.cleanup().items():
             counts[name] = counts.get(name, 0) + count
     return counts
 

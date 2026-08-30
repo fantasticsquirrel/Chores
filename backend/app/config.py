@@ -53,6 +53,10 @@ class Settings:
     password_reset_delivery_max_attempts: int = 3
     password_reset_retention_days: int = 30
     password_reset_response_floor_ms: int = 100
+    registration_enabled: bool = False
+    registration_token_ttl_seconds: int = 24 * 60 * 60
+    registration_request_window_seconds: int = 15 * 60
+    registration_ip_window_limit: int = 5
     # Set only by the disposable browser-smoke wrapper. This is deliberately
     # non-operational and must be rejected at startup outside that harness.
     playwright_smoke_run_id: str = ""
@@ -171,6 +175,7 @@ def get_settings() -> Settings:
 
     password_reset_enabled_raw = os.getenv("PASSWORD_RESET_ENABLED", "false")
     password_reset_enabled = _parse_bool(password_reset_enabled_raw, field_name="PASSWORD_RESET_ENABLED")
+    registration_enabled = _parse_bool(os.getenv("REGISTRATION_ENABLED", "false"), field_name="REGISTRATION_ENABLED")
     password_reset_public_app_url = os.getenv(
         "PASSWORD_RESET_PUBLIC_APP_URL", "https://family.multihost.ing/chore"
     ).strip()
@@ -188,7 +193,7 @@ def get_settings() -> Settings:
         password_reset_rate_limit_pepper = _development_key(secret_key, purpose="password-reset-rate-limit")
     if password_reset_active_token_key_version and password_reset_active_token_key_version not in dict(password_reset_token_keys):
         raise SettingsError("PASSWORD_RESET_ACTIVE_TOKEN_KEY_VERSION is not configured.")
-    if password_reset_enabled and app_env == "production":
+    if (password_reset_enabled or registration_enabled) and app_env == "production":
         if not password_reset_token_keys or not password_reset_active_token_key_version:
             raise SettingsError("PASSWORD_RESET_TOKEN_KEYS and PASSWORD_RESET_ACTIVE_TOKEN_KEY_VERSION are required when enabled.")
         if len(password_reset_rate_limit_pepper) < 32:
@@ -258,6 +263,16 @@ def get_settings() -> Settings:
         ),
         password_reset_response_floor_ms=_parse_positive_int(
             os.getenv("PASSWORD_RESET_RESPONSE_FLOOR_MS", "100"), field_name="PASSWORD_RESET_RESPONSE_FLOOR_MS"
+        ),
+        registration_enabled=registration_enabled,
+        registration_token_ttl_seconds=_parse_positive_int(
+            os.getenv("REGISTRATION_TOKEN_TTL_SECONDS", "86400"), field_name="REGISTRATION_TOKEN_TTL_SECONDS"
+        ),
+        registration_request_window_seconds=_parse_positive_int(
+            os.getenv("REGISTRATION_REQUEST_WINDOW_SECONDS", "900"), field_name="REGISTRATION_REQUEST_WINDOW_SECONDS"
+        ),
+        registration_ip_window_limit=_parse_positive_int(
+            os.getenv("REGISTRATION_IP_WINDOW_LIMIT", "5"), field_name="REGISTRATION_IP_WINDOW_LIMIT"
         ),
         playwright_smoke_run_id=os.getenv("PLAYWRIGHT_SMOKE_RUN_ID", "").strip(),
     )

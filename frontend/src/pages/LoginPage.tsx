@@ -188,6 +188,9 @@ export function LoginPage(): ReactElement {
             <Link className="password-reset-link" to="/forgot-password">
               Forgot password?
             </Link>
+            <Link className="password-reset-link" to="/register">
+              Create a household account
+            </Link>
           </>
         ) : (
           <>

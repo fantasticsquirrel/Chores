@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 
 _PASSWORD_RESET_REQUEST_PATH = "/chore-api/auth/password-reset/request"
 _PASSWORD_RESET_CONFIRM_PATH = "/chore-api/auth/password-reset/confirm"
+_REGISTRATION_REQUEST_PATH = "/chore-api/auth/registration/request"
+_REGISTRATION_VERIFY_PATH = "/chore-api/auth/registration/verify"
 _PASSWORD_RESET_REQUEST_ACK = "If an eligible account exists for that address, reset instructions will arrive shortly."
 _PASSWORD_RESET_CONFIRM_ACK = "Try signing in. If you cannot sign in, request a new reset link."
 
@@ -179,6 +181,8 @@ class CsrfProtectionMiddleware(BaseHTTPMiddleware):
         "/chore-api/auth/child-login",
         "/chore-api/auth/password-reset/request",
         "/chore-api/auth/password-reset/confirm",
+        "/chore-api/auth/registration/request",
+        "/chore-api/auth/registration/verify",
     }
 
     async def dispatch(self, request: Request, call_next: Callable):  # type: ignore[override]
@@ -216,6 +220,17 @@ def register_exception_handlers(app: FastAPI) -> None:
             return await _password_reset_request_acknowledgement()
         if request.url.path == _PASSWORD_RESET_CONFIRM_PATH:
             return await _password_reset_confirmation_acknowledgement()
+        if request.url.path == _REGISTRATION_REQUEST_PATH:
+            # Pydantic's default detail includes rejected input values. Never
+            # reflect a candidate password or email in a public response.
+            return JSONResponse(
+                status_code=422,
+                content={"detail": "Invalid registration details. Use a valid email, timezone, and a password of at least 15 characters."},
+            )
+        if request.url.path == _REGISTRATION_VERIFY_PATH:
+            return _public_password_reset_response(
+                "Verification processed. Try signing in; if it does not work, register again."
+            )
         return await request_validation_exception_handler(request, error)
 
     @app.exception_handler(Exception)
