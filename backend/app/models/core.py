@@ -25,8 +25,10 @@ class Household(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="UTC")
-    # Creation uses a two-step household/user bootstrap; the production Alembic
-    # migration makes this column NOT NULL and installs database-level guards.
+    # Production requires this value on INSERT. Registration preallocates the
+    # owner user ID and relies on the deferred FK to create both rows atomically.
+    # This remains nullable in metadata for legacy create_all-based test/setup
+    # helpers; Alembic is the production schema authority and enforces NOT NULL.
     owner_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT", use_alter=True, deferrable=True, initially="DEFERRED"), nullable=True, unique=True, index=True
     )
