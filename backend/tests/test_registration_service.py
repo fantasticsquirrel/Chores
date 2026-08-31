@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import select
 
 from app.config import get_settings
@@ -56,6 +58,47 @@ def test_registration_creates_no_identity_until_single_use_verification(tmp_path
         assert household is not None and household.owner_user_id == user.id
     with factory() as session:
         assert service.verify(session, token=token) is None
+
+
+def test_registration_verification_succeeds_against_migrated_schema(tmp_path, monkeypatch) -> None:
+    database_url = f"sqlite:///{tmp_path / 'registration-migrated.db'}"
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    get_settings.cache_clear()
+
+    backend_root = Path(__file__).resolve().parents[1]
+    config = Config(str(backend_root / "alembic.ini"))
+    config.set_main_option("script_location", str(backend_root / "alembic"))
+    config.set_main_option("sqlalchemy.url", database_url)
+    command.upgrade(config, "head")
+
+    factory = get_session_factory(database_url)
+    service = RegistrationService(settings=Settings())
+    with factory() as session:
+        service.request(
+            session,
+            email="migrated-owner@example.com",
+            password="correct horse battery staple",
+            household_name="Migrated Home",
+            timezone="UTC",
+            ip_address="198.51.100.3",
+        )
+        session.commit()
+        registration = session.scalar(select(AccountRegistration))
+        assert registration is not None
+        token = format_registration_token(
+            registration.id,
+            key_version=registration.token_key_version,
+            token_keys=Settings().password_reset_token_keys,
+        )
+
+    with factory() as session:
+        user = service.verify(session, token=token)
+        assert user is not None
+        session.commit()
+        household = session.get(Household, user.household_id)
+        assert household is not None
+        assert household.owner_user_id == user.id
 
 
 def test_existing_email_is_uniform_noop(tmp_path, monkeypatch) -> None:

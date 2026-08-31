@@ -92,13 +92,29 @@ class RegistrationService:
             return None
         try:
             with session.begin_nested():
-                household = Household(name=registration.household_name, timezone=registration.timezone, owner_user_id=None)
+                # The migrated schema requires owner_user_id on the household's
+                # first INSERT. Preallocate a JSON-safe positive integer ID;
+                # the household FK is DEFERRABLE, so the matching user can be
+                # inserted later in the same transaction without ever creating
+                # an ownerless household.
+                owner_user_id = secrets.randbelow((1 << 53) - 1) + 1
+                household = Household(
+                    name=registration.household_name,
+                    timezone=registration.timezone,
+                    owner_user_id=owner_user_id,
+                )
                 session.add(household)
                 session.flush()
-                user = User(household_id=household.id, email=registration.email, password_hash=registration.password_hash, role=UserRole.PARENT_ADMIN, active=True)
+                user = User(
+                    id=owner_user_id,
+                    household_id=household.id,
+                    email=registration.email,
+                    password_hash=registration.password_hash,
+                    role=UserRole.PARENT_ADMIN,
+                    active=True,
+                )
                 session.add(user)
                 session.flush()
-                household.owner_user_id = user.id
                 registration.consumed_at = now
                 session.add(SecurityAuditEvent(event_type="registration.completed", target_user_id=user.id, household_id=household.id, ip_address="redacted", details_json="{}"))
                 session.flush()
