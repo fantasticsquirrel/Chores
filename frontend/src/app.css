@@ -1171,6 +1171,41 @@ body {
   flex-direction: column;
   gap: 0.25rem;
   align-items: flex-start;
+  cursor: pointer;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.calendar-day:not(:disabled):hover,
+.calendar-day:not(:disabled):focus-visible,
+.calendar-day.selected {
+  border-color: var(--accent, #60a5fa);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #60a5fa) 24%, transparent);
+  transform: translateY(-1px);
+}
+
+.calendar-day:disabled {
+  cursor: default;
+}
+
+.calendar-instructions {
+  margin-top: -0.25rem;
+  color: var(--text-muted);
+}
+
+.calendar-day-editor {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  background: var(--surface-soft);
+}
+
+.calendar-day-editor h3 {
+  margin: 0.15rem 0 0;
+}
+
+.calendar-attendance-form {
+  margin-top: 1rem;
 }
 
 .calendar-day.muted {
@@ -1272,6 +1307,10 @@ body {
     min-height: 3.75rem;
     padding: 0.35rem;
     font-size: 0.8rem;
+  }
+
+  .calendar-day-editor {
+    padding: 0.8rem;
   }
 
   .calendar-day .balance-pill {
