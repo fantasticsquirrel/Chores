@@ -29,6 +29,7 @@ export function HomeschoolPage(): ReactElement {
   const [editingSubjectId, setEditingSubjectId] = useState<number | null>(null);
   const [calendarYearMonth, setCalendarYearMonth] = useState(toYearMonth(todayISO()));
   const [calendarChildId, setCalendarChildId] = useState("");
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   const [dayComment, setDayComment] = useState<DayCommentFormState>({
     childId: "",
     date: todayISO(),
@@ -191,6 +192,7 @@ export function HomeschoolPage(): ReactElement {
         comment: attendance.comment,
       });
       setAttendance((prev) => ({ ...prev, comment: "" }));
+      setSelectedCalendarDate(null);
       setActionMessage("Saved attendance.");
       refresh();
     } catch (error: unknown) {
@@ -341,12 +343,24 @@ export function HomeschoolPage(): ReactElement {
         selectedChildAttendance={selectedChildAttendance}
         selectedChildComments={selectedChildComments}
         subjects={state.subjects}
-        onMonthChange={setCalendarYearMonth}
-        onChildChange={setCalendarChildId}
+        selectedDate={selectedCalendarDate}
+        attendance={attendance}
+        onMonthChange={(yearMonth) => {
+          setCalendarYearMonth(yearMonth);
+          setSelectedCalendarDate(null);
+        }}
+        onChildChange={(childId) => {
+          setCalendarChildId(childId);
+          setSelectedCalendarDate(null);
+        }}
         onDaySelect={(date, comment) => {
+          setSelectedCalendarDate(date);
           setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date }));
           setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date, comment: comment || prev.comment }));
         }}
+        onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
+        onSaveAttendance={(event) => void handleSaveAttendance(event)}
+        onCloseDayEditor={() => setSelectedCalendarDate(null)}
         onClearAttendance={(attendanceId) => void handleClearAttendance(attendanceId)}
         onClearDayComment={(commentId) => void handleClearDayComment(commentId)}
       />

@@ -1,7 +1,8 @@
-import type { ReactElement } from "react";
+import type { FormEvent, ReactElement } from "react";
 
 import type { Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolSubject } from "../../api";
-import { Button, Card, FormField } from "../../ui";
+import { Button, Card, FormField, TextInput } from "../../ui";
+import type { AttendanceFormState } from "./HomeschoolForms";
 import { buildMonthGrid, formatYearMonth, shiftYearMonth, todayISO, toYearMonth } from "./dateUtils";
 
 type AttendanceCalendarProps = {
@@ -11,9 +12,14 @@ type AttendanceCalendarProps = {
   selectedChildAttendance: HomeschoolAttendance[];
   selectedChildComments: HomeschoolDayComment[];
   subjects: HomeschoolSubject[];
+  selectedDate: string | null;
+  attendance: AttendanceFormState;
   onMonthChange: (yearMonth: string) => void;
   onChildChange: (childId: string) => void;
   onDaySelect: (date: string, comment: string) => void;
+  onAttendanceChange: (patch: Partial<AttendanceFormState>) => void;
+  onSaveAttendance: (event: FormEvent<HTMLFormElement>) => void;
+  onCloseDayEditor: () => void;
   onClearAttendance: (attendanceId: number) => void;
   onClearDayComment: (commentId: number) => void;
 };
@@ -25,9 +31,14 @@ export function AttendanceCalendar({
   selectedChildAttendance,
   selectedChildComments,
   subjects,
+  selectedDate,
+  attendance,
   onMonthChange,
   onChildChange,
   onDaySelect,
+  onAttendanceChange,
+  onSaveAttendance,
+  onCloseDayEditor,
   onClearAttendance,
   onClearDayComment,
 }: AttendanceCalendarProps): ReactElement {
@@ -63,6 +74,9 @@ export function AttendanceCalendar({
         </select>
       </FormField>
       <h3>{calendarLabel}</h3>
+      <p className="calendar-instructions">
+        {calendarChildId === "" ? "Select a child to record attendance." : "Tap or click a date to record attendance."}
+      </p>
       <div className="calendar-grid">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div key={day} className="eyebrow calendar-weekday">{day}</div>
@@ -74,7 +88,10 @@ export function AttendanceCalendar({
             <button
               key={cell.iso}
               type="button"
-              className={`glass-card button-reset calendar-day${cell.inMonth ? "" : " muted"}`}
+              className={`glass-card button-reset calendar-day${cell.inMonth ? "" : " muted"}${selectedDate === cell.iso ? " selected" : ""}`}
+              disabled={!cell.inMonth || calendarChildId === ""}
+              aria-label={`${cell.iso}${records.length > 0 ? `, ${records.length} attendance ${records.length === 1 ? "entry" : "entries"}` : ", no attendance recorded"}`}
+              aria-pressed={selectedDate === cell.iso}
               onClick={() => onDaySelect(cell.iso, comment?.comment || "")}
             >
               <strong className="calendar-day-number">{cell.day}{comment?.comment ? " ★" : ""}</strong>
@@ -95,6 +112,48 @@ export function AttendanceCalendar({
           );
         })}
       </div>
+
+      {selectedDate !== null ? (
+        <section className="calendar-day-editor" aria-labelledby="calendar-day-editor-title">
+          <div className="panel-header-row">
+            <div>
+              <p className="eyebrow">Selected school day</p>
+              <h3 id="calendar-day-editor-title">Record attendance for {selectedDate}</h3>
+            </div>
+            <Button type="button" onClick={onCloseDayEditor}>Close</Button>
+          </div>
+          <form className="children-form calendar-attendance-form" onSubmit={onSaveAttendance}>
+            <FormField label="Subject">
+              <select
+                className="text-input"
+                value={attendance.subjectId}
+                onChange={(event) => onAttendanceChange({ subjectId: event.target.value })}
+                required
+                autoFocus
+              >
+                <option value="">Select subject</option>
+                {subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
+              </select>
+            </FormField>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={attendance.present} onChange={(event) => onAttendanceChange({ present: event.target.checked })} />
+              Present
+            </label>
+            <FormField label="Comment">
+              <TextInput
+                value={attendance.comment}
+                onChange={(event) => onAttendanceChange({ comment: event.target.value })}
+                placeholder="Fractions, copywork, field trip..."
+                maxLength={2000}
+              />
+            </FormField>
+            <div className="item-actions">
+              <Button type="submit" disabled={attendance.subjectId === ""}>Save Attendance</Button>
+              <Button type="button" onClick={onCloseDayEditor}>Cancel</Button>
+            </div>
+          </form>
+        </section>
+      ) : null}
 
       {activeSubjectRows.length > 0 ? (
         <div className="subject-attendance-strip" aria-label="Subject attendance totals">

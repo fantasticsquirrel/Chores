@@ -159,6 +159,69 @@ describe("Homeschool page", () => {
     }));
   });
 
+  it("opens the calendar day editor and saves attendance for the tapped date", async () => {
+    mockHomeschoolApi();
+    const attendanceSpy = vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockResolvedValue({
+      ...attendanceRecords[0],
+      date: "2026-09-02",
+      comment: "Decimals",
+    });
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Tap or click a date to record attendance.")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
+
+    const editorHeading = screen.getByRole("heading", { name: "Record attendance for 2026-09-02" });
+    expect(editorHeading).toBeVisible();
+    const editor = editorHeading.closest("section");
+    expect(editor).not.toBeNull();
+    fireEvent.change(within(editor as HTMLElement).getByLabelText("Comment"), { target: { value: "Decimals" } });
+    fireEvent.click(within(editor as HTMLElement).getByRole("button", { name: "Save Attendance" }));
+
+    await waitFor(() => expect(attendanceSpy).toHaveBeenCalledWith({
+      household_id: 1,
+      child_id: 1,
+      subject_id: 20,
+      date: "2026-09-02",
+      present: true,
+      comment: "Decimals",
+    }));
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Record attendance for 2026-09-02" })).not.toBeInTheDocument());
+  });
+
+  it("cancels the calendar day editor and disables date actions without a child", async () => {
+    mockHomeschoolApi();
+
+    const { unmount } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    await screen.findByText("Tap or click a date to record attendance.");
+    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
+    const editorHeading = screen.getByRole("heading", { name: "Record attendance for 2026-09-02" });
+    fireEvent.click(within(editorHeading.closest("section") as HTMLElement).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("heading", { name: "Record attendance for 2026-09-02" })).not.toBeInTheDocument();
+
+    unmount();
+    vi.mocked(apiClient.listChildren).mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("Select a child to record attendance.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" })).toBeDisabled();
+  });
+
 
   it("edits existing semester and subject setup records", async () => {
     mockHomeschoolApi();
