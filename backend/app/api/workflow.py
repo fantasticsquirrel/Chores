@@ -36,12 +36,12 @@ from app.schemas.workflow import (
     SubmissionReviewResponse,
 )
 from app.services.chores.workflow import (
-    _advance_rotation_state_if_needed,
-    _approval_occurrence_or_409,
-    _derive_submission_status,
-    _eligible_chores_for_child,
-    _resolve_active_child,
-    _serialize_submission_review,
+    advance_rotation_state_if_needed,
+    approval_occurrence_or_409,
+    derive_submission_status,
+    eligible_chores_for_child,
+    resolve_active_child,
+    serialize_submission_review,
     record_approved_occurrence,
 )
 from app.services.notifications import notify_submission_approved, notify_submission_created
@@ -58,8 +58,8 @@ def list_eligible_chores(
     session: Session = Depends(get_db_session),
     user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> list[EligibleChoreResponse]:
-    child = _resolve_active_child(session, user, child_id)
-    return _eligible_chores_for_child(session, child, target_date)
+    child = resolve_active_child(session, user, child_id)
+    return eligible_chores_for_child(session, child, target_date)
 
 
 @router.post("/submissions", response_model=SubmissionResponse, status_code=status.HTTP_201_CREATED)
@@ -69,8 +69,8 @@ def create_submission(
     session: Session = Depends(get_db_session),
     user: User = Depends(_REQUIRE_CHORES_ACCESS),
 ) -> SubmissionResponse:
-    child = _resolve_active_child(session, user, child_id)
-    eligible = _eligible_chores_for_child(session, child, payload.for_date)
+    child = resolve_active_child(session, user, child_id)
+    eligible = eligible_chores_for_child(session, child, payload.for_date)
     eligible_chore_ids = {item.chore_id for item in eligible}
 
     invalid_chore_ids = [chore_id for chore_id in payload.chore_ids if chore_id not in eligible_chore_ids]
@@ -127,7 +127,7 @@ def list_submissions(
         query = query.where(Submission.status == status_filter)
 
     submissions = list(session.scalars(query).all())
-    return [_serialize_submission_review(session, submission) for submission in submissions]
+    return [serialize_submission_review(session, submission) for submission in submissions]
 
 
 @router.post("/submissions/{submission_id}/approve-all", response_model=SubmissionReviewResponse)
@@ -161,7 +161,7 @@ def approve_submission(
         chore = chore_map.get(item.chore_id)
         if chore is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chore not found for submission item.")
-        occurrence_date = _approval_occurrence_or_409(session, submission, chore)
+        occurrence_date = approval_occurrence_or_409(session, submission, chore)
 
         item.status = SubmissionStatus.APPROVED
         record_approved_occurrence(
@@ -172,14 +172,14 @@ def approve_submission(
         )
 
         if chore.id not in processed_rotation_chores:
-            _advance_rotation_state_if_needed(session, chore, occurrence_date)
+            advance_rotation_state_if_needed(session, chore, occurrence_date)
             processed_rotation_chores.add(chore.id)
 
     submission.status = SubmissionStatus.APPROVED
     notify_submission_approved(session, submission)
     session.commit()
     session.refresh(submission)
-    return _serialize_submission_review(session, submission)
+    return serialize_submission_review(session, submission)
 
 
 @router.post("/submissions/{submission_id}/items/{item_id}/decision", response_model=SubmissionReviewResponse)
@@ -214,23 +214,23 @@ def decide_submission_item(
         chore = session.get(Chore, item.chore_id)
         if chore is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chore not found for submission item.")
-        occurrence_date = _approval_occurrence_or_409(session, submission, chore)
+        occurrence_date = approval_occurrence_or_409(session, submission, chore)
         record_approved_occurrence(
             session,
             submission=submission,
             chore=chore,
             occurrence_date=occurrence_date,
         )
-        _advance_rotation_state_if_needed(session, chore, occurrence_date)
+        advance_rotation_state_if_needed(session, chore, occurrence_date)
 
     submission_items = list(
         session.scalars(
             select(SubmissionItem).where(SubmissionItem.submission_id == submission_id).order_by(SubmissionItem.id.asc())
         ).all()
     )
-    submission.status = _derive_submission_status(submission_items)
+    submission.status = derive_submission_status(submission_items)
     if payload.status == SubmissionStatus.APPROVED:
         notify_submission_approved(session, submission)
     session.commit()
     session.refresh(submission)
-    return _serialize_submission_review(session, submission)
+    return serialize_submission_review(session, submission)

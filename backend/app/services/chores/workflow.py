@@ -36,7 +36,7 @@ from app.schemas.workflow import (
 )
 
 
-def _resolve_active_child(session: Session, user: User, child_id: int | None) -> Child:
+def resolve_active_child(session: Session, user: User, child_id: int | None) -> Child:
     if user.role == UserRole.CHILD:
         if user.child_id is None:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
@@ -58,7 +58,7 @@ def _resolve_active_child(session: Session, user: User, child_id: int | None) ->
     return child
 
 
-def _eligible_chores_for_child(session: Session, child: Child, target_date: date) -> list[EligibleChoreResponse]:
+def eligible_chores_for_child(session: Session, child: Child, target_date: date) -> list[EligibleChoreResponse]:
     chores = list(
         session.scalars(
             select(Chore)
@@ -231,7 +231,7 @@ def _has_pending_submission_for_occurrence(session: Session, chore: Chore, child
     return False
 
 
-def _approval_occurrence_or_409(session: Session, submission: Submission, chore: Chore) -> date:
+def approval_occurrence_or_409(session: Session, submission: Submission, chore: Chore) -> date:
     child = session.get(Child, submission.child_id)
     if child is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found for submission.")
@@ -321,7 +321,7 @@ def _is_child_rotation_assignee(session: Session, chore: Chore, child_id: int, o
     return members[idx].child_id == child_id
 
 
-def _advance_rotation_state_if_needed(session: Session, chore: Chore, occurrence_date: date) -> None:
+def advance_rotation_state_if_needed(session: Session, chore: Chore, occurrence_date: date) -> None:
     if chore.assignment_mode != AssignmentMode.ROTATING:
         return
 
@@ -347,7 +347,7 @@ def _advance_rotation_state_if_needed(session: Session, chore: Chore, occurrence
     state.last_occurrence_date = occurrence_date
 
 
-def _serialize_submission_review(session: Session, submission: Submission) -> SubmissionReviewResponse:
+def serialize_submission_review(session: Session, submission: Submission) -> SubmissionReviewResponse:
     child = session.get(Child, submission.child_id)
     if child is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found for submission.")
@@ -381,7 +381,7 @@ def _serialize_submission_review(session: Session, submission: Submission) -> Su
     )
 
 
-def _derive_submission_status(items: list[SubmissionItem]) -> SubmissionStatus:
+def derive_submission_status(items: list[SubmissionItem]) -> SubmissionStatus:
     if any(item.status == SubmissionStatus.PENDING for item in items):
         return SubmissionStatus.PENDING
     if any(item.status == SubmissionStatus.APPROVED for item in items):

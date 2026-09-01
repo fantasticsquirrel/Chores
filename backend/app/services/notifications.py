@@ -24,7 +24,7 @@ from app.models.core import (
 )
 from app.models.enums import SubmissionStatus, UserRole
 from app.security.outbound_urls import UnsafeOutboundUrl, validate_push_endpoint
-from app.services.chores.workflow import _eligible_chores_for_child
+from app.services.chores.workflow import eligible_chores_for_child
 
 MODULE_CHORES = "chores"
 PUSH_TIMEOUT_SECONDS = 5
@@ -428,7 +428,7 @@ def _generate_daily(session: Session, target_date: date, *, only_user_id: int | 
         child = session.get(Child, user.child_id)
         if child is None or not child.active:
             continue
-        eligible = _eligible_chores_for_child(session, child, target_date)
+        eligible = eligible_chores_for_child(session, child, target_date)
         if not eligible:
             continue
         names = ", ".join(item.name for item in eligible[:3])
@@ -470,7 +470,7 @@ def run_notification_scheduler(*, now: datetime | None = None) -> dict[str, int]
                 days = max(1, math.ceil(hours / 24))
                 for offset in range(1, days + 1):
                     target = local.date() + timedelta(days=offset)
-                    eligible = _eligible_chores_for_child(session, child, target)
+                    eligible = eligible_chores_for_child(session, child, target)
                     if not eligible:
                         continue
                     result = create_notification(

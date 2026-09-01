@@ -28,22 +28,7 @@ HOTSPOT_ALLOWLIST = {
     "packages/family-api/src/api-endpoints.ts": "Phase 4 endpoint split",
 }
 
-PRIVATE_IMPORT_ALLOWLIST = {
-    ("backend/app/services/notifications.py", "app.services.chores.workflow._eligible_chores_for_child"):
-        "Phase 2 replaces this with a public eligibility boundary",
-    ("backend/app/api/workflow.py", "app.services.chores.workflow._advance_rotation_state_if_needed"):
-        "Phase 2 replaces this with a public rotation boundary",
-    ("backend/app/api/workflow.py", "app.services.chores.workflow._approval_occurrence_or_409"):
-        "Phase 2 replaces this with a public submission boundary",
-    ("backend/app/api/workflow.py", "app.services.chores.workflow._derive_submission_status"):
-        "Phase 2 replaces this with a public submission boundary",
-    ("backend/app/api/workflow.py", "app.services.chores.workflow._eligible_chores_for_child"):
-        "Phase 2 replaces this with a public eligibility boundary",
-    ("backend/app/api/workflow.py", "app.services.chores.workflow._resolve_active_child"):
-        "Phase 2 replaces this with a public child-scope boundary",
-    ("backend/app/api/workflow.py", "app.services.chores.workflow._serialize_submission_review"):
-        "Phase 2 replaces this with a public serialization boundary",
-}
+PRIVATE_IMPORT_ALLOWLIST: dict[tuple[str, str], str] = {}
 
 
 @dataclass(frozen=True)
