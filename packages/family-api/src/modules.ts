@@ -1,6 +1,6 @@
 import type { UserRole } from "./models";
 
-export type FamilyModuleKey = "chores" | "homeschool" | "recipes" | "admin";
+export type FamilyModuleKey = "chores" | "homeschool" | "recipes" | "support" | "admin";
 export type FamilyModulePlatform = "web" | "mobile";
 
 export type FamilyModuleDefinition = {
@@ -47,6 +47,15 @@ export const FAMILY_MODULE_DEFINITIONS: FamilyModuleDefinition[] = [
     platforms: ["web"],
   },
   {
+    key: "support",
+    label: "Support",
+    name: "Support",
+    description: "Open and track Family Manager support tickets.",
+    path: "/support",
+    roles: ["PARENT_ADMIN", "PARENT"],
+    platforms: ["web"],
+  },
+  {
     key: "admin",
     label: "Admin",
     name: "Admin",
@@ -65,8 +74,8 @@ export const BACKEND_MODULE_DEFINITIONS: BackendModuleDefinition[] =
   }));
 
 export const BACKEND_DEFAULT_ROLE_MODULES: Record<UserRole, FamilyModuleKey[]> = {
-  PARENT_ADMIN: ["chores", "homeschool", "recipes", "admin"],
-  PARENT: ["chores", "homeschool", "recipes"],
+  PARENT_ADMIN: ["chores", "homeschool", "recipes", "support", "admin"],
+  PARENT: ["chores", "homeschool", "recipes", "support"],
   CHILD: ["chores"],
 };
 

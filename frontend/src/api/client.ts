@@ -44,6 +44,26 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
     this.csrfToken = readCookieValue(CSRF_COOKIE_NAME);
   }
 
+  async getSupportStatus(): Promise<{ enabled: boolean }> {
+    return this.get<{ enabled: boolean }>("/support/status");
+  }
+
+  async listSupportTickets(): Promise<import("./models").SupportTicket[]> {
+    return this.get<import("./models").SupportTicket[]>("/support/tickets");
+  }
+
+  async getSupportTicket(id: number): Promise<import("./models").SupportTicket> {
+    return this.get<import("./models").SupportTicket>(`/support/tickets/${id}`);
+  }
+
+  async createSupportTicket(payload: import("./models").CreateSupportTicketRequest): Promise<import("./models").SupportTicket> {
+    return this.post<import("./models").SupportTicket, import("./models").CreateSupportTicketRequest>("/support/tickets", payload);
+  }
+
+  async replySupportTicket(id: number, body: string): Promise<import("./models").SupportTicket> {
+    return this.post<import("./models").SupportTicket, { body: string }>(`/support/tickets/${id}/replies`, { body });
+  }
+
   protected override afterAuthSession(session: import("./models").AuthSessionResponse): void {
     this.csrfToken = session.csrf_token ?? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME);
   }

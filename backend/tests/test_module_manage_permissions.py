@@ -41,7 +41,7 @@ def _seed_view_only_admin(tmp_path: Path, monkeypatch) -> tuple[User, str]:
         session.add_all([admin, steward])
         session.flush()
         service = ModuleService()
-        for module_key in ("chores", "recipes", "homeschool", "admin"):
+        for module_key in ("chores", "recipes", "homeschool", "support", "admin"):
             service.set_user_access(session, admin, module_key, can_view=True, can_manage=False)
         session.commit()
         session.refresh(admin)

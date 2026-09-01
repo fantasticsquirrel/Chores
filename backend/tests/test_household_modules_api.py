@@ -86,6 +86,14 @@ def test_admin_manager_can_list_household_module_toggles(tmp_path: Path, monkeyp
             "can_disable": True,
         },
         {
+            "key": "support",
+            "name": "Support",
+            "description": "Open and track Family Manager support tickets.",
+            "can_manage": True,
+            "enabled": True,
+            "can_disable": True,
+        },
+        {
             "key": "admin",
             "name": "Admin",
             "description": "Household users, child accounts, and module access controls.",

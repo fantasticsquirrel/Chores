@@ -8,6 +8,7 @@ describe("frontend family module registry", () => {
       "chores",
       "homeschool",
       "recipes",
+      "support",
       "admin",
     ]);
   });

@@ -10,6 +10,8 @@ from app.api.notifications import router as notifications_router
 from app.api.billing import router as billing_router
 from app.api.households import router as households_router
 from app.api.ops import router as ops_router
+from app.api.support import integration_router as zammad_integration_router
+from app.api.support import router as support_router
 
 __all__ = [
     "auth_router",
@@ -24,4 +26,6 @@ __all__ = [
     "ops_router",
     "recipes_router",
     "workflow_router",
+    "support_router",
+    "zammad_integration_router",
 ]

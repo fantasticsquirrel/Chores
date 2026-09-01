@@ -12,6 +12,7 @@ describe("shared family module metadata", () => {
       "chores",
       "homeschool",
       "recipes",
+      "support",
       "admin",
     ]);
     expect(
@@ -24,6 +25,7 @@ describe("shared family module metadata", () => {
       "chores",
       "homeschool",
       "recipes",
+      "support",
       "admin",
     ]);
     expect(getFamilyModulesForPlatform("mobile").map((module) => module.key)).toEqual([
@@ -32,6 +34,7 @@ describe("shared family module metadata", () => {
       "admin",
     ]);
     expect(isFamilyModuleSupportedOnPlatform("recipes", "web")).toBe(true);
+    expect(isFamilyModuleSupportedOnPlatform("support", "web")).toBe(true);
     expect(isFamilyModuleSupportedOnPlatform("recipes", "mobile")).toBe(false);
   });
 });

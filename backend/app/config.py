@@ -60,6 +60,13 @@ class Settings:
     # Set only by the disposable browser-smoke wrapper. This is deliberately
     # non-operational and must be rejected at startup outside that harness.
     playwright_smoke_run_id: str = ""
+    zammad_enabled: bool = False
+    zammad_base_url: str = ""
+    zammad_api_token: str = ""
+    zammad_group_id: int = 1
+    zammad_webhook_secret: str = ""
+    zammad_timeout_seconds: int = 8
+    zammad_webhook_max_age_seconds: int = 300
 
     @property
     def is_production(self) -> bool:
@@ -176,6 +183,17 @@ def get_settings() -> Settings:
     password_reset_enabled_raw = os.getenv("PASSWORD_RESET_ENABLED", "false")
     password_reset_enabled = _parse_bool(password_reset_enabled_raw, field_name="PASSWORD_RESET_ENABLED")
     registration_enabled = _parse_bool(os.getenv("REGISTRATION_ENABLED", "false"), field_name="REGISTRATION_ENABLED")
+    zammad_enabled = _parse_bool(os.getenv("ZAMMAD_ENABLED", "false"), field_name="ZAMMAD_ENABLED")
+    zammad_base_url = os.getenv("ZAMMAD_BASE_URL", "").strip().rstrip("/")
+    zammad_api_token = os.getenv("ZAMMAD_API_TOKEN", "").strip()
+    zammad_webhook_secret = os.getenv("ZAMMAD_WEBHOOK_SECRET", "").strip()
+    if zammad_enabled:
+        if not zammad_base_url.startswith("https://"):
+            raise SettingsError("ZAMMAD_BASE_URL must use HTTPS when enabled.")
+        if len(zammad_api_token) < 16:
+            raise SettingsError("ZAMMAD_API_TOKEN is required when enabled.")
+        if len(zammad_webhook_secret) < 32:
+            raise SettingsError("ZAMMAD_WEBHOOK_SECRET must be at least 32 characters when enabled.")
     password_reset_public_app_url = os.getenv(
         "PASSWORD_RESET_PUBLIC_APP_URL", "https://family.multihost.ing/chore"
     ).strip()
@@ -275,4 +293,11 @@ def get_settings() -> Settings:
             os.getenv("REGISTRATION_IP_WINDOW_LIMIT", "5"), field_name="REGISTRATION_IP_WINDOW_LIMIT"
         ),
         playwright_smoke_run_id=os.getenv("PLAYWRIGHT_SMOKE_RUN_ID", "").strip(),
+        zammad_enabled=zammad_enabled,
+        zammad_base_url=zammad_base_url,
+        zammad_api_token=zammad_api_token,
+        zammad_group_id=_parse_positive_int(os.getenv("ZAMMAD_GROUP_ID", "1"), field_name="ZAMMAD_GROUP_ID"),
+        zammad_webhook_secret=zammad_webhook_secret,
+        zammad_timeout_seconds=_parse_positive_int(os.getenv("ZAMMAD_TIMEOUT_SECONDS", "8"), field_name="ZAMMAD_TIMEOUT_SECONDS"),
+        zammad_webhook_max_age_seconds=_parse_positive_int(os.getenv("ZAMMAD_WEBHOOK_MAX_AGE_SECONDS", "300"), field_name="ZAMMAD_WEBHOOK_MAX_AGE_SECONDS"),
     )

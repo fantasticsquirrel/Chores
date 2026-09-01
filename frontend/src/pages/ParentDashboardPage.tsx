@@ -170,6 +170,7 @@ export function ParentDashboardPage(): ReactElement {
           <ButtonLink to="/parent/money">Money & History</ButtonLink>
           {moduleKeys.includes("homeschool") ? <ButtonLink to="/homeschool">Open Homeschool</ButtonLink> : null}
           {moduleKeys.includes("recipes") ? <ButtonLink to="/recipes">Open Cookbook</ButtonLink> : null}
+          {moduleKeys.includes("support") ? <ButtonLink to="/support">Get Support</ButtonLink> : null}
         </div>
       </Card>
     </section>

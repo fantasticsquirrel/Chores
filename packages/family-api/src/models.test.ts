@@ -21,12 +21,12 @@ describe("shared API models", () => {
       csrf_token?: string | null;
     }>();
     expectTypeOf<FamilyModule>().toMatchTypeOf<{
-      key: "chores" | "homeschool" | "recipes" | "admin";
+      key: "chores" | "homeschool" | "recipes" | "support" | "admin";
       name: string;
       description: string;
     }>();
     expectTypeOf<SetUserModuleAccessRequest>().toMatchTypeOf<{
-      module_key: "chores" | "homeschool" | "recipes" | "admin";
+      module_key: "chores" | "homeschool" | "recipes" | "support" | "admin";
       can_view: boolean;
       can_manage?: boolean;
     }>();

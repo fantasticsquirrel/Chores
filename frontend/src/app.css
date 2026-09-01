@@ -1653,3 +1653,10 @@ body {
 .module-read-only textarea {
   display: none !important;
 }
+.support-layout { display: grid; gap: 1rem; width: 100%; }
+.support-intro { grid-column: 1 / -1; }
+.support-ticket-list { list-style: none; padding: 0; display: grid; gap: .65rem; }
+.support-ticket-list button { width: 100%; display: flex; justify-content: space-between; gap: 1rem; text-align: left; padding: .8rem; }
+.support-thread { display: grid; gap: .75rem; margin: 1rem 0; }
+.support-thread article { padding: .8rem; border: 1px solid var(--border-color, #bbb); border-radius: .75rem; }
+@media (min-width: 900px) { .support-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
