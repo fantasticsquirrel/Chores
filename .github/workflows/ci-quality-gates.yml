@@ -22,6 +22,9 @@ jobs:
       - name: Install workspace dependencies
         run: npm ci
 
+      - name: Architecture hotspot report
+        run: npm run architecture:report
+
       - name: Frontend lint
         run: npm run lint --workspace frontend
 
@@ -66,6 +69,9 @@ jobs:
 
       - name: Full backend test suite
         run: pytest backend/tests -q
+
+      - name: Architecture dependency boundaries
+        run: python scripts/architecture-report.py --strict
 
       - name: Explicit fresh migration gate
         run: pytest backend/tests/test_alembic_migrations.py::test_alembic_upgrade_head_creates_family_manager_schema -q
