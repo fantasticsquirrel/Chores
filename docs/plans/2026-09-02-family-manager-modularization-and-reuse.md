@@ -10,7 +10,7 @@
 - [x] Separate completed refactor work from remaining work.
 - [x] Define target boundaries, dependency direction, and measurable acceptance criteria.
 - [ ] Phase 0: add architecture characterization and size/duplication reporting.
-- [ ] Phase 1: split backend domain models without schema changes.
+- [x] Phase 1: split backend domain models without schema changes.
 - [ ] Phase 2: decompose chore workflow and notification services.
 - [ ] Phase 3: thin remaining backend routers.
 - [ ] Phase 4: split the shared TypeScript contract by domain.
@@ -352,4 +352,3 @@ Delete a shim only when:
 - Duplicate pure scheduling/payload/module/error mechanics have one authoritative implementation per runtime/shared package.
 - Backend, shared package, frontend, mobile, lint, typecheck, build, migration, security, and relevant Playwright/smoke gates pass.
 - No API, database, route, permission, or visible behavior regression is introduced.
-
