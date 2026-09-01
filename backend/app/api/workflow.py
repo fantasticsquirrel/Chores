@@ -35,12 +35,11 @@ from app.schemas.workflow import (
     SubmissionReviewItemResponse,
     SubmissionReviewResponse,
 )
-from app.services.chores.workflow import (
-    advance_rotation_state_if_needed,
+from app.services.chores.eligibility import eligible_chores_for_child, resolve_active_child
+from app.services.chores.rotation import advance_rotation_state_if_needed
+from app.services.chores.submissions import (
     approval_occurrence_or_409,
     derive_submission_status,
-    eligible_chores_for_child,
-    resolve_active_child,
     serialize_submission_review,
     record_approved_occurrence,
 )

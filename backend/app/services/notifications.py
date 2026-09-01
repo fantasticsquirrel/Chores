@@ -24,7 +24,7 @@ from app.models.core import (
 )
 from app.models.enums import SubmissionStatus, UserRole
 from app.security.outbound_urls import UnsafeOutboundUrl, validate_push_endpoint
-from app.services.chores.workflow import eligible_chores_for_child
+from app.services.chores.eligibility import eligible_chores_for_child
 
 MODULE_CHORES = "chores"
 PUSH_TIMEOUT_SECONDS = 5
