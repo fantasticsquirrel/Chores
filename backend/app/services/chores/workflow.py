@@ -35,6 +35,7 @@ from app.schemas.workflow import (
     SubmissionReviewResponse,
 )
 from app.services.chores.rotation import is_child_rotation_assignee
+from app.services.chores.scheduling import scheduled_occurrence_for_target
 
 
 def resolve_active_child(session: Session, user: User, child_id: int | None) -> Child:
@@ -80,7 +81,7 @@ def eligible_chores_for_child(session: Session, child: Child, target_date: date)
         if not _is_child_allowed_for_chore(session, chore.id, child.id):
             continue
 
-        occurrence_date = _scheduled_occurrence_for_target(session, chore, child, target_date)
+        occurrence_date = scheduled_occurrence_for_target(session, chore, child, target_date)
         if occurrence_date is None:
             continue
 
@@ -114,14 +115,6 @@ def eligible_chores_for_child(session: Session, child: Child, target_date: date)
     return results
 
 
-def _schedule_unit_days(unit: ScheduleUnit | None) -> int:
-    if unit == ScheduleUnit.WEEK:
-        return 7
-    if unit == ScheduleUnit.MONTH:
-        return 30
-    return 1
-
-
 def _is_child_allowed_for_chore(session: Session, chore_id: int, child_id: int) -> bool:
     any_rows = session.scalar(select(exists().where(ChoreAllowedChild.chore_id == chore_id)))
     if not any_rows:
@@ -131,50 +124,6 @@ def _is_child_allowed_for_chore(session: Session, chore_id: int, child_id: int) 
             select(exists().where(and_(ChoreAllowedChild.chore_id == chore_id, ChoreAllowedChild.child_id == child_id)))
         )
     )
-def _latest_completion_date_for_scope(session: Session, chore: Chore, child: Child) -> date | None:
-    query = select(CompletionRecord.date).where(
-        CompletionRecord.chore_id == chore.id,
-        CompletionRecord.status == CompletionStatus.APPROVED,
-    )
-    if chore.completion_mode == CompletionMode.PER_CHILD:
-        query = query.where(CompletionRecord.child_id == child.id)
-    else:
-        query = query.where(CompletionRecord.household_id == child.household_id)
-    query = query.order_by(CompletionRecord.date.desc()).limit(1)
-    return session.scalar(query)
-
-
-def _scheduled_occurrence_for_target(session: Session, chore: Chore, child: Child, target_date: date) -> date | None:
-    if target_date < chore.start_date:
-        return None
-
-    if chore.schedule_mode == ScheduleMode.NONE:
-        return target_date
-
-    if chore.schedule_mode == ScheduleMode.ONCE:
-        return chore.start_date if target_date == chore.start_date else None
-
-    if chore.schedule_mode == ScheduleMode.EVERY:
-        if chore.schedule_interval is None:
-            return None
-        step_days = chore.schedule_interval * _schedule_unit_days(chore.schedule_unit)
-        delta_days = (target_date - chore.start_date).days
-        if delta_days < 0 or delta_days % step_days != 0:
-            return None
-        return target_date
-
-    if chore.schedule_mode == ScheduleMode.AFTER_COMPLETION:
-        interval = chore.schedule_interval or 1
-        step_days = interval * _schedule_unit_days(chore.schedule_unit)
-        latest_completion = _latest_completion_date_for_scope(session, chore, child)
-        due_date = chore.start_date if latest_completion is None else latest_completion + timedelta(days=step_days)
-        if target_date < due_date:
-            return None
-        return due_date
-
-    return None
-
-
 def _has_approved_completion_for_occurrence(session: Session, chore: Chore, child: Child, occurrence_date: date) -> bool:
     query = select(exists().where(
         and_(
@@ -223,7 +172,7 @@ def _has_pending_submission_for_occurrence(session: Session, chore: Chore, child
         pending_child = child if submission.child_id == child.id else session.get(Child, submission.child_id)
         if pending_child is None:
             continue
-        pending_occurrence = _scheduled_occurrence_for_target(session, chore, pending_child, submission.for_date)
+        pending_occurrence = scheduled_occurrence_for_target(session, chore, pending_child, submission.for_date)
         if pending_occurrence == occurrence_date:
             return True
 
@@ -235,7 +184,7 @@ def approval_occurrence_or_409(session: Session, submission: Submission, chore: 
     if child is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found for submission.")
 
-    occurrence_date = _scheduled_occurrence_for_target(session, chore, child, submission.for_date)
+    occurrence_date = scheduled_occurrence_for_target(session, chore, child, submission.for_date)
     if occurrence_date is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore is no longer eligible for this date.")
 
