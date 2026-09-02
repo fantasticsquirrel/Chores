@@ -14,7 +14,6 @@ SOURCE_ROOTS = (ROOT / "backend/app", ROOT / "frontend/src", ROOT / "mobile/src"
 EXTENSIONS = {".py", ".ts", ".tsx"}
 
 HOTSPOT_ALLOWLIST = {
-    "backend/app/services/chores/workflow.py": "Phase 2 chore-domain split",
     "backend/app/services/notifications.py": "Phase 2 notification split",
     "frontend/src/pages/ParentChoresPage.tsx": "Phase 5 web feature split",
     "frontend/src/pages/ParentChildrenPage.tsx": "Phase 5 web feature split",
