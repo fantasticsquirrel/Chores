@@ -16,7 +16,6 @@ from app.models.core import (
     Household,
     Notification,
     NotificationDeliveryAttempt,
-    NotificationPreference,
     PushSubscription,
     Submission,
     SubmissionItem,
@@ -25,22 +24,15 @@ from app.models.core import (
 from app.models.enums import SubmissionStatus, UserRole
 from app.security.outbound_urls import UnsafeOutboundUrl, validate_push_endpoint
 from app.services.chores.eligibility import eligible_chores_for_child
+from app.services.notification_preferences import (
+    DEFAULT_CHORE_NOTIFICATION_SETTINGS,
+    MODULE_CHORES,
+    get_user_notification_settings,
+    update_user_notification_settings,
+)
 
-MODULE_CHORES = "chores"
 PUSH_TIMEOUT_SECONDS = 5
 MAX_PUSH_ATTEMPTS = 3
-
-DEFAULT_CHORE_NOTIFICATION_SETTINGS: dict[str, Any] = {
-    "in_app_enabled": True,
-    "push_enabled": False,
-    "daily_digest_enabled": True,
-    "daily_digest_time": "08:00",
-    "due_soon_enabled": True,
-    "due_soon_hours": 24,
-    "approval_notifications_enabled": True,
-    "quiet_hours_start": "21:00",
-    "quiet_hours_end": "07:00",
-}
 
 
 def utc_now() -> datetime:
@@ -49,50 +41,6 @@ def utc_now() -> datetime:
 
 def _db_datetime(value: datetime) -> datetime:
     return value.astimezone(UTC).replace(tzinfo=None) if value.tzinfo else value
-
-
-def _merged_settings(raw: str | None) -> dict[str, Any]:
-    values = dict(DEFAULT_CHORE_NOTIFICATION_SETTINGS)
-    if raw:
-        try:
-            decoded = json.loads(raw)
-        except json.JSONDecodeError:
-            decoded = {}
-        if isinstance(decoded, dict):
-            values.update(decoded)
-    return values
-
-
-def get_user_notification_settings(session: Session, user_id: int) -> dict[str, dict[str, Any]]:
-    row = session.scalar(
-        select(NotificationPreference).where(
-            NotificationPreference.user_id == user_id,
-            NotificationPreference.module_key == MODULE_CHORES,
-        )
-    )
-    return {MODULE_CHORES: _merged_settings(row.settings_json if row else None)}
-
-
-def update_user_notification_settings(session: Session, user_id: int, module_key: str, updates: dict[str, Any]) -> dict[str, Any]:
-    if module_key != MODULE_CHORES:
-        raise ValueError("Unsupported notification module.")
-    row = session.scalar(
-        select(NotificationPreference).where(
-            NotificationPreference.user_id == user_id,
-            NotificationPreference.module_key == module_key,
-        )
-    )
-    settings = _merged_settings(row.settings_json if row else None)
-    clean_updates = {key: value for key, value in updates.items() if value is not None and key in settings}
-    settings.update(clean_updates)
-    if row is None:
-        row = NotificationPreference(user_id=user_id, module_key=module_key, settings_json=json.dumps(settings), updated_at=utc_now())
-        session.add(row)
-    else:
-        row.settings_json = json.dumps(settings)
-        row.updated_at = utc_now()
-    session.commit()
-    return settings
 
 
 def create_notification(
