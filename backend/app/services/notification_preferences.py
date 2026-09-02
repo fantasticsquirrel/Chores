@@ -1,8 +1,9 @@
 """Notification preference defaults, persistence, and merging."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, time, timedelta
 import json
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -62,4 +63,37 @@ def update_user_notification_settings(session: Session, user_id: int, module_key
     return settings
 
 
-__all__ = ["DEFAULT_CHORE_NOTIFICATION_SETTINGS", "MODULE_CHORES", "get_user_notification_settings", "update_user_notification_settings"]
+def quiet_hours_end(
+    now: datetime,
+    timezone_name: str,
+    settings: dict[str, Any],
+) -> datetime | None:
+    start_raw = settings.get("quiet_hours_start") or ""
+    end_raw = settings.get("quiet_hours_end") or ""
+    if not start_raw or not end_raw or start_raw == end_raw:
+        return None
+    try:
+        start = time.fromisoformat(start_raw)
+        end = time.fromisoformat(end_raw)
+    except ValueError:
+        return None
+    try:
+        zone = ZoneInfo(timezone_name)
+    except ZoneInfoNotFoundError:
+        zone = ZoneInfo("UTC")
+    local = now.astimezone(zone)
+    local_time = local.timetz().replace(tzinfo=None)
+    in_quiet = (local_time >= start or local_time < end) if start > end else start <= local_time < end
+    if not in_quiet:
+        return None
+    end_date = local.date() + timedelta(days=1 if start > end and local_time >= start else 0)
+    return datetime.combine(end_date, end, tzinfo=zone).astimezone(UTC)
+
+
+__all__ = [
+    "DEFAULT_CHORE_NOTIFICATION_SETTINGS",
+    "MODULE_CHORES",
+    "get_user_notification_settings",
+    "quiet_hours_end",
+    "update_user_notification_settings",
+]

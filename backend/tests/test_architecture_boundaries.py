@@ -16,9 +16,25 @@ def test_every_file_over_500_lines_has_a_removal_phase() -> None:
     assert report["unplanned_hotspots_over_500"] == []
 
 
-def test_api_and_notifications_use_public_chore_boundaries() -> None:
+def test_api_and_notification_reminders_use_public_chore_boundaries() -> None:
     workflow_api = (ROOT / "backend/app/api/workflow.py").read_text(encoding="utf-8")
-    notifications = (ROOT / "backend/app/services/notifications.py").read_text(encoding="utf-8")
+    reminders = (ROOT / "backend/app/services/notification_reminders.py").read_text(encoding="utf-8")
 
     assert "app.services.chores.workflow import" not in workflow_api
-    assert "app.services.chores.eligibility import eligible_chores_for_child" in notifications
+    assert "app.services.chores.eligibility import eligible_chores_for_child" in reminders
+
+
+def test_notification_services_do_not_depend_on_api_or_facade_layers() -> None:
+    for service_name in ("notification_push.py", "notification_reminders.py"):
+        service = (ROOT / "backend/app/services" / service_name).read_text(encoding="utf-8")
+
+        assert "app.api" not in service
+        assert "app.services.notifications" not in service
+
+
+def test_notification_facade_exposes_extracted_delivery_and_reminder_capabilities() -> None:
+    notifications = (ROOT / "backend/app/services/notifications.py").read_text(encoding="utf-8")
+
+    assert "from app.services.notification_push import" in notifications
+    assert "from app.services import notification_reminders" in notifications
+    assert "def process_pending_push_deliveries" not in notifications

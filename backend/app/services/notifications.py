@@ -1,47 +1,33 @@
+"""Compatibility facade for notification services."""
+
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, time, timedelta
-import json
-import math
-from pathlib import Path
-from typing import Any, Callable
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from datetime import UTC, date, datetime
+from typing import Any
 
-from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.core import (
-    Child,
-    Chore,
-    Household,
-    Notification,
-    NotificationDeliveryAttempt,
-    PushSubscription,
-    Submission,
-    SubmissionItem,
-    User,
-)
+from app.models.core import Child, Chore, Notification, Submission, SubmissionItem, User
 from app.models.enums import SubmissionStatus, UserRole
-from app.security.outbound_urls import UnsafeOutboundUrl, validate_push_endpoint
-from app.services.chores.eligibility import eligible_chores_for_child
+from app.services import notification_reminders
 from app.services.notification_preferences import (
     DEFAULT_CHORE_NOTIFICATION_SETTINGS,
     MODULE_CHORES,
     get_user_notification_settings,
     update_user_notification_settings,
 )
+from app.services.notification_push import (
+    MAX_PUSH_ATTEMPTS,
+    PUSH_TIMEOUT_SECONDS,
+    enqueue_push_delivery_attempts,
+    process_pending_push_deliveries,
+)
 from app.services.push_subscriptions import disable_push_subscriptions, upsert_push_subscription
-
-PUSH_TIMEOUT_SECONDS = 5
-MAX_PUSH_ATTEMPTS = 3
 
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
-
-
-def _db_datetime(value: datetime) -> datetime:
-    return value.astimezone(UTC).replace(tzinfo=None) if value.tzinfo else value
 
 
 def create_notification(
@@ -67,7 +53,9 @@ def create_notification(
     if category == "approval" and settings.get("approval_notifications_enabled") is False:
         return None
     if dedup_key is not None:
-        existing = session.scalar(select(Notification).where(Notification.user_id == user_id, Notification.dedup_key == dedup_key))
+        existing = session.scalar(
+            select(Notification).where(Notification.user_id == user_id, Notification.dedup_key == dedup_key)
+        )
         if existing is not None:
             return None
     notification = Notification(
@@ -95,226 +83,26 @@ def _enqueue_push_if_enabled(session: Session, notification: Notification, setti
 
     if settings.get("push_enabled") is not True or not get_settings().push_vapid_private_key:
         return
-    subscriptions = list(
-        session.scalars(
-            select(PushSubscription).where(PushSubscription.user_id == notification.user_id, PushSubscription.enabled.is_(True))
-        ).all()
-    )
-    for subscription in subscriptions:
-        channel = f"push:{subscription.id}"
-        duplicate = session.scalar(
-            select(NotificationDeliveryAttempt).where(
-                NotificationDeliveryAttempt.notification_id == notification.id,
-                NotificationDeliveryAttempt.channel == channel,
-            )
-        )
-        if duplicate is None:
-            session.add(
-                NotificationDeliveryAttempt(
-                    notification_id=notification.id,
-                    channel=channel,
-                    status="pending",
-                    attempted_at=_db_datetime(utc_now()),
-                    error_message="attempts=0",
-                )
-            )
-
-
-def _private_key() -> str:
-    from app.config import get_settings
-
-    value = get_settings().push_vapid_private_key
-    if not value:
-        return ""
-    try:
-        path = Path(value)
-        if path.is_file():
-            return path.read_text()
-    except OSError:
-        pass
-    return value
-
-
-def _default_sender(**kwargs: Any) -> Any:
-    import requests
-    from pywebpush import webpush
-
-    kwargs.pop("allow_redirects", None)
-
-    class _NoRedirectSession(requests.Session):
-        def request(self, *args: Any, **request_kwargs: Any) -> Any:
-            request_kwargs["allow_redirects"] = False
-            return super().request(*args, **request_kwargs)
-
-    with _NoRedirectSession() as session:
-        kwargs["requests_session"] = session
-        return webpush(**kwargs)
-
-
-def _attempt_count(attempt: NotificationDeliveryAttempt) -> int:
-    prefix = (attempt.error_message or "").split(";", 1)[0]
-    try:
-        return int(prefix.removeprefix("attempts="))
-    except ValueError:
-        return 0
-
-
-def _timezone(name: str) -> ZoneInfo:
-    try:
-        return ZoneInfo(name)
-    except ZoneInfoNotFoundError:
-        return ZoneInfo("UTC")
-
-
-def _quiet_end(now: datetime, household: Household, settings: dict[str, Any]) -> datetime | None:
-    start_raw = settings.get("quiet_hours_start") or ""
-    end_raw = settings.get("quiet_hours_end") or ""
-    if not start_raw or not end_raw or start_raw == end_raw:
-        return None
-    try:
-        start = time.fromisoformat(start_raw)
-        end = time.fromisoformat(end_raw)
-    except ValueError:
-        return None
-    zone = _timezone(household.timezone)
-    local = now.astimezone(zone)
-    local_time = local.timetz().replace(tzinfo=None)
-    in_quiet = (local_time >= start or local_time < end) if start > end else start <= local_time < end
-    if not in_quiet:
-        return None
-    end_date = local.date() + timedelta(days=1 if start > end and local_time >= start else 0)
-    return datetime.combine(end_date, end, tzinfo=zone).astimezone(UTC)
-
-
-def process_pending_push_deliveries(
-    *,
-    limit: int = 100,
-    now: datetime | None = None,
-    sender: Callable[..., Any] = _default_sender,
-) -> dict[str, int]:
-    from app.config import get_settings
-    from app.db import get_session_factory
-
-    current = now or utc_now()
-    current_db = _db_datetime(current)
-    factory = get_session_factory(get_settings().database_url)
-    counts: dict[str, int] = {}
-    with factory() as session:
-        eligible_for_claim = or_(
-            NotificationDeliveryAttempt.status == "pending",
-            and_(
-                NotificationDeliveryAttempt.status == "retry",
-                NotificationDeliveryAttempt.attempted_at <= current_db,
-            ),
-            and_(
-                NotificationDeliveryAttempt.status == "processing",
-                NotificationDeliveryAttempt.attempted_at <= current_db - timedelta(minutes=5),
-            ),
-        )
-        candidate_ids = list(
-            session.scalars(
-                select(NotificationDeliveryAttempt.id)
-                .where(eligible_for_claim)
-                .order_by(NotificationDeliveryAttempt.id)
-                .limit(limit)
-            ).all()
-        )
-        claimed_ids: list[int] = []
-        for attempt_id in candidate_ids:
-            result = session.execute(
-                update(NotificationDeliveryAttempt)
-                .where(NotificationDeliveryAttempt.id == attempt_id, eligible_for_claim)
-                .values(status="processing", attempted_at=current_db)
-            )
-            if result.rowcount == 1:
-                claimed_ids.append(attempt_id)
-        session.commit()
-        attempts = [attempt for attempt_id in claimed_ids if (attempt := session.get(NotificationDeliveryAttempt, attempt_id)) is not None]
-        for attempt in attempts:
-            try:
-                subscription_id = int(attempt.channel.split(":", 1)[1])
-            except (IndexError, ValueError):
-                attempt.status = "dead"
-                attempt.error_message = "attempts=0;invalid queue channel"
-                counts["dead"] = counts.get("dead", 0) + 1
-                continue
-            notification = session.get(Notification, attempt.notification_id)
-            subscription = session.get(PushSubscription, subscription_id)
-            if notification is None or subscription is None or not subscription.enabled:
-                attempt.status = "disabled"
-                counts["disabled"] = counts.get("disabled", 0) + 1
-                continue
-            if subscription.user_id != notification.user_id:
-                attempt.status = "dead"
-                attempt.error_message = "attempts=0;subscription ownership mismatch"
-                counts["dead"] = counts.get("dead", 0) + 1
-                continue
-            user = session.get(User, notification.user_id)
-            household = session.get(Household, notification.household_id)
-            if user is None or household is None or user.household_id != notification.household_id:
-                attempt.status = "dead"
-                counts["dead"] = counts.get("dead", 0) + 1
-                continue
-            user_settings = get_user_notification_settings(session, user.id).get(notification.module_key, {})
-            quiet_until = _quiet_end(current, household, user_settings)
-            if quiet_until is not None:
-                attempt.status = "retry"
-                attempt.attempted_at = _db_datetime(quiet_until)
-                attempt.error_message = f"attempts={_attempt_count(attempt)};quiet-hours"
-                counts["retry"] = counts.get("retry", 0) + 1
-                continue
-            try:
-                validate_push_endpoint(subscription.endpoint)
-                response = sender(
-                    subscription_info={
-                        "endpoint": subscription.endpoint,
-                        "keys": {"p256dh": subscription.p256dh, "auth": subscription.auth},
-                    },
-                    data=json.dumps({"title": notification.title, "body": notification.body, "link_url": notification.link_url})[:4096],
-                    vapid_private_key=_private_key(),
-                    vapid_claims={"sub": get_settings().push_vapid_claims_sub},
-                    timeout=PUSH_TIMEOUT_SECONDS,
-                    allow_redirects=False,
-                )
-                status_code = getattr(response, "status_code", 201)
-                if status_code in {404, 410}:
-                    raise _GoneSubscription(status_code)
-                if not 200 <= status_code < 300:
-                    raise RuntimeError(f"push service returned {status_code}")
-                attempt.status = "sent"
-                attempt.attempted_at = current_db
-                attempt.error_message = ""
-                counts["sent"] = counts.get("sent", 0) + 1
-            except Exception as exc:  # Worker must persist bounded failure state and continue.
-                status_code = getattr(getattr(exc, "response", None), "status_code", None)
-                if isinstance(exc, UnsafeOutboundUrl) or isinstance(exc, _GoneSubscription) or status_code in {404, 410}:
-                    subscription.enabled = False
-                    subscription.disabled_at = current_db
-                    attempt.status = "disabled"
-                    attempt.attempted_at = current_db
-                    attempt.error_message = f"attempts={_attempt_count(attempt) + 1};{str(exc)[:900]}"
-                    counts["disabled"] = counts.get("disabled", 0) + 1
-                    continue
-                failures = _attempt_count(attempt) + 1
-                attempt.attempted_at = _db_datetime(current + timedelta(minutes=(2 if failures == 1 else 8)))
-                attempt.error_message = f"attempts={failures};{str(exc)[:900]}"
-                attempt.status = "dead" if failures >= MAX_PUSH_ATTEMPTS else "retry"
-                counts[attempt.status] = counts.get(attempt.status, 0) + 1
-        session.commit()
-    return counts
-
-
-class _GoneSubscription(RuntimeError):
-    def __init__(self, status_code: int) -> None:
-        super().__init__(f"push subscription returned {status_code}")
-        self.response = type("Response", (), {"status_code": status_code})()
+    enqueue_push_delivery_attempts(session, notification)
 
 
 def notify_submission_created(session: Session, submission: Submission) -> int:
     child = session.get(Child, submission.child_id)
     child_name = child.name if child is not None else "A child"
-    item_count = session.scalar(select(func.count()).select_from(SubmissionItem).where(SubmissionItem.submission_id == submission.id)) or 0
-    recipients = list(session.scalars(select(User).where(User.household_id == submission.household_id, User.role.in_([UserRole.PARENT, UserRole.PARENT_ADMIN]))).all())
+    item_count = (
+        session.scalar(
+            select(func.count()).select_from(SubmissionItem).where(SubmissionItem.submission_id == submission.id)
+        )
+        or 0
+    )
+    recipients = list(
+        session.scalars(
+            select(User).where(
+                User.household_id == submission.household_id,
+                User.role.in_([UserRole.PARENT, UserRole.PARENT_ADMIN]),
+            )
+        ).all()
+    )
     created = 0
     for user in recipients:
         result = create_notification(
@@ -334,12 +122,24 @@ def notify_submission_created(session: Session, submission: Submission) -> int:
 
 
 def notify_submission_approved(session: Session, submission: Submission) -> int:
-    child_user = session.scalar(select(User).where(User.household_id == submission.household_id, User.child_id == submission.child_id, User.role == UserRole.CHILD))
+    child_user = session.scalar(
+        select(User).where(
+            User.household_id == submission.household_id,
+            User.child_id == submission.child_id,
+            User.role == UserRole.CHILD,
+        )
+    )
     if child_user is None:
         return 0
-    item_rows = list(session.scalars(select(SubmissionItem).where(SubmissionItem.submission_id == submission.id)).all())
+    item_rows = list(
+        session.scalars(select(SubmissionItem).where(SubmissionItem.submission_id == submission.id)).all()
+    )
     chore_ids = [item.chore_id for item in item_rows if item.status == SubmissionStatus.APPROVED]
-    names = [row.name for row in session.scalars(select(Chore).where(Chore.id.in_(chore_ids))).all()] if chore_ids else []
+    names = (
+        [row.name for row in session.scalars(select(Chore).where(Chore.id.in_(chore_ids))).all()]
+        if chore_ids
+        else []
+    )
     created = create_notification(
         session,
         household_id=submission.household_id,
@@ -355,94 +155,14 @@ def notify_submission_approved(session: Session, submission: Submission) -> int:
 
 
 def generate_daily_chore_reminders(target_date: date) -> int:
-    from app.config import get_settings
-    from app.db import get_session_factory
-
-    factory = get_session_factory(get_settings().database_url)
-    with factory() as session:
-        created = _generate_daily(session, target_date)
-        session.commit()
-        return created
-
-
-def _generate_daily(session: Session, target_date: date, *, only_user_id: int | None = None) -> int:
-    query = select(User).where(User.role == UserRole.CHILD, User.child_id.is_not(None))
-    if only_user_id is not None:
-        query = query.where(User.id == only_user_id)
-    created = 0
-    for user in session.scalars(query).all():
-        settings = get_user_notification_settings(session, user.id)[MODULE_CHORES]
-        if not settings.get("daily_digest_enabled", True):
-            continue
-        child = session.get(Child, user.child_id)
-        if child is None or not child.active:
-            continue
-        eligible = eligible_chores_for_child(session, child, target_date)
-        if not eligible:
-            continue
-        names = ", ".join(item.name for item in eligible[:3])
-        if len(eligible) > 3:
-            names += f", and {len(eligible) - 3} more"
-        result = create_notification(
-            session,
-            household_id=user.household_id,
-            user_id=user.id,
-            category="reminder",
-            title="Today's chores are ready",
-            body=f"You have {len(eligible)} chore{'s' if len(eligible) != 1 else ''} ready today: {names}.",
-            link_url="/chore/child/today",
-            dedup_key=f"chores:daily:{user.id}:{target_date.isoformat()}",
-            child_id=child.id,
-        )
-        created += int(result is not None)
-    return created
+    return notification_reminders.generate_daily_chore_reminders(
+        target_date,
+        create_notification=create_notification,
+    )
 
 
 def run_notification_scheduler(*, now: datetime | None = None) -> dict[str, int]:
-    from app.config import get_settings
-    from app.db import get_session_factory
-
-    current = now or utc_now()
-    factory = get_session_factory(get_settings().database_url)
-    counts: dict[str, int] = {}
-    with factory() as session:
-        child_users = list(session.scalars(select(User).where(User.role == UserRole.CHILD, User.child_id.is_not(None))).all())
-        for user in child_users:
-            household = session.get(Household, user.household_id)
-            child = session.get(Child, user.child_id)
-            if household is None or child is None or not child.active:
-                continue
-            local = current.astimezone(_timezone(household.timezone))
-            settings = get_user_notification_settings(session, user.id)[MODULE_CHORES]
-            if settings.get("due_soon_enabled", True):
-                hours = int(settings.get("due_soon_hours", 24))
-                days = max(1, math.ceil(hours / 24))
-                for offset in range(1, days + 1):
-                    target = local.date() + timedelta(days=offset)
-                    eligible = eligible_chores_for_child(session, child, target)
-                    if not eligible:
-                        continue
-                    result = create_notification(
-                        session,
-                        household_id=user.household_id,
-                        user_id=user.id,
-                        category="due_soon",
-                        title="Chores due soon",
-                        body=f"{len(eligible)} chore{'s are' if len(eligible) != 1 else ' is'} coming up.",
-                        link_url="/chore/child/today",
-                        dedup_key=f"chores:due-soon:{user.id}:{target.isoformat()}",
-                        child_id=child.id,
-                    )
-                    counts["due_soon"] = counts.get("due_soon", 0) + int(result is not None)
-                    break
-            if settings.get("daily_digest_enabled", True):
-                try:
-                    digest_time = time.fromisoformat(str(settings.get("daily_digest_time", "08:00")))
-                except ValueError:
-                    digest_time = time(8, 0)
-                scheduled = datetime.combine(local.date(), digest_time, tzinfo=local.tzinfo)
-                if scheduled <= local < scheduled + timedelta(minutes=15):
-                    made = _generate_daily(session, local.date(), only_user_id=user.id)
-                    counts["daily_digest"] = counts.get("daily_digest", 0) + made
-        session.commit()
-    return {key: value for key, value in counts.items() if value}
+    return notification_reminders.run_notification_scheduler(
+        now=now,
+        create_notification=create_notification,
+    )
