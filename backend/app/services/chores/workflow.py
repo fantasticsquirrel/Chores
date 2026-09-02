@@ -34,6 +34,7 @@ from app.schemas.workflow import (
     SubmissionReviewItemResponse,
     SubmissionReviewResponse,
 )
+from app.services.chores.rotation import is_child_rotation_assignee
 
 
 def resolve_active_child(session: Session, user: User, child_id: int | None) -> Child:
@@ -83,7 +84,7 @@ def eligible_chores_for_child(session: Session, child: Child, target_date: date)
         if occurrence_date is None:
             continue
 
-        if chore.assignment_mode == AssignmentMode.ROTATING and not _is_child_rotation_assignee(
+        if chore.assignment_mode == AssignmentMode.ROTATING and not is_child_rotation_assignee(
             session, chore, child.id, occurrence_date
         ):
             continue
@@ -238,7 +239,7 @@ def approval_occurrence_or_409(session: Session, submission: Submission, chore: 
     if occurrence_date is None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore is no longer eligible for this date.")
 
-    if chore.assignment_mode == AssignmentMode.ROTATING and not _is_child_rotation_assignee(
+    if chore.assignment_mode == AssignmentMode.ROTATING and not is_child_rotation_assignee(
         session, chore, child.id, occurrence_date
     ):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Chore is no longer assigned to this child.")
@@ -294,55 +295,6 @@ def record_approved_occurrence(
             )
         )
     return completion
-
-
-def _is_child_rotation_assignee(session: Session, chore: Chore, child_id: int, occurrence_date: date) -> bool:
-    members = list(
-        session.scalars(
-            select(ChoreRotationMember)
-            .where(ChoreRotationMember.chore_id == chore.id)
-            .order_by(ChoreRotationMember.position.asc())
-        ).all()
-    )
-    if not members:
-        return False
-
-    step_days = max(1, (chore.schedule_interval or 1) * _schedule_unit_days(chore.schedule_unit))
-    if chore.schedule_mode == ScheduleMode.EVERY:
-        idx = ((occurrence_date - chore.start_date).days // step_days) % len(members)
-    elif chore.schedule_mode == ScheduleMode.ONCE:
-        idx = 0
-    else:
-        state = session.get(ChoreRotationState, chore.id)
-        idx = (state.current_position if state is not None else 0) % len(members)
-
-    return members[idx].child_id == child_id
-
-
-def advance_rotation_state_if_needed(session: Session, chore: Chore, occurrence_date: date) -> None:
-    if chore.assignment_mode != AssignmentMode.ROTATING:
-        return
-
-    members = list(
-        session.scalars(
-            select(ChoreRotationMember)
-            .where(ChoreRotationMember.chore_id == chore.id)
-            .order_by(ChoreRotationMember.position.asc())
-        ).all()
-    )
-    if len(members) <= 1:
-        return
-
-    state = session.get(ChoreRotationState, chore.id)
-    if state is None:
-        state = ChoreRotationState(chore_id=chore.id, current_position=0, last_occurrence_date=None)
-        session.add(state)
-
-    if state.last_occurrence_date == occurrence_date:
-        return
-
-    state.current_position = (state.current_position + 1) % len(members)
-    state.last_occurrence_date = occurrence_date
 
 
 def serialize_submission_review(session: Session, submission: Submission) -> SubmissionReviewResponse:
