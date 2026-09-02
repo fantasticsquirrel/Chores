@@ -130,8 +130,6 @@ def _is_child_allowed_for_chore(session: Session, chore_id: int, child_id: int) 
             select(exists().where(and_(ChoreAllowedChild.chore_id == chore_id, ChoreAllowedChild.child_id == child_id)))
         )
     )
-
-
 def _latest_completion_date_for_scope(session: Session, chore: Chore, child: Child) -> date | None:
     query = select(CompletionRecord.date).where(
         CompletionRecord.chore_id == chore.id,
@@ -379,11 +377,3 @@ def serialize_submission_review(session: Session, submission: Submission) -> Sub
             for item in items
         ],
     )
-
-
-def derive_submission_status(items: list[SubmissionItem]) -> SubmissionStatus:
-    if any(item.status == SubmissionStatus.PENDING for item in items):
-        return SubmissionStatus.PENDING
-    if any(item.status == SubmissionStatus.APPROVED for item in items):
-        return SubmissionStatus.APPROVED
-    return SubmissionStatus.REJECTED

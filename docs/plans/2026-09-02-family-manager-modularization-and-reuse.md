@@ -9,7 +9,7 @@
 - [x] Inventory current structure and hotspots.
 - [x] Separate completed refactor work from remaining work.
 - [x] Define target boundaries, dependency direction, and measurable acceptance criteria.
-- [ ] Phase 0: add architecture characterization and size/duplication reporting.
+- [x] Phase 0: add architecture characterization and size/duplication reporting.
 - [x] Phase 1: split backend domain models without schema changes.
 - [ ] Phase 2: decompose chore workflow and notification services.
 - [ ] Phase 3: thin remaining backend routers.
