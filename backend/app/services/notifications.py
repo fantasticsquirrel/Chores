@@ -30,6 +30,7 @@ from app.services.notification_preferences import (
     get_user_notification_settings,
     update_user_notification_settings,
 )
+from app.services.push_subscriptions import disable_push_subscriptions, upsert_push_subscription
 
 PUSH_TIMEOUT_SECONDS = 5
 MAX_PUSH_ATTEMPTS = 3
@@ -445,32 +446,3 @@ def run_notification_scheduler(*, now: datetime | None = None) -> dict[str, int]
                     counts["daily_digest"] = counts.get("daily_digest", 0) + made
         session.commit()
     return {key: value for key, value in counts.items() if value}
-
-
-def upsert_push_subscription(session: Session, *, user_id: int, endpoint: str, p256dh: str, auth: str, device_label: str) -> PushSubscription:
-    validate_push_endpoint(endpoint)
-    existing = session.scalar(select(PushSubscription).where(PushSubscription.user_id == user_id, PushSubscription.endpoint == endpoint))
-    now = utc_now()
-    if existing is None:
-        existing = PushSubscription(user_id=user_id, endpoint=endpoint, p256dh=p256dh, auth=auth, device_label=device_label, enabled=True, last_seen_at=now)
-        session.add(existing)
-    else:
-        existing.p256dh = p256dh
-        existing.auth = auth
-        existing.device_label = device_label
-        existing.enabled = True
-        existing.disabled_at = None
-        existing.last_seen_at = now
-    session.commit()
-    session.refresh(existing)
-    return existing
-
-
-def disable_push_subscriptions(session: Session, *, user_id: int) -> int:
-    now = utc_now()
-    rows = list(session.scalars(select(PushSubscription).where(PushSubscription.user_id == user_id, PushSubscription.enabled.is_(True))).all())
-    for row in rows:
-        row.enabled = False
-        row.disabled_at = now
-    session.commit()
-    return len(rows)
