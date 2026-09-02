@@ -25,16 +25,29 @@ def test_api_and_notification_reminders_use_public_chore_boundaries() -> None:
 
 
 def test_notification_services_do_not_depend_on_api_or_facade_layers() -> None:
-    for service_name in ("notification_push.py", "notification_reminders.py"):
+    for service_name in (
+        "notification_creation.py",
+        "notification_push.py",
+        "notification_reminders.py",
+        "notification_submissions.py",
+    ):
         service = (ROOT / "backend/app/services" / service_name).read_text(encoding="utf-8")
 
         assert "app.api" not in service
         assert "app.services.notifications" not in service
 
 
-def test_notification_facade_exposes_extracted_delivery_and_reminder_capabilities() -> None:
+def test_notification_facade_exposes_extracted_capabilities_without_orchestration() -> None:
     notifications = (ROOT / "backend/app/services/notifications.py").read_text(encoding="utf-8")
 
+    assert "from app.services.notification_creation import" in notifications
     assert "from app.services.notification_push import" in notifications
-    assert "from app.services import notification_reminders" in notifications
+    assert "from app.services.notification_reminders import" in notifications
+    assert "from app.services.notification_submissions import" in notifications
+    assert "from sqlalchemy" not in notifications
+    assert "def create_notification" not in notifications
+    assert "def notify_submission_created" not in notifications
+    assert "def notify_submission_approved" not in notifications
+    assert "def generate_daily_chore_reminders" not in notifications
+    assert "def run_notification_scheduler" not in notifications
     assert "def process_pending_push_deliveries" not in notifications

@@ -9,8 +9,8 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Child, Chore, Household, Notification, User
-from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, UserRole
+from app.models.core import Child, Chore, Household, Notification, Submission, SubmissionItem, User
+from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, SubmissionStatus, UserRole
 from app.security import hash_password
 from app.security.csrf import CSRF_HEADER_NAME
 
@@ -159,6 +159,75 @@ def test_submission_and_approval_create_chore_notifications(tmp_path: Path, monk
         assert child_inbox.json()["items"][0]["title"] == "Chore approved"
         assert child_inbox.json()["items"][0]["link_url"] == "/chore/child/today"
         assert "Dishes" in child_inbox.json()["items"][0]["body"]
+
+
+def test_submission_notification_orchestration_scopes_recipients_and_deduplicates(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    seed = _seed_household()
+
+    from app.services.notifications import notify_submission_approved, notify_submission_created
+
+    session_factory = get_session_factory(get_settings().database_url)
+    with session_factory() as session:
+        parent_admin = User(
+            household_id=seed["household_id"],
+            email="admin@example.com",
+            password_hash=hash_password("password123"),
+            role=UserRole.PARENT_ADMIN,
+        )
+        other_household = Household(name="Other Home", timezone="UTC")
+        session.add_all([parent_admin, other_household])
+        session.flush()
+        other_parent = User(
+            household_id=other_household.id,
+            email="other-parent@example.com",
+            password_hash=hash_password("password123"),
+            role=UserRole.PARENT,
+        )
+        submission = Submission(
+            household_id=seed["household_id"],
+            child_id=seed["child_id"],
+            for_date=date(2026, 6, 18),
+            status=SubmissionStatus.PENDING,
+        )
+        session.add_all([other_parent, submission])
+        session.flush()
+        item = SubmissionItem(
+            submission_id=submission.id,
+            chore_id=seed["chore_id"],
+            status=SubmissionStatus.PENDING,
+        )
+        session.add(item)
+        session.flush()
+
+        assert notify_submission_created(session, submission) == 2
+        assert notify_submission_created(session, submission) == 0
+
+        review_notifications = list(
+            session.scalars(
+                select(Notification)
+                .where(Notification.category == "approval", Notification.user_id != seed["child_user_id"])
+                .order_by(Notification.user_id)
+            ).all()
+        )
+        assert {notification.user_id for notification in review_notifications} == {
+            seed["parent_id"],
+            parent_admin.id,
+        }
+        assert all(notification.body == "Riley submitted 1 chore for approval." for notification in review_notifications)
+
+        item.status = SubmissionStatus.APPROVED
+        assert notify_submission_approved(session, submission) == 1
+        assert notify_submission_approved(session, submission) == 0
+
+        child_notification = session.scalar(
+            select(Notification).where(Notification.user_id == seed["child_user_id"])
+        )
+        assert child_notification is not None
+        assert child_notification.body == "Approved: Dishes."
 
 
 def test_generate_daily_chore_reminders_dedupes_per_child_date(tmp_path: Path, monkeypatch) -> None:

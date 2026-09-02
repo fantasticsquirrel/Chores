@@ -4,18 +4,16 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime, time, timedelta
 import math
-from typing import Callable
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import Child, Household, Notification, User
+from app.models.core import Child, Household, User
 from app.models.enums import UserRole
 from app.services.chores.eligibility import eligible_chores_for_child
+from app.services.notification_creation import create_notification
 from app.services.notification_preferences import MODULE_CHORES, get_user_notification_settings
-
-NotificationCreator = Callable[..., Notification | None]
 
 
 def _utc_now() -> datetime:
@@ -31,8 +29,6 @@ def _timezone(name: str) -> ZoneInfo:
 
 def generate_daily_chore_reminders(
     target_date: date,
-    *,
-    create_notification: NotificationCreator,
 ) -> int:
     from app.config import get_settings
     from app.db import get_session_factory
@@ -42,7 +38,6 @@ def generate_daily_chore_reminders(
         created = _generate_daily(
             session,
             target_date,
-            create_notification=create_notification,
         )
         session.commit()
         return created
@@ -52,7 +47,6 @@ def _generate_daily(
     session: Session,
     target_date: date,
     *,
-    create_notification: NotificationCreator,
     only_user_id: int | None = None,
 ) -> int:
     query = select(User).where(User.role == UserRole.CHILD, User.child_id.is_not(None))
@@ -90,7 +84,6 @@ def _generate_daily(
 def run_notification_scheduler(
     *,
     now: datetime | None = None,
-    create_notification: NotificationCreator,
 ) -> dict[str, int]:
     from app.config import get_settings
     from app.db import get_session_factory
@@ -140,7 +133,6 @@ def run_notification_scheduler(
                     made = _generate_daily(
                         session,
                         local.date(),
-                        create_notification=create_notification,
                         only_user_id=user.id,
                     )
                     counts["daily_digest"] = counts.get("daily_digest", 0) + made
