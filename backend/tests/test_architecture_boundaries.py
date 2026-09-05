@@ -51,3 +51,21 @@ def test_notification_facade_exposes_extracted_capabilities_without_orchestratio
     assert "def generate_daily_chore_reminders" not in notifications
     assert "def run_notification_scheduler" not in notifications
     assert "def process_pending_push_deliveries" not in notifications
+
+
+def test_chore_router_keeps_transaction_ownership_and_delegates_domain_logic() -> None:
+    chore_router = (ROOT / "backend/app/api/chores.py").read_text(encoding="utf-8")
+    chore_services = [
+        (ROOT / f"backend/app/services/chores/{name}.py").read_text(encoding="utf-8")
+        for name in ("management", "parent_tasks", "serialization")
+    ]
+
+    assert len(chore_router.splitlines()) < 300
+    assert "from app.services.chores.management import" in chore_router
+    assert "from sqlalchemy import" not in chore_router
+    assert "session.commit()" in chore_router
+    assert "session.get(Chore" not in chore_services[0]
+    for service in chore_services:
+        assert "session.commit()" not in service
+        assert "app.api" not in service
+        assert len(service.splitlines()) < 350
