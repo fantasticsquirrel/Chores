@@ -9,6 +9,7 @@
     "./client-core": "./src/client-core.ts",
     "./endpoints": "./src/endpoints/index.ts",
     "./endpoints/*": "./src/endpoints/*.ts",
+    "./finance": "./src/finance.ts",
     "./models": "./src/models.ts",
     "./models/*": "./src/models/*.ts",
     "./modules": "./src/modules.ts",

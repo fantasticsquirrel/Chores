@@ -1,5 +1,6 @@
 export * from "./api-endpoints";
 export * from "./client-core";
+export * from "./finance";
 export type * from "./models";
 export * from "./modules";
 export * from "./ops-endpoints";

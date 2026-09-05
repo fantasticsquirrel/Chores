@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { parseChoreTransactionDraft } from "@family-manager/family-api/finance";
 import { apiClient } from "../../api/client";
 import type { ChildBalance, ChoreTransaction } from "../../api/models";
 import { ActionButton } from "../../components/ActionButton";
@@ -35,10 +36,10 @@ export function MoneyScreen({ readOnly = false }: { readOnly?: boolean }) {
 
   async function save() {
     if (childId === null) return;
-    const cents = Math.round(Number.parseFloat(amount) * 100);
-    if (!Number.isFinite(cents) || cents === 0 || (type !== "ADJUSTMENT" && cents < 0)) { setError(type === "ADJUSTMENT" ? "Enter a non-zero adjustment." : "Enter an amount greater than zero."); return; }
+    const parsed = parseChoreTransactionDraft({ amount, childId, memo, type });
+    if (parsed.error !== null) { setError(parsed.error); return; }
     try {
-      await apiClient.createChoreTransaction({ child_id: childId, amount_cents: cents, type, memo });
+      await apiClient.createChoreTransaction(parsed.payload);
       setAmount(""); setMemo(""); await load(childId);
     } catch (caught) { setError(formatError(caught)); }
   }
