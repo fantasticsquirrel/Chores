@@ -1,5 +1,36 @@
+import type { AuthSessionResponse } from "./models/auth";
+
 export type RequestQueryValue = string | number | boolean | null | undefined;
 export type RequestQuery = object;
+
+export abstract class FamilyApiClientCore {
+  protected abstract get<TResponse>(
+    path: string,
+    query?: RequestQuery,
+  ): Promise<TResponse>;
+  protected abstract post<TResponse, TBody>(
+    path: string,
+    body: TBody,
+    query?: RequestQuery,
+  ): Promise<TResponse>;
+  protected abstract put<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse>;
+  protected abstract patch<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse>;
+  protected abstract delete(path: string, query?: RequestQuery): Promise<void>;
+  protected abstract postNoContent(path: string): Promise<void>;
+  protected abstract postNoContentWithBody<TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<void>;
+
+  protected afterAuthSession(_session: AuthSessionResponse): void {}
+  protected afterLogout(): void {}
+}
 
 export type NormalizeBaseUrlOptions = {
   allowRelative: boolean;

@@ -7,6 +7,8 @@
     ".": "./src/index.ts",
     "./api-endpoints": "./src/api-endpoints.ts",
     "./client-core": "./src/client-core.ts",
+    "./endpoints": "./src/endpoints/index.ts",
+    "./endpoints/*": "./src/endpoints/*.ts",
     "./models": "./src/models.ts",
     "./models/*": "./src/models/*.ts",
     "./modules": "./src/modules.ts",
