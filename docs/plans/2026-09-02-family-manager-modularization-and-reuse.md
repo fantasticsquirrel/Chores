@@ -12,7 +12,7 @@
 - [x] Phase 0: add architecture characterization and size/duplication reporting.
 - [x] Phase 1: split backend domain models without schema changes.
 - [x] Phase 2: decompose chore workflow and notification services.
-- [ ] Phase 3: thin remaining backend routers.
+- [x] Phase 3: thin remaining backend routers.
 - [ ] Phase 4: split the shared TypeScript contract by domain.
 - [ ] Phase 5: decompose web feature pages.
 - [ ] Phase 6: decompose mobile feature screens and styles.

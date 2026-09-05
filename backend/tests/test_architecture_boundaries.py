@@ -144,3 +144,32 @@ def test_recipe_router_keeps_security_and_transaction_boundaries_while_delegatin
     assert "ip.is_private" in recipe_services["importer"]
     assert "MAX_RECIPE_IMPORT_BYTES" in recipe_services["importer"]
     assert "RECIPE_IMPORT_TIMEOUT_SECONDS" in recipe_services["importer"]
+
+
+def test_ops_router_keeps_privileged_security_and_transaction_boundaries_while_delegating_domains() -> None:
+    ops_router = (ROOT / "backend/app/api/ops.py").read_text(encoding="utf-8")
+    service_root = ROOT / "backend/app/services/ops"
+    ops_services = {
+        name: (service_root / f"{name}.py").read_text(encoding="utf-8")
+        for name in (
+            "audit",
+            "billing_reconciliation",
+            "platform_users",
+            "support_cases",
+        )
+    }
+
+    assert len(ops_router.splitlines()) < 300
+    assert ops_router.count("Depends(require_platform_roles(") == 9
+    assert "has_recent_reauth(principal.auth_session)" in ops_router
+    assert "from app.services.ops import audit, billing_reconciliation, platform_users, support_cases" in ops_router
+    assert "from sqlalchemy import" not in ops_router
+    assert "select(" not in ops_router
+    assert "db.commit()" in ops_router
+
+    for service in ops_services.values():
+        assert "app.api" not in service
+        assert "session.commit()" not in service
+        assert "session.rollback()" not in service
+        assert "session.refresh(" not in service
+        assert len(service.splitlines()) < 300
