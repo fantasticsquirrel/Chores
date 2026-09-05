@@ -3,8 +3,11 @@ import type {
   Child,
   Chore,
   CompletionMode,
+  CreateChoreRequest,
+  EligibleChore,
   ScheduleMode,
   ScheduleUnit,
+  UpdateChoreRequest,
 } from "../../../api/models";
 
 export type MobileChoreFormState = {
@@ -82,7 +85,10 @@ export function buildEditChoreForm(chore: Chore): MobileChoreFormState {
   };
 }
 
-export function parseOptionalPositiveInteger(value: string, fieldName: string): number | null {
+export function parseOptionalPositiveInteger(
+  value: string,
+  fieldName: string,
+): number | null {
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;
   const parsed = Number.parseInt(trimmed, 10);
@@ -90,6 +96,119 @@ export function parseOptionalPositiveInteger(value: string, fieldName: string): 
     throw new Error(`${fieldName} must be a positive whole number.`);
   }
   return parsed;
+}
+
+type NormalizedChoreForm = {
+  expiresAt: string | null;
+  name: string;
+  rewardCents: number;
+  scheduleInterval: number | null;
+  scheduleUnit: ScheduleUnit | null;
+  timeoutDays: number | null;
+};
+
+function normalizeChoreForm(form: MobileChoreFormState): NormalizedChoreForm {
+  const name = form.name.trim();
+  if (name.length === 0) {
+    throw new Error("Chore name is required.");
+  }
+
+  const timeoutDays = parseOptionalPositiveInteger(
+    form.timeout_days,
+    "Timeout",
+  );
+  const showInterval =
+    form.schedule_mode === "EVERY" || form.schedule_mode === "AFTER_COMPLETION";
+  const scheduleInterval = showInterval
+    ? parseOptionalPositiveInteger(form.schedule_interval, "Interval")
+    : null;
+  if (showInterval && scheduleInterval === null) {
+    throw new Error("Interval is required for repeating schedules.");
+  }
+
+  if (form.assignment_mode === "ROTATING" && form.rotation_order.length < 2) {
+    throw new Error("Rotation requires at least 2 children.");
+  }
+
+  const rewardCents = Math.round(
+    Number.parseFloat(form.reward_dollars || "0") * 100,
+  );
+  if (!Number.isFinite(rewardCents) || rewardCents < 0) {
+    throw new Error("Reward must be a non-negative amount.");
+  }
+
+  return {
+    expiresAt: form.expires_at.trim().length > 0 ? form.expires_at : null,
+    name,
+    rewardCents,
+    scheduleInterval,
+    scheduleUnit: scheduleInterval !== null ? form.schedule_unit : null,
+    timeoutDays,
+  };
+}
+
+export function buildCreateChoreRequest(
+  form: MobileChoreFormState,
+  householdId: number,
+  userId: number,
+): CreateChoreRequest {
+  const normalized = normalizeChoreForm(form);
+  return {
+    household_id: householdId,
+    owner_user_id: form.task_scope === "PARENT" ? userId : null,
+    name: normalized.name,
+    reward_cents: form.task_scope === "PARENT" ? 0 : normalized.rewardCents,
+    start_date: form.start_date,
+    expires_at: normalized.expiresAt,
+    timeout_days: normalized.timeoutDays,
+    schedule_mode: form.schedule_mode,
+    schedule_interval: normalized.scheduleInterval,
+    schedule_unit: normalized.scheduleUnit,
+    completion_mode: form.completion_mode,
+    assignment_mode:
+      form.task_scope === "PARENT" ? "STATIC" : form.assignment_mode,
+    allowed_child_ids:
+      form.task_scope === "PARENT" || form.assignment_mode === "ROTATING"
+        ? []
+        : form.allowed_child_ids,
+    rotation_order:
+      form.task_scope === "CHILD" && form.assignment_mode === "ROTATING"
+        ? form.rotation_order
+        : [],
+  };
+}
+
+export function buildUpdateChoreRequest(
+  form: MobileChoreFormState,
+  householdId: number,
+  userId: number,
+): UpdateChoreRequest {
+  const normalized = normalizeChoreForm(form);
+  return {
+    household_id: householdId,
+    owner_user_id: form.task_scope === "PARENT" ? userId : null,
+    name: normalized.name,
+    reward_cents: form.task_scope === "PARENT" ? 0 : normalized.rewardCents,
+    start_date: form.start_date,
+    expires_at: normalized.expiresAt,
+    timeout_days: normalized.timeoutDays,
+    schedule_mode: form.schedule_mode,
+    schedule_interval: normalized.scheduleInterval,
+    schedule_unit: normalized.scheduleUnit,
+    completion_mode: form.completion_mode,
+    assignment_mode:
+      form.task_scope === "PARENT" ? "STATIC" : form.assignment_mode,
+    allowed_child_ids:
+      form.assignment_mode === "ROTATING" ? null : form.allowed_child_ids,
+    rotation_order:
+      form.assignment_mode === "ROTATING" ? form.rotation_order : null,
+  };
+}
+
+export function showScheduleInterval(form: MobileChoreFormState): boolean {
+  return (
+    form.schedule_mode === "EVERY" || form.schedule_mode === "AFTER_COMPLETION"
+  );
 }
 
 export function scheduleLabel(chore: Chore): string {
@@ -122,7 +241,25 @@ export function timingLabel(chore: Chore): string {
   const labels: string[] = [];
   if (chore.expires_at !== null) labels.push(`Ends ${chore.expires_at}`);
   if (chore.timeout_days !== null) {
-    labels.push(`Window ${chore.timeout_days} day${chore.timeout_days === 1 ? "" : "s"}`);
+    labels.push(
+      `Window ${chore.timeout_days} day${chore.timeout_days === 1 ? "" : "s"}`,
+    );
   }
   return labels.join(" · ");
+}
+
+export function eligibleTimingLabel(chore: EligibleChore): string {
+  return `Due ${chore.occurrence_date}${
+    chore.expires_on ? ` · Ends ${chore.expires_on}` : ""
+  }`;
+}
+
+export function completionLabel(chore: Chore): string {
+  return chore.completion_mode === "SHARED" ? "Shared" : "Per child";
+}
+
+export function rewardLabel(chore: Chore): string {
+  return chore.owner_user_id === null
+    ? `Reward $${(chore.reward_cents / 100).toFixed(2)}`
+    : "Personal parent to-do · no finance";
 }
