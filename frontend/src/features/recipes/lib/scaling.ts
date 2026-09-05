@@ -11,7 +11,9 @@ export function formatQuantity(value: number | null): string {
   if (value === null) return "";
   const whole = Math.trunc(value);
   const remainder = Math.abs(value - whole);
-  const match = FRACTIONS.find(([fraction]) => Math.abs(remainder - fraction) < 0.02);
+  const match = FRACTIONS.find(
+    ([fraction]) => Math.abs(remainder - fraction) < 0.02,
+  );
   if (match !== undefined) {
     if (whole === 0) return match[1];
     return `${whole} ${match[1]}`;

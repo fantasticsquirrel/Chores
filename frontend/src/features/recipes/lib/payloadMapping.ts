@@ -6,7 +6,7 @@ import type {
   RecipeStepRequest,
   RecipeSummary,
 } from "../../../api";
-import { formatQuantity } from "../../../pages/recipes/scaling";
+import { formatQuantity } from "./scaling";
 
 export function emptyIngredient(position = 1): RecipeIngredientRequest {
   return {
@@ -161,4 +161,34 @@ export function buildRecipePayloadForSave(payload: CreateRecipeRequest): CreateR
   }
   const components = (payload.components ?? []).filter((row) => row.component_recipe_id > 0);
   return { ...payload, title: payload.title.trim(), ingredients, steps, components };
+}
+
+export function buildRecipePayloadForUpdate(
+  payload: CreateRecipeRequest,
+  recipeId: number,
+): CreateRecipeRequest {
+  const ingredients = (payload.ingredients ?? [])
+    .filter((row) => row.item.trim().length > 0)
+    .map((row, index) => ({ ...row, position: index + 1 }));
+  const validPositions = new Set(ingredients.map((row) => row.position));
+  const steps = (payload.steps ?? [])
+    .filter((row) => row.instruction.trim().length > 0)
+    .map((row, index) => ({
+      ...row,
+      position: index + 1,
+      ingredient_position_refs: (row.ingredient_position_refs ?? []).filter(
+        (ref) => validPositions.has(ref),
+      ),
+    }));
+  const components = (payload.components ?? []).filter(
+    (row) =>
+      row.component_recipe_id > 0 && row.component_recipe_id !== recipeId,
+  );
+  return {
+    ...payload,
+    title: payload.title.trim(),
+    ingredients,
+    steps,
+    components,
+  };
 }

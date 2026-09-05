@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildEmptyRecipePayload,
   buildRecipePayloadForSave,
+  buildRecipePayloadForUpdate,
   parsePositionRefs,
 } from "./payloadMapping";
 
@@ -14,6 +15,38 @@ describe("recipe payload mapping", () => {
     expect(payload.ingredients?.[0]).toMatchObject({ position: 1, item: "" });
     expect(payload.steps).toHaveLength(1);
     expect(payload.steps?.[0]).toMatchObject({ position: 1, instruction: "" });
+  });
+
+  it("normalizes update rows while excluding the recipe from its own components", () => {
+    const payload = buildEmptyRecipePayload();
+    payload.title = "  Dinner  ";
+    payload.ingredients = [
+      { ...payload.ingredients![0], position: 4, item: "rice" },
+    ];
+    payload.steps = [
+      {
+        ...payload.steps![0],
+        position: 7,
+        instruction: "Cook it",
+        ingredient_position_refs: [1, 4],
+      },
+    ];
+    payload.components = [
+      { component_recipe_id: 10 },
+      { component_recipe_id: 11 },
+    ];
+
+    expect(buildRecipePayloadForUpdate(payload, 10)).toMatchObject({
+      title: "Dinner",
+      ingredients: [expect.objectContaining({ position: 1, item: "rice" })],
+      steps: [
+        expect.objectContaining({
+          position: 1,
+          ingredient_position_refs: [1],
+        }),
+      ],
+      components: [{ component_recipe_id: 11 }],
+    });
   });
 
   it("parses comma-separated positive step ingredient references", () => {
