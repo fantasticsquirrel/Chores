@@ -4,7 +4,9 @@ import type { Child, HomeschoolDayComment } from "../../../api/models";
 import { ActionButton } from "../../../components/ActionButton";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
 import type { DayCommentFormState } from "../lib/defaults";
 import { sortDatedRecords } from "../lib/records";
 import { ChildPicker } from "./HomeschoolPickers";
@@ -47,7 +49,7 @@ export function HomeschoolCommentSection({
           onChangeText={(date) => onChange({ date })}
           placeholder="YYYY-MM-DD"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.date}
         />
         <FieldLabel label="Comment" />
@@ -57,7 +59,7 @@ export function HomeschoolCommentSection({
           onChangeText={(comment) => onChange({ comment })}
           placeholder="Field trip, sick day, reading notes..."
           placeholderTextColor="#94a3b8"
-          style={[styles.input, styles.multilineInput]}
+          style={[formStyles.input, formStyles.multilineInput]}
           value={form.comment}
         />
         <ActionButton
@@ -69,15 +71,15 @@ export function HomeschoolCommentSection({
 
       <SectionCard title="Recent Comments">
         {recentComments.length === 0 ? (
-          <Text style={styles.mutedText}>No day comments yet.</Text>
+          <Text style={shellStyles.mutedText}>No day comments yet.</Text>
         ) : null}
         {recentComments.map((comment) => (
-          <View key={comment.id} style={styles.reviewItem}>
-            <Text style={styles.rowTitle}>{comment.date}</Text>
-            <Text style={styles.rowMeta}>
+          <View key={comment.id} style={cardStyles.reviewItem}>
+            <Text style={formStyles.rowTitle}>{comment.date}</Text>
+            <Text style={formStyles.rowMeta}>
               {comment.comment || "No comment"}
             </Text>
-            <View style={styles.inlineButtons}>
+            <View style={formStyles.inlineButtons}>
               <ActionButton
                 compact
                 disabled={busy}

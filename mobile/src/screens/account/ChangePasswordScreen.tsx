@@ -6,7 +6,8 @@ import { ActionButton } from "../../components/ActionButton";
 import { FieldLabel } from "../../components/FieldLabel";
 import { InlineNotice } from "../../components/InlineNotice";
 import { SectionCard } from "../../components/SectionCard";
-import { styles } from "../../styles/layout";
+import { formStyles } from "../../styles/forms";
+import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
 export function ChangePasswordScreen() {
@@ -66,7 +67,7 @@ export function ChangePasswordScreen() {
 
   return (
     <SectionCard title="Account Security">
-      <View style={styles.compactStack}>
+      <View style={shellStyles.compactStack}>
         <FieldLabel label="Current Password" />
         <TextInput
           maxLength={1024}
@@ -77,7 +78,7 @@ export function ChangePasswordScreen() {
           placeholder="Current password"
           placeholderTextColor="#94a3b8"
           secureTextEntry
-          style={styles.input}
+          style={formStyles.input}
           textContentType="password"
           value={currentPassword}
         />
@@ -91,7 +92,7 @@ export function ChangePasswordScreen() {
           placeholder="At least 15 characters"
           placeholderTextColor="#94a3b8"
           secureTextEntry
-          style={styles.input}
+          style={formStyles.input}
           textContentType="newPassword"
           value={newPassword}
         />
@@ -105,7 +106,7 @@ export function ChangePasswordScreen() {
           placeholder="Repeat new password"
           placeholderTextColor="#94a3b8"
           secureTextEntry
-          style={styles.input}
+          style={formStyles.input}
           textContentType="newPassword"
           value={confirmPassword}
         />

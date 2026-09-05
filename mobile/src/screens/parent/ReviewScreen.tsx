@@ -8,7 +8,9 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
-import { styles } from "../../styles/layout";
+import { cardStyles } from "../../styles/cards";
+import { formStyles } from "../../styles/forms";
+import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
 export function ParentReviewScreen() {
@@ -92,7 +94,7 @@ export function ParentReviewScreen() {
         </SectionCard>
       ) : submissions.length === 0 ? (
         <SectionCard title="Pending">
-          <Text style={styles.mutedText}>No pending submissions.</Text>
+          <Text style={shellStyles.mutedText}>No pending submissions.</Text>
         </SectionCard>
       ) : (
         submissions.map((submission) => (
@@ -102,12 +104,12 @@ export function ParentReviewScreen() {
             title={`Submission #${submission.id}`}
           >
             {submission.items.map((item) => (
-              <View key={item.id} style={styles.reviewItem}>
-                <View style={styles.rowMain}>
-                  <Text style={styles.rowTitle}>{item.chore_name}</Text>
-                  <Text style={styles.rowMeta}>{item.status}</Text>
+              <View key={item.id} style={cardStyles.reviewItem}>
+                <View style={formStyles.rowMain}>
+                  <Text style={formStyles.rowTitle}>{item.chore_name}</Text>
+                  <Text style={formStyles.rowMeta}>{item.status}</Text>
                 </View>
-                <View style={styles.itemButtonRow}>
+                <View style={cardStyles.itemButtonRow}>
                   <ActionButton
                     compact
                     disabled={actionId !== null}

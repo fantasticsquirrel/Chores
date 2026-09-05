@@ -15,7 +15,10 @@ import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
 import { familyModules, type FamilyModuleKey } from "../../modules/registry";
-import { styles } from "../../styles/layout";
+import { adminStyles } from "../../features/admin/styles";
+import { cardStyles } from "../../styles/cards";
+import { formStyles } from "../../styles/forms";
+import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
 type AdminState = {
@@ -268,23 +271,23 @@ export function AdminScreen({
         {!householdState.loading &&
         householdState.error === null &&
         householdState.modules.length === 0 ? (
-          <Text style={styles.mutedText}>No household modules found.</Text>
+          <Text style={shellStyles.mutedText}>No household modules found.</Text>
         ) : null}
         {householdState.modules.map((module) => {
           const disabled =
             !module.can_disable || updatingHouseholdModule !== null;
           return (
-            <View key={module.key} style={styles.selectableRow}>
-              <View style={styles.rowMain}>
-                <Text style={styles.rowTitle}>{module.name}</Text>
-                <Text style={styles.rowMeta}>{module.description}</Text>
+            <View key={module.key} style={formStyles.selectableRow}>
+              <View style={formStyles.rowMain}>
+                <Text style={formStyles.rowTitle}>{module.name}</Text>
+                <Text style={formStyles.rowMeta}>{module.description}</Text>
                 {!module.can_disable ? (
-                  <Text style={styles.lockedModuleText}>
+                  <Text style={adminStyles.lockedModuleText}>
                     Admin stays enabled so household administrators cannot be locked out.
                   </Text>
                 ) : null}
                 {householdActionError?.module.key === module.key ? (
-                  <View style={styles.moduleActionFeedback}>
+                  <View style={adminStyles.moduleActionFeedback}>
                     <InlineNotice
                       tone="error"
                       message={`Could not update ${module.name}: ${householdActionError.message}`}
@@ -311,18 +314,18 @@ export function AdminScreen({
                 disabled={disabled}
                 onPress={() => toggleHouseholdModule(module)}
                 style={[
-                  styles.moduleToggle,
-                  module.enabled ? styles.moduleToggleEnabled : null,
-                  disabled && module.can_disable ? styles.moduleToggleBusy : null,
+                  adminStyles.moduleToggle,
+                  module.enabled ? adminStyles.moduleToggleEnabled : null,
+                  disabled && module.can_disable ? adminStyles.moduleToggleBusy : null,
                 ]}
               >
                 <View
                   style={[
-                    styles.moduleToggleThumb,
-                    module.enabled ? styles.moduleToggleThumbEnabled : null,
+                    adminStyles.moduleToggleThumb,
+                    module.enabled ? adminStyles.moduleToggleThumbEnabled : null,
                   ]}
                 />
-                <Text style={styles.moduleToggleLabel}>
+                <Text style={adminStyles.moduleToggleLabel}>
                   {updatingHouseholdModule === module.key
                     ? "Saving"
                     : module.enabled
@@ -350,7 +353,7 @@ export function AdminScreen({
           }}
           placeholder="other.parent@example.com"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={newParentEmail}
         />
         <FieldLabel label="Temporary Password" />
@@ -363,7 +366,7 @@ export function AdminScreen({
           placeholder="At least 8 characters"
           placeholderTextColor="#94a3b8"
           secureTextEntry
-          style={styles.input}
+          style={formStyles.input}
           value={newParentPassword}
         />
         <FieldLabel label="Role" />
@@ -402,16 +405,16 @@ export function AdminScreen({
       <SectionCard title="Module Access">
         {state.loading ? <LoadingRow label="Loading module access" /> : null}
         {!state.loading && state.users.length === 0 ? (
-          <Text style={styles.mutedText}>No users found.</Text>
+          <Text style={shellStyles.mutedText}>No users found.</Text>
         ) : null}
         {state.users.map((user) => (
-          <View key={user.id} style={styles.reviewItem}>
-            <Text style={styles.rowTitle}>{user.email}</Text>
-            <Text style={styles.rowMeta}>
+          <View key={user.id} style={cardStyles.reviewItem}>
+            <Text style={formStyles.rowTitle}>{user.email}</Text>
+            <Text style={formStyles.rowMeta}>
               {user.role}
               {user.child_id ? ` · child ${user.child_id}` : ""}
             </Text>
-            <View style={styles.choiceGrid}>
+            <View style={formStyles.choiceGrid}>
               {familyModules.map((module) => {
                 const enabled = hasModule(user, module.key);
                 const householdStateUnavailable =
@@ -433,15 +436,15 @@ export function AdminScreen({
                     key={module.key}
                     onPress={() => toggleAccess(user, module.key)}
                     style={[
-                      styles.choiceButton,
-                      enabled ? styles.choiceButtonSelected : null,
-                      disabled ? styles.buttonDisabled : null,
+                      formStyles.choiceButton,
+                      enabled ? formStyles.choiceButtonSelected : null,
+                      disabled ? formStyles.buttonDisabled : null,
                     ]}
                   >
                     <Text
                       style={[
-                        styles.choiceButtonText,
-                        enabled ? styles.choiceButtonTextSelected : null,
+                        formStyles.choiceButtonText,
+                        enabled ? formStyles.choiceButtonTextSelected : null,
                       ]}
                     >
                       {householdStateUnavailable

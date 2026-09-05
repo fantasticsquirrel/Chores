@@ -9,7 +9,9 @@ import type {
 import { ActionButton } from "../../../components/ActionButton";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
 import type { GradeFormState } from "../lib/defaults";
 import {
   ChildPicker,
@@ -75,7 +77,7 @@ export function HomeschoolGradeSection({
           onChangeText={(grade) => onChange({ grade })}
           placeholder="A, 95%, Complete..."
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.grade}
         />
         <ActionButton
@@ -87,22 +89,22 @@ export function HomeschoolGradeSection({
 
       <SectionCard title="Grade Records">
         {filteredGrades.length === 0 ? (
-          <Text style={styles.mutedText}>No grade records yet.</Text>
+          <Text style={shellStyles.mutedText}>No grade records yet.</Text>
         ) : null}
         {filteredGrades.map((grade) => (
-          <View key={grade.id} style={styles.reviewItem}>
-            <Text style={styles.rowTitle}>
+          <View key={grade.id} style={cardStyles.reviewItem}>
+            <Text style={formStyles.rowTitle}>
               {subjectLookup.get(grade.subject_id)?.name ??
                 `Subject ${grade.subject_id}`}
               : {grade.grade || "-"}
             </Text>
-            <Text style={styles.rowMeta}>
+            <Text style={formStyles.rowMeta}>
               {grade.semester_id === null
                 ? "Overall"
                 : (semesterLookup.get(grade.semester_id)?.name ??
                   `Semester ${grade.semester_id}`)}
             </Text>
-            <View style={styles.inlineButtons}>
+            <View style={formStyles.inlineButtons}>
               <ActionButton
                 compact
                 disabled={busy}

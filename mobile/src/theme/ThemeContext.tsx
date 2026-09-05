@@ -2,8 +2,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 
 import { applyThemeColors, themeDefinitions, themeIds, type ThemeId } from "../styles/colors";
-import { refreshStyles } from "../styles/layout";
+import { refreshCardStyles } from "../styles/cards";
+import { refreshFormStyles } from "../styles/forms";
 import { refreshNavigationStyles } from "../styles/navigation";
+import { refreshShellStyles } from "../styles/shell";
+import { refreshAdminStyles } from "../features/admin/styles";
+import { refreshAuthStyles } from "../features/auth/styles";
+import { refreshChoreStyles } from "../features/chores/styles";
+import { refreshHomeschoolStyles } from "../features/homeschool/styles";
 
 const STORAGE_KEY = "family-manager-theme";
 const ThemeContext = createContext<{ theme: ThemeId; setTheme: (theme: ThemeId) => void }>({ theme: "paper-pine", setTheme: () => undefined });
@@ -17,8 +23,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   function apply(themeId: ThemeId) {
     applyThemeColors(themeId);
-    refreshStyles();
+    refreshAdminStyles();
+    refreshAuthStyles();
+    refreshCardStyles();
+    refreshChoreStyles();
+    refreshFormStyles();
+    refreshHomeschoolStyles();
     refreshNavigationStyles();
+    refreshShellStyles();
     setThemeState(themeId);
   }
 

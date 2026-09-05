@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 
-import { styles } from "../styles/layout";
+import { cardStyles } from "../styles/cards";
 
 export function SectionCard({
   children,
@@ -13,11 +13,11 @@ export function SectionCard({
   title: string;
 }) {
   return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title}</Text>
+    <View style={cardStyles.card}>
+      <View style={cardStyles.cardHeader}>
+        <Text style={cardStyles.cardTitle}>{title}</Text>
         {subtitle !== undefined ? (
-          <Text style={styles.cardSubtitle} numberOfLines={2}>
+          <Text style={cardStyles.cardSubtitle} numberOfLines={2}>
             {subtitle}
           </Text>
         ) : null}

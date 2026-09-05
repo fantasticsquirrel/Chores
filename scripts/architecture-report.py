@@ -17,11 +17,6 @@ HOTSPOT_ALLOWLIST = {
     "frontend/src/pages/ParentChoresPage.tsx": "Phase 5 web feature split",
     "frontend/src/pages/ParentChildrenPage.tsx": "Phase 5 web feature split",
     "frontend/src/pages/AdminDashboardPage.tsx": "Phase 5 web feature split",
-    "mobile/src/screens/homeschool/HomeschoolScreen.tsx": "Phase 6 mobile feature split",
-    "mobile/src/features/homeschool/components/HomeschoolForms.tsx": "Phase 6 mobile feature split",
-    "mobile/src/screens/parent/ChoresScreen.tsx": "Phase 6 mobile feature split",
-    "mobile/src/screens/parent/ChildrenScreen.tsx": "Phase 6 mobile feature split",
-    "mobile/src/styles/layout.ts": "Phase 6 style split",
     "packages/family-api/src/models.ts": "Phase 4 contract split",
     "packages/family-api/src/api-endpoints.ts": "Phase 4 endpoint split",
 }

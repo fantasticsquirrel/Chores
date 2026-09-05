@@ -8,7 +8,8 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
 import { StatCard } from "../../components/StatCard";
-import { styles } from "../../styles/layout";
+import { cardStyles } from "../../styles/cards";
+import { shellStyles } from "../../styles/shell";
 import { formatError, formatNullableCount } from "../../utils/format";
 
 export function ParentHomeScreen({
@@ -69,7 +70,7 @@ export function ParentHomeScreen({
         }
       />
       {error !== null ? <InlineNotice tone="error" message={error} /> : null}
-      <View style={styles.statGrid}>
+      <View style={cardStyles.statGrid}>
         <StatCard
           label="Active children"
           value={formatNullableCount(activeChildrenCount)}
@@ -81,12 +82,12 @@ export function ParentHomeScreen({
       </View>
       <SectionCard title="Enabled modules">
         {modules.length === 0 ? (
-          <Text style={styles.mutedText}>No modules loaded yet.</Text>
+          <Text style={shellStyles.mutedText}>No modules loaded yet.</Text>
         ) : (
-          <View style={styles.chipRow}>
+          <View style={cardStyles.chipRow}>
             {modules.map((module) => (
-              <View key={module.key} style={styles.moduleChip}>
-                <Text style={styles.moduleChipText}>{module.name}</Text>
+              <View key={module.key} style={cardStyles.moduleChip}>
+                <Text style={cardStyles.moduleChipText}>{module.name}</Text>
               </View>
             ))}
           </View>

@@ -28,7 +28,7 @@ import { ChoresScreen } from "./screens/parent/ChoresScreen";
 import { ParentHomeScreen } from "./screens/parent/ParentHomeScreen";
 import { ParentReviewScreen } from "./screens/parent/ReviewScreen";
 import { MoneyScreen } from "./screens/parent/MoneyScreen";
-import { styles } from "./styles/layout";
+import { shellStyles } from "./styles/shell";
 import { isParentRole } from "./utils/format";
 import { useTheme } from "./theme/ThemeContext";
 
@@ -75,9 +75,9 @@ export function AppShell() {
     return (
       <SafeAreaScreen>
         <StatusBar style={definition.dark ? "light" : "dark"} />
-        <View style={styles.centeredPanel}>
+        <View style={shellStyles.centeredPanel}>
           <ActivityIndicator color="#0f766e" size="large" />
-          <Text style={styles.mutedText}>Opening Family Manager</Text>
+          <Text style={shellStyles.mutedText}>Opening Family Manager</Text>
         </View>
       </SafeAreaScreen>
     );
@@ -134,15 +134,15 @@ export function AppShell() {
   return (
     <SafeAreaScreen bottom={false} key={theme}>
       <StatusBar style={definition.dark ? "light" : "dark"} />
-      <View style={styles.appHeader}>
+      <View style={shellStyles.appHeader}>
         <View>
-          <Text style={styles.appTitle}>Family Manager</Text>
-          <Text style={styles.headerSubline}>
+          <Text style={shellStyles.appTitle}>Family Manager</Text>
+          <Text style={shellStyles.headerSubline}>
             {session.user.role.replace("_", " ")}
           </Text>
         </View>
-        <View style={styles.sessionPill}>
-          <Text style={styles.sessionPillText} numberOfLines={1}>
+        <View style={shellStyles.sessionPill}>
+          <Text style={shellStyles.sessionPillText} numberOfLines={1}>
             {session.user.email}
           </Text>
         </View>
@@ -151,7 +151,7 @@ export function AppShell() {
         <InlineNotice tone="warning" message={bootstrapError} />
       ) : null}
       <ScrollView
-        contentContainerStyle={styles.screenContent}
+        contentContainerStyle={shellStyles.screenContent}
         keyboardShouldPersistTaps="handled"
       >
         {renderedTab}

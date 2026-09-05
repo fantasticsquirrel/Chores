@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 
-import { styles } from "../styles/layout";
+import { shellStyles } from "../styles/shell";
 
 export function ScreenHeader({
   subtitle,
@@ -13,11 +13,11 @@ export function ScreenHeader({
   trailing?: ReactNode;
 }) {
   return (
-    <View style={styles.screenHeader}>
-      <View style={styles.screenHeaderText}>
-        <Text style={styles.screenTitle}>{title}</Text>
+    <View style={shellStyles.screenHeader}>
+      <View style={shellStyles.screenHeaderText}>
+        <Text style={shellStyles.screenTitle}>{title}</Text>
         {subtitle !== undefined ? (
-          <Text style={styles.screenSubtitle}>{subtitle}</Text>
+          <Text style={shellStyles.screenSubtitle}>{subtitle}</Text>
         ) : null}
       </View>
       {trailing !== undefined ? <View>{trailing}</View> : null}

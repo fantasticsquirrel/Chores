@@ -27,7 +27,7 @@ import {
   homeschoolTabOptions,
 } from "../../features/homeschool/lib/options";
 import { hasModule } from "../../navigation/tabs";
-import { styles } from "../../styles/layout";
+import { shellStyles } from "../../styles/shell";
 import { isParentRole } from "../../utils/format";
 import { HomeschoolCalendarScreen } from "./HomeschoolCalendarScreen";
 
@@ -62,7 +62,7 @@ export function HomeschoolScreen({
       <View>
         <ScreenHeader subtitle="Module access" title="Homeschool" />
         <SectionCard title="Unavailable">
-          <Text style={styles.mutedText}>
+          <Text style={shellStyles.mutedText}>
             Homeschool is not enabled for this account.
           </Text>
         </SectionCard>

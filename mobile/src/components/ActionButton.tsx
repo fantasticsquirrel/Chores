@@ -1,6 +1,6 @@
 import { Pressable, Text } from "react-native";
 
-import { styles } from "../styles/layout";
+import { formStyles } from "../styles/forms";
 
 export function ActionButton({
   compact = false,
@@ -21,19 +21,19 @@ export function ActionButton({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.button,
-        compact ? styles.buttonCompact : null,
-        variant === "secondary" ? styles.buttonSecondary : null,
-        variant === "danger" ? styles.buttonDanger : null,
-        pressed && !disabled ? styles.buttonPressed : null,
-        disabled ? styles.buttonDisabled : null,
+        formStyles.button,
+        compact ? formStyles.buttonCompact : null,
+        variant === "secondary" ? formStyles.buttonSecondary : null,
+        variant === "danger" ? formStyles.buttonDanger : null,
+        pressed && !disabled ? formStyles.buttonPressed : null,
+        disabled ? formStyles.buttonDisabled : null,
       ]}
     >
       <Text
         style={[
-          styles.buttonText,
-          variant === "secondary" ? styles.buttonSecondaryText : null,
-          disabled ? styles.buttonTextDisabled : null,
+          formStyles.buttonText,
+          variant === "secondary" ? formStyles.buttonSecondaryText : null,
+          disabled ? formStyles.buttonTextDisabled : null,
         ]}
       >
         {label}

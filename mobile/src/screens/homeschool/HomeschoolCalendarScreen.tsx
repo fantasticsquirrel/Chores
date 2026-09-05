@@ -9,7 +9,10 @@ import type {
 import { ActionButton } from "../../components/ActionButton";
 import { FieldLabel } from "../../components/FieldLabel";
 import { SectionCard } from "../../components/SectionCard";
-import { styles } from "../../styles/layout";
+import { homeschoolStyles } from "../../features/homeschool/styles";
+import { cardStyles } from "../../styles/cards";
+import { formStyles } from "../../styles/forms";
+import { shellStyles } from "../../styles/shell";
 import { todayDateString } from "../../utils/date";
 import {
   buildCalendarDaySummaries,
@@ -74,9 +77,9 @@ export function HomeschoolCalendarScreen({
         title="Calendar Review"
       >
         <FieldLabel label="Child" />
-        <View style={styles.compactStack}>
+        <View style={shellStyles.compactStack}>
           {activeChildren.length === 0 ? (
-            <Text style={styles.mutedText}>No active children found.</Text>
+            <Text style={shellStyles.mutedText}>No active children found.</Text>
           ) : (
             activeChildren.map((child) => (
               <Pressable
@@ -84,18 +87,18 @@ export function HomeschoolCalendarScreen({
                 key={child.id}
                 onPress={() => onChildChange(child.id)}
                 style={[
-                  styles.selectableRow,
+                  formStyles.selectableRow,
                   selectedChildId === child.id
-                    ? styles.selectableRowSelected
+                    ? formStyles.selectableRowSelected
                     : null,
                 ]}
               >
-                <Text style={styles.rowTitle}>{child.name}</Text>
+                <Text style={formStyles.rowTitle}>{child.name}</Text>
                 <Text
                   style={[
-                    styles.selectionMark,
+                    formStyles.selectionMark,
                     selectedChildId === child.id
-                      ? styles.selectionMarkSelected
+                      ? formStyles.selectionMarkSelected
                       : null,
                   ]}
                 >
@@ -106,11 +109,11 @@ export function HomeschoolCalendarScreen({
           )}
         </View>
 
-        <View style={styles.divider} />
-        <View style={styles.splitRow}>
-          <Text style={styles.cardTitle}>{formatYearMonth(calendarYearMonth)}</Text>
+        <View style={homeschoolStyles.divider} />
+        <View style={shellStyles.splitRow}>
+          <Text style={cardStyles.cardTitle}>{formatYearMonth(calendarYearMonth)}</Text>
         </View>
-        <View style={styles.inlineButtons}>
+        <View style={formStyles.inlineButtons}>
           <ActionButton
             compact
             label="Previous"
@@ -137,14 +140,14 @@ export function HomeschoolCalendarScreen({
           />
         </View>
 
-        <View style={styles.calendarWeekRow}>
+        <View style={homeschoolStyles.calendarWeekRow}>
           {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-            <Text key={`${day}-${index}`} style={styles.calendarWeekday}>
+            <Text key={`${day}-${index}`} style={homeschoolStyles.calendarWeekday}>
               {day}
             </Text>
           ))}
         </View>
-        <View style={styles.calendarGrid}>
+        <View style={homeschoolStyles.calendarGrid}>
           {daySummaries.map((day) => {
             const selected = day.iso === selectedDate;
             return (
@@ -153,30 +156,30 @@ export function HomeschoolCalendarScreen({
                 key={day.iso}
                 onPress={() => onDateSelect(day.iso)}
                 style={[
-                  styles.calendarCell,
-                  !day.inMonth ? styles.calendarCellMuted : null,
-                  selected ? styles.calendarCellSelected : null,
+                  homeschoolStyles.calendarCell,
+                  !day.inMonth ? homeschoolStyles.calendarCellMuted : null,
+                  selected ? homeschoolStyles.calendarCellSelected : null,
                 ]}
               >
                 <Text
                   style={[
-                    styles.calendarCellText,
-                    !day.inMonth ? styles.calendarCellTextMuted : null,
-                    selected ? styles.calendarCellTextSelected : null,
+                    homeschoolStyles.calendarCellText,
+                    !day.inMonth ? homeschoolStyles.calendarCellTextMuted : null,
+                    selected ? homeschoolStyles.calendarCellTextSelected : null,
                   ]}
                 >
                   {day.day}
                   {day.comment !== null ? "*" : ""}
                 </Text>
                 {day.presentCount > 0 ? (
-                  <View style={styles.calendarSubjectRow}>
+                  <View style={homeschoolStyles.calendarSubjectRow}>
                     {day.subjectInitials.map((initial, index) => (
                       <Text
                         key={`${day.iso}-${initial}-${index}`}
                         style={[
-                          styles.calendarSubjectInitial,
+                          homeschoolStyles.calendarSubjectInitial,
                           selected
-                            ? styles.calendarSubjectInitialSelected
+                            ? homeschoolStyles.calendarSubjectInitialSelected
                             : null,
                         ]}
                       >
@@ -193,25 +196,25 @@ export function HomeschoolCalendarScreen({
 
       <SectionCard subtitle={selectedDate} title="Day Detail">
         {selectedChildId === null ? (
-          <Text style={styles.mutedText}>Select a child to review this day.</Text>
+          <Text style={shellStyles.mutedText}>Select a child to review this day.</Text>
         ) : null}
         {selectedChildId !== null && selectedDayAttendance.length === 0 ? (
-          <Text style={styles.mutedText}>No attendance entries for this day.</Text>
+          <Text style={shellStyles.mutedText}>No attendance entries for this day.</Text>
         ) : null}
         {selectedDayAttendance.map((record) => {
           const subject = subjectLookup.get(record.subject_id);
           return (
-            <View key={record.id} style={styles.reviewItem}>
-              <Text style={styles.rowTitle}>
+            <View key={record.id} style={cardStyles.reviewItem}>
+              <Text style={formStyles.rowTitle}>
                 {subject?.name ?? `Subject ${record.subject_id}`}
               </Text>
-              <Text style={styles.rowMeta}>
+              <Text style={formStyles.rowMeta}>
                 {record.present ? "Present" : "Not present"}
                 {record.comment.trim().length > 0
                   ? ` - ${record.comment}`
                   : ""}
               </Text>
-              <View style={styles.inlineButtons}>
+              <View style={formStyles.inlineButtons}>
                 <ActionButton
                   compact
                   label="Edit"
@@ -229,10 +232,10 @@ export function HomeschoolCalendarScreen({
           );
         })}
         {selectedDayComment !== null ? (
-          <View style={styles.reviewItem}>
-            <Text style={styles.rowTitle}>Day comment</Text>
-            <Text style={styles.rowMeta}>{selectedDayComment.comment}</Text>
-            <View style={styles.inlineButtons}>
+          <View style={cardStyles.reviewItem}>
+            <Text style={formStyles.rowTitle}>Day comment</Text>
+            <Text style={formStyles.rowMeta}>{selectedDayComment.comment}</Text>
+            <View style={formStyles.inlineButtons}>
               <ActionButton
                 compact
                 label="Edit"
@@ -248,9 +251,9 @@ export function HomeschoolCalendarScreen({
             </View>
           </View>
         ) : (
-          <Text style={styles.mutedText}>No day comment for this date.</Text>
+          <Text style={shellStyles.mutedText}>No day comment for this date.</Text>
         )}
-        <View style={styles.inlineButtons}>
+        <View style={formStyles.inlineButtons}>
           <ActionButton
             compact
             disabled={selectedChildId === null}

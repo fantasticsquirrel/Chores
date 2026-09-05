@@ -4,7 +4,9 @@ import type { HomeschoolSemester } from "../../../api/models";
 import { ActionButton } from "../../../components/ActionButton";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
 import type { SemesterFormState } from "../lib/defaults";
 import { ToggleRow } from "./HomeschoolPickers";
 
@@ -58,7 +60,7 @@ export function HomeschoolSemesterFormSection({
         onChangeText={(name) => onChange({ name })}
         placeholder="Fall 2026"
         placeholderTextColor="#94a3b8"
-        style={styles.input}
+        style={formStyles.input}
         value={form.name}
       />
       <FieldLabel label="Start Date" />
@@ -67,7 +69,7 @@ export function HomeschoolSemesterFormSection({
         onChangeText={(start_date) => onChange({ start_date })}
         placeholder="YYYY-MM-DD"
         placeholderTextColor="#94a3b8"
-        style={styles.input}
+        style={formStyles.input}
         value={form.start_date}
       />
       <FieldLabel label="End Date" />
@@ -76,7 +78,7 @@ export function HomeschoolSemesterFormSection({
         onChangeText={(end_date) => onChange({ end_date })}
         placeholder="YYYY-MM-DD"
         placeholderTextColor="#94a3b8"
-        style={styles.input}
+        style={formStyles.input}
         value={form.end_date}
       />
       <ToggleRow
@@ -84,7 +86,7 @@ export function HomeschoolSemesterFormSection({
         label="Active semester"
         onToggle={() => onChange({ active: !form.active })}
       />
-      <View style={styles.inlineButtons}>
+      <View style={formStyles.inlineButtons}>
         <ActionButton
           compact
           disabled={busy || form.name.trim().length === 0}
@@ -114,18 +116,18 @@ export function HomeschoolSemesterListSection({
   return (
     <SectionCard title="Semesters">
       {semesters.length === 0 ? (
-        <Text style={styles.mutedText}>
+        <Text style={shellStyles.mutedText}>
           No semesters have been created yet.
         </Text>
       ) : null}
       {semesters.map((semester) => (
-        <View key={semester.id} style={styles.reviewItem}>
-          <Text style={styles.rowTitle}>{semester.name}</Text>
-          <Text style={styles.rowMeta}>
+        <View key={semester.id} style={cardStyles.reviewItem}>
+          <Text style={formStyles.rowTitle}>{semester.name}</Text>
+          <Text style={formStyles.rowMeta}>
             {semester.start_date} to {semester.end_date} -{" "}
             {semester.active ? "active" : "inactive"}
           </Text>
-          <View style={styles.inlineButtons}>
+          <View style={formStyles.inlineButtons}>
             <ActionButton
               compact
               disabled={busy}

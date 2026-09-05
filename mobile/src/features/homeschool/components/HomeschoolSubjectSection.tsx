@@ -4,7 +4,10 @@ import type { HomeschoolSubject } from "../../../api/models";
 import { ActionButton } from "../../../components/ActionButton";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
+import { homeschoolStyles } from "../styles";
 import type { SubjectFormState } from "../lib/defaults";
 import { subjectColorSwatches } from "../lib/options";
 import { ToggleRow } from "./HomeschoolPickers";
@@ -59,7 +62,7 @@ export function HomeschoolSubjectFormSection({
         onChangeText={(name) => onChange({ name })}
         placeholder="Math"
         placeholderTextColor="#94a3b8"
-        style={styles.input}
+        style={formStyles.input}
         value={form.name}
       />
       <FieldLabel label="Color" />
@@ -69,10 +72,10 @@ export function HomeschoolSubjectFormSection({
         onChangeText={(color) => onChange({ color })}
         placeholder="#3b82f6"
         placeholderTextColor="#94a3b8"
-        style={styles.input}
+        style={formStyles.input}
         value={form.color}
       />
-      <View style={styles.swatchRow}>
+      <View style={homeschoolStyles.swatchRow}>
         {subjectColorSwatches.map((color) => (
           <Pressable
             accessibilityLabel={`Use ${color}`}
@@ -80,10 +83,10 @@ export function HomeschoolSubjectFormSection({
             key={color}
             onPress={() => onChange({ color })}
             style={[
-              styles.colorSwatch,
+              homeschoolStyles.colorSwatch,
               { backgroundColor: color },
               form.color.trim().toLowerCase() === color
-                ? styles.colorSwatchSelected
+                ? homeschoolStyles.colorSwatchSelected
                 : null,
             ]}
           />
@@ -94,7 +97,7 @@ export function HomeschoolSubjectFormSection({
         label="Active subject"
         onToggle={() => onChange({ active: !form.active })}
       />
-      <View style={styles.inlineButtons}>
+      <View style={formStyles.inlineButtons}>
         <ActionButton
           compact
           disabled={busy || form.name.trim().length === 0}
@@ -124,22 +127,22 @@ export function HomeschoolSubjectListSection({
   return (
     <SectionCard title="Subjects">
       {subjects.length === 0 ? (
-        <Text style={styles.mutedText}>No subjects have been created yet.</Text>
+        <Text style={shellStyles.mutedText}>No subjects have been created yet.</Text>
       ) : null}
       {subjects.map((subject) => (
-        <View key={subject.id} style={styles.reviewItem}>
-          <View style={styles.splitRow}>
-            <View style={styles.rowMain}>
-              <Text style={styles.rowTitle}>{subject.name}</Text>
-              <Text style={styles.rowMeta}>
+        <View key={subject.id} style={cardStyles.reviewItem}>
+          <View style={shellStyles.splitRow}>
+            <View style={formStyles.rowMain}>
+              <Text style={formStyles.rowTitle}>{subject.name}</Text>
+              <Text style={formStyles.rowMeta}>
                 {subject.color} - {subject.active ? "active" : "inactive"}
               </Text>
             </View>
             <View
-              style={[styles.rowColorDot, { backgroundColor: subject.color }]}
+              style={[homeschoolStyles.rowColorDot, { backgroundColor: subject.color }]}
             />
           </View>
-          <View style={styles.inlineButtons}>
+          <View style={formStyles.inlineButtons}>
             <ActionButton
               compact
               disabled={busy}

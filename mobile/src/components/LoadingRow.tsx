@@ -1,12 +1,12 @@
 import { ActivityIndicator, Text, View } from "react-native";
 
-import { styles } from "../styles/layout";
+import { shellStyles } from "../styles/shell";
 
 export function LoadingRow({ label }: { label: string }) {
   return (
-    <View style={styles.loadingRow}>
+    <View style={shellStyles.loadingRow}>
       <ActivityIndicator color="#0f766e" />
-      <Text style={styles.mutedText}>{label}</Text>
+      <Text style={shellStyles.mutedText}>{label}</Text>
     </View>
   );
 }

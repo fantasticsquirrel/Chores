@@ -8,7 +8,7 @@ import { InfoRow } from "../../components/InfoRow";
 import { InlineNotice } from "../../components/InlineNotice";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
-import { styles } from "../../styles/layout";
+import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 import { ChangePasswordScreen } from "./ChangePasswordScreen";
 import { SubscriptionScreen } from "./SubscriptionScreen";
@@ -78,7 +78,7 @@ export function AccountScreen({
           </SectionCard>
           <SectionCard title="Modules">
             {modules.length === 0 ? (
-              <Text style={styles.mutedText}>No modules loaded.</Text>
+              <Text style={shellStyles.mutedText}>No modules loaded.</Text>
             ) : (
               modules.map((module) => (
                 <InfoRow

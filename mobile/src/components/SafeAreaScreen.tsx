@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { styles } from "../styles/layout";
+import { shellStyles } from "../styles/shell";
 
 export function SafeAreaScreen({
   bottom = true,
@@ -10,7 +10,7 @@ export function SafeAreaScreen({
   return (
     <SafeAreaView
       edges={bottom ? ["top", "right", "bottom", "left"] : ["top", "right", "left"]}
-      style={styles.safeArea}
+      style={shellStyles.safeArea}
     >
       {children}
     </SafeAreaView>

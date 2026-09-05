@@ -8,7 +8,8 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
-import { styles } from "../../styles/layout";
+import { formStyles } from "../../styles/forms";
+import { shellStyles } from "../../styles/shell";
 import { todayDateString } from "../../utils/date";
 import { formatError } from "../../utils/format";
 
@@ -92,10 +93,10 @@ export function ChildTodayScreen() {
           }}
           placeholder="YYYY-MM-DD"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={date}
         />
-        <View style={styles.inlineButtons}>
+        <View style={formStyles.inlineButtons}>
           <ActionButton
             compact
             disabled={loading}
@@ -118,7 +119,7 @@ export function ChildTodayScreen() {
         {loading ? (
           <LoadingRow label="Loading chores" />
         ) : chores.length === 0 ? (
-          <Text style={styles.mutedText}>No chores are available for this date.</Text>
+          <Text style={shellStyles.mutedText}>No chores are available for this date.</Text>
         ) : (
           <View>
             {chores.map((chore) => (
@@ -127,21 +128,21 @@ export function ChildTodayScreen() {
                 accessibilityRole="button"
                 onPress={() => toggleChore(chore.chore_id)}
                 style={[
-                  styles.selectableRow,
+                  formStyles.selectableRow,
                   selectedChoreIds.has(chore.chore_id)
-                    ? styles.selectableRowSelected
+                    ? formStyles.selectableRowSelected
                     : null,
                 ]}
               >
-                <View style={styles.rowMain}>
-                  <Text style={styles.rowTitle}>{chore.name}</Text>
-                  {chore.expires_on ? <Text style={styles.rowMeta}>Expires {chore.expires_on}</Text> : null}
+                <View style={formStyles.rowMain}>
+                  <Text style={formStyles.rowTitle}>{chore.name}</Text>
+                  {chore.expires_on ? <Text style={formStyles.rowMeta}>Expires {chore.expires_on}</Text> : null}
                 </View>
                 <Text
                   style={[
-                    styles.selectionMark,
+                    formStyles.selectionMark,
                     selectedChoreIds.has(chore.chore_id)
-                      ? styles.selectionMarkSelected
+                      ? formStyles.selectionMarkSelected
                       : null,
                   ]}
                 >

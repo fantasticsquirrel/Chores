@@ -5,7 +5,10 @@ import { ActionButton } from "../../../components/ActionButton";
 import { InlineNotice } from "../../../components/InlineNotice";
 import { LoadingRow } from "../../../components/LoadingRow";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
+import { choreStyles } from "../styles";
 import type { ChoresState } from "../hooks/useChoreData";
 import {
   completionLabel,
@@ -38,7 +41,7 @@ export function ChoreList({
         />
       ) : null}
       {!choresState.loading && choresState.chores.length === 0 ? (
-        <Text style={styles.mutedText}>No chores have been created yet.</Text>
+        <Text style={shellStyles.mutedText}>No chores have been created yet.</Text>
       ) : null}
       {choresState.chores.map((chore) => (
         <ChoreCard
@@ -69,20 +72,20 @@ export function ChoreCard({
 }) {
   const timing = timingLabel(chore);
   return (
-    <View style={styles.reviewItem}>
-      <Text style={styles.rowTitle}>{chore.name}</Text>
-      <Text style={styles.rowMeta}>
+    <View style={cardStyles.reviewItem}>
+      <Text style={formStyles.rowTitle}>{chore.name}</Text>
+      <Text style={formStyles.rowMeta}>
         {scheduleLabel(chore)} · {completionLabel(chore)}
       </Text>
-      <Text style={styles.rowMeta}>{rewardLabel(chore)}</Text>
+      <Text style={formStyles.rowMeta}>{rewardLabel(chore)}</Text>
       {chore.owner_user_id === null ? (
-        <Text style={styles.rowMeta}>{eligibilityLabel(chore, children)}</Text>
+        <Text style={formStyles.rowMeta}>{eligibilityLabel(chore, children)}</Text>
       ) : null}
-      {timing.length > 0 ? <Text style={styles.rowMeta}>{timing}</Text> : null}
+      {timing.length > 0 ? <Text style={formStyles.rowMeta}>{timing}</Text> : null}
       {chore.archived_at !== null ? (
-        <Text style={[styles.rowMeta, styles.dangerText]}>Archived</Text>
+        <Text style={[formStyles.rowMeta, choreStyles.dangerText]}>Archived</Text>
       ) : null}
-      <View style={styles.inlineButtons}>
+      <View style={formStyles.inlineButtons}>
         <ActionButton
           compact
           label="Edit"

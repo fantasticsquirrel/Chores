@@ -3,7 +3,10 @@ import { Pressable, Text, View } from "react-native";
 import type { Child, HomeschoolSemester } from "../../../api/models";
 import { SectionCard } from "../../../components/SectionCard";
 import { StatCard } from "../../../components/StatCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
+import { homeschoolStyles } from "../styles";
 import type { SubjectSummaryRow } from "../lib/records";
 
 export function HomeschoolOverview({
@@ -37,7 +40,7 @@ export function HomeschoolOverview({
 }) {
   return (
     <View>
-      <View style={styles.statGrid}>
+      <View style={cardStyles.statGrid}>
         <StatCard label="Days" value={uniqueAttendanceDays.toString()} />
         <StatCard label="Entries" value={totalAttendanceEntries.toString()} />
         <StatCard label="Notes" value={commentsInSemester.toString()} />
@@ -49,7 +52,7 @@ export function HomeschoolOverview({
         title="Selected Child"
       >
         {activeChildren.length === 0 ? (
-          <Text style={styles.mutedText}>
+          <Text style={shellStyles.mutedText}>
             Add an active child before logging school records.
           </Text>
         ) : null}
@@ -59,18 +62,18 @@ export function HomeschoolOverview({
             key={child.id}
             onPress={() => onChildSelect(child.id)}
             style={[
-              styles.selectableRow,
+              formStyles.selectableRow,
               selectedChildId === child.id
-                ? styles.selectableRowSelected
+                ? formStyles.selectableRowSelected
                 : null,
             ]}
           >
-            <Text style={styles.rowTitle}>{child.name}</Text>
+            <Text style={formStyles.rowTitle}>{child.name}</Text>
             <Text
               style={[
-                styles.selectionMark,
+                formStyles.selectionMark,
                 selectedChildId === child.id
-                  ? styles.selectionMarkSelected
+                  ? formStyles.selectionMarkSelected
                   : null,
               ]}
             >
@@ -89,7 +92,7 @@ export function HomeschoolOverview({
         title="Summary Range"
       >
         {semesters.length === 0 ? (
-          <Text style={styles.mutedText}>
+          <Text style={shellStyles.mutedText}>
             Create a semester to narrow attendance and grade summaries.
           </Text>
         ) : null}
@@ -99,23 +102,23 @@ export function HomeschoolOverview({
             key={semester.id}
             onPress={() => onSemesterSelect(semester.id)}
             style={[
-              styles.selectableRow,
+              formStyles.selectableRow,
               selectedSemesterId === semester.id
-                ? styles.selectableRowSelected
+                ? formStyles.selectableRowSelected
                 : null,
             ]}
           >
-            <View style={styles.rowMain}>
-              <Text style={styles.rowTitle}>{semester.name}</Text>
-              <Text style={styles.rowMeta}>
+            <View style={formStyles.rowMain}>
+              <Text style={formStyles.rowTitle}>{semester.name}</Text>
+              <Text style={formStyles.rowMeta}>
                 {semester.start_date} to {semester.end_date}
               </Text>
             </View>
             <Text
               style={[
-                styles.selectionMark,
+                formStyles.selectionMark,
                 selectedSemesterId === semester.id
-                  ? styles.selectionMarkSelected
+                  ? formStyles.selectionMarkSelected
                   : null,
               ]}
             >
@@ -127,22 +130,22 @@ export function HomeschoolOverview({
 
       <SectionCard title="Subject Progress">
         {subjectRows.length === 0 ? (
-          <Text style={styles.mutedText}>
+          <Text style={shellStyles.mutedText}>
             Create subjects to see progress rows.
           </Text>
         ) : null}
         {subjectRows.map((row) => (
-          <View key={row.subjectId} style={styles.reviewItem}>
-            <View style={styles.splitRow}>
-              <View style={styles.rowMain}>
-                <Text style={styles.rowTitle}>{row.name}</Text>
-                <Text style={styles.rowMeta}>
+          <View key={row.subjectId} style={cardStyles.reviewItem}>
+            <View style={shellStyles.splitRow}>
+              <View style={formStyles.rowMain}>
+                <Text style={formStyles.rowTitle}>{row.name}</Text>
+                <Text style={formStyles.rowMeta}>
                   {row.days} day{row.days === 1 ? "" : "s"} - {row.entries} entr
                   {row.entries === 1 ? "y" : "ies"} - Grade {row.grade}
                 </Text>
               </View>
               <View
-                style={[styles.rowColorDot, { backgroundColor: row.color }]}
+                style={[homeschoolStyles.rowColorDot, { backgroundColor: row.color }]}
               />
             </View>
           </View>

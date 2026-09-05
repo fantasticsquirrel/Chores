@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { styles } from "../styles/layout";
+import { cardStyles } from "../styles/cards";
 
 export function InlineNotice({
   message,
@@ -12,20 +12,20 @@ export function InlineNotice({
   return (
     <View
       style={[
-        styles.notice,
-        tone === "error" ? styles.noticeError : null,
-        tone === "success" ? styles.noticeSuccess : null,
-        tone === "warning" ? styles.noticeWarning : null,
-        tone === "info" ? styles.noticeInfo : null,
+        cardStyles.notice,
+        tone === "error" ? cardStyles.noticeError : null,
+        tone === "success" ? cardStyles.noticeSuccess : null,
+        tone === "warning" ? cardStyles.noticeWarning : null,
+        tone === "info" ? cardStyles.noticeInfo : null,
       ]}
     >
       <Text
         style={[
-          styles.noticeText,
-          tone === "error" ? styles.noticeTextError : null,
-          tone === "success" ? styles.noticeTextSuccess : null,
-          tone === "warning" ? styles.noticeTextWarning : null,
-          tone === "info" ? styles.noticeTextInfo : null,
+          cardStyles.noticeText,
+          tone === "error" ? cardStyles.noticeTextError : null,
+          tone === "success" ? cardStyles.noticeTextSuccess : null,
+          tone === "warning" ? cardStyles.noticeTextWarning : null,
+          tone === "info" ? cardStyles.noticeTextInfo : null,
         ]}
       >
         {message}

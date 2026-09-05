@@ -7,7 +7,8 @@ import { InfoRow } from "../../components/InfoRow";
 import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { SectionCard } from "../../components/SectionCard";
-import { styles } from "../../styles/layout";
+import { cardStyles } from "../../styles/cards";
+import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
 const statusLabels: Record<BillingStatus, string> = {
@@ -43,12 +44,12 @@ export function SubscriptionScreen() {
       {error !== null ? <InlineNotice tone="error" message={`Could not load subscription: ${error}`} /> : null}
       {billing !== null ? (
         <>
-          <Text style={styles.cardTitle}>{statusLabels[billing.status]}</Text>
+          <Text style={cardStyles.cardTitle}>{statusLabels[billing.status]}</Text>
           {billing.plan_name !== null ? <InfoRow label="Plan" value={billing.plan_name} /> : null}
           {billing.expires_at !== null ? <InfoRow label="Access expires" value={formatDate(billing.expires_at)} /> : null}
           {billing.expires_at === null && billing.current_period_ends_at !== null ? <InfoRow label="Current period ends" value={formatDate(billing.current_period_ends_at)} /> : null}
-          {billing.provider === null ? <Text style={styles.mutedText}>No payment provider is connected.</Text> : null}
-          <Text style={styles.mutedText}>No subscription actions are currently available.</Text>
+          {billing.provider === null ? <Text style={shellStyles.mutedText}>No payment provider is connected.</Text> : null}
+          <Text style={shellStyles.mutedText}>No subscription actions are currently available.</Text>
         </>
       ) : null}
     </SectionCard>

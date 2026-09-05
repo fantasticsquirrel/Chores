@@ -17,7 +17,8 @@ import type {
   ChildLoginInput,
   ParentLoginInput,
 } from "../../hooks/useSessionBootstrap";
-import { styles } from "../../styles/layout";
+import { authStyles } from "../../features/auth/styles";
+import { formStyles } from "../../styles/forms";
 import { formatError } from "../../utils/format";
 
 type LoginMode = "parent" | "child";
@@ -84,16 +85,16 @@ export function LoginScreen({
     <SafeAreaScreen>
       <StatusBar style="dark" />
       <ScrollView
-        contentContainerStyle={styles.loginContent}
+        contentContainerStyle={authStyles.loginContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.loginCard}>
-          <Text style={styles.loginTitle}>Family Manager</Text>
-          <Text style={styles.loginSubtitle}>
+        <View style={authStyles.loginCard}>
+          <Text style={authStyles.loginTitle}>Family Manager</Text>
+          <Text style={authStyles.loginSubtitle}>
             Parents use their login email and password. Kids can use a parent
             login email, their child name, and their child password.
           </Text>
-          <View style={styles.loginModeSwitch}>
+          <View style={authStyles.loginModeSwitch}>
             <Pressable
               accessibilityRole="button"
               accessibilityState={{ selected: mode === "parent" }}
@@ -103,14 +104,14 @@ export function LoginScreen({
                 setError(null);
               }}
               style={[
-                styles.loginModeButton,
-                mode === "parent" ? styles.loginModeButtonActive : null,
+                authStyles.loginModeButton,
+                mode === "parent" ? authStyles.loginModeButtonActive : null,
               ]}
             >
               <Text
                 style={[
-                  styles.loginModeButtonText,
-                  mode === "parent" ? styles.loginModeButtonTextActive : null,
+                  authStyles.loginModeButtonText,
+                  mode === "parent" ? authStyles.loginModeButtonTextActive : null,
                 ]}
               >
                 Parent
@@ -125,23 +126,23 @@ export function LoginScreen({
                 setError(null);
               }}
               style={[
-                styles.loginModeButton,
-                mode === "child" ? styles.loginModeButtonActive : null,
+                authStyles.loginModeButton,
+                mode === "child" ? authStyles.loginModeButtonActive : null,
               ]}
             >
               <Text
                 style={[
-                  styles.loginModeButtonText,
-                  mode === "child" ? styles.loginModeButtonTextActive : null,
+                  authStyles.loginModeButtonText,
+                  mode === "child" ? authStyles.loginModeButtonTextActive : null,
                 ]}
               >
                 Child
               </Text>
             </Pressable>
           </View>
-          <View style={styles.apiBasePanel}>
-            <Text style={styles.apiBaseLabel}>API</Text>
-            <Text style={styles.apiBaseValue} numberOfLines={2}>
+          <View style={authStyles.apiBasePanel}>
+            <Text style={authStyles.apiBaseLabel}>API</Text>
+            <Text style={authStyles.apiBaseValue} numberOfLines={2}>
               {apiBaseUrl}
             </Text>
           </View>
@@ -158,7 +159,7 @@ export function LoginScreen({
                 }}
                 placeholder="parent@example.com"
                 placeholderTextColor="#94a3b8"
-                style={styles.input}
+                style={formStyles.input}
                 textContentType="emailAddress"
                 value={email}
               />
@@ -171,7 +172,7 @@ export function LoginScreen({
                 placeholder="Password"
                 placeholderTextColor="#94a3b8"
                 secureTextEntry
-                style={styles.input}
+                style={formStyles.input}
                 textContentType="password"
                 value={password}
               />
@@ -182,11 +183,11 @@ export function LoginScreen({
                   void Linking.openURL(PARENT_PASSWORD_RECOVERY_URL);
                 }}
                 style={({ pressed }) => [
-                  styles.recoveryLink,
-                  pressed ? styles.recoveryLinkPressed : null,
+                  authStyles.recoveryLink,
+                  pressed ? authStyles.recoveryLinkPressed : null,
                 ]}
               >
-                <Text style={styles.recoveryLinkText}>Forgot password?</Text>
+                <Text style={authStyles.recoveryLinkText}>Forgot password?</Text>
               </Pressable>
             </>
           ) : (
@@ -202,7 +203,7 @@ export function LoginScreen({
                 }}
                 placeholder="parent@example.com"
                 placeholderTextColor="#94a3b8"
-                style={styles.input}
+                style={formStyles.input}
                 textContentType="emailAddress"
                 value={childParentEmail}
               />
@@ -216,11 +217,11 @@ export function LoginScreen({
                 }}
                 placeholder="Enter child name"
                 placeholderTextColor="#94a3b8"
-                style={styles.input}
+                style={formStyles.input}
                 textContentType="username"
                 value={childName}
               />
-              <Text style={styles.recoveryGuidance}>
+              <Text style={authStyles.recoveryGuidance}>
                 Ask a parent for help resetting your password.
               </Text>
               <FieldLabel label="Child Password" />
@@ -232,7 +233,7 @@ export function LoginScreen({
                 placeholder="Password"
                 placeholderTextColor="#94a3b8"
                 secureTextEntry
-                style={styles.input}
+                style={formStyles.input}
                 textContentType="password"
                 value={childPassword}
               />

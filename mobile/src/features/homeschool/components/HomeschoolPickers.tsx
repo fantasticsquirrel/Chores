@@ -6,7 +6,9 @@ import type {
   HomeschoolSubject,
 } from "../../../api/models";
 import { FieldLabel } from "../../../components/FieldLabel";
-import { styles } from "../../../styles/layout";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
+import { homeschoolStyles } from "../styles";
 
 export function ChildPicker({
   children,
@@ -21,7 +23,7 @@ export function ChildPicker({
     <View>
       <FieldLabel label="Child" />
       {children.length === 0 ? (
-        <Text style={styles.mutedText}>
+        <Text style={shellStyles.mutedText}>
           Create a child before logging records.
         </Text>
       ) : null}
@@ -31,16 +33,16 @@ export function ChildPicker({
           key={child.id}
           onPress={() => onChange(child.id.toString())}
           style={[
-            styles.selectableRow,
-            value === child.id.toString() ? styles.selectableRowSelected : null,
+            formStyles.selectableRow,
+            value === child.id.toString() ? formStyles.selectableRowSelected : null,
           ]}
         >
-          <Text style={styles.rowTitle}>{child.name}</Text>
+          <Text style={formStyles.rowTitle}>{child.name}</Text>
           <Text
             style={[
-              styles.selectionMark,
+              formStyles.selectionMark,
               value === child.id.toString()
-                ? styles.selectionMarkSelected
+                ? formStyles.selectionMarkSelected
                 : null,
             ]}
           >
@@ -65,7 +67,7 @@ export function SubjectPicker({
     <View>
       <FieldLabel label="Subject" />
       {subjects.length === 0 ? (
-        <Text style={styles.mutedText}>
+        <Text style={shellStyles.mutedText}>
           Create a subject before logging records.
         </Text>
       ) : null}
@@ -75,28 +77,28 @@ export function SubjectPicker({
           key={subject.id}
           onPress={() => onChange(subject.id.toString())}
           style={[
-            styles.selectableRow,
+            formStyles.selectableRow,
             value === subject.id.toString()
-              ? styles.selectableRowSelected
+              ? formStyles.selectableRowSelected
               : null,
           ]}
         >
-          <View style={styles.splitRow}>
+          <View style={shellStyles.splitRow}>
             <View
-              style={[styles.rowColorDot, { backgroundColor: subject.color }]}
+              style={[homeschoolStyles.rowColorDot, { backgroundColor: subject.color }]}
             />
-            <View style={styles.rowMain}>
-              <Text style={styles.rowTitle}>{subject.name}</Text>
-              <Text style={styles.rowMeta}>
+            <View style={formStyles.rowMain}>
+              <Text style={formStyles.rowTitle}>{subject.name}</Text>
+              <Text style={formStyles.rowMeta}>
                 {subject.active ? "Active" : "Inactive"}
               </Text>
             </View>
           </View>
           <Text
             style={[
-              styles.selectionMark,
+              formStyles.selectionMark,
               value === subject.id.toString()
-                ? styles.selectionMarkSelected
+                ? formStyles.selectionMarkSelected
                 : null,
             ]}
           >
@@ -127,15 +129,15 @@ export function SemesterPicker({
           accessibilityRole="button"
           onPress={() => onChange("")}
           style={[
-            styles.selectableRow,
-            value === "" ? styles.selectableRowSelected : null,
+            formStyles.selectableRow,
+            value === "" ? formStyles.selectableRowSelected : null,
           ]}
         >
-          <Text style={styles.rowTitle}>Overall</Text>
+          <Text style={formStyles.rowTitle}>Overall</Text>
           <Text
             style={[
-              styles.selectionMark,
-              value === "" ? styles.selectionMarkSelected : null,
+              formStyles.selectionMark,
+              value === "" ? formStyles.selectionMarkSelected : null,
             ]}
           >
             {value === "" ? "Selected" : "Select"}
@@ -148,23 +150,23 @@ export function SemesterPicker({
           key={semester.id}
           onPress={() => onChange(semester.id.toString())}
           style={[
-            styles.selectableRow,
+            formStyles.selectableRow,
             value === semester.id.toString()
-              ? styles.selectableRowSelected
+              ? formStyles.selectableRowSelected
               : null,
           ]}
         >
-          <View style={styles.rowMain}>
-            <Text style={styles.rowTitle}>{semester.name}</Text>
-            <Text style={styles.rowMeta}>
+          <View style={formStyles.rowMain}>
+            <Text style={formStyles.rowTitle}>{semester.name}</Text>
+            <Text style={formStyles.rowMeta}>
               {semester.start_date} to {semester.end_date}
             </Text>
           </View>
           <Text
             style={[
-              styles.selectionMark,
+              formStyles.selectionMark,
               value === semester.id.toString()
-                ? styles.selectionMarkSelected
+                ? formStyles.selectionMarkSelected
                 : null,
             ]}
           >
@@ -190,15 +192,15 @@ export function ToggleRow({
       accessibilityRole="button"
       onPress={onToggle}
       style={[
-        styles.selectableRow,
-        enabled ? styles.selectableRowSelected : null,
+        formStyles.selectableRow,
+        enabled ? formStyles.selectableRowSelected : null,
       ]}
     >
-      <Text style={styles.rowTitle}>{label}</Text>
+      <Text style={formStyles.rowTitle}>{label}</Text>
       <Text
         style={[
-          styles.selectionMark,
-          enabled ? styles.selectionMarkSelected : null,
+          formStyles.selectionMark,
+          enabled ? formStyles.selectionMarkSelected : null,
         ]}
       >
         {enabled ? "Yes" : "No"}

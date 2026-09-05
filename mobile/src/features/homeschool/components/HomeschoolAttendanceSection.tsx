@@ -9,7 +9,9 @@ import { ActionButton } from "../../../components/ActionButton";
 import { ChoiceGroup } from "../../../components/ChoiceGroup";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
 import type { AttendanceFormState } from "../lib/defaults";
 import { sortDatedRecords } from "../lib/records";
 import { ChildPicker, SubjectPicker } from "./HomeschoolPickers";
@@ -67,7 +69,7 @@ export function HomeschoolAttendanceSection({
           onChangeText={(date) => onChange({ date })}
           placeholder="YYYY-MM-DD"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.date}
         />
         <FieldLabel label="Status" />
@@ -84,7 +86,7 @@ export function HomeschoolAttendanceSection({
           onChangeText={(comment) => onChange({ comment })}
           placeholder="Fractions, copywork, field trip..."
           placeholderTextColor="#94a3b8"
-          style={[styles.input, styles.multilineInput]}
+          style={[formStyles.input, formStyles.multilineInput]}
           value={form.comment}
         />
         <ActionButton
@@ -96,20 +98,20 @@ export function HomeschoolAttendanceSection({
 
       <SectionCard title="Recent Attendance">
         {recentRecords.length === 0 ? (
-          <Text style={styles.mutedText}>No attendance records yet.</Text>
+          <Text style={shellStyles.mutedText}>No attendance records yet.</Text>
         ) : null}
         {recentRecords.map((record) => (
-          <View key={record.id} style={styles.reviewItem}>
-            <Text style={styles.rowTitle}>
+          <View key={record.id} style={cardStyles.reviewItem}>
+            <Text style={formStyles.rowTitle}>
               {record.date} -{" "}
               {subjectLookup.get(record.subject_id)?.name ??
                 `Subject ${record.subject_id}`}
             </Text>
-            <Text style={styles.rowMeta}>
+            <Text style={formStyles.rowMeta}>
               {record.present ? "Present" : "Absent"}
               {record.comment.trim().length > 0 ? ` - ${record.comment}` : ""}
             </Text>
-            <View style={styles.inlineButtons}>
+            <View style={formStyles.inlineButtons}>
               <ActionButton
                 compact
                 disabled={busy}

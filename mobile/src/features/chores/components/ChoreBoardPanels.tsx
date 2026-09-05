@@ -6,7 +6,9 @@ import { FieldLabel } from "../../../components/FieldLabel";
 import { InlineNotice } from "../../../components/InlineNotice";
 import { LoadingRow } from "../../../components/LoadingRow";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
 import type { ChildrenState, EligibleChildState } from "../hooks/useChoreData";
 import { eligibleTimingLabel } from "../lib/chorePresentation";
 
@@ -30,10 +32,10 @@ export function DailyChoreBoardPanel({
         onChangeText={onDateChange}
         placeholder="YYYY-MM-DD"
         placeholderTextColor="#94a3b8"
-        style={styles.input}
+        style={formStyles.input}
         value={targetDate}
       />
-      <View style={styles.inlineButtons}>
+      <View style={formStyles.inlineButtons}>
         <ActionButton
           compact
           label="Today"
@@ -82,7 +84,7 @@ export function ChoreEligibilityPanel({
   if (activeChildren.length === 0) {
     return (
       <SectionCard title="Available Chores">
-        <Text style={styles.mutedText}>No active children found.</Text>
+        <Text style={shellStyles.mutedText}>No active children found.</Text>
       </SectionCard>
     );
   }
@@ -105,16 +107,16 @@ export function ChoreEligibilityPanel({
         {!childState.loading &&
         childState.error === null &&
         childState.chores.length === 0 ? (
-          <Text style={styles.mutedText}>
+          <Text style={shellStyles.mutedText}>
             No chores available for this date.
           </Text>
         ) : null}
         {childState.chores.map((chore) => (
-          <View key={chore.chore_id} style={styles.reviewItem}>
-            <View style={styles.splitRow}>
-              <View style={styles.rowMain}>
-                <Text style={styles.rowTitle}>{chore.name}</Text>
-                <Text style={styles.rowMeta}>{eligibleTimingLabel(chore)}</Text>
+          <View key={chore.chore_id} style={cardStyles.reviewItem}>
+            <View style={shellStyles.splitRow}>
+              <View style={formStyles.rowMain}>
+                <Text style={formStyles.rowTitle}>{chore.name}</Text>
+                <Text style={formStyles.rowMeta}>{eligibleTimingLabel(chore)}</Text>
               </View>
               <ActionButton
                 compact
@@ -178,18 +180,18 @@ export function SelectedChoreSubmitPanel({
             key={child.id}
             onPress={() => onChildSelect(child.id)}
             style={[
-              styles.selectableRow,
+              formStyles.selectableRow,
               selectedChildId === child.id
-                ? styles.selectableRowSelected
+                ? formStyles.selectableRowSelected
                 : null,
             ]}
           >
-            <Text style={styles.rowTitle}>{child.name}</Text>
+            <Text style={formStyles.rowTitle}>{child.name}</Text>
             <Text
               style={[
-                styles.selectionMark,
+                formStyles.selectionMark,
                 selectedChildId === child.id
-                  ? styles.selectionMarkSelected
+                  ? formStyles.selectionMarkSelected
                   : null,
               ]}
             >
@@ -199,7 +201,7 @@ export function SelectedChoreSubmitPanel({
         ))}
       </View>
       {selectedChild === null ? (
-        <Text style={styles.mutedText}>
+        <Text style={shellStyles.mutedText}>
           Select a child to submit multiple chores.
         </Text>
       ) : null}
@@ -218,21 +220,21 @@ export function SelectedChoreSubmitPanel({
           key={chore.chore_id}
           onPress={() => onChoreToggle(chore.chore_id)}
           style={[
-            styles.selectableRow,
+            formStyles.selectableRow,
             selectedChoreIds.includes(chore.chore_id)
-              ? styles.selectableRowSelected
+              ? formStyles.selectableRowSelected
               : null,
           ]}
         >
-          <View style={styles.rowMain}>
-            <Text style={styles.rowTitle}>{chore.name}</Text>
-            <Text style={styles.rowMeta}>{eligibleTimingLabel(chore)}</Text>
+          <View style={formStyles.rowMain}>
+            <Text style={formStyles.rowTitle}>{chore.name}</Text>
+            <Text style={formStyles.rowMeta}>{eligibleTimingLabel(chore)}</Text>
           </View>
           <Text
             style={[
-              styles.selectionMark,
+              formStyles.selectionMark,
               selectedChoreIds.includes(chore.chore_id)
-                ? styles.selectionMarkSelected
+                ? formStyles.selectionMarkSelected
                 : null,
             ]}
           >

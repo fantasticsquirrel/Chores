@@ -7,7 +7,9 @@ import { ChoiceGroup } from "../../../components/ChoiceGroup";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { InlineNotice } from "../../../components/InlineNotice";
 import { SectionCard } from "../../../components/SectionCard";
-import { styles } from "../../../styles/layout";
+import { cardStyles } from "../../../styles/cards";
+import { formStyles } from "../../../styles/forms";
+import { shellStyles } from "../../../styles/shell";
 import {
   assignmentOptions,
   completionOptions,
@@ -72,7 +74,7 @@ export function ChoreForm({
 
   return (
     <SectionCard title={editingId !== null ? "Edit Chore" : "New Chore"}>
-      <View style={styles.compactStack}>
+      <View style={shellStyles.compactStack}>
         <FieldLabel label="Used by" />
         <ChoiceGroup
           disabled={submitting || editingId !== null}
@@ -91,7 +93,7 @@ export function ChoreForm({
           onChangeText={(value) => setField("name", value)}
           placeholder="Take out trash"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.name}
         />
         {form.task_scope === "CHILD" ? (
@@ -100,7 +102,7 @@ export function ChoreForm({
             <TextInput
               keyboardType="decimal-pad"
               onChangeText={(value) => setField("reward_dollars", value)}
-              style={styles.input}
+              style={formStyles.input}
               value={form.reward_dollars}
             />
           </>
@@ -116,7 +118,7 @@ export function ChoreForm({
           onChangeText={(value) => setField("start_date", value)}
           placeholder="YYYY-MM-DD"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.start_date}
         />
         <FieldLabel label="Global End Date" />
@@ -125,7 +127,7 @@ export function ChoreForm({
           onChangeText={(value) => setField("expires_at", value)}
           placeholder="Optional YYYY-MM-DD"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.expires_at}
         />
         <FieldLabel label="Completion Window Days" />
@@ -134,7 +136,7 @@ export function ChoreForm({
           onChangeText={(value) => setField("timeout_days", value)}
           placeholder="Optional"
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={formStyles.input}
           value={form.timeout_days}
         />
         <FieldLabel label="Schedule" />
@@ -161,7 +163,7 @@ export function ChoreForm({
               onChangeText={(value) => setField("schedule_interval", value)}
               placeholder="1"
               placeholderTextColor="#94a3b8"
-              style={styles.input}
+              style={formStyles.input}
               value={form.schedule_interval}
             />
             <FieldLabel label="Interval Unit" />
@@ -197,7 +199,7 @@ export function ChoreForm({
         />
         {form.assignment_mode === "STATIC" ? (
           <>
-            <Text style={styles.mutedText}>
+            <Text style={shellStyles.mutedText}>
               Leave every child unselected to allow all active children.
             </Text>
             {activeChildren.map((child) => (
@@ -206,18 +208,18 @@ export function ChoreForm({
                 key={child.id}
                 onPress={() => toggleAllowedChild(child.id)}
                 style={[
-                  styles.selectableRow,
+                  formStyles.selectableRow,
                   form.allowed_child_ids.includes(child.id)
-                    ? styles.selectableRowSelected
+                    ? formStyles.selectableRowSelected
                     : null,
                 ]}
               >
-                <Text style={styles.rowTitle}>{child.name}</Text>
+                <Text style={formStyles.rowTitle}>{child.name}</Text>
                 <Text
                   style={[
-                    styles.selectionMark,
+                    formStyles.selectionMark,
                     form.allowed_child_ids.includes(child.id)
-                      ? styles.selectionMarkSelected
+                      ? formStyles.selectionMarkSelected
                       : null,
                   ]}
                 >
@@ -236,18 +238,18 @@ export function ChoreForm({
                 key={child.id}
                 onPress={() => toggleRotationChild(child.id)}
                 style={[
-                  styles.selectableRow,
+                  formStyles.selectableRow,
                   form.rotation_order.includes(child.id)
-                    ? styles.selectableRowSelected
+                    ? formStyles.selectableRowSelected
                     : null,
                 ]}
               >
-                <Text style={styles.rowTitle}>{child.name}</Text>
+                <Text style={formStyles.rowTitle}>{child.name}</Text>
                 <Text
                   style={[
-                    styles.selectionMark,
+                    formStyles.selectionMark,
                     form.rotation_order.includes(child.id)
-                      ? styles.selectionMarkSelected
+                      ? formStyles.selectionMarkSelected
                       : null,
                   ]}
                 >
@@ -262,11 +264,11 @@ export function ChoreForm({
                 activeChildren.find((child) => child.id === childId)?.name ??
                 `#${childId}`;
               return (
-                <View key={childId} style={styles.reviewItem}>
-                  <Text style={styles.rowTitle}>
+                <View key={childId} style={cardStyles.reviewItem}>
+                  <Text style={formStyles.rowTitle}>
                     {index + 1}. {childName}
                   </Text>
-                  <View style={styles.inlineButtons}>
+                  <View style={formStyles.inlineButtons}>
                     <ActionButton
                       compact
                       disabled={index === 0}
@@ -290,7 +292,7 @@ export function ChoreForm({
         {submitError !== null ? (
           <InlineNotice tone="error" message={submitError} />
         ) : null}
-        <View style={styles.inlineButtons}>
+        <View style={formStyles.inlineButtons}>
           <ActionButton
             compact
             disabled={submitting}

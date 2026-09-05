@@ -1,7 +1,7 @@
 import { Text } from "react-native";
 
-import { styles } from "../styles/layout";
+import { formStyles } from "../styles/forms";
 
 export function FieldLabel({ label }: { label: string }) {
-  return <Text style={styles.fieldLabel}>{label}</Text>;
+  return <Text style={formStyles.fieldLabel}>{label}</Text>;
 }

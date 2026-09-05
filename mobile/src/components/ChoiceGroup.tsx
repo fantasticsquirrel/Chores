@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
-import { styles } from "../styles/layout";
+import { formStyles } from "../styles/forms";
 
 export type ChoiceOption<T extends string> = {
   label: string;
@@ -19,7 +19,7 @@ export function ChoiceGroup<T extends string>({
   value: T;
 }) {
   return (
-    <View style={styles.choiceGrid}>
+    <View style={formStyles.choiceGrid}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -29,15 +29,15 @@ export function ChoiceGroup<T extends string>({
             key={option.value}
             onPress={() => onChange(option.value)}
             style={[
-              styles.choiceButton,
-              selected ? styles.choiceButtonSelected : null,
-              disabled ? styles.buttonDisabled : null,
+              formStyles.choiceButton,
+              selected ? formStyles.choiceButtonSelected : null,
+              disabled ? formStyles.buttonDisabled : null,
             ]}
           >
             <Text
               style={[
-                styles.choiceButtonText,
-                selected ? styles.choiceButtonTextSelected : null,
+                formStyles.choiceButtonText,
+                selected ? formStyles.choiceButtonTextSelected : null,
               ]}
             >
               {option.label}
