@@ -69,3 +69,29 @@ def test_chore_router_keeps_transaction_ownership_and_delegates_domain_logic() -
         assert "session.commit()" not in service
         assert "app.api" not in service
         assert len(service.splitlines()) < 350
+
+
+def test_homeschool_router_keeps_security_and_transaction_boundaries_while_delegating_crud() -> None:
+    homeschool_router = (ROOT / "backend/app/api/homeschool.py").read_text(encoding="utf-8")
+    service_root = ROOT / "backend/app/services/homeschool"
+    homeschool_services = [
+        (service_root / f"{name}.py").read_text(encoding="utf-8")
+        for name in ("access", "semesters", "subjects", "attendance", "day_comments", "grades")
+    ]
+
+    assert len(homeschool_router.splitlines()) < 300
+    assert "require_module_access(MODULE_HOMESCHOOL" in homeschool_router
+    assert "Depends(_require_homeschool_access)" in homeschool_router
+    assert "from app.services.homeschool" in homeschool_router
+    assert "from sqlalchemy import" not in homeschool_router
+    assert "session.get(" not in homeschool_router
+    assert "session.commit()" in homeschool_router
+    assert "session.rollback()" in homeschool_router
+    assert "session.refresh(" in homeschool_router
+    for service in homeschool_services:
+        assert "app.api" not in service
+        assert "session.commit()" not in service
+        assert "session.rollback()" not in service
+        assert "session.refresh(" not in service
+        assert "session.get(" not in service
+        assert len(service.splitlines()) < 250

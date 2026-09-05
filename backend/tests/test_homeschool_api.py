@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -9,6 +10,13 @@ from app.db import get_session_factory, initialize_database
 from app.main import app
 from app.models.core import Child, Household, User
 from app.models.enums import UserRole
+from app.models.homeschool import (
+    HomeschoolAttendance,
+    HomeschoolDayComment,
+    HomeschoolGrade,
+    HomeschoolSemester,
+    HomeschoolSubject,
+)
 from app.security import hash_password
 from app.services.modules import ModuleService
 
@@ -589,3 +597,139 @@ def test_parent_without_homeschool_module_access_is_forbidden(tmp_path: Path, mo
 
     assert response.status_code == 403
     assert response.json()["detail"] == "Module access denied."
+
+
+def test_parent_cannot_list_homeschool_records_for_another_households_child(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        other_household = Household(name="Other home", timezone="UTC")
+        session.add(other_household)
+        session.flush()
+        other_child = Child(household_id=other_household.id, name="Jordan", active=True)
+        session.add(other_child)
+        session.commit()
+        other_child_id = other_child.id
+
+    with TestClient(app) as client:
+        _login(client, user, password)
+        responses = [
+            client.get(
+                f"/chore-api/homeschool/{record_type}"
+                f"?household_id={user.household_id}&child_id={other_child_id}"
+            )
+            for record_type in ("attendance", "day-comments", "grades")
+        ]
+
+    assert [(response.status_code, response.json()["detail"]) for response in responses] == [
+        (404, "Child not found."),
+        (404, "Child not found."),
+        (404, "Child not found."),
+    ]
+
+
+def test_parent_cannot_mutate_another_households_homeschool_resources(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, _child, password = _create_parent_fixture()
+    settings = get_settings()
+    session_factory = get_session_factory(settings.database_url)
+    with session_factory() as session:
+        other_household = Household(name="Other home", timezone="UTC")
+        session.add(other_household)
+        session.flush()
+        other_child = Child(household_id=other_household.id, name="Jordan", active=True)
+        other_semester = HomeschoolSemester(
+            household_id=other_household.id,
+            name="Hidden semester",
+            start_date=date(2026, 8, 15),
+            end_date=date(2026, 12, 20),
+        )
+        other_subject = HomeschoolSubject(
+            household_id=other_household.id,
+            name="Hidden subject",
+            color="#111827",
+        )
+        session.add_all([other_child, other_semester, other_subject])
+        session.flush()
+        other_attendance = HomeschoolAttendance(
+            household_id=other_household.id,
+            child_id=other_child.id,
+            subject_id=other_subject.id,
+            date=date(2026, 9, 1),
+            present=True,
+            comment="Hidden",
+        )
+        other_comment = HomeschoolDayComment(
+            household_id=other_household.id,
+            child_id=other_child.id,
+            date=date(2026, 9, 1),
+            comment="Hidden",
+        )
+        other_grade = HomeschoolGrade(
+            household_id=other_household.id,
+            child_id=other_child.id,
+            subject_id=other_subject.id,
+            semester_id=other_semester.id,
+            grade="A",
+        )
+        session.add_all([other_attendance, other_comment, other_grade])
+        session.commit()
+        resource_ids = {
+            "semester": other_semester.id,
+            "subject": other_subject.id,
+            "attendance": other_attendance.id,
+            "comment": other_comment.id,
+            "grade": other_grade.id,
+        }
+
+    with TestClient(app) as client:
+        csrf_token = _login(client, user, password)
+        headers = {"X-CSRF-Token": csrf_token}
+        responses = [
+            client.put(
+                f"/chore-api/homeschool/semesters/{resource_ids['semester']}",
+                headers=headers,
+                json={
+                    "household_id": user.household_id,
+                    "name": "Still hidden",
+                    "start_date": "2026-08-15",
+                    "end_date": "2026-12-20",
+                    "active": True,
+                },
+            ),
+            client.put(
+                f"/chore-api/homeschool/subjects/{resource_ids['subject']}",
+                headers=headers,
+                json={
+                    "household_id": user.household_id,
+                    "name": "Still hidden",
+                    "color": "#111827",
+                    "active": True,
+                },
+            ),
+            client.delete(
+                f"/chore-api/homeschool/attendance/{resource_ids['attendance']}"
+                f"?household_id={user.household_id}",
+                headers=headers,
+            ),
+            client.delete(
+                f"/chore-api/homeschool/day-comments/{resource_ids['comment']}"
+                f"?household_id={user.household_id}",
+                headers=headers,
+            ),
+            client.delete(
+                f"/chore-api/homeschool/grades/{resource_ids['grade']}"
+                f"?household_id={user.household_id}",
+                headers=headers,
+            ),
+        ]
+
+    assert [(response.status_code, response.json()["detail"]) for response in responses] == [
+        (404, "Semester not found."),
+        (404, "Subject not found."),
+        (404, "Attendance not found."),
+        (404, "Day comment not found."),
+        (404, "Grade not found."),
+    ]

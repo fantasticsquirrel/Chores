@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
-from app.models.core import Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolGrade, HomeschoolSemester, HomeschoolSubject, User
 from app.models.enums import UserRole
+from app.models.homeschool import (
+    HomeschoolAttendance,
+    HomeschoolDayComment,
+    HomeschoolGrade,
+    HomeschoolSemester,
+    HomeschoolSubject,
+)
+from app.models.identity import User
 from app.modules import MODULE_HOMESCHOOL
 from app.schemas.homeschool import (
     CreateHomeschoolSemesterRequest,
@@ -23,35 +29,34 @@ from app.schemas.homeschool import (
     UpsertHomeschoolDayCommentRequest,
     UpsertHomeschoolGradeRequest,
 )
+from app.services.homeschool.access import require_household_scope
+from app.services.homeschool.attendance import (
+    delete_household_attendance,
+    list_household_attendance,
+    upsert_household_attendance,
+)
+from app.services.homeschool.day_comments import (
+    delete_household_day_comment,
+    list_household_day_comments,
+    upsert_household_day_comment,
+)
+from app.services.homeschool.grades import delete_household_grade, list_household_grades, upsert_household_grade
+from app.services.homeschool.semesters import (
+    create_household_semester,
+    delete_household_semester,
+    list_household_semesters,
+    update_household_semester,
+)
+from app.services.homeschool.subjects import (
+    create_household_subject,
+    delete_household_subject,
+    list_household_subjects,
+    update_household_subject,
+)
 
 router = APIRouter(prefix="/homeschool", tags=["homeschool"])
 _PARENT_ROLES = (UserRole.PARENT_ADMIN, UserRole.PARENT)
 _require_homeschool_access = require_module_access(MODULE_HOMESCHOOL, *_PARENT_ROLES)
-
-
-def _ensure_household_access(user: User, household_id: int) -> None:
-    if user.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
-
-
-def _ensure_child_in_household(session: Session, child_id: int, household_id: int) -> None:
-    child = session.get(Child, child_id)
-    if child is None or child.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found.")
-
-
-def _ensure_subject_in_household(session: Session, subject_id: int, household_id: int) -> None:
-    subject = session.get(HomeschoolSubject, subject_id)
-    if subject is None or subject.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
-
-
-def _ensure_semester_in_household(session: Session, semester_id: int | None, household_id: int) -> None:
-    if semester_id is None:
-        return
-    semester = session.get(HomeschoolSemester, semester_id)
-    if semester is None or semester.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
 
 
 @router.get("/semesters", response_model=list[HomeschoolSemesterResponse])
@@ -60,14 +65,8 @@ def list_semesters(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolSemester]:
-    _ensure_household_access(current_user, household_id)
-    return list(
-        session.scalars(
-            select(HomeschoolSemester)
-            .where(HomeschoolSemester.household_id == household_id)
-            .order_by(HomeschoolSemester.start_date.desc(), HomeschoolSemester.id.desc())
-        )
-    )
+    require_household_scope(current_user, household_id)
+    return list_household_semesters(session, household_id)
 
 
 @router.post("/semesters", response_model=HomeschoolSemesterResponse, status_code=status.HTTP_201_CREATED)
@@ -76,9 +75,8 @@ def create_semester(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolSemester:
-    _ensure_household_access(current_user, payload.household_id)
-    semester = HomeschoolSemester(**payload.model_dump())
-    session.add(semester)
+    require_household_scope(current_user, payload.household_id)
+    semester = create_household_semester(session, payload)
     session.commit()
     session.refresh(semester)
     return semester
@@ -91,14 +89,8 @@ def update_semester(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolSemester:
-    _ensure_household_access(current_user, payload.household_id)
-    semester = session.get(HomeschoolSemester, semester_id)
-    if semester is None or semester.household_id != payload.household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
-    semester.name = payload.name
-    semester.start_date = payload.start_date
-    semester.end_date = payload.end_date
-    semester.active = payload.active
+    require_household_scope(current_user, payload.household_id)
+    semester = update_household_semester(session, semester_id, payload)
     session.commit()
     session.refresh(semester)
     return semester
@@ -111,19 +103,8 @@ def delete_semester(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
-    _ensure_household_access(current_user, household_id)
-    semester = session.get(HomeschoolSemester, semester_id)
-    if semester is None or semester.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Semester not found.")
-    has_grades = session.scalar(
-        select(HomeschoolGrade.id).where(
-            HomeschoolGrade.household_id == household_id,
-            HomeschoolGrade.semester_id == semester_id,
-        ).limit(1)
-    ) is not None
-    if has_grades:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Semester has grades. Clear related grades first.")
-    session.delete(semester)
+    require_household_scope(current_user, household_id)
+    delete_household_semester(session, semester_id, household_id)
     session.commit()
 
 
@@ -133,14 +114,8 @@ def list_subjects(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolSubject]:
-    _ensure_household_access(current_user, household_id)
-    return list(
-        session.scalars(
-            select(HomeschoolSubject)
-            .where(HomeschoolSubject.household_id == household_id)
-            .order_by(HomeschoolSubject.name)
-        )
-    )
+    require_household_scope(current_user, household_id)
+    return list_household_subjects(session, household_id)
 
 
 @router.post("/subjects", response_model=HomeschoolSubjectResponse, status_code=status.HTTP_201_CREATED)
@@ -149,9 +124,8 @@ def create_subject(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolSubject:
-    _ensure_household_access(current_user, payload.household_id)
-    subject = HomeschoolSubject(**payload.model_dump())
-    session.add(subject)
+    require_household_scope(current_user, payload.household_id)
+    subject = create_household_subject(session, payload)
     try:
         session.commit()
     except IntegrityError as exc:
@@ -168,13 +142,8 @@ def update_subject(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolSubject:
-    _ensure_household_access(current_user, payload.household_id)
-    subject = session.get(HomeschoolSubject, subject_id)
-    if subject is None or subject.household_id != payload.household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
-    subject.name = payload.name
-    subject.color = payload.color
-    subject.active = payload.active
+    require_household_scope(current_user, payload.household_id)
+    subject = update_household_subject(session, subject_id, payload)
     try:
         session.commit()
     except IntegrityError as exc:
@@ -191,25 +160,8 @@ def delete_subject(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
-    _ensure_household_access(current_user, household_id)
-    subject = session.get(HomeschoolSubject, subject_id)
-    if subject is None or subject.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject not found.")
-    has_attendance = session.scalar(
-        select(HomeschoolAttendance.id).where(
-            HomeschoolAttendance.household_id == household_id,
-            HomeschoolAttendance.subject_id == subject_id,
-        ).limit(1)
-    ) is not None
-    has_grades = session.scalar(
-        select(HomeschoolGrade.id).where(
-            HomeschoolGrade.household_id == household_id,
-            HomeschoolGrade.subject_id == subject_id,
-        ).limit(1)
-    ) is not None
-    if has_attendance or has_grades:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subject has homeschool records. Clear related attendance and grades first.")
-    session.delete(subject)
+    require_household_scope(current_user, household_id)
+    delete_household_subject(session, subject_id, household_id)
     session.commit()
 
 
@@ -220,12 +172,8 @@ def list_attendance(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolAttendance]:
-    _ensure_household_access(current_user, household_id)
-    stmt = select(HomeschoolAttendance).where(HomeschoolAttendance.household_id == household_id)
-    if child_id is not None:
-        _ensure_child_in_household(session, child_id, household_id)
-        stmt = stmt.where(HomeschoolAttendance.child_id == child_id)
-    return list(session.scalars(stmt.order_by(HomeschoolAttendance.date.desc(), HomeschoolAttendance.id.desc())))
+    require_household_scope(current_user, household_id)
+    return list_household_attendance(session, household_id, child_id)
 
 
 @router.put("/attendance", response_model=HomeschoolAttendanceResponse)
@@ -234,23 +182,8 @@ def upsert_attendance(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolAttendance:
-    _ensure_household_access(current_user, payload.household_id)
-    _ensure_child_in_household(session, payload.child_id, payload.household_id)
-    _ensure_subject_in_household(session, payload.subject_id, payload.household_id)
-
-    attendance = session.scalar(
-        select(HomeschoolAttendance).where(
-            HomeschoolAttendance.child_id == payload.child_id,
-            HomeschoolAttendance.subject_id == payload.subject_id,
-            HomeschoolAttendance.date == payload.date,
-        )
-    )
-    if attendance is None:
-        attendance = HomeschoolAttendance(**payload.model_dump())
-        session.add(attendance)
-    else:
-        attendance.present = payload.present
-        attendance.comment = payload.comment
+    require_household_scope(current_user, payload.household_id)
+    attendance = upsert_household_attendance(session, payload)
     session.commit()
     session.refresh(attendance)
     return attendance
@@ -263,11 +196,8 @@ def delete_attendance(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
-    _ensure_household_access(current_user, household_id)
-    attendance = session.get(HomeschoolAttendance, attendance_id)
-    if attendance is None or attendance.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attendance not found.")
-    session.delete(attendance)
+    require_household_scope(current_user, household_id)
+    delete_household_attendance(session, attendance_id, household_id)
     session.commit()
 
 
@@ -278,12 +208,8 @@ def list_day_comments(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolDayComment]:
-    _ensure_household_access(current_user, household_id)
-    stmt = select(HomeschoolDayComment).where(HomeschoolDayComment.household_id == household_id)
-    if child_id is not None:
-        _ensure_child_in_household(session, child_id, household_id)
-        stmt = stmt.where(HomeschoolDayComment.child_id == child_id)
-    return list(session.scalars(stmt.order_by(HomeschoolDayComment.date.desc(), HomeschoolDayComment.id.desc())))
+    require_household_scope(current_user, household_id)
+    return list_household_day_comments(session, household_id, child_id)
 
 
 @router.put("/day-comments", response_model=HomeschoolDayCommentResponse)
@@ -292,20 +218,8 @@ def upsert_day_comment(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolDayComment:
-    _ensure_household_access(current_user, payload.household_id)
-    _ensure_child_in_household(session, payload.child_id, payload.household_id)
-
-    comment = session.scalar(
-        select(HomeschoolDayComment).where(
-            HomeschoolDayComment.child_id == payload.child_id,
-            HomeschoolDayComment.date == payload.date,
-        )
-    )
-    if comment is None:
-        comment = HomeschoolDayComment(**payload.model_dump())
-        session.add(comment)
-    else:
-        comment.comment = payload.comment
+    require_household_scope(current_user, payload.household_id)
+    comment = upsert_household_day_comment(session, payload)
     session.commit()
     session.refresh(comment)
     return comment
@@ -318,11 +232,8 @@ def delete_day_comment(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
-    _ensure_household_access(current_user, household_id)
-    comment = session.get(HomeschoolDayComment, comment_id)
-    if comment is None or comment.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Day comment not found.")
-    session.delete(comment)
+    require_household_scope(current_user, household_id)
+    delete_household_day_comment(session, comment_id, household_id)
     session.commit()
 
 
@@ -333,12 +244,8 @@ def list_grades(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> list[HomeschoolGrade]:
-    _ensure_household_access(current_user, household_id)
-    stmt = select(HomeschoolGrade).where(HomeschoolGrade.household_id == household_id)
-    if child_id is not None:
-        _ensure_child_in_household(session, child_id, household_id)
-        stmt = stmt.where(HomeschoolGrade.child_id == child_id)
-    return list(session.scalars(stmt.order_by(HomeschoolGrade.id.desc())))
+    require_household_scope(current_user, household_id)
+    return list_household_grades(session, household_id, child_id)
 
 
 @router.put("/grades", response_model=HomeschoolGradeResponse)
@@ -347,23 +254,8 @@ def upsert_grade(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> HomeschoolGrade:
-    _ensure_household_access(current_user, payload.household_id)
-    _ensure_child_in_household(session, payload.child_id, payload.household_id)
-    _ensure_subject_in_household(session, payload.subject_id, payload.household_id)
-    _ensure_semester_in_household(session, payload.semester_id, payload.household_id)
-
-    grade = session.scalar(
-        select(HomeschoolGrade).where(
-            HomeschoolGrade.child_id == payload.child_id,
-            HomeschoolGrade.subject_id == payload.subject_id,
-            HomeschoolGrade.semester_id == payload.semester_id,
-        )
-    )
-    if grade is None:
-        grade = HomeschoolGrade(**payload.model_dump())
-        session.add(grade)
-    else:
-        grade.grade = payload.grade
+    require_household_scope(current_user, payload.household_id)
+    grade = upsert_household_grade(session, payload)
     session.commit()
     session.refresh(grade)
     return grade
@@ -376,9 +268,6 @@ def delete_grade(
     current_user: User = Depends(_require_homeschool_access),
     session: Session = Depends(get_db_session),
 ) -> None:
-    _ensure_household_access(current_user, household_id)
-    grade = session.get(HomeschoolGrade, grade_id)
-    if grade is None or grade.household_id != household_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grade not found.")
-    session.delete(grade)
+    require_household_scope(current_user, household_id)
+    delete_household_grade(session, grade_id, household_id)
     session.commit()
