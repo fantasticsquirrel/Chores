@@ -350,6 +350,89 @@ def test_recipe_url_import_and_backup_roundtrip(tmp_path: Path, monkeypatch) -> 
         assert restored.json()["recipes"][0]["title"] == "Backup Pancakes"
 
 
+def test_recipe_backup_preserves_household_scope_and_title_order(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(email="parent@example.com")
+    family_parent, family_password = _create_user(
+        email="family-parent@example.com",
+        household_id=parent.household_id,
+    )
+    outsider, outsider_password = _create_user(email="outsider@example.com")
+
+    with TestClient(app) as client:
+        headers = _login(client, parent, password)
+        zulu = client.post(
+            "/chore-api/recipes",
+            json=_recipe_payload(title="Zulu Soup"),
+            headers=headers,
+        )
+        assert zulu.status_code == 201
+
+    with TestClient(app) as client:
+        headers = _login(client, family_parent, family_password)
+        alpha = client.post(
+            "/chore-api/recipes",
+            json=_recipe_payload(title="Alpha Salad"),
+            headers=headers,
+        )
+        assert alpha.status_code == 201
+
+    with TestClient(app) as client:
+        headers = _login(client, outsider, outsider_password)
+        hidden = client.post(
+            "/chore-api/recipes",
+            json=_recipe_payload(title="Hidden Pie"),
+            headers=headers,
+        )
+        assert hidden.status_code == 201
+
+    with TestClient(app) as client:
+        _login(client, parent, password)
+        backup = client.get("/chore-api/recipes/backup")
+
+    assert backup.status_code == 200
+    assert backup.json()["version"] == 1
+    assert [recipe["title"] for recipe in backup.json()["recipes"]] == ["Alpha Salad", "Zulu Soup"]
+    assert [recipe["owner_user_id"] for recipe in backup.json()["recipes"]] == [family_parent.id, parent.id]
+
+
+def test_recipe_backup_import_is_atomic_when_a_scoped_reference_is_invalid(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, password = _create_user(email="parent@example.com")
+    outsider, outsider_password = _create_user(email="outsider@example.com")
+
+    with TestClient(app) as client:
+        outsider_headers = _login(client, outsider, outsider_password)
+        hidden_category = client.post(
+            "/chore-api/recipes/categories",
+            json=_category_payload("Hidden"),
+            headers=outsider_headers,
+        )
+        assert hidden_category.status_code == 201
+
+    with TestClient(app) as client:
+        headers = _login(client, parent, password)
+        imported = client.post(
+            "/chore-api/recipes/backup/import",
+            json={
+                "recipes": [
+                    _recipe_payload(title="Would Be First"),
+                    _recipe_payload(
+                        title="Invalid Second",
+                        category_ids=[hidden_category.json()["id"]],
+                    ),
+                ]
+            },
+            headers=headers,
+        )
+        remaining = client.get("/chore-api/recipes", params={"active_only": False})
+
+    assert imported.status_code == 404
+    assert imported.json() == {"detail": "Recipe category not found."}
+    assert remaining.status_code == 200
+    assert remaining.json() == []
+
+
 def test_recipe_feedback_can_be_saved_for_each_parent_and_child(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     parent, password = _create_user(email="parent@example.com")

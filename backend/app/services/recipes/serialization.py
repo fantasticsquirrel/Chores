@@ -3,8 +3,8 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import (
-    Child,
+from app.models.identity import Child, User
+from app.models.recipes import (
     Recipe,
     RecipeCategory,
     RecipeCategoryLink,
@@ -15,7 +15,6 @@ from app.models.core import (
     RecipeStepIngredientLink,
     RecipeTag,
     RecipeTagLink,
-    User,
 )
 
 

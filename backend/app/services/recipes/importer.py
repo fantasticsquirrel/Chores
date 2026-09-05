@@ -10,8 +10,12 @@ from html.parser import HTMLParser
 from typing import Any
 
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
+from app.models.identity import User
+from app.models.recipes import Recipe
 from app.schemas.recipes import CreateRecipeRequest
+from app.services.recipes.management import create_owned_recipe
 
 MAX_RECIPE_IMPORT_BYTES = 2_000_000
 RECIPE_IMPORT_TIMEOUT_SECONDS = 10
@@ -151,6 +155,11 @@ def fetch_recipe_payload_from_url(url: str) -> CreateRecipeRequest:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not fetch recipe URL.") from exc
 
     return recipe_payload_from_html(html, url)
+
+
+def stage_recipe_url_import(session: Session, actor: User, url: str) -> Recipe:
+    recipe_payload = fetch_recipe_payload_from_url(url)
+    return create_owned_recipe(session, actor, recipe_payload)
 
 
 def _validate_import_url(url: str) -> None:

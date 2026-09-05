@@ -95,3 +95,52 @@ def test_homeschool_router_keeps_security_and_transaction_boundaries_while_deleg
         assert "session.refresh(" not in service
         assert "session.get(" not in service
         assert len(service.splitlines()) < 250
+
+
+def test_recipe_router_keeps_security_and_transaction_boundaries_while_delegating_domain_logic() -> None:
+    recipe_router = (ROOT / "backend/app/api/recipes.py").read_text(encoding="utf-8")
+    service_root = ROOT / "backend/app/services/recipes"
+    recipe_services = {
+        name: (service_root / f"{name}.py").read_text(encoding="utf-8")
+        for name in (
+            "backup",
+            "catalog",
+            "feedback",
+            "importer",
+            "management",
+            "ownership",
+            "scaling",
+            "serialization",
+            "service",
+        )
+    }
+
+    assert len(recipe_router.splitlines()) < 300
+    assert "require_module_access(MODULE_RECIPES" in recipe_router
+    assert recipe_router.count("Depends(_require_recipes_access)") == recipe_router.count("@router.")
+    assert "from app.services.recipes.backup import" in recipe_router
+    assert "from app.services.recipes.importer import stage_recipe_url_import" in recipe_router
+    assert "from app.services.recipes.serialization import" in recipe_router
+    assert "from sqlalchemy import" not in recipe_router
+    assert "select(" not in recipe_router
+    assert "session.commit()" in recipe_router
+    assert "session.rollback()" in recipe_router
+    assert "session.refresh(" in recipe_router
+    assert recipe_router.index('@router.post("/import-url"') < recipe_router.index('@router.get("/{recipe_id}"')
+    assert recipe_router.index('@router.get("/backup"') < recipe_router.index('@router.get("/{recipe_id}"')
+
+    for service in recipe_services.values():
+        assert "app.api" not in service
+        assert "session.commit()" not in service
+        assert "session.rollback()" not in service
+        assert "session.refresh(" not in service
+        assert len(service.splitlines()) < 350
+
+    assert ".where(Recipe.household_id == actor.household_id)" in recipe_services["backup"]
+    assert ".order_by(Recipe.title)" in recipe_services["backup"]
+    assert "for recipe_payload in payload.recipes" in recipe_services["backup"]
+    assert 'parsed.scheme not in {"http", "https"}' in recipe_services["importer"]
+    assert "socket.getaddrinfo(" in recipe_services["importer"]
+    assert "ip.is_private" in recipe_services["importer"]
+    assert "MAX_RECIPE_IMPORT_BYTES" in recipe_services["importer"]
+    assert "RECIPE_IMPORT_TIMEOUT_SECONDS" in recipe_services["importer"]

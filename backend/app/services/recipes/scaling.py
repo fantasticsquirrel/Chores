@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.identity import User
+from app.models.recipes import RecipeIngredient, RecipeStep
+from app.services.recipes.ownership import get_recipe_for_owner
+from app.services.recipes.serialization import ingredient_dict, step_dict
 
 
 def scale_ingredients(
@@ -72,3 +80,51 @@ def scale_linked_steps(
         scaled_steps.append({**step, "scaled_instruction": scaled_instruction, "linked_ingredients": linked})
 
     return scaled_steps
+
+
+def scale_household_recipe(
+    session: Session,
+    recipe_id: int,
+    actor: User,
+    *,
+    target_servings: float | None,
+    scale_factor: float | None,
+) -> dict[str, object]:
+    recipe = get_recipe_for_owner(session, recipe_id, actor)
+    ingredients = [
+        ingredient_dict(ingredient)
+        for ingredient in session.scalars(
+            select(RecipeIngredient)
+            .where(RecipeIngredient.recipe_id == recipe.id)
+            .order_by(RecipeIngredient.position)
+        )
+    ]
+    steps = [
+        step_dict(session, step)
+        for step in session.scalars(
+            select(RecipeStep)
+            .where(RecipeStep.recipe_id == recipe.id)
+            .order_by(RecipeStep.position)
+        )
+    ]
+    scaled = scale_ingredients(
+        ingredients,
+        base_servings=recipe.servings,
+        target_servings=target_servings,
+        scale_factor=scale_factor,
+    )
+    step_ingredient_ids = {
+        cast(int, step["id"]): cast(list[int], step["ingredient_ids"])
+        for step in steps
+    }
+    scaled_steps = scale_linked_steps(
+        steps,
+        scaled_ingredients=scaled["ingredients"],
+        step_ingredient_ids=step_ingredient_ids,
+    )
+    return {
+        "recipe_id": recipe.id,
+        "base_servings": recipe.servings,
+        **scaled,
+        "steps": scaled_steps,
+    }

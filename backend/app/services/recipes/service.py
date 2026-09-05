@@ -4,7 +4,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models.core import (
+from app.models.identity import User
+from app.models.recipes import (
     Recipe,
     RecipeCategoryLink,
     RecipeComponent,
@@ -12,7 +13,6 @@ from app.models.core import (
     RecipeStep,
     RecipeStepIngredientLink,
     RecipeTagLink,
-    User,
 )
 from app.schemas.recipes import CreateRecipeRequest, UpdateRecipeRequest
 from app.services.recipes.ownership import get_category_for_household, get_recipe_for_owner, get_tag_for_household

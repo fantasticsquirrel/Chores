@@ -4,8 +4,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import Recipe, RecipeCategory, RecipeTag, User
 from app.models.enums import UserRole
+from app.models.identity import User
+from app.models.recipes import Recipe, RecipeCategory, RecipeTag
 
 
 def get_category_for_owner(session: Session, category_id: int, user: User) -> RecipeCategory:
