@@ -1,4 +1,7 @@
-import type { BillingStatusResponse, HouseholdOwnershipResponse } from "./models";
+import type {
+  BillingStatusResponse,
+  HouseholdOwnershipResponse,
+} from "./models/account";
 
 export type OpsRole = "PLATFORM_OWNER" | "PLATFORM_SUPPORT";
 export interface OpsUser { id: number; email: string; role: OpsRole; mfa_required: boolean; mfa_verified: boolean }

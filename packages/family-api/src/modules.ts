@@ -1,4 +1,4 @@
-import type { UserRole } from "./models";
+import type { UserRole } from "./models/common";
 
 export type FamilyModuleKey = "chores" | "homeschool" | "recipes" | "admin";
 export type FamilyModulePlatform = "web" | "mobile";
