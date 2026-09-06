@@ -16,8 +16,8 @@
 - [x] Phase 4: split the shared TypeScript contract by domain.
 - [x] Phase 5: decompose web feature pages.
 - [x] Phase 6: decompose mobile feature screens and styles.
-- [ ] Phase 7: simplify module onboarding and remove compatibility shims.
-- [ ] Run all release gates and update durable architecture documentation.
+- [x] Phase 7: simplify module onboarding and remove compatibility shims.
+- [x] Run all release gates and update durable architecture documentation.
 
 ## Outcome
 

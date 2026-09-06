@@ -125,7 +125,7 @@ function readSource(path: string): string {
 }
 
 describe("domain model structure", () => {
-  it("declares every compatibility export exactly once without any", () => {
+  it("declares every public export exactly once without any", () => {
     const declarations = domainFiles.flatMap((file) => {
       const source = readSource(join(modelsDirectory, file));
       expect(source).not.toMatch(/\bany\b/);
@@ -138,21 +138,17 @@ describe("domain model structure", () => {
     expect(new Set(declarations).size).toBe(declarations.length);
   });
 
-  it("re-exports every domain through the new and compatibility barrels", () => {
+  it("re-exports every domain through the public domain barrel", () => {
     const domainBarrel = readSource(join(modelsDirectory, "index.ts"));
     const reexportedDomains = [...domainBarrel.matchAll(/from "\.\/(\w+)"/g)]
       .map((match) => `${match[1]}.ts`)
       .sort();
 
     expect(reexportedDomains).toEqual(domainFiles);
-    expect(readSource(join(sourceDirectory, "models.ts"))).toContain(
-      'export type * from "./models/index";',
-    );
-
     const packageManifest = JSON.parse(
       readSource(join(sourceDirectory, "../package.json")),
     ) as { exports: Record<string, string> };
-    expect(packageManifest.exports["./models"]).toBe("./src/models.ts");
+    expect(packageManifest.exports["./models"]).toBe("./src/models/index.ts");
     expect(packageManifest.exports["./models/*"]).toBe("./src/models/*.ts");
   });
 

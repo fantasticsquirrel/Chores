@@ -1,4 +1,4 @@
-import { FamilyRecipeApiEndpoints } from "@family-manager/family-api/api-endpoints";
+import { FamilyRecipeApiEndpoints } from "@family-manager/family-api/endpoints";
 import {
   buildUrl,
   extractErrorDetail,
@@ -37,15 +37,22 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
 
   constructor(config: ApiClientConfig = {}) {
     super();
-    this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl(), DEFAULT_API_BASE_URL, {
-      allowRelative: true,
-    });
+    this.baseUrl = normalizeBaseUrl(
+      config.baseUrl ?? resolveApiBaseUrl(),
+      DEFAULT_API_BASE_URL,
+      {
+        allowRelative: true,
+      },
+    );
     this.fetchImpl = resolveFetchImpl(config.fetchImpl);
     this.csrfToken = readCookieValue(CSRF_COOKIE_NAME);
   }
 
-  protected override afterAuthSession(session: import("./models").AuthSessionResponse): void {
-    this.csrfToken = session.csrf_token ?? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME);
+  protected override afterAuthSession(
+    session: import("./models").AuthSessionResponse,
+  ): void {
+    this.csrfToken =
+      session.csrf_token ?? this.csrfToken ?? readCookieValue(CSRF_COOKIE_NAME);
   }
 
   protected override afterLogout(): void {

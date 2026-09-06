@@ -1,23 +1,16 @@
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { apiClient } from "./api/client";
 import { InlineNotice } from "./components/InlineNotice";
 import { SafeAreaScreen } from "./components/SafeAreaScreen";
 import { useModules } from "./hooks/useModules";
 import { useSessionBootstrap } from "./hooks/useSessionBootstrap";
+import { canAccessMobileModule } from "./modules/registry";
 import { BottomNavigation } from "./navigation/BottomNavigation";
 import { OverflowMenu } from "./navigation/OverflowMenu";
-import {
-  buildNavigationLayout,
-  resolveActiveTab,
-} from "./navigation/tabs";
+import { buildNavigationLayout, resolveActiveTab } from "./navigation/tabs";
 import { AccountScreen } from "./screens/account/AccountScreen";
 import { AdminScreen } from "./screens/admin/AdminScreen";
 import { LoginScreen } from "./screens/auth/LoginScreen";
@@ -104,14 +97,25 @@ export function AppShell() {
         />
       ) : null}
       {activeTab === "children" ? <ChildrenScreen session={session} /> : null}
-      {activeTab === "chores" ? <ChoresScreen session={session} /> : null}
-      {activeTab === "review" ? <ParentReviewScreen /> : null}
-      {activeTab === "money" ? <MoneyScreen /> : null}
-      {activeTab === "homeschool" ? (
+      {activeTab === "chores" && canAccessMobileModule(modules, "chores") ? (
+        <ChoresScreen session={session} />
+      ) : null}
+      {activeTab === "review" && canAccessMobileModule(modules, "chores") ? (
+        <ParentReviewScreen />
+      ) : null}
+      {activeTab === "money" && canAccessMobileModule(modules, "chores") ? (
+        <MoneyScreen />
+      ) : null}
+      {activeTab === "homeschool" &&
+      canAccessMobileModule(modules, "homeschool") ? (
         <HomeschoolScreen modules={modules} session={session} />
       ) : null}
-      {activeTab === "admin" ? (
-        <AdminScreen onModulesChanged={async () => { await loadModules(); }} />
+      {activeTab === "admin" && canAccessMobileModule(modules, "admin") ? (
+        <AdminScreen
+          onModulesChanged={async () => {
+            await loadModules();
+          }}
+        />
       ) : null}
       {activeTab === "account" ? (
         <AccountScreen
@@ -127,8 +131,15 @@ export function AppShell() {
       onLogout={handleLogout}
       session={session}
     />
-  ) : activeTab === "money" ? <MoneyScreen readOnly /> : (
+  ) : activeTab === "money" && canAccessMobileModule(modules, "chores") ? (
+    <MoneyScreen readOnly />
+  ) : canAccessMobileModule(modules, "chores") ? (
     <ChildTodayScreen />
+  ) : (
+    <InlineNotice
+      tone="warning"
+      message="This module is not enabled for your account."
+    />
   );
 
   return (

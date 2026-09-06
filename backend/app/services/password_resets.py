@@ -12,7 +12,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.core import PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
+from app.models import PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
 from app.models.enums import UserRole
 from app.security.password_resets import digest_password_reset_token, format_password_reset_token
 
@@ -417,7 +417,7 @@ class PasswordResetService:
     ) -> None:
         # Import here to keep this service request-context independent: it never
         # needs raw request email/IP and must not persist either in audit JSON.
-        from app.models.core import SecurityAuditEvent
+        from app.models import SecurityAuditEvent
         import json
 
         session.add(

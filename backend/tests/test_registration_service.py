@@ -7,7 +7,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
-from app.models.core import AccountRegistration, AccountRegistrationDelivery, Household, User
+from app.models import AccountRegistration, AccountRegistrationDelivery, Household, User
 from app.models.enums import UserRole
 from app.security.registrations import format_registration_token
 from app.services.registrations import RegistrationService

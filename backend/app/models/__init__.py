@@ -1,8 +1,93 @@
 from app.models.billing import BillingAccount, BillingCustomerReference, BillingEvent, HouseholdEntitlement, Subscription
-from app.models.core import ALL_MODELS as CORE_MODELS
+from app.models.chores import (
+    Chore,
+    ChoreAllowedChild,
+    ChoreRotationMember,
+    ChoreRotationState,
+    CompletionRecord,
+    ParentChoreCompletion,
+    Submission,
+    SubmissionItem,
+    Tag,
+    Transaction,
+)
+from app.models.homeschool import (
+    HomeschoolAttendance,
+    HomeschoolDayComment,
+    HomeschoolGrade,
+    HomeschoolSemester,
+    HomeschoolSubject,
+)
+from app.models.identity import AuthSession, Child, Household, LoginAttempt, SecurityAuditEvent, User
+from app.models.modules import HouseholdModuleAccess, Module, UserModuleAccess
+from app.models.notifications import Notification, NotificationDeliveryAttempt, NotificationPreference, PushSubscription
 from app.models.platform import PlatformAuditEvent, PlatformSession, PlatformUser, SupportCase, SupportCaseNote
+from app.models.recipes import (
+    QuickTemplate,
+    Recipe,
+    RecipeCategory,
+    RecipeCategoryLink,
+    RecipeComponent,
+    RecipeFeedback,
+    RecipeIngredient,
+    RecipeStep,
+    RecipeStepIngredientLink,
+    RecipeTag,
+    RecipeTagLink,
+)
+from app.models.recovery import (
+    AccountRegistration,
+    AccountRegistrationDelivery,
+    PasswordReset,
+    PasswordResetDelivery,
+    PasswordResetRequest,
+)
 
-ALL_MODELS = CORE_MODELS + (
+ALL_MODELS = (
+    Household,
+    Child,
+    User,
+    AuthSession,
+    LoginAttempt,
+    SecurityAuditEvent,
+    PasswordReset,
+    PasswordResetRequest,
+    PasswordResetDelivery,
+    AccountRegistration,
+    AccountRegistrationDelivery,
+    Module,
+    HouseholdModuleAccess,
+    UserModuleAccess,
+    Tag,
+    Chore,
+    ChoreAllowedChild,
+    ChoreRotationMember,
+    ChoreRotationState,
+    Submission,
+    SubmissionItem,
+    CompletionRecord,
+    ParentChoreCompletion,
+    Transaction,
+    HomeschoolSemester,
+    HomeschoolSubject,
+    HomeschoolAttendance,
+    HomeschoolDayComment,
+    HomeschoolGrade,
+    QuickTemplate,
+    RecipeCategory,
+    RecipeTag,
+    Recipe,
+    RecipeCategoryLink,
+    RecipeTagLink,
+    RecipeIngredient,
+    RecipeStep,
+    RecipeStepIngredientLink,
+    RecipeComponent,
+    Notification,
+    NotificationPreference,
+    PushSubscription,
+    NotificationDeliveryAttempt,
+    RecipeFeedback,
     PlatformUser,
     PlatformSession,
     PlatformAuditEvent,
@@ -15,4 +100,4 @@ ALL_MODELS = CORE_MODELS + (
     HouseholdEntitlement,
 )
 
-__all__ = ["ALL_MODELS"]
+__all__ = [model.__name__ for model in ALL_MODELS] + ["ALL_MODELS"]

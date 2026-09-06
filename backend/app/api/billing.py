@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_roles
-from app.models.core import Household, User
+from app.models import Household, User
 from app.models.enums import UserRole
 from app.schemas.platform import BillingStatusResponse
 from app.services.billing import entitlement_for_household

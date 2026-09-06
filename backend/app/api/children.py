@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
 from app.modules import MODULE_CHORES
-from app.models.core import User
+from app.models import User
 from app.models.enums import UserRole
 from app.schemas.children import (
     ChildAccountResponse,

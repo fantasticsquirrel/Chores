@@ -1,29 +1,125 @@
 {
-  "modules": [
-    {
+  "schema_version": 1,
+  "modules": {
+    "chores": {
       "key": "chores",
       "name": "Chores",
-      "description": "Chore assignments, submissions, approvals, and rewards."
+      "description": "Chore assignments, submissions, approvals, and rewards.",
+      "labels": {
+        "web": "Chores",
+        "mobile": "Chores"
+      },
+      "default_grants": {
+        "PARENT_ADMIN": true,
+        "PARENT": true,
+        "CHILD": true
+      },
+      "platforms": {
+        "web": {
+          "supported": true,
+          "destination": "/parent/chores",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
+        },
+        "mobile": {
+          "supported": true,
+          "destination": "chores",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
+        }
+      }
     },
-    {
+    "homeschool": {
       "key": "homeschool",
       "name": "Homeschool",
-      "description": "Attendance, subjects, semesters, comments, and homeschool reporting."
+      "description": "Attendance, subjects, semesters, comments, and homeschool reporting.",
+      "labels": {
+        "web": "Homeschool",
+        "mobile": "School"
+      },
+      "default_grants": {
+        "PARENT_ADMIN": true,
+        "PARENT": true,
+        "CHILD": false
+      },
+      "platforms": {
+        "web": {
+          "supported": true,
+          "destination": "/homeschool",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
+        },
+        "mobile": {
+          "supported": true,
+          "destination": "homeschool",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": false
+        }
+      }
     },
-    {
+    "recipes": {
       "key": "recipes",
       "name": "Recipes",
-      "description": "Personal recipe collection, ingredients, scaling, and cooking notes."
+      "description": "Personal recipe collection, ingredients, scaling, and cooking notes.",
+      "labels": {
+        "web": "Recipes",
+        "mobile": "Recipes"
+      },
+      "default_grants": {
+        "PARENT_ADMIN": true,
+        "PARENT": true,
+        "CHILD": false
+      },
+      "platforms": {
+        "web": {
+          "supported": true,
+          "destination": "/recipes",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
+        },
+        "mobile": {
+          "supported": false,
+          "destination": null,
+          "roles": [],
+          "navigation": false,
+          "dashboard": false
+        }
+      }
     },
-    {
+    "admin": {
       "key": "admin",
       "name": "Admin",
-      "description": "Household users, child accounts, and module access controls."
+      "description": "Household users, child accounts, and module access controls.",
+      "labels": {
+        "web": "Admin",
+        "mobile": "Admin"
+      },
+      "default_grants": {
+        "PARENT_ADMIN": true,
+        "PARENT": false,
+        "CHILD": false
+      },
+      "platforms": {
+        "web": {
+          "supported": true,
+          "destination": "/admin/dashboard",
+          "roles": ["PARENT_ADMIN"],
+          "navigation": true,
+          "dashboard": false
+        },
+        "mobile": {
+          "supported": true,
+          "destination": "admin",
+          "roles": ["PARENT_ADMIN"],
+          "navigation": true,
+          "dashboard": false
+        }
+      }
     }
-  ],
-  "default_role_modules": {
-    "PARENT_ADMIN": ["chores", "homeschool", "recipes", "admin"],
-    "PARENT": ["chores", "homeschool", "recipes"],
-    "CHILD": ["chores"]
   }
 }

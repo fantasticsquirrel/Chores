@@ -11,13 +11,21 @@ import type {
   RecipeDetail,
   SetUserModuleAccessRequest,
   UserRole,
-} from "./models";
+} from "./models/index";
 
 describe("shared API models", () => {
   it("exposes common auth and module contracts without loosening literal types", () => {
-    expectTypeOf<UserRole>().toEqualTypeOf<"PARENT_ADMIN" | "PARENT" | "CHILD">();
+    expectTypeOf<UserRole>().toEqualTypeOf<
+      "PARENT_ADMIN" | "PARENT" | "CHILD"
+    >();
     expectTypeOf<AuthSessionResponse>().toMatchTypeOf<{
-      user: { id: number; household_id: number; email: string; role: UserRole; is_household_owner: boolean };
+      user: {
+        id: number;
+        household_id: number;
+        email: string;
+        role: UserRole;
+        is_household_owner: boolean;
+      };
       csrf_token?: string | null;
     }>();
     expectTypeOf<FamilyModule>().toMatchTypeOf<{

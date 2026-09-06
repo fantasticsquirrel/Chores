@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import Select, func, select
 
-from app.models.core import Child
+from app.models import Child
 from app.repositories.base import SQLAlchemyRepository
 
 

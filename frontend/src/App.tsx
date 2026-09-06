@@ -1,5 +1,13 @@
 import { useEffect, useState, type ReactElement } from "react";
-import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  Navigate,
+  NavLink,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
@@ -15,13 +23,21 @@ import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { AccountPage } from "./pages/AccountPage";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import { HomeschoolPage } from "./pages/HomeschoolPage";
-import { RecipeDetailPage, RecipeOrganizerPage } from "./pages/RecipeOrganizerPage";
+import {
+  RecipeDetailPage,
+  RecipeOrganizerPage,
+} from "./pages/RecipeOrganizerPage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { AuthProvider } from "./auth/AuthContext";
 import { useAuth } from "./auth/useAuth";
 import { type UserRole, apiClient } from "./api";
 import { formatApiError } from "./lib/errors";
-import type { FamilyModuleKey } from "./modules/registry";
+import {
+  getWebModuleDestination,
+  hasWebModuleGuard,
+  webModuleNavigationItems,
+  type FamilyModuleKey,
+} from "./modules/registry";
 import { Button, Card, InlineNotice } from "./ui";
 import { OpsApp } from "./ops/OpsApp";
 import { ThemePicker, ThemeProvider } from "./theme";
@@ -39,17 +55,48 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { to: "/parent/dashboard", label: "Today", roles: ["PARENT_ADMIN", "PARENT"] },
-  { to: "/parent/chores", label: "Chores", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
-  { to: "/parent/money", label: "Money", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "chores" },
-  { to: "/homeschool", label: "Homeschool", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "homeschool" },
-  { to: "/recipes", label: "Recipes", roles: ["PARENT_ADMIN", "PARENT"], moduleKey: "recipes" },
-  { to: "/admin/dashboard", label: "Admin", roles: ["PARENT_ADMIN"], moduleKey: "admin" },
+  {
+    to: "/parent/dashboard",
+    label: "Today",
+    roles: ["PARENT_ADMIN", "PARENT"],
+  },
+  ...webModuleNavigationItems.flatMap((item) =>
+    item.moduleKey === "chores"
+      ? [
+          item,
+          {
+            to: "/parent/money",
+            label: "Money",
+            roles: ["PARENT_ADMIN", "PARENT"] as UserRole[],
+            moduleKey: "chores" as FamilyModuleKey,
+          },
+        ]
+      : [item],
+  ),
 
-  { to: "/account", label: "Account", roles: ["PARENT_ADMIN", "PARENT", "CHILD"] },
-  { to: "/notifications", label: "Notifications", roles: ["PARENT_ADMIN", "PARENT", "CHILD"], moduleKey: "chores" },
-  { to: "/child/today", label: "Child Today", roles: ["CHILD"], moduleKey: "chores" },
-  { to: "/child/history", label: "My Money", roles: ["CHILD"], moduleKey: "chores" },
+  {
+    to: "/account",
+    label: "Account",
+    roles: ["PARENT_ADMIN", "PARENT", "CHILD"],
+  },
+  {
+    to: "/notifications",
+    label: "Notifications",
+    roles: ["PARENT_ADMIN", "PARENT", "CHILD"],
+    moduleKey: "chores",
+  },
+  {
+    to: "/child/today",
+    label: "Child Today",
+    roles: ["CHILD"],
+    moduleKey: "chores",
+  },
+  {
+    to: "/child/history",
+    label: "My Money",
+    roles: ["CHILD"],
+    moduleKey: "chores",
+  },
 ];
 
 function getDefaultRouteForRole(role: UserRole): string {
@@ -101,7 +148,9 @@ type RoleProtectedRouteProps = {
   allowedRoles: UserRole[];
 };
 
-function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactElement {
+function RoleProtectedRoute({
+  allowedRoles,
+}: RoleProtectedRouteProps): ReactElement {
   const { status, user } = useAuth();
 
   if (status !== "authenticated" || user === null) {
@@ -115,13 +164,20 @@ function RoleProtectedRoute({ allowedRoles }: RoleProtectedRouteProps): ReactEle
   return <Outlet />;
 }
 
-
 type ModuleProtectedRouteProps = {
   moduleKey: FamilyModuleKey;
 };
 
-function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactElement {
+function ModuleProtectedRoute({
+  moduleKey,
+}: ModuleProtectedRouteProps): ReactElement {
   const { status, moduleKeys, manageableModuleKeys } = useAuth();
+
+  if (!hasWebModuleGuard(moduleKey)) {
+    throw new Error(
+      `Module route ${moduleKey} is missing its web guard registration.`,
+    );
+  }
 
   if (status !== "authenticated") {
     return <Navigate to="/login" replace />;
@@ -139,7 +195,9 @@ function ModuleProtectedRoute({ moduleKey }: ModuleProtectedRouteProps): ReactEl
   if (!manageableModuleKeys.includes(moduleKey)) {
     return (
       <>
-        <InlineNotice variant="info">You have view-only access. Management controls are hidden.</InlineNotice>
+        <InlineNotice variant="info">
+          You have view-only access. Management controls are hidden.
+        </InlineNotice>
         <div className="module-read-only">
           <Outlet />
         </div>
@@ -158,7 +216,12 @@ function AppShell(): ReactElement {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const visibleNavItems =
     status === "authenticated" && user !== null
-      ? navItems.filter((item) => item.roles.includes(user.role) && (item.moduleKey === undefined || moduleKeys.includes(item.moduleKey)))
+      ? navItems.filter(
+          (item) =>
+            item.roles.includes(user.role) &&
+            (item.moduleKey === undefined ||
+              moduleKeys.includes(item.moduleKey)),
+        )
       : [];
 
   useEffect(() => {
@@ -204,61 +267,78 @@ function AppShell(): ReactElement {
           <h2>Household Workspace</h2>
         </div>
         {status === "authenticated" && user !== null ? (
-          <div className="app-brand-session"><span>Signed in as {user.email}</span><ThemePicker compact /></div>
+          <div className="app-brand-session">
+            <span>Signed in as {user.email}</span>
+            <ThemePicker compact />
+          </div>
         ) : null}
       </header>
-      <div className={`workspace-layout${status === "authenticated" ? " workspace-layout--authenticated" : ""}`}>
-        {status === "authenticated" ? <aside className="workspace-sidebar glass-card">
-        <nav aria-label="Primary" className="workspace-nav">
-          {visibleNavItems.map((item, index) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `nav-chip ${index < 3 ? "mobile-primary" : "mobile-secondary"}${isActive ? " active" : ""}`}
-            >
-              {item.label === "Notifications" && unreadNotifications > 0 ? `${item.label} (${unreadNotifications})` : item.label}
-            </NavLink>
-          ))}
-          {status === "authenticated" ? (
-            <Button
-              type="button"
-              className="nav-chip"
-              onClick={() => {
-                void handleLogout();
-              }}
-              disabled={loggingOut}
-            >
-              {loggingOut ? "Logging Out..." : "Log Out"}
-            </Button>
-          ) : null}
-          <details className="mobile-more">
-            <summary>More</summary>
-            <div className="mobile-more-panel">
-              {visibleNavItems.slice(3).map((item) => (
+      <div
+        className={`workspace-layout${status === "authenticated" ? " workspace-layout--authenticated" : ""}`}
+      >
+        {status === "authenticated" ? (
+          <aside className="workspace-sidebar glass-card">
+            <nav aria-label="Primary" className="workspace-nav">
+              {visibleNavItems.map((item, index) => (
                 <NavLink
-                  key={`mobile-${item.to}`}
+                  key={item.to}
                   to={item.to}
-                  aria-label={`${item.label} in More menu`}
+                  className={({ isActive }) =>
+                    `nav-chip ${index < 3 ? "mobile-primary" : "mobile-secondary"}${isActive ? " active" : ""}`
+                  }
                 >
-                  {item.label}
+                  {item.label === "Notifications" && unreadNotifications > 0
+                    ? `${item.label} (${unreadNotifications})`
+                    : item.label}
                 </NavLink>
               ))}
-              <button
-                type="button"
-                aria-label="Log out from More menu"
-                onClick={() => { void handleLogout(); }}
-              >
-                {loggingOut ? "Logging out..." : "Log out"}
-              </button>
-            </div>
-          </details>
-        </nav>
-        </aside> : null}
+              {status === "authenticated" ? (
+                <Button
+                  type="button"
+                  className="nav-chip"
+                  onClick={() => {
+                    void handleLogout();
+                  }}
+                  disabled={loggingOut}
+                >
+                  {loggingOut ? "Logging Out..." : "Log Out"}
+                </Button>
+              ) : null}
+              <details className="mobile-more">
+                <summary>More</summary>
+                <div className="mobile-more-panel">
+                  {visibleNavItems.slice(3).map((item) => (
+                    <NavLink
+                      key={`mobile-${item.to}`}
+                      to={item.to}
+                      aria-label={`${item.label} in More menu`}
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                  <button
+                    type="button"
+                    aria-label="Log out from More menu"
+                    onClick={() => {
+                      void handleLogout();
+                    }}
+                  >
+                    {loggingOut ? "Logging out..." : "Log out"}
+                  </button>
+                </div>
+              </details>
+            </nav>
+          </aside>
+        ) : null}
         <div className="workspace-main">
           {logoutError !== null ? (
-            <InlineNotice variant="error">Could not sign out: {logoutError}</InlineNotice>
+            <InlineNotice variant="error">
+              Could not sign out: {logoutError}
+            </InlineNotice>
           ) : null}
-          <main className="content-grid"><Outlet /></main>
+          <main className="content-grid">
+            <Outlet />
+          </main>
         </div>
       </div>
     </div>
@@ -267,70 +347,117 @@ function AppShell(): ReactElement {
 
 export default function App(): ReactElement {
   const { pathname } = useLocation();
-  return pathname === "/ops" || pathname.startsWith("/ops/") ? <OpsApp /> : <HouseholdApp />;
+  return pathname === "/ops" || pathname.startsWith("/ops/") ? (
+    <OpsApp />
+  ) : (
+    <HouseholdApp />
+  );
 }
 
 function HouseholdApp(): ReactElement {
   return (
-    <ThemeProvider><AuthProvider>
-      <Routes>
-        <Route element={<AppShell />}>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="/account/security" element={<AccountPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/chore/account/security" element={<Navigate to="/account/security" replace />} />
-            <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN", "PARENT"]} />}>
-              <Route path="/parent/dashboard" element={<ParentDashboardPage />} />
-              <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+    <ThemeProvider>
+      <AuthProvider>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/account/security" element={<AccountPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route
+                path="/chore/account/security"
+                element={<Navigate to="/account/security" replace />}
+              />
+              <Route
+                element={
+                  <RoleProtectedRoute
+                    allowedRoles={["PARENT_ADMIN", "PARENT"]}
+                  />
+                }
+              >
                 <Route
-                  path="/board"
-                  element={<ParentSubmissionReviewPage />}
+                  path="/parent/dashboard"
+                  element={<ParentDashboardPage />}
                 />
-                <Route path="/parent/chores" element={<ParentChoresPage />} />
-                <Route path="/parent/children" element={<ParentChildrenPage />} />
-                <Route path="/parent/money" element={<ChoreFinancePage />} />
-              </Route>
-              <Route element={<ModuleProtectedRoute moduleKey="homeschool" />}>
-                <Route path="/homeschool" element={<HomeschoolPage />} />
-              </Route>
-              <Route element={<ModuleProtectedRoute moduleKey="recipes" />}>
-                <Route path="/recipes" element={<RecipeOrganizerPage />} />
-                <Route path="/recipes/:recipeId" element={<RecipeDetailPage />} />
+                <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+                  <Route
+                    path="/board"
+                    element={<ParentSubmissionReviewPage />}
+                  />
+                  <Route
+                    path={getWebModuleDestination("chores")}
+                    element={<ParentChoresPage />}
+                  />
+                  <Route
+                    path="/parent/children"
+                    element={<ParentChildrenPage />}
+                  />
+                  <Route path="/parent/money" element={<ChoreFinancePage />} />
+                </Route>
+                <Route
+                  element={<ModuleProtectedRoute moduleKey="homeschool" />}
+                >
+                  <Route
+                    path={getWebModuleDestination("homeschool")}
+                    element={<HomeschoolPage />}
+                  />
+                </Route>
+                <Route element={<ModuleProtectedRoute moduleKey="recipes" />}>
+                  <Route
+                    path={getWebModuleDestination("recipes")}
+                    element={<RecipeOrganizerPage />}
+                  />
+                  <Route
+                    path="/recipes/:recipeId"
+                    element={<RecipeDetailPage />}
+                  />
+                </Route>
+                <Route
+                  path="/parent/tags"
+                  element={
+                    <RouteCard
+                      title="Parent Tags"
+                      description="Tag management is reserved for a later implementation task."
+                    />
+                  }
+                />
               </Route>
               <Route
-                path="/parent/tags"
-                element={<RouteCard title="Parent Tags" description="Tag management is reserved for a later implementation task." />}
-              />
-            </Route>
-            <Route element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN"]} />}>
-              <Route element={<ModuleProtectedRoute moduleKey="admin" />}>
-                <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                element={<RoleProtectedRoute allowedRoles={["PARENT_ADMIN"]} />}
+              >
+                <Route element={<ModuleProtectedRoute moduleKey="admin" />}>
+                  <Route
+                    path={getWebModuleDestination("admin")}
+                    element={<AdminDashboardPage />}
+                  />
+                </Route>
               </Route>
-            </Route>
-            <Route element={<RoleProtectedRoute allowedRoles={["CHILD"]} />}>
-              <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+              <Route element={<RoleProtectedRoute allowedRoles={["CHILD"]} />}>
+                <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
+                  <Route path="/child/today" element={<ChildTodayPage />} />
+                  <Route path="/child/history" element={<ChoreFinancePage />} />
+                </Route>
                 <Route
-                  path="/child/today"
-                  element={<ChildTodayPage />}
+                  path="/child/calendar"
+                  element={
+                    <RouteCard
+                      title="Child Calendar"
+                      description="Calendar and historical cadence will be added in upcoming tasks."
+                    />
+                  }
                 />
               </Route>
-              <Route
-                path="/child/calendar"
-                element={<RouteCard title="Child Calendar" description="Calendar and historical cadence will be added in upcoming tasks." />}
-              />
-              <Route path="/child/history" element={<ChoreFinancePage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
-            <Route path="*" element={<NotFoundPage />} />
           </Route>
-        </Route>
-      </Routes>
-    </AuthProvider></ThemeProvider>
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

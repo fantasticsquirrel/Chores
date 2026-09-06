@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Child, Household, User
+from app.models import Child, Household, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME
@@ -328,6 +328,12 @@ def test_recipe_url_import_and_backup_roundtrip(tmp_path: Path, monkeypatch) -> 
     def fake_urlopen(*args: object, **kwargs: object) -> FakeResponse:
         return FakeResponse()
 
+    monkeypatch.setattr(
+        "app.services.recipes.importer.socket.getaddrinfo",
+        lambda *_args, **_kwargs: [
+            (None, None, None, None, ("93.184.216.34", 443)),
+        ],
+    )
     monkeypatch.setattr("app.services.recipes.importer.urllib.request.urlopen", fake_urlopen)
 
     with TestClient(app) as client:

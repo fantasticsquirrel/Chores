@@ -11,7 +11,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import (
+from app.models import (
     Child,
     Chore,
     Household,
@@ -147,7 +147,9 @@ def test_notification_creation_only_enqueues_and_does_not_send_network(tmp_path:
     _configure(tmp_path, monkeypatch)
     seed = _seed()
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import create_notification, update_user_notification_settings, upsert_push_subscription
+    from app.services.notification_creation import create_notification
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.push_subscriptions import upsert_push_subscription
 
     with seed["factory"]() as session:
         update_user_notification_settings(session, seed["parent_id"], "chores", {"push_enabled": True})
@@ -180,7 +182,10 @@ def test_worker_revalidates_endpoint_uses_bounded_timeout_and_never_resends_sent
     _configure(tmp_path, monkeypatch)
     seed = _seed()
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import create_notification, process_pending_push_deliveries, update_user_notification_settings, upsert_push_subscription
+    from app.services.notification_creation import create_notification
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.notification_push import process_pending_push_deliveries
+    from app.services.push_subscriptions import upsert_push_subscription
 
     with seed["factory"]() as session:
         update_user_notification_settings(session, seed["parent_id"], "chores", {"push_enabled": True, "quiet_hours_start": "", "quiet_hours_end": ""})
@@ -206,7 +211,8 @@ def test_worker_rejects_subscription_owned_by_different_user(tmp_path: Path, mon
     _configure(tmp_path, monkeypatch)
     seed = _seed()
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import process_pending_push_deliveries, upsert_push_subscription
+    from app.services.notification_push import process_pending_push_deliveries
+    from app.services.push_subscriptions import upsert_push_subscription
 
     with seed["factory"]() as session:
         subscription = upsert_push_subscription(
@@ -260,7 +266,10 @@ def test_worker_reclaims_only_stale_processing_leases(tmp_path: Path, monkeypatc
     _configure(tmp_path, monkeypatch)
     seed = _seed()
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import create_notification, process_pending_push_deliveries, update_user_notification_settings, upsert_push_subscription
+    from app.services.notification_creation import create_notification
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.notification_push import process_pending_push_deliveries
+    from app.services.push_subscriptions import upsert_push_subscription
 
     claimed_at = datetime(2026, 7, 14, 12, 0, tzinfo=UTC)
     with seed["factory"]() as session:
@@ -286,7 +295,10 @@ def test_worker_disables_gone_subscription_and_retries_transient_failures_to_dea
     _configure(tmp_path, monkeypatch)
     seed = _seed()
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import create_notification, process_pending_push_deliveries, update_user_notification_settings, upsert_push_subscription
+    from app.services.notification_creation import create_notification
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.notification_push import process_pending_push_deliveries
+    from app.services.push_subscriptions import upsert_push_subscription
 
     with seed["factory"]() as session:
         update_user_notification_settings(session, seed["parent_id"], "chores", {"push_enabled": True, "quiet_hours_start": "", "quiet_hours_end": ""})
@@ -319,7 +331,9 @@ def test_approval_in_app_and_push_preferences_are_enforced(tmp_path: Path, monke
     _configure(tmp_path, monkeypatch)
     seed = _seed()
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import create_notification, update_user_notification_settings, upsert_push_subscription
+    from app.services.notification_creation import create_notification
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.push_subscriptions import upsert_push_subscription
 
     with seed["factory"]() as session:
         update_user_notification_settings(session, seed["parent_id"], "chores", {"approval_notifications_enabled": False})
@@ -362,7 +376,8 @@ def test_approval_in_app_and_push_preferences_are_enforced(tmp_path: Path, monke
 def test_scheduler_respects_household_local_digest_time_due_soon_and_is_idempotent(tmp_path: Path, monkeypatch) -> None:
     _configure(tmp_path, monkeypatch)
     seed = _seed(timezone="America/New_York")
-    from app.services.notifications import run_notification_scheduler, update_user_notification_settings
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.notification_reminders import run_notification_scheduler
 
     with seed["factory"]() as session:
         update_user_notification_settings(
@@ -390,7 +405,10 @@ def test_worker_defers_push_during_local_quiet_hours(tmp_path: Path, monkeypatch
     _configure(tmp_path, monkeypatch)
     seed = _seed(timezone="America/New_York")
     monkeypatch.setattr("socket.getaddrinfo", _public_dns)
-    from app.services.notifications import create_notification, process_pending_push_deliveries, update_user_notification_settings, upsert_push_subscription
+    from app.services.notification_creation import create_notification
+    from app.services.notification_preferences import update_user_notification_settings
+    from app.services.notification_push import process_pending_push_deliveries
+    from app.services.push_subscriptions import upsert_push_subscription
 
     with seed["factory"]() as session:
         update_user_notification_settings(session, seed["parent_id"], "chores", {"push_enabled": True, "quiet_hours_start": "21:00", "quiet_hours_end": "07:00"})

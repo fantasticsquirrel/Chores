@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import AuthSession, Child, Household, SecurityAuditEvent, User
+from app.models import AuthSession, Child, Household, SecurityAuditEvent, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME

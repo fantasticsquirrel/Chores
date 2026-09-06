@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app.api.dependencies import get_current_user, require_roles
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
-from app.models.core import Child, Household, User
+from app.models import Child, Household, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.security.sessions import SESSION_COOKIE_NAME, create_session_token

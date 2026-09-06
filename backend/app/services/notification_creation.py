@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import Notification
+from app.models import Notification
 from app.services.notification_preferences import MODULE_CHORES, get_user_notification_settings
 from app.services.notification_push import enqueue_push_delivery_attempts
 

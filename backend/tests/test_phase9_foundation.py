@@ -12,7 +12,7 @@ from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
 from app.models.billing import BillingEvent, HouseholdEntitlement, Subscription
-from app.models.core import Household, SecurityAuditEvent, User
+from app.models import Household, SecurityAuditEvent, User
 from app.models.enums import EntitlementStatus, PlatformRole, UserRole
 from app.models.platform import PlatformAuditEvent, PlatformUser, SupportCase, SupportCaseNote
 from app.security.passwords import hash_password, verify_password

@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
-from app.models.core import Child
+from app.models import Child
 from app.repositories.children import ChildRepository
 
 

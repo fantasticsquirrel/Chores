@@ -10,7 +10,7 @@ from typing import Any, Callable
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session
 
-from app.models.core import Household, Notification, NotificationDeliveryAttempt, PushSubscription, User
+from app.models import Household, Notification, NotificationDeliveryAttempt, PushSubscription, User
 from app.security.outbound_urls import UnsafeOutboundUrl, validate_push_endpoint
 from app.services.notification_preferences import get_user_notification_settings, quiet_hours_end
 

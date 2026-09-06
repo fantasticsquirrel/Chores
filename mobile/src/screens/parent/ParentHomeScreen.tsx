@@ -8,6 +8,7 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
 import { StatCard } from "../../components/StatCard";
+import { hasMobileDashboardCard } from "../../modules/registry";
 import { cardStyles } from "../../styles/cards";
 import { shellStyles } from "../../styles/shell";
 import { formatError, formatNullableCount } from "../../utils/format";
@@ -32,16 +33,24 @@ export function ParentHomeScreen({
     setLoading(true);
     setError(null);
     try {
-      const [children, submissions, moduleResponse] = await Promise.all([
-        apiClient.listChildren({
-          household_id: session.user.household_id,
-          active_only: true,
-        }),
-        apiClient.listSubmissions({ status: "PENDING" }),
-        apiClient.getMyModules(),
-      ]);
-      setActiveChildrenCount(children.length);
-      setPendingCount(submissions.length);
+      const moduleResponse = await apiClient.getMyModules();
+      const choresDashboardEnabled =
+        hasMobileDashboardCard("chores") &&
+        moduleResponse.modules.some((module) => module.key === "chores");
+      if (choresDashboardEnabled) {
+        const [children, submissions] = await Promise.all([
+          apiClient.listChildren({
+            household_id: session.user.household_id,
+            active_only: true,
+          }),
+          apiClient.listSubmissions({ status: "PENDING" }),
+        ]);
+        setActiveChildrenCount(children.length);
+        setPendingCount(submissions.length);
+      } else {
+        setActiveChildrenCount(null);
+        setPendingCount(null);
+      }
       onModulesLoaded(moduleResponse.modules);
     } catch (refreshError) {
       setError(formatError(refreshError));
@@ -49,6 +58,10 @@ export function ParentHomeScreen({
       setLoading(false);
     }
   }, [onModulesLoaded, session.user.household_id]);
+
+  const choresDashboardEnabled =
+    hasMobileDashboardCard("chores") &&
+    modules.some((module) => module.key === "chores");
 
   useEffect(() => {
     void refresh();
@@ -70,16 +83,18 @@ export function ParentHomeScreen({
         }
       />
       {error !== null ? <InlineNotice tone="error" message={error} /> : null}
-      <View style={cardStyles.statGrid}>
-        <StatCard
-          label="Active children"
-          value={formatNullableCount(activeChildrenCount)}
-        />
-        <StatCard
-          label="Pending reviews"
-          value={formatNullableCount(pendingCount)}
-        />
-      </View>
+      {choresDashboardEnabled ? (
+        <View style={cardStyles.statGrid}>
+          <StatCard
+            label="Active children"
+            value={formatNullableCount(activeChildrenCount)}
+          />
+          <StatCard
+            label="Pending reviews"
+            value={formatNullableCount(pendingCount)}
+          />
+        </View>
+      ) : null}
       <SectionCard title="Enabled modules">
         {modules.length === 0 ? (
           <Text style={shellStyles.mutedText}>No modules loaded yet.</Text>

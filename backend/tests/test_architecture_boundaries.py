@@ -37,20 +37,21 @@ def test_notification_services_do_not_depend_on_api_or_facade_layers() -> None:
         assert "app.services.notifications" not in service
 
 
-def test_notification_facade_exposes_extracted_capabilities_without_orchestration() -> None:
-    notifications = (ROOT / "backend/app/services/notifications.py").read_text(encoding="utf-8")
+def test_removed_backend_compatibility_facades_have_no_live_imports() -> None:
+    assert not (ROOT / "backend/app/models/core.py").exists()
+    assert not (ROOT / "backend/app/services/notifications.py").exists()
+    assert not (ROOT / "backend/app/services/chores/workflow.py").exists()
 
-    assert "from app.services.notification_creation import" in notifications
-    assert "from app.services.notification_push import" in notifications
-    assert "from app.services.notification_reminders import" in notifications
-    assert "from app.services.notification_submissions import" in notifications
-    assert "from sqlalchemy" not in notifications
-    assert "def create_notification" not in notifications
-    assert "def notify_submission_created" not in notifications
-    assert "def notify_submission_approved" not in notifications
-    assert "def generate_daily_chore_reminders" not in notifications
-    assert "def run_notification_scheduler" not in notifications
-    assert "def process_pending_push_deliveries" not in notifications
+    source_roots = (ROOT / "backend/app", ROOT / "backend/tests", ROOT / "backend/scripts")
+    sources = "\n".join(
+        path.read_text(encoding="utf-8")
+        for source_root in source_roots
+        for path in source_root.rglob("*.py")
+        if path != Path(__file__)
+    )
+    assert "app.models.core" not in sources
+    assert "app.services.notifications" not in sources
+    assert "app.services.chores.workflow" not in sources
 
 
 def test_chore_router_keeps_transaction_ownership_and_delegates_domain_logic() -> None:

@@ -10,7 +10,7 @@ from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.models.core import LoginAttempt, SecurityAuditEvent, User
+from app.models import LoginAttempt, SecurityAuditEvent, User
 
 
 def request_ip(request: Request) -> str:

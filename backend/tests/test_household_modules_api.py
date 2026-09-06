@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Household, Module, SecurityAuditEvent, User
+from app.models import Household, Module, SecurityAuditEvent, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.services.modules import ModuleService

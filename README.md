@@ -269,7 +269,7 @@ source .venv/bin/activate
 PYTHONPATH=backend python - <<'PY'
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
-from app.models.core import Household, User
+from app.models import Household, User
 from app.models.enums import UserRole
 from app.security import hash_password
 
@@ -325,9 +325,12 @@ Run this checklist after each deploy:
 
 Project backpressure commands:
 
+- `npm run modules:validate`
+- `npm run architecture:report`
 - `npm run lint`
 - `npm test`
 - `npm run build`
+- `npm run mobile:gate`
 
 Backend verification:
 

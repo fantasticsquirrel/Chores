@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db_session, require_module_access, require_module_manage
-from app.models.core import HouseholdModuleAccess, User
+from app.models import HouseholdModuleAccess, User
 from app.models.enums import UserRole
 from app.modules import MODULE_ADMIN
 from app.schemas.modules import (

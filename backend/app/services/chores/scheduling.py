@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import Child, Chore, CompletionRecord
+from app.models import Child, Chore, CompletionRecord
 from app.models.enums import CompletionMode, CompletionStatus, ScheduleMode, ScheduleUnit
 
 

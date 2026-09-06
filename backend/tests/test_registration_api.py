@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_engine, get_session_factory, initialize_database
 from app.main import app
-from app.models.core import AccountRegistration
+from app.models import AccountRegistration
 from app.security.registrations import format_registration_token
 from app.services.registration_mail import RegistrationMailWorker
 

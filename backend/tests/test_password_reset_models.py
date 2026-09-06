@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.config import get_settings
 from app.db import get_engine, get_session_factory
-from app.models.core import Household, PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
+from app.models import Household, PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
 from app.models.enums import UserRole
 
 

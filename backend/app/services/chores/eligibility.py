@@ -7,7 +7,7 @@ from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.core import (
+from app.models import (
     Child,
     Chore,
     ChoreAllowedChild,

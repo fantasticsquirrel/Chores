@@ -4,7 +4,7 @@ from pathlib import Path
 
 from app.config import Settings
 from app.db import get_session_factory, initialize_database
-from app.models.core import Child, Household
+from app.models import Child, Household
 from app.repositories.children import ChildRepository
 from app.services.children import ChildService
 

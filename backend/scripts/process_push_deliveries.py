@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.services.notifications import process_pending_push_deliveries
+from app.services.notification_push import process_pending_push_deliveries
 
 
 if __name__ == "__main__":

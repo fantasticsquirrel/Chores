@@ -9,7 +9,7 @@ from app.config import get_settings
 from app.db import get_session_factory
 from app.main import app
 from app.db import initialize_database
-from app.models.core import Child, Chore, ChoreRotationMember, Household, User
+from app.models import Child, Chore, ChoreRotationMember, Household, User
 from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, ScheduleUnit, UserRole
 from app.security import hash_password
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME

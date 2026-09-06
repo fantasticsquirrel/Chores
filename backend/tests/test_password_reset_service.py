@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import get_engine, get_session_factory, initialize_database
-from app.models.core import (
+from app.models import (
     Household,
     PasswordReset,
     PasswordResetDelivery,
@@ -74,7 +74,7 @@ def _seed_user(
             household_id = household.id
         if role is UserRole.CHILD:
             # The service never needs a child row, but ORM/schema invariants do.
-            from app.models.core import Child
+            from app.models import Child
 
             child = Child(household_id=household_id, name=f"Child {email}", active=active)
             session.add(child)

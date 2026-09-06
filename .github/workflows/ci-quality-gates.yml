@@ -25,6 +25,9 @@ jobs:
       - name: Architecture hotspot report
         run: npm run architecture:report
 
+      - name: Canonical module manifest validation
+        run: npm run modules:validate
+
       - name: Frontend lint
         run: npm run lint --workspace frontend
 

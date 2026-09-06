@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.db import get_session_factory
-from app.models.core import PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
+from app.models import PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
 from app.models.enums import UserRole
 from app.security.password_resets import PasswordResetTokenError, format_password_reset_token
 from app.services.password_resets import normalize_recovery_email

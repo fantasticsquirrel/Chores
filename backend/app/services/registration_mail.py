@@ -10,7 +10,7 @@ from sqlalchemy import and_, delete, or_, select, update
 
 from app.config import Settings, get_settings
 from app.db import get_session_factory
-from app.models.core import AccountRegistration, AccountRegistrationDelivery
+from app.models import AccountRegistration, AccountRegistrationDelivery
 from app.security.registrations import format_registration_token
 from app.services.password_reset_mail import LocalSendmailAdapter, MailSubmissionError
 

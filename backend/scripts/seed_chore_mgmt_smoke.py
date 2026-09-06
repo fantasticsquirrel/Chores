@@ -15,7 +15,7 @@ from sqlalchemy import func, select  # noqa: E402
 
 from app.config import get_settings  # noqa: E402
 from app.db import get_session_factory, initialize_database  # noqa: E402
-from app.models.core import Child, Household, User  # noqa: E402
+from app.models import Child, Household, User  # noqa: E402
 from app.models.enums import UserRole  # noqa: E402
 from app.security import hash_password  # noqa: E402
 from scripts.smoke_safety import require_isolated_smoke_database  # noqa: E402

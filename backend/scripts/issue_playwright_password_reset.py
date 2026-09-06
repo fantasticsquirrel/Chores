@@ -26,7 +26,7 @@ from sqlalchemy import select  # noqa: E402
 
 from app.config import get_settings  # noqa: E402
 from app.db import get_session_factory  # noqa: E402
-from app.models.core import PasswordReset, PasswordResetDelivery, User  # noqa: E402
+from app.models import PasswordReset, PasswordResetDelivery, User  # noqa: E402
 from app.models.enums import UserRole  # noqa: E402
 from app.services.password_reset_mail import PasswordResetMailWorker  # noqa: E402
 from app.services.password_resets import normalize_recovery_email  # noqa: E402

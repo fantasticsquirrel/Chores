@@ -11,7 +11,7 @@ from sqlalchemy import func, select
 from app.config import get_settings
 from app.db import get_session_factory
 from app.main import app
-from app.models.core import Child, Chore, CompletionRecord, Household, Submission, SubmissionItem, Transaction, User
+from app.models import Child, Chore, CompletionRecord, Household, Submission, SubmissionItem, Transaction, User
 from app.models.enums import (
     AssignmentMode,
     CompletionMode,

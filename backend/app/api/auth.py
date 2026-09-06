@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_db_session
 from app.config import get_settings
-from app.models.core import Household, User
+from app.models import Household, User
 from app.schemas.auth import (
     AuthSessionResponse,
     AuthUserResponse,

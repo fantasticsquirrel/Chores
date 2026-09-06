@@ -1,10 +1,5 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import {
-  FamilyCoreApiEndpoints as CompatibilityCoreApiEndpoints,
-  FamilyRecipeApiEndpoints as CompatibilityRecipeApiEndpoints,
-  familyApiRoutes as compatibilityRoutes,
-} from "../api-endpoints";
 import type { RequestQuery } from "../client-core";
 import type { AuthSessionResponse } from "../models/auth";
 import type { NotificationSettingUpdate } from "../models/notifications";
@@ -39,7 +34,10 @@ class EndpointHarness extends FamilyRecipeApiEndpoints {
   logoutCount = 0;
   response: unknown = { marker: "response" };
 
-  protected get<TResponse>(path: string, query?: RequestQuery): Promise<TResponse> {
+  protected get<TResponse>(
+    path: string,
+    query?: RequestQuery,
+  ): Promise<TResponse> {
     this.calls.push({ method: "GET", path, query });
     return Promise.resolve(this.response as TResponse);
   }
@@ -97,10 +95,7 @@ class EndpointHarness extends FamilyRecipeApiEndpoints {
 }
 
 describe("split endpoint contracts", () => {
-  it("keeps legacy class and route exports identical to the new entry points", () => {
-    expect(CompatibilityCoreApiEndpoints).toBe(FamilyCoreApiEndpoints);
-    expect(CompatibilityRecipeApiEndpoints).toBe(FamilyRecipeApiEndpoints);
-    expect(compatibilityRoutes).toBe(familyApiRoutes);
+  it("keeps endpoint inheritance and route ownership aligned", () => {
     expectTypeOf<FamilyNotificationApiEndpoints>().toMatchTypeOf<FamilySupportApiEndpoints>();
     expectTypeOf<FamilyCoreApiEndpoints>().toMatchTypeOf<FamilyNotificationApiEndpoints>();
     expectTypeOf<FamilyRecipeApiEndpoints>().toMatchTypeOf<FamilyCoreApiEndpoints>();
@@ -116,7 +111,9 @@ describe("split endpoint contracts", () => {
     };
 
     await expect(api.getHouseholdOwnership()).resolves.toBe(response);
-    await expect(api.transferHouseholdOwnership(transfer)).resolves.toBe(response);
+    await expect(api.transferHouseholdOwnership(transfer)).resolves.toBe(
+      response,
+    );
     await expect(api.getBillingStatus()).resolves.toBe(response);
 
     expect(api.calls).toEqual([
@@ -192,9 +189,9 @@ describe("split endpoint contracts", () => {
     const api = new EndpointHarness();
     api.response = session;
 
-    await expect(api.login({ email: "parent@example.com", password: "secret" })).resolves.toBe(
-      session,
-    );
+    await expect(
+      api.login({ email: "parent@example.com", password: "secret" }),
+    ).resolves.toBe(session);
     await api.logout();
     await api.listHomeschoolDayComments(2, 9);
     await api.completeParentTask(11, "2026-09-05 & later");

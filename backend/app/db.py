@@ -68,7 +68,7 @@ def _invalidate_parent_resets_after_email_change(session: Session, flush_context
     skip the safeguard until the reset migration exists.
     """
     del flush_context, instances
-    from app.models.core import PasswordReset, PasswordResetDelivery, User
+    from app.models import PasswordReset, PasswordResetDelivery, User
     from app.models.enums import UserRole
 
     changed_parent_ids = [

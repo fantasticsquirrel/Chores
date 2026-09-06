@@ -31,7 +31,18 @@ describe("buildNavigationLayout", () => {
       ],
       overflow: [],
     });
-    expect(navigationDestinations(layout)).toEqual(["today", "money", "account"]);
+    expect(navigationDestinations(layout)).toEqual([
+      "today",
+      "money",
+      "account",
+    ]);
+  });
+
+  it("keeps revoked child module access out of navigation", () => {
+    expect(buildNavigationLayout("CHILD", [])).toEqual({
+      primary: [{ key: "account", label: "Account" }],
+      overflow: [],
+    });
   });
 
   it("keeps Children primary when chores is the only enabled work module", () => {
@@ -70,10 +81,7 @@ describe("buildNavigationLayout", () => {
   });
 
   it("adds Admin only for parent admins with admin module access", () => {
-    const parent = buildNavigationLayout(
-      "PARENT",
-      modules("chores", "admin"),
-    );
+    const parent = buildNavigationLayout("PARENT", modules("chores", "admin"));
     const adminWithoutAccess = buildNavigationLayout(
       "PARENT_ADMIN",
       modules("chores"),

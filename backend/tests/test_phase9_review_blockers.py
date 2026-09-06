@@ -14,7 +14,7 @@ from app.config import SettingsError, get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
 from app.models.billing import BillingCustomerReference, Subscription
-from app.models.core import Household, LoginAttempt, User
+from app.models import Household, LoginAttempt, User
 from app.models.enums import EntitlementStatus, PlatformRole, UserRole
 from app.models.platform import PlatformAuditEvent, PlatformUser
 from app.schemas.platform import ComplimentaryRequest, ReconcileRequest, SupportCaseCreate

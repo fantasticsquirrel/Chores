@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_roles
-from app.models.core import User
+from app.models import User
 from app.models.enums import UserRole
 from app.schemas.ownership import OwnershipResponse, OwnershipTransferRequest
 from app.services.ownership import get_owned_household, transfer_ownership

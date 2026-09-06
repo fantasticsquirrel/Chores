@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
-from app.models.core import User
+from app.models import User
 from app.models.enums import UserRole
 from app.repositories.base import SQLAlchemyRepository
 

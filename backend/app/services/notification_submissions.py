@@ -3,7 +3,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.core import Child, Chore, Submission, SubmissionItem, User
+from app.models import Child, Chore, Submission, SubmissionItem, User
 from app.models.enums import SubmissionStatus, UserRole
 from app.services.notification_creation import create_notification
 

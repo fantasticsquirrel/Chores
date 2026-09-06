@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import HouseholdModuleAccess, Module, User, UserModuleAccess
+from app.models import HouseholdModuleAccess, Module, User, UserModuleAccess
 from app.models.enums import UserRole
 from app.modules import AVAILABLE_MODULES, DEFAULT_ROLE_MODULES, MODULE_ADMIN, AppModule
 

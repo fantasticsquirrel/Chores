@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db import get_session_factory
-from app.models.core import Child, User
+from app.models import Child, User
 from app.models.enums import UserRole
 from app.security.sessions import SESSION_COOKIE_NAME, resolve_session
 from app.services.auth import AuthService

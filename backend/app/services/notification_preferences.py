@@ -8,9 +8,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import NotificationPreference
+from app.models import NotificationPreference
+from app.modules import MODULE_CHORES
 
-MODULE_CHORES = "chores"
 DEFAULT_CHORE_NOTIFICATION_SETTINGS: dict[str, Any] = {
     "in_app_enabled": True,
     "push_enabled": False,

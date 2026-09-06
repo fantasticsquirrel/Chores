@@ -1,4 +1,4 @@
-import { FamilyCoreApiEndpoints } from "@family-manager/family-api/api-endpoints";
+import { FamilyCoreApiEndpoints } from "@family-manager/family-api/endpoints";
 import {
   buildUrl,
   extractErrorDetail,
@@ -36,9 +36,13 @@ export class ApiClient extends FamilyCoreApiEndpoints {
 
   constructor(config: ApiClientConfig = {}) {
     super();
-    this.baseUrl = normalizeBaseUrl(config.baseUrl ?? resolveApiBaseUrl(), DEFAULT_API_BASE_URL, {
-      allowRelative: false,
-    });
+    this.baseUrl = normalizeBaseUrl(
+      config.baseUrl ?? resolveApiBaseUrl(),
+      DEFAULT_API_BASE_URL,
+      {
+        allowRelative: false,
+      },
+    );
     this.fetchImpl = resolveFetchImpl(config.fetchImpl);
     this.csrfToken = null;
   }
@@ -47,7 +51,9 @@ export class ApiClient extends FamilyCoreApiEndpoints {
     return this.baseUrl;
   }
 
-  protected override afterAuthSession(session: import("./models").AuthSessionResponse): void {
+  protected override afterAuthSession(
+    session: import("./models").AuthSessionResponse,
+  ): void {
     this.csrfToken = session.csrf_token ?? this.csrfToken;
   }
 

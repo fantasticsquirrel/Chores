@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.config import get_settings
 from app.db import get_session_factory
 from app.main import app
-from app.models.core import Household, User
+from app.models import Household, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME

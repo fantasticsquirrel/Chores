@@ -17,7 +17,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import get_engine, get_session_factory, initialize_database
-from app.models.core import Household, PasswordResetDelivery, User
+from app.models import Household, PasswordResetDelivery, User
 from app.models.enums import UserRole
 from app.security import hash_parent_password
 from app.services.password_reset_mail import render_reset_link_message
@@ -197,7 +197,11 @@ def test_isolated_playwright_bridge_captures_a_real_worker_message_only_in_memor
         reset_token = os.read(reader, 2048).decode("ascii")
         os.close(reader)
         bridge_exited_successfully = result.returncode == 0
-        assert bridge_exited_successfully, "The isolated reset bridge exited unsuccessfully."
+        bridge_error_lines = result.stderr.decode("utf-8", errors="replace").splitlines()
+        bridge_error = bridge_error_lines[-1] if bridge_error_lines else "no error detail"
+        assert bridge_exited_successfully, (
+            f"The isolated reset bridge exited unsuccessfully: {bridge_error}"
+        )
         bridge_stdout_was_empty = result.stdout == b""
         assert bridge_stdout_was_empty, "The isolated reset bridge emitted unexpected stdout."
         token_matches_public_capability_grammar = re.fullmatch(r"[A-Za-z0-9._~-]{1,1024}", reset_token) is not None

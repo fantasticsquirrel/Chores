@@ -1,19 +1,26 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 from app.models.enums import UserRole
-from app.modules import AVAILABLE_MODULES, DEFAULT_ROLE_MODULES
+from app.modules import AVAILABLE_MODULES, DEFAULT_ROLE_MODULES, MODULE_MANIFEST_PATH
 
 
 def test_backend_module_registry_matches_shared_contract() -> None:
-    contract_path = Path(__file__).resolve().parents[2] / "packages" / "family-api" / "module-contract.json"
-    contract = json.loads(contract_path.read_text())
-
-    assert [module.__dict__ for module in AVAILABLE_MODULES] == contract["modules"]
+    assert MODULE_MANIFEST_PATH.is_file()
+    assert [module.key for module in AVAILABLE_MODULES] == [
+        "chores",
+        "homeschool",
+        "recipes",
+        "admin",
+    ]
+    assert AVAILABLE_MODULES[0].labels == {"web": "Chores", "mobile": "Chores"}
+    assert AVAILABLE_MODULES[2].platforms["mobile"].supported is False
+    assert AVAILABLE_MODULES[2].platforms["mobile"].destination is None
     assert {
         role.value: list(module_keys)
         for role, module_keys in DEFAULT_ROLE_MODULES.items()
-    } == contract["default_role_modules"]
+    } == {
+        "PARENT_ADMIN": ["chores", "homeschool", "recipes", "admin"],
+        "PARENT": ["chores", "homeschool", "recipes"],
+        "CHILD": ["chores"],
+    }
     assert set(DEFAULT_ROLE_MODULES) == {UserRole.PARENT_ADMIN, UserRole.PARENT, UserRole.CHILD}

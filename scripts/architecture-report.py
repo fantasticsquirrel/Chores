@@ -14,11 +14,12 @@ SOURCE_ROOTS = (ROOT / "backend/app", ROOT / "frontend/src", ROOT / "mobile/src"
 EXTENSIONS = {".py", ".ts", ".tsx"}
 
 HOTSPOT_ALLOWLIST = {
-    "frontend/src/pages/ParentChoresPage.tsx": "Phase 5 web feature split",
-    "frontend/src/pages/ParentChildrenPage.tsx": "Phase 5 web feature split",
-    "frontend/src/pages/AdminDashboardPage.tsx": "Phase 5 web feature split",
-    "packages/family-api/src/models.ts": "Phase 4 contract split",
-    "packages/family-api/src/api-endpoints.ts": "Phase 4 endpoint split",
+    "backend/app/api/auth.py": "Owner: auth; review on next auth route change; explicit security/transaction orchestration",
+    "backend/app/services/password_reset_mail.py": "Owner: account recovery; review on next mail-provider change; cohesive outbox worker",
+    "backend/app/services/password_resets.py": "Owner: account recovery; review on next reset-flow change; cohesive reset lifecycle",
+    "frontend/src/App.tsx": "Owner: web shell; review on next shell-route change; cohesive auth, navigation, and route composition",
+    "frontend/src/pages/HomeschoolPage.tsx": "Owner: homeschool web; review on next homeschool feature slice; composition-focused orchestrator",
+    "mobile/src/screens/admin/AdminScreen.tsx": "Owner: admin mobile; review on next admin feature slice; composition-focused orchestrator",
 }
 
 PRIVATE_IMPORT_ALLOWLIST: dict[tuple[str, str], str] = {}

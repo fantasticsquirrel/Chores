@@ -86,7 +86,7 @@ describe("AdminScreen household modules", () => {
     render(<AdminScreen />);
 
     const control = await screen.findByRole("button", {
-      name: "Globally Off Homeschool",
+      name: "Globally Off School",
     });
     expect(control.props.accessibilityState).toMatchObject({ disabled: true });
   });

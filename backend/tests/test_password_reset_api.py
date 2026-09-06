@@ -11,7 +11,7 @@ from sqlalchemy import select, update
 from app.config import get_settings
 from app.db import get_engine, get_session_factory, initialize_database
 from app.main import app
-from app.models.core import (
+from app.models import (
     AuthSession,
     Child,
     Household,

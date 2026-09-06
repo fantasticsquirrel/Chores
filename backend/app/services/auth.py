@@ -7,7 +7,7 @@ from enum import Enum
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from app.models.core import User
+from app.models import User
 from app.models.enums import UserRole
 from app.repositories.children import ChildRepository
 from app.repositories.users import UserRepository

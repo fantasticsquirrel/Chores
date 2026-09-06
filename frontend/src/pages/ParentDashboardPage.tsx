@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiClient, type Child, type ChildBalance } from "../api";
 import { useAuth } from "../auth/useAuth";
 import { formatApiError } from "../lib/errors";
+import { hasWebDashboardCard } from "../modules/registry";
 import { Badge, ButtonLink, Card, InlineNotice } from "../ui";
 
 type DashboardState = {
@@ -18,6 +19,8 @@ type DashboardState = {
 export function ParentDashboardPage(): ReactElement {
   const { user, moduleKeys } = useAuth();
   const householdId = user?.household_id ?? null;
+  const choresDashboardEnabled =
+    hasWebDashboardCard("chores") && moduleKeys.includes("chores");
   const [state, setState] = useState<DashboardState>({
     children: [],
     choreCountsByChild: {},
@@ -29,6 +32,20 @@ export function ParentDashboardPage(): ReactElement {
 
   useEffect(() => {
     let isMounted = true;
+
+    if (!choresDashboardEnabled) {
+      setState({
+        children: [],
+        choreCountsByChild: {},
+        pendingSubmissionsCount: 0,
+        loading: false,
+        error: null,
+        balances: [],
+      });
+      return () => {
+        isMounted = false;
+      };
+    }
 
     if (householdId === null) {
       setState({
@@ -54,10 +71,18 @@ export function ParentDashboardPage(): ReactElement {
         const choreRows = await Promise.all(
           children
             .filter((child) => child.active)
-            .map(async (child) => [
-              child.id,
-              (await apiClient.listEligibleChores({ date: today, child_id: child.id })).length,
-            ] as const),
+            .map(
+              async (child) =>
+                [
+                  child.id,
+                  (
+                    await apiClient.listEligibleChores({
+                      date: today,
+                      child_id: child.id,
+                    })
+                  ).length,
+                ] as const,
+            ),
         );
         if (!isMounted) {
           return;
@@ -90,7 +115,7 @@ export function ParentDashboardPage(): ReactElement {
     return () => {
       isMounted = false;
     };
-  }, [householdId]);
+  }, [choresDashboardEnabled, householdId]);
 
   const activeChildrenCount = useMemo(
     () => state.children.filter((child) => child.active).length,
@@ -99,77 +124,123 @@ export function ParentDashboardPage(): ReactElement {
 
   return (
     <section className="dashboard-grid" aria-label="Parent dashboard">
-      <Card className="metric-card">
-        <p className="metric-label">Pending Submissions</p>
-        <p className="metric-value">{state.loading ? "-" : state.pendingSubmissionsCount}</p>
-        <p className="metric-footnote">Review approvals on the Board page.</p>
-      </Card>
-      <Card className="metric-card">
-        <p className="metric-label">Total Amount Owed</p>
-        <p className="metric-value">{state.loading ? "-" : `$${(state.balances.reduce((sum, row) => sum + row.balance_cents, 0) / 100).toFixed(2)}`}</p>
-        <p className="metric-footnote">Across all child allowance balances.</p>
-      </Card>
+      {choresDashboardEnabled ? (
+        <Card className="metric-card">
+          <p className="metric-label">Pending Submissions</p>
+          <p className="metric-value">
+            {state.loading ? "-" : state.pendingSubmissionsCount}
+          </p>
+          <p className="metric-footnote">Review approvals on the Board page.</p>
+        </Card>
+      ) : null}
+      {choresDashboardEnabled ? (
+        <Card className="metric-card">
+          <p className="metric-label">Total Amount Owed</p>
+          <p className="metric-value">
+            {state.loading
+              ? "-"
+              : `$${(state.balances.reduce((sum, row) => sum + row.balance_cents, 0) / 100).toFixed(2)}`}
+          </p>
+          <p className="metric-footnote">
+            Across all child allowance balances.
+          </p>
+        </Card>
+      ) : null}
 
-      <Card className="metric-card">
-        <p className="metric-label">Active Children</p>
-        <p className="metric-value">{state.loading ? "-" : activeChildrenCount}</p>
-        <p className="metric-footnote">Children with active profiles.</p>
-      </Card>
+      {choresDashboardEnabled ? (
+        <Card className="metric-card">
+          <p className="metric-label">Active Children</p>
+          <p className="metric-value">
+            {state.loading ? "-" : activeChildrenCount}
+          </p>
+          <p className="metric-footnote">Children with active profiles.</p>
+        </Card>
+      ) : null}
 
-      <Card className="dashboard-panel">
-        <div className="panel-header-row">
-          <h1>Today</h1>
-          <Badge>Action Queue</Badge>
-        </div>
+      {choresDashboardEnabled ? (
+        <Card className="dashboard-panel">
+          <div className="panel-header-row">
+            <h1>Today</h1>
+            <Badge>Action Queue</Badge>
+          </div>
 
-        {state.loading ? <p>Building today&apos;s household queue...</p> : null}
+          {state.loading ? (
+            <p>Building today&apos;s household queue...</p>
+          ) : null}
 
-        {!state.loading && state.error !== null ? (
-          <InlineNotice variant="error">Could not load children: {state.error}</InlineNotice>
-        ) : null}
+          {!state.loading && state.error !== null ? (
+            <InlineNotice variant="error">
+              Could not load children: {state.error}
+            </InlineNotice>
+          ) : null}
 
-        {!state.loading && state.error === null ? (
-          <ul className="balance-list" aria-label="Today actions">
-            {state.pendingSubmissionsCount > 0 ? (
-              <li className="balance-item">
-                <div>
-                  <p className="balance-name">Chore approvals</p>
-                  <p className="balance-meta">Completed work is waiting for review.</p>
-                </div>
-                <ButtonLink to="/board">Review {state.pendingSubmissionsCount} {state.pendingSubmissionsCount === 1 ? "submission" : "submissions"}</ButtonLink>
-              </li>
-            ) : null}
-            {state.children.filter((child) => child.active).map((child) => {
-              const count = state.choreCountsByChild[child.id] ?? 0;
-              return (
-                <li key={child.id} className="balance-item">
+          {!state.loading && state.error === null ? (
+            <ul className="balance-list" aria-label="Today actions">
+              {state.pendingSubmissionsCount > 0 ? (
+                <li className="balance-item">
                   <div>
-                    <p className="balance-name">{child.name} · {count} {count === 1 ? "chore" : "chores"} due</p>
-                    <p className="balance-meta">See assignments and help with anything blocked.</p>
+                    <p className="balance-name">Chore approvals</p>
+                    <p className="balance-meta">
+                      Completed work is waiting for review.
+                    </p>
                   </div>
-                  <ButtonLink to="/parent/chores">Open Chores</ButtonLink>
+                  <ButtonLink to="/board">
+                    Review {state.pendingSubmissionsCount}{" "}
+                    {state.pendingSubmissionsCount === 1
+                      ? "submission"
+                      : "submissions"}
+                  </ButtonLink>
                 </li>
-              );
-            })}
-            {state.pendingSubmissionsCount === 0 && activeChildrenCount === 0 ? <li>No household actions need attention.</li> : null}
-          </ul>
-        ) : null}
-      </Card>
+              ) : null}
+              {state.children
+                .filter((child) => child.active)
+                .map((child) => {
+                  const count = state.choreCountsByChild[child.id] ?? 0;
+                  return (
+                    <li key={child.id} className="balance-item">
+                      <div>
+                        <p className="balance-name">
+                          {child.name} · {count}{" "}
+                          {count === 1 ? "chore" : "chores"} due
+                        </p>
+                        <p className="balance-meta">
+                          See assignments and help with anything blocked.
+                        </p>
+                      </div>
+                      <ButtonLink to="/parent/chores">Open Chores</ButtonLink>
+                    </li>
+                  );
+                })}
+              {state.pendingSubmissionsCount === 0 &&
+              activeChildrenCount === 0 ? (
+                <li>No household actions need attention.</li>
+              ) : null}
+            </ul>
+          ) : null}
+        </Card>
+      ) : null}
 
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <h2>Quick Actions</h2>
         </div>
         <div className="quick-actions">
-          <ButtonLink to="/parent/children">
-            Manage Children
-          </ButtonLink>
-          <ButtonLink to="/board">
-            Open Board
-          </ButtonLink>
-          <ButtonLink to="/parent/money">Money & History</ButtonLink>
-          {moduleKeys.includes("homeschool") ? <ButtonLink to="/homeschool">Open Homeschool</ButtonLink> : null}
-          {moduleKeys.includes("recipes") ? <ButtonLink to="/recipes">Open Cookbook</ButtonLink> : null}
+          {choresDashboardEnabled ? (
+            <ButtonLink to="/parent/children">Manage Children</ButtonLink>
+          ) : null}
+          {choresDashboardEnabled ? (
+            <ButtonLink to="/board">Open Board</ButtonLink>
+          ) : null}
+          {choresDashboardEnabled ? (
+            <ButtonLink to="/parent/money">Money & History</ButtonLink>
+          ) : null}
+          {hasWebDashboardCard("homeschool") &&
+          moduleKeys.includes("homeschool") ? (
+            <ButtonLink to="/homeschool">Open Homeschool</ButtonLink>
+          ) : null}
+          {hasWebDashboardCard("recipes") && moduleKeys.includes("recipes") ? (
+            <ButtonLink to="/recipes">Open Cookbook</ButtonLink>
+          ) : null}
         </div>
       </Card>
     </section>

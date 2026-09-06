@@ -7,7 +7,7 @@ import secrets
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.models.core import AuthSession, User
+from app.models import AuthSession, User
 
 SESSION_COOKIE_NAME = "chore_tracker_session"
 SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 14

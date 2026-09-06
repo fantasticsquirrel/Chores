@@ -9,7 +9,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Child, Chore, Household, Notification, Submission, SubmissionItem, User
+from app.models import Child, Chore, Household, Notification, Submission, SubmissionItem, User
 from app.models.enums import AssignmentMode, CompletionMode, ScheduleMode, SubmissionStatus, UserRole
 from app.security import hash_password
 from app.security.csrf import CSRF_HEADER_NAME
@@ -168,7 +168,10 @@ def test_submission_notification_orchestration_scopes_recipients_and_deduplicate
     _configure_test_settings(tmp_path, monkeypatch)
     seed = _seed_household()
 
-    from app.services.notifications import notify_submission_approved, notify_submission_created
+    from app.services.notification_submissions import (
+        notify_submission_approved,
+        notify_submission_created,
+    )
 
     session_factory = get_session_factory(get_settings().database_url)
     with session_factory() as session:
@@ -234,7 +237,7 @@ def test_generate_daily_chore_reminders_dedupes_per_child_date(tmp_path: Path, m
     _configure_test_settings(tmp_path, monkeypatch)
     seed = _seed_household()
 
-    from app.services.notifications import generate_daily_chore_reminders
+    from app.services.notification_reminders import generate_daily_chore_reminders
 
     created_first = generate_daily_chore_reminders(date(2026, 6, 18))
     created_second = generate_daily_chore_reminders(date(2026, 6, 18))

@@ -5,7 +5,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import Chore, ChoreRotationMember, ChoreRotationState
+from app.models import Chore, ChoreRotationMember, ChoreRotationState
 from app.models.enums import AssignmentMode, ScheduleMode, ScheduleUnit
 
 

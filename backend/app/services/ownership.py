@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.models.core import Household, SecurityAuditEvent, User
+from app.models import Household, SecurityAuditEvent, User
 from app.models.enums import UserRole
 from app.security.passwords import verify_password
 

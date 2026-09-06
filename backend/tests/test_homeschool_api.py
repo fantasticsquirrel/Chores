@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app.config import get_settings
 from app.db import get_session_factory, initialize_database
 from app.main import app
-from app.models.core import Child, Household, User
+from app.models import Child, Household, User
 from app.models.enums import UserRole
 from app.models.homeschool import (
     HomeschoolAttendance,

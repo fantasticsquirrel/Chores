@@ -9,7 +9,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.core import AccountRegistration, AccountRegistrationDelivery, Household, SecurityAuditEvent, User
+from app.models import AccountRegistration, AccountRegistrationDelivery, Household, SecurityAuditEvent, User
 from app.models.enums import UserRole
 from app.security.passwords import hash_parent_password
 from app.security.registrations import digest_registration_token, format_registration_token, parse_registration_token

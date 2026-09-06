@@ -7,7 +7,7 @@ from sqlalchemy import Select, and_, exists, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
-from app.models.core import (
+from app.models import (
     Child,
     Chore,
     ChoreAllowedChild,
@@ -43,7 +43,10 @@ from app.services.chores.submissions import (
     serialize_submission_review,
     record_approved_occurrence,
 )
-from app.services.notifications import notify_submission_approved, notify_submission_created
+from app.services.notification_submissions import (
+    notify_submission_approved,
+    notify_submission_created,
+)
 
 router = APIRouter(tags=["workflow"])
 _REQUIRE_CHORES_ACCESS = require_module_access(MODULE_CHORES, UserRole.PARENT, UserRole.PARENT_ADMIN, UserRole.CHILD)

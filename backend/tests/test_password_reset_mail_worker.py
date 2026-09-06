@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from app.config import get_settings
 from app.db import get_engine, get_session_factory, initialize_database
-from app.models.core import Household, PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
+from app.models import Household, PasswordReset, PasswordResetDelivery, PasswordResetRequest, User
 from app.models.enums import UserRole
 from app.security import hash_password
 from app.security.password_resets import digest_password_reset_token, format_password_reset_token

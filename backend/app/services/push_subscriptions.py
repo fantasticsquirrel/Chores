@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import PushSubscription
+from app.models import PushSubscription
 from app.security.outbound_urls import validate_push_endpoint
 
 

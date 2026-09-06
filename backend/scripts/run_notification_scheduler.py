@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from app.services.notifications import run_notification_scheduler
+from app.services.notification_reminders import run_notification_scheduler
 
 
 if __name__ == "__main__":

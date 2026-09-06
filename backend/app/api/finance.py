@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session, require_module_access
-from app.models.core import Child, Transaction, User
+from app.models import Child, Transaction, User
 from app.models.enums import TransactionType, UserRole
 from app.modules import MODULE_CHORES
 from app.schemas.finance import ChildBalanceResponse, CreateTransactionRequest, TransactionResponse

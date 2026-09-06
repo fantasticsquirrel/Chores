@@ -134,7 +134,7 @@ function productionTypeScriptFiles(directory: string): string[] {
 }
 
 describe("endpoint group structure", () => {
-  it("owns each legacy endpoint exactly once in the intended domain file", () => {
+  it("owns each endpoint exactly once in the intended domain file", () => {
     expect(endpointFiles).toEqual([
       "core.ts",
       "notifications.ts",
@@ -146,7 +146,9 @@ describe("endpoint group structure", () => {
       const source = readSource(join(endpointsDirectory, file));
       expect(source).not.toMatch(/\bany\b/);
       expect(source).not.toContain('from "../models"');
-      expect(source).not.toMatch(/protected abstract (?:get|post|put|patch|delete)/);
+      expect(source).not.toMatch(
+        /protected abstract (?:get|post|put|patch|delete)/,
+      );
       expect(endpointMethods(source)).toEqual(expectedMethodsByFile[file]);
       return endpointMethods(source);
     });
@@ -173,12 +175,13 @@ describe("endpoint group structure", () => {
         new RegExp(`protected abstract ${primitive}(?:<[^>]+>)?\\(`),
       );
     }
-    expect(endpointSources).not.toMatch(/\b(?:credentials|csrf|cookie|fetchImpl|baseUrl)\b/i);
+    expect(endpointSources).not.toMatch(
+      /\b(?:credentials|csrf|cookie|fetchImpl|baseUrl)\b/i,
+    );
   });
 
-  it("publishes new endpoint entry points while retaining the compatibility barrel", () => {
+  it("publishes domain endpoint entry points without a compatibility barrel", () => {
     const endpointBarrel = readSource(join(endpointsDirectory, "index.ts"));
-    const compatibilityBarrel = readSource(join(sourceDirectory, "api-endpoints.ts"));
     const packageManifest = JSON.parse(
       readSource(join(sourceDirectory, "../package.json")),
     ) as { exports: Record<string, string> };
@@ -188,10 +191,7 @@ describe("endpoint group structure", () => {
         .map((match) => `${match[1]}.ts`)
         .sort(),
     ).toEqual(endpointFiles);
-    expect(compatibilityBarrel).toContain('export * from "./endpoints/index";');
-    expect(packageManifest.exports["./api-endpoints"]).toBe(
-      "./src/api-endpoints.ts",
-    );
+    expect(packageManifest.exports["./api-endpoints"]).toBeUndefined();
     expect(packageManifest.exports["./endpoints"]).toBe(
       "./src/endpoints/index.ts",
     );

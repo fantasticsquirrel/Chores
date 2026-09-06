@@ -90,10 +90,38 @@ Compatibility re-export shims are acceptable during gradual moves, but new code 
 
 Module metadata must be explicit and drift-tested:
 
-- Backend module definitions are authoritative for backend-owned fields such as key, name, description, and role/default grants.
-- Shared/frontend/mobile metadata may include display and platform support fields, but must not replace server authorization.
+- `packages/family-api/module-contract.json` is the canonical checked manifest for keys, names/descriptions, platform labels, role-default grants, explicit web/mobile support, primary destinations, navigation visibility, and dashboard availability.
+- `backend/app/modules.py` and `packages/family-api/src/modules.ts` consume the same manifest. Web/mobile registries derive display metadata rather than copying it.
+- Platform registrations describe actual routes, navigation, guards, and dashboard UI. `validateModuleManifest(...)` must reject missing integrations and backend/shared/default-grant drift.
+- Backend route dependencies and persisted global/household/user access remain authoritative. Manifest and client checks never replace server authorization.
 - Unsupported platform modules should be expressed explicitly with platform support metadata rather than accidental omission.
 - See `docs/standard-module-creation-guide.md` for new module requirements.
+
+## Compatibility Seams
+
+Phase 7 of the 2026 modularization plan removed the temporary
+`backend/app/models/core.py`, `backend/app/services/notifications.py`,
+`backend/app/services/chores/workflow.py`,
+`packages/family-api/src/models.ts`, and
+`packages/family-api/src/api-endpoints.ts` facades after repository imports moved
+to package/domain entry points and web/mobile builds exercised the replacements.
+
+The following compatibility behavior remains intentionally:
+
+- `backend/scripts/smoke_safety.py` is still imported by all disposable smoke
+  seed scripts. It keeps those script entry points stable while delegating the
+  safety policy to `app.smoke_safety`; removing it now would break live callers.
+- The `@family-manager/family-api/models` package export points directly to the
+  domain model index. The shim file is gone, but the public subpath remains to
+  avoid an unnecessary consumer break.
+- `/chore/account/security` continues to redirect to `/account/security` for
+  deployed bookmarks, and legacy child login-email behavior remains supported
+  for existing credentials. These are product compatibility contracts, not
+  module metadata or authorization shortcuts.
+
+Re-audit a retained seam only when its callers have moved, full gates and build
+output are clean, and removal will not invalidate deployed URLs, credentials, or
+fixture isolation.
 
 ## Testing and Verification Standards
 
@@ -123,6 +151,7 @@ npm run test --workspace mobile
 Shared package:
 
 ```bash
+npm run modules:validate
 npx vitest run packages/family-api/src/*.test.ts --environment node
 ```
 

@@ -1,4 +1,5 @@
 import type { FamilyModule, UserRole } from "../api/models";
+import { getMobileModule } from "../modules/registry";
 import { isParentRole } from "../utils/format";
 import type {
   AppTab,
@@ -20,6 +21,12 @@ export function buildNavigationLayout(
   modules: FamilyModule[],
 ): NavigationLayout {
   if (!isParentRole(role)) {
+    if (!hasModule(modules, "chores")) {
+      return {
+        primary: [{ key: "account", label: "Account" }],
+        overflow: [],
+      };
+    }
     return {
       primary: [
         { key: "today", label: "Today" },
@@ -36,11 +43,14 @@ export function buildNavigationLayout(
   const overflow: NavigationItem[] = [];
 
   if (choresEnabled) {
-    primary.push({ key: "chores", label: "Chores" });
+    primary.push({ key: "chores", label: getMobileModule("chores").label });
   }
 
   if (homeschoolEnabled) {
-    primary.push({ key: "homeschool", label: "School" });
+    primary.push({
+      key: "homeschool",
+      label: getMobileModule("homeschool").label,
+    });
     overflow.push({ key: "children", label: "Children" });
   } else {
     primary.push({ key: "children", label: "Children" });
@@ -52,7 +62,7 @@ export function buildNavigationLayout(
   }
 
   if (role === "PARENT_ADMIN" && hasModule(modules, "admin")) {
-    overflow.push({ key: "admin", label: "Admin" });
+    overflow.push({ key: "admin", label: getMobileModule("admin").label });
   }
   overflow.push({ key: "account", label: "Account" });
 
@@ -89,5 +99,7 @@ export function resolveActiveTab(
     return activeTab;
   }
   const preferred = defaultTabForRole(role);
-  return destinations.includes(preferred) ? preferred : destinations[0] ?? preferred;
+  return destinations.includes(preferred)
+    ? preferred
+    : (destinations[0] ?? preferred);
 }

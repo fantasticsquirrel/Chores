@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.core import Child, Household, User
+from app.models import Child, Household, User
 from app.models.enums import UserRole
 from app.services.chores.eligibility import eligible_chores_for_child
 from app.services.notification_creation import create_notification
