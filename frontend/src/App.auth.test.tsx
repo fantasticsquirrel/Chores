@@ -39,6 +39,129 @@ describe("Auth bootstrap and logout", () => {
     expect(meSpy).toHaveBeenCalledTimes(1);
   });
 
+  it("redirects an authenticated parent from the site root to their dashboard", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 3,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+  });
+
+  it("redirects an authenticated parent away from the login route", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 3,
+        household_id: 1,
+        email: "parent@example.com",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+  });
+
+  it("redirects an authenticated child away from the login route", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 7,
+        household_id: 1,
+        email: "child@example.com",
+        role: "CHILD",
+        child_id: 4,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+  });
+
+  it("redirects an authenticated child from the site root to child today", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
+      user: {
+        id: 7,
+        household_id: 1,
+        email: "child@example.com",
+        role: "CHILD",
+        child_id: 4,
+      },
+      csrf_token: null,
+    });
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+  });
+
+  it("renders the login route for an anonymous user", async () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockRejectedValue(
+      new ApiClientError(401, "Not authenticated.", {
+        detail: "Not authenticated.",
+      }),
+    );
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+  });
+
+  it("does not flash the login page while root session bootstrap is pending", () => {
+    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(new Promise<never>(() => undefined));
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Checking Session" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+  });
+
   it("logs out through API and returns to the login page", async () => {
     vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
       user: {

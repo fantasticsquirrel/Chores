@@ -2,8 +2,17 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
+import { ApiClientError, apiClient } from "./api";
 
 describe("Password-reset routes and login entry", () => {
+  beforeEach(() => {
+    vi.mocked(apiClient.getCurrentSession).mockRejectedValue(
+      new ApiClientError(401, "Not authenticated.", {
+        detail: "Not authenticated.",
+      }),
+    );
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });

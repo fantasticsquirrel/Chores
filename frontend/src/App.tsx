@@ -144,6 +144,29 @@ function ProtectedRoute(): ReactElement {
   return <Outlet />;
 }
 
+type PublicEntryRouteProps = {
+  login: boolean;
+};
+
+function PublicEntryRoute({ login }: PublicEntryRouteProps): ReactElement {
+  const { status, user } = useAuth();
+
+  if (status === "loading") {
+    return (
+      <RouteCard
+        title="Checking Session"
+        description="Verifying your session before loading this page."
+      />
+    );
+  }
+
+  if (status === "authenticated" && user !== null) {
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
+  }
+
+  return login ? <LoginPage /> : <Navigate to="/login" replace />;
+}
+
 type RoleProtectedRouteProps = {
   allowedRoles: UserRole[];
 };
@@ -360,8 +383,8 @@ function HouseholdApp(): ReactElement {
       <AuthProvider>
         <Routes>
           <Route element={<AppShell />}>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<PublicEntryRoute login={false} />} />
+            <Route path="/login" element={<PublicEntryRoute login />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/register" element={<RegisterPage />} />

@@ -5,6 +5,14 @@ import App from "./App";
 import { ApiClientError, apiClient } from "./api";
 
 describe("Login page", () => {
+  beforeEach(() => {
+    vi.mocked(apiClient.getCurrentSession).mockRejectedValue(
+      new ApiClientError(401, "Not authenticated.", {
+        detail: "Not authenticated.",
+      }),
+    );
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -30,7 +38,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Login Email"), {
+    fireEvent.change(await screen.findByLabelText("Login Email"), {
       target: { value: " parent@example.com " },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
@@ -50,9 +58,6 @@ describe("Login page", () => {
   });
 
   it("submits parent email, child name, and child password then navigates to child today", async () => {
-    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(
-      new Promise<never>(() => undefined),
-    );
     const loginSpy = vi.spyOn(apiClient, "login");
     const childLoginSpy = vi.spyOn(apiClient, "childLogin");
     childLoginSpy.mockResolvedValue({
@@ -73,7 +78,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: "Child" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Child" }));
     expect(screen.getByPlaceholderText("Enter child name")).toBeVisible();
     fireEvent.change(screen.getByLabelText("Parent Login Email"), {
       target: { value: " parent@example.com " },
@@ -113,7 +118,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Login Email"), {
+    fireEvent.change(await screen.findByLabelText("Login Email"), {
       target: { value: "parent@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
@@ -128,9 +133,6 @@ describe("Login page", () => {
   });
 
   it("shows inline error when child login request fails", async () => {
-    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(
-      new Promise<never>(() => undefined),
-    );
     const childLoginSpy = vi.spyOn(apiClient, "childLogin");
     childLoginSpy.mockRejectedValue(
       new ApiClientError(
@@ -149,7 +151,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: "Child" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Child" }));
     fireEvent.change(screen.getByLabelText("Parent Login Email"), {
       target: { value: "parent@example.com" },
     });
@@ -195,7 +197,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(screen.getByLabelText("Login Email"), {
+    fireEvent.change(await screen.findByLabelText("Login Email"), {
       target: { value: "parent@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
