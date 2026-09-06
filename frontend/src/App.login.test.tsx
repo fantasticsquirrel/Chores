@@ -38,7 +38,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(await screen.findByLabelText("Login Email"), {
+    fireEvent.change(await screen.findByLabelText("Email or Username"), {
       target: { value: " parent@example.com " },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
@@ -80,7 +80,7 @@ describe("Login page", () => {
 
     fireEvent.click(await screen.findByRole("tab", { name: "Child" }));
     expect(screen.getByPlaceholderText("Enter child name")).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Parent Login Email"), {
+    fireEvent.change(screen.getByLabelText("Parent Email or Username"), {
       target: { value: " parent@example.com " },
     });
     fireEvent.change(screen.getByLabelText("Child Name"), {
@@ -118,7 +118,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(await screen.findByLabelText("Login Email"), {
+    fireEvent.change(await screen.findByLabelText("Email or Username"), {
       target: { value: "parent@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
@@ -152,7 +152,7 @@ describe("Login page", () => {
     );
 
     fireEvent.click(await screen.findByRole("tab", { name: "Child" }));
-    fireEvent.change(screen.getByLabelText("Parent Login Email"), {
+    fireEvent.change(screen.getByLabelText("Parent Email or Username"), {
       target: { value: "parent@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Child Name"), {
@@ -197,7 +197,7 @@ describe("Login page", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.change(await screen.findByLabelText("Login Email"), {
+    fireEvent.change(await screen.findByLabelText("Email or Username"), {
       target: { value: "parent@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
@@ -216,5 +216,88 @@ describe("Login page", () => {
     expect(
       await screen.findByRole("heading", { name: "Today" }),
     ).toBeVisible();
+  });
+
+  it("submits a legacy username for parent login without email validation", async () => {
+    const loginSpy = vi.spyOn(apiClient, "login");
+    loginSpy.mockResolvedValue({
+      user: {
+        id: 9,
+        household_id: 1,
+        email: "legacy-parent",
+        role: "PARENT",
+        child_id: null,
+      },
+      csrf_token: "csrf-token",
+    });
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    const identifierInput = await screen.findByLabelText("Email or Username");
+    expect(identifierInput).toHaveAttribute("type", "text");
+    expect(identifierInput).toHaveAttribute("autocomplete", "username");
+    fireEvent.change(identifierInput, {
+      target: { value: " legacy-parent " },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+    await waitFor(() =>
+      expect(loginSpy).toHaveBeenCalledWith({
+        email: "legacy-parent",
+        password: "password123",
+      }),
+    );
+  });
+
+  it("submits a legacy parent username for child login without email validation", async () => {
+    const childLoginSpy = vi.spyOn(apiClient, "childLogin");
+    childLoginSpy.mockResolvedValue({
+      user: {
+        id: 10,
+        household_id: 1,
+        email: "generated-jordan@example.com",
+        role: "CHILD",
+        child_id: 4,
+      },
+      csrf_token: "child-csrf-token",
+    });
+    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
+
+    render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+        <App />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Child" }));
+    const identifierInput = screen.getByLabelText("Parent Email or Username");
+    expect(identifierInput).toHaveAttribute("type", "text");
+    expect(identifierInput).toHaveAttribute("autocomplete", "username");
+    fireEvent.change(identifierInput, {
+      target: { value: " legacy-parent " },
+    });
+    fireEvent.change(screen.getByLabelText("Child Name"), {
+      target: { value: " Jordan " },
+    });
+    fireEvent.change(screen.getByLabelText("Child Password"), {
+      target: { value: "kid-password-123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
+
+    await waitFor(() =>
+      expect(childLoginSpy).toHaveBeenCalledWith({
+        parent_email: "legacy-parent",
+        child_name: "Jordan",
+        password: "kid-password-123",
+      }),
+    );
   });
 });

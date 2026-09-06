@@ -103,6 +103,20 @@ def test_login_and_me_flow(tmp_path: Path, monkeypatch) -> None:
         assert me_response.json()["csrf_token"] == login_response.cookies[CSRF_COOKIE_NAME]
 
 
+def test_login_accepts_legacy_username_identifier(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    user, password = _create_parent_user(email="dad")
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/login",
+            json={"email": " DAD ", "password": password},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["user"]["id"] == user.id
+
+
 def test_login_rejects_invalid_credentials(tmp_path: Path, monkeypatch) -> None:
     _configure_test_settings(tmp_path, monkeypatch)
     user, _password = _create_parent_user()
@@ -146,6 +160,30 @@ def test_child_login_uses_parent_email_child_name_and_child_password(tmp_path: P
     assert "chore_tracker_session" in response.cookies
     assert CSRF_COOKIE_NAME in response.cookies
     assert response.json()["csrf_token"] == response.cookies[CSRF_COOKIE_NAME]
+
+
+def test_child_login_accepts_legacy_parent_username(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    parent, _parent_password = _create_parent_user(email="dad")
+    child, child_user, child_password = _create_child_user(
+        household_id=parent.household_id,
+        child_name="Jordan",
+        child_email="kid",
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/chore-api/auth/child-login",
+            json={
+                "parent_email": " DAD ",
+                "child_name": " jordan ",
+                "password": child_password,
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["user"]["id"] == child_user.id
+    assert response.json()["user"]["child_id"] == child.id
 
 
 def test_child_login_rejects_unknown_parent_email(tmp_path: Path, monkeypatch) -> None:

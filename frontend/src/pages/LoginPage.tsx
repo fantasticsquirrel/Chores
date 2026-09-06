@@ -87,7 +87,7 @@ export function LoginPage(): ReactElement {
       if (mode === "parent") {
         const trimmedEmail = email.trim();
         if (trimmedEmail.length === 0 || password.length === 0) {
-          setSubmitError("Email and password are required.");
+          setSubmitError("Email or legacy username and password are required.");
           return;
         }
         session = await apiClient.login({ email: trimmedEmail, password });
@@ -101,7 +101,7 @@ export function LoginPage(): ReactElement {
           childPassword.length === 0
         ) {
           setSubmitError(
-            "Parent email, child name, and child password are required.",
+            "Parent email or legacy username, child name, and child password are required.",
           );
           return;
         }
@@ -125,8 +125,9 @@ export function LoginPage(): ReactElement {
     <Card as="section">
       <h1>Welcome Back</h1>
       <p>
-        Parents use their login email and password. Kids can use a parent login
-        email, their child name, and their child password.
+        Parents use their email or legacy username and password. Kids can use a
+        parent email or legacy username, their child name, and their child
+        password.
       </p>
       {passwordChanged ? (
         <InlineNotice variant="info">Password changed. Sign in again with your new password.</InlineNotice>
@@ -162,13 +163,13 @@ export function LoginPage(): ReactElement {
       >
         {mode === "parent" ? (
           <>
-            <FormField label="Login Email">
+            <FormField label="Email or Username">
               <TextInput
-                type="email"
+                type="text"
                 value={email}
                 onChange={(event) => handleEmailChange(event.target.value)}
-                placeholder="parent@example.com"
-                autoComplete="email"
+                placeholder="Email or legacy username"
+                autoComplete="username"
                 disabled={submitting}
                 maxLength={320}
                 required
@@ -194,15 +195,15 @@ export function LoginPage(): ReactElement {
           </>
         ) : (
           <>
-            <FormField label="Parent Login Email">
+            <FormField label="Parent Email or Username">
               <TextInput
-                type="email"
+                type="text"
                 value={childParentEmail}
                 onChange={(event) =>
                   handleChildParentEmailChange(event.target.value)
                 }
-                placeholder="parent@example.com"
-                autoComplete="email"
+                placeholder="Parent email or legacy username"
+                autoComplete="username"
                 disabled={submitting}
                 maxLength={320}
                 required

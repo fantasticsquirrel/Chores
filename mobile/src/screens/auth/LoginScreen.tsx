@@ -91,8 +91,9 @@ export function LoginScreen({
         <View style={authStyles.loginCard}>
           <Text style={authStyles.loginTitle}>Family Manager</Text>
           <Text style={authStyles.loginSubtitle}>
-            Parents use their login email and password. Kids can use a parent
-            login email, their child name, and their child password.
+            Parents use their email or legacy username and password. Kids can
+            use a parent email or legacy username, their child name, and their
+            child password.
           </Text>
           <View style={authStyles.loginModeSwitch}>
             <Pressable
@@ -148,23 +149,24 @@ export function LoginScreen({
           </View>
           {mode === "parent" ? (
             <>
-              <FieldLabel label="Login Email" />
+              <FieldLabel label="Email or Username" />
               <TextInput
+                accessibilityLabel="Email or Username"
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType="email-address"
                 onChangeText={(value) => {
                   setEmail(value);
                   setError(null);
                 }}
-                placeholder="parent@example.com"
+                placeholder="Email or legacy username"
                 placeholderTextColor="#94a3b8"
                 style={formStyles.input}
-                textContentType="emailAddress"
+                textContentType="username"
                 value={email}
               />
               <FieldLabel label="Password" />
               <TextInput
+                accessibilityLabel="Password"
                 onChangeText={(value) => {
                   setPassword(value);
                   setError(null);
@@ -192,23 +194,24 @@ export function LoginScreen({
             </>
           ) : (
             <>
-              <FieldLabel label="Parent Login Email" />
+              <FieldLabel label="Parent Email or Username" />
               <TextInput
+                accessibilityLabel="Parent Email or Username"
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType="email-address"
                 onChangeText={(value) => {
                   setChildParentEmail(value);
                   setError(null);
                 }}
-                placeholder="parent@example.com"
+                placeholder="Parent email or legacy username"
                 placeholderTextColor="#94a3b8"
                 style={formStyles.input}
-                textContentType="emailAddress"
+                textContentType="username"
                 value={childParentEmail}
               />
               <FieldLabel label="Child Name" />
               <TextInput
+                accessibilityLabel="Child Name"
                 autoCapitalize="words"
                 autoCorrect={false}
                 onChangeText={(value) => {
@@ -226,6 +229,7 @@ export function LoginScreen({
               </Text>
               <FieldLabel label="Child Password" />
               <TextInput
+                accessibilityLabel="Child Password"
                 onChangeText={(value) => {
                   setChildPassword(value);
                   setError(null);
