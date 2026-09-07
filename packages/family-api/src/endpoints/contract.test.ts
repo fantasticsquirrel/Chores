@@ -228,41 +228,6 @@ describe("split endpoint contracts", () => {
     ]);
   });
 
-  it("maps the public account picker without weakening the auth lifecycle", async () => {
-    const api = new EndpointHarness();
-    const accounts = [
-      {
-        account_token: "signed-account-token",
-        display_name: "Dad",
-        mode: "parent" as const,
-      },
-    ];
-    api.response = accounts;
-
-    await expect(api.listLoginAccounts()).resolves.toBe(accounts);
-    api.response = session;
-    await expect(
-      api.loginAccount({
-        account_token: "signed-account-token",
-        password: "secret",
-      }),
-    ).resolves.toBe(session);
-
-    expect(api.authSessions).toEqual([session]);
-    expect(api.calls).toEqual([
-      { method: "GET", path: "/auth/login-accounts", query: undefined },
-      {
-        method: "POST",
-        path: "/auth/login-account",
-        body: {
-          account_token: "signed-account-token",
-          password: "secret",
-        },
-        query: undefined,
-      },
-    ]);
-  });
-
   it("preserves recipe routes and query/payload mapping", async () => {
     const api = new EndpointHarness();
     const recipe: CreateRecipeRequest = { title: "Soup" };

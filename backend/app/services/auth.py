@@ -4,7 +4,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 
-from itsdangerous import BadData, URLSafeSerializer
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
@@ -13,28 +12,6 @@ from app.models.enums import UserRole
 from app.repositories.children import ChildRepository
 from app.repositories.users import UserRepository
 from app.security import hash_parent_password, hash_password, needs_rehash, verify_password
-
-_LOGIN_ACCOUNT_TOKEN_SALT = "family-manager-login-account-v1"
-
-
-def create_login_account_token(user_id: int, secret_key: str) -> str:
-    """Create a tamper-evident public selector; this is not an auth credential."""
-    return URLSafeSerializer(secret_key, salt=_LOGIN_ACCOUNT_TOKEN_SALT).dumps(
-        {"user_id": user_id}
-    )
-
-
-def resolve_login_account_token(token: str, secret_key: str) -> int | None:
-    try:
-        payload = URLSafeSerializer(secret_key, salt=_LOGIN_ACCOUNT_TOKEN_SALT).loads(token)
-    except BadData:
-        return None
-    if not isinstance(payload, dict):
-        return None
-    user_id = payload.get("user_id")
-    if type(user_id) is not int or user_id <= 0:
-        return None
-    return user_id
 
 
 class ChildLoginStatus(str, Enum):
@@ -47,13 +24,6 @@ class ChildLoginStatus(str, Enum):
 class AuthenticatedUser:
     user: User
     session_generation: int
-
-
-@dataclass(frozen=True)
-class LoginAccount:
-    user_id: int
-    display_name: str
-    mode: str
 
 
 @dataclass(frozen=True)
@@ -76,37 +46,6 @@ class AuthService:
         repository = self._repository_factory(session)
         normalized_email = email.strip().lower()
         user = repository.get_any_by_email(normalized_email)
-        return self._authenticate_user(session, user, password)
-
-    def authenticate_account(self, session: Session, user_id: int, password: str) -> AuthenticatedUser | None:
-        repository = self._repository_factory(session)
-        return self._authenticate_user(session, repository.get_by_id(user_id), password)
-
-    def list_login_accounts(self, session: Session) -> list[LoginAccount]:
-        repository = self._repository_factory(session)
-        accounts = [
-            LoginAccount(
-                user_id=user.id,
-                display_name=(child_name or user.email).strip() or user.email,
-                mode="child" if user.role == UserRole.CHILD else "parent",
-            )
-            for user, child_name in repository.list_active_login_accounts()
-        ]
-        return sorted(
-            accounts,
-            key=lambda account: (
-                account.mode == "child",
-                account.display_name.casefold(),
-                account.user_id,
-            ),
-        )
-
-    def _authenticate_user(
-        self,
-        session: Session,
-        user: User | None,
-        password: str,
-    ) -> AuthenticatedUser | None:
         if user is None:
             return None
 

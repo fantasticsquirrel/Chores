@@ -1,24 +1,13 @@
 from __future__ import annotations
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
-from app.models import Child, User
+from app.models import User
 from app.models.enums import UserRole
 from app.repositories.base import SQLAlchemyRepository
 
 
 class UserRepository(SQLAlchemyRepository):
-    def list_active_login_accounts(self) -> list[tuple[User, str | None]]:
-        query = (
-            select(User, Child.name)
-            .outerjoin(Child, Child.id == User.child_id)
-            .where(
-                User.active.is_(True),
-                or_(User.role != UserRole.CHILD, Child.active.is_(True)),
-            )
-        )
-        return list(self.session.execute(query).tuples().all())
-
     def get_by_email(self, household_id: int, email: str) -> User | None:
         query = select(User).where(User.household_id == household_id, User.email == email)
         return self.session.scalars(query).one_or_none()

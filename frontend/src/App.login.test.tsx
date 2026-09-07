@@ -11,7 +11,6 @@ describe("Login page", () => {
         detail: "Not authenticated.",
       }),
     );
-    vi.spyOn(apiClient, "listLoginAccounts").mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -300,109 +299,5 @@ describe("Login page", () => {
         password: "kid-password-123",
       }),
     );
-  });
-
-  it("lists parent accounts and signs in the selected account with its password", async () => {
-    vi.mocked(apiClient.listLoginAccounts).mockResolvedValue([
-      {
-        account_token: "dad-token",
-        display_name: "Dad",
-        mode: "parent",
-      },
-      {
-        account_token: "child-token",
-        display_name: "A",
-        mode: "child",
-      },
-    ]);
-    const loginAccountSpy = vi.spyOn(apiClient, "loginAccount").mockResolvedValue({
-      user: {
-        id: 9,
-        household_id: 1,
-        email: "dad",
-        role: "PARENT",
-        child_id: null,
-      },
-      csrf_token: "csrf-token",
-    });
-    const manualLoginSpy = vi.spyOn(apiClient, "login");
-    vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
-
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    const accountPicker = await screen.findByLabelText("Parent Account");
-    expect(accountPicker).toHaveTextContent("Dad");
-    expect(accountPicker).not.toHaveTextContent("A");
-    fireEvent.change(accountPicker, { target: { value: "dad-token" } });
-    expect(screen.queryByLabelText("Email or Username")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "password123" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
-
-    await waitFor(() =>
-      expect(loginAccountSpy).toHaveBeenCalledWith({
-        account_token: "dad-token",
-        password: "password123",
-      }),
-    );
-    expect(manualLoginSpy).not.toHaveBeenCalled();
-  });
-
-  it("keeps child mode while signing in a selected legacy child account", async () => {
-    vi.mocked(apiClient.listLoginAccounts).mockResolvedValue([
-      {
-        account_token: "dad-token",
-        display_name: "Dad",
-        mode: "parent",
-      },
-      {
-        account_token: "child-token",
-        display_name: "A",
-        mode: "child",
-      },
-    ]);
-    const loginAccountSpy = vi.spyOn(apiClient, "loginAccount").mockResolvedValue({
-      user: {
-        id: 10,
-        household_id: 1,
-        email: "child-1-generated@child.local",
-        role: "CHILD",
-        child_id: 4,
-      },
-      csrf_token: "csrf-token",
-    });
-    const manualChildLoginSpy = vi.spyOn(apiClient, "childLogin");
-    vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
-
-    render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
-        <App />
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(await screen.findByRole("tab", { name: "Child" }));
-    const accountPicker = screen.getByLabelText("Child Account");
-    expect(accountPicker).toHaveTextContent("A");
-    expect(accountPicker).not.toHaveTextContent("Dad");
-    fireEvent.change(accountPicker, { target: { value: "child-token" } });
-    expect(screen.queryByLabelText("Parent Email or Username")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Child Name")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Child Password"), {
-      target: { value: "kid-password-123" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Sign In" }));
-
-    await waitFor(() =>
-      expect(loginAccountSpy).toHaveBeenCalledWith({
-        account_token: "child-token",
-        password: "kid-password-123",
-      }),
-    );
-    expect(manualChildLoginSpy).not.toHaveBeenCalled();
   });
 });

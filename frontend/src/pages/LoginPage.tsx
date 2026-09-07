@@ -4,7 +4,6 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiClient, type AuthSessionResponse } from "../api";
 import { useAuth } from "../auth/useAuth";
-import { useLoginAccountPicker } from "../features/auth/hooks/useLoginAccountPicker";
 import { formatApiError } from "../lib/errors";
 import { Button, Card, FormField, InlineNotice, TextInput } from "../ui";
 
@@ -30,7 +29,6 @@ export function LoginPage(): ReactElement {
   const [childParentEmail, setChildParentEmail] = useState("");
   const [childName, setChildName] = useState("");
   const [childPassword, setChildPassword] = useState("");
-  const accountPicker = useLoginAccountPicker();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -43,7 +41,6 @@ export function LoginPage(): ReactElement {
 
   function handleEmailChange(value: string): void {
     setEmail(value);
-    accountPicker.selectParentAccount("");
     if (submitError !== null) {
       setSubmitError(null);
     }
@@ -58,7 +55,6 @@ export function LoginPage(): ReactElement {
 
   function handleChildParentEmailChange(value: string): void {
     setChildParentEmail(value);
-    accountPicker.selectChildAccount("");
     if (submitError !== null) {
       setSubmitError(null);
     }
@@ -66,7 +62,6 @@ export function LoginPage(): ReactElement {
 
   function handleChildNameChange(value: string): void {
     setChildName(value);
-    accountPicker.selectChildAccount("");
     if (submitError !== null) {
       setSubmitError(null);
     }
@@ -90,55 +85,31 @@ export function LoginPage(): ReactElement {
     try {
       let session: AuthSessionResponse;
       if (mode === "parent") {
-        if (password.length === 0) {
+        const trimmedEmail = email.trim();
+        if (trimmedEmail.length === 0 || password.length === 0) {
           setSubmitError("Email or legacy username and password are required.");
           return;
         }
-        if (accountPicker.selectedParentAccount.length > 0) {
-          session = await apiClient.loginAccount({
-            account_token: accountPicker.selectedParentAccount,
-            password,
-          });
-        } else {
-          const trimmedEmail = email.trim();
-          if (trimmedEmail.length === 0) {
-            setSubmitError(
-              "Email or legacy username and password are required.",
-            );
-            return;
-          }
-          session = await apiClient.login({ email: trimmedEmail, password });
-        }
+        session = await apiClient.login({ email: trimmedEmail, password });
         setPassword("");
       } else {
-        if (accountPicker.selectedChildAccount.length > 0) {
-          if (childPassword.length === 0) {
-            setSubmitError("Child account and password are required.");
-            return;
-          }
-          session = await apiClient.loginAccount({
-            account_token: accountPicker.selectedChildAccount,
-            password: childPassword,
-          });
-        } else {
-          const trimmedParentEmail = childParentEmail.trim();
-          const trimmedChildName = childName.trim();
-          if (
-            trimmedParentEmail.length === 0 ||
-            trimmedChildName.length === 0 ||
-            childPassword.length === 0
-          ) {
-            setSubmitError(
-              "Parent email or legacy username, child name, and child password are required.",
-            );
-            return;
-          }
-          session = await apiClient.childLogin({
-            parent_email: trimmedParentEmail,
-            child_name: trimmedChildName,
-            password: childPassword,
-          });
+        const trimmedParentEmail = childParentEmail.trim();
+        const trimmedChildName = childName.trim();
+        if (
+          trimmedParentEmail.length === 0 ||
+          trimmedChildName.length === 0 ||
+          childPassword.length === 0
+        ) {
+          setSubmitError(
+            "Parent email or legacy username, child name, and child password are required.",
+          );
+          return;
         }
+        session = await apiClient.childLogin({
+          parent_email: trimmedParentEmail,
+          child_name: trimmedChildName,
+          password: childPassword,
+        });
         setChildPassword("");
       }
       setAuthenticatedSession(session);
@@ -192,44 +163,18 @@ export function LoginPage(): ReactElement {
       >
         {mode === "parent" ? (
           <>
-            {accountPicker.parentAccounts.length > 0 ? (
-              <FormField label="Parent Account">
-                <select
-                  value={accountPicker.selectedParentAccount}
-                  onChange={(event) => {
-                    accountPicker.selectParentAccount(event.target.value);
-                    setEmail("");
-                    setPassword("");
-                    setSubmitError(null);
-                  }}
-                  disabled={submitting}
-                >
-                  <option value="">Enter email or username manually</option>
-                  {accountPicker.parentAccounts.map((account) => (
-                    <option
-                      key={account.account_token}
-                      value={account.account_token}
-                    >
-                      {account.display_name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            ) : null}
-            {accountPicker.selectedParentAccount.length === 0 ? (
-              <FormField label="Email or Username">
-                <TextInput
-                  type="text"
-                  value={email}
-                  onChange={(event) => handleEmailChange(event.target.value)}
-                  placeholder="Email or legacy username"
-                  autoComplete="username"
-                  disabled={submitting}
-                  maxLength={320}
-                  required
-                />
-              </FormField>
-            ) : null}
+            <FormField label="Email or Username">
+              <TextInput
+                type="text"
+                value={email}
+                onChange={(event) => handleEmailChange(event.target.value)}
+                placeholder="Email or legacy username"
+                autoComplete="username"
+                disabled={submitting}
+                maxLength={320}
+                required
+              />
+            </FormField>
             <FormField label="Password">
               <TextInput
                 type="password"
@@ -250,63 +195,32 @@ export function LoginPage(): ReactElement {
           </>
         ) : (
           <>
-            {accountPicker.childAccounts.length > 0 ? (
-              <FormField label="Child Account">
-                <select
-                  value={accountPicker.selectedChildAccount}
-                  onChange={(event) => {
-                    accountPicker.selectChildAccount(event.target.value);
-                    setChildParentEmail("");
-                    setChildName("");
-                    setChildPassword("");
-                    setSubmitError(null);
-                  }}
-                  disabled={submitting}
-                >
-                  <option value="">Enter child details manually</option>
-                  {accountPicker.childAccounts.map((account) => (
-                    <option
-                      key={account.account_token}
-                      value={account.account_token}
-                    >
-                      {account.display_name}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            ) : null}
-            {accountPicker.selectedChildAccount.length === 0 ? (
-              <>
-                <FormField label="Parent Email or Username">
-                  <TextInput
-                    type="text"
-                    value={childParentEmail}
-                    onChange={(event) =>
-                      handleChildParentEmailChange(event.target.value)
-                    }
-                    placeholder="Parent email or legacy username"
-                    autoComplete="username"
-                    disabled={submitting}
-                    maxLength={320}
-                    required
-                  />
-                </FormField>
-                <FormField label="Child Name">
-                  <TextInput
-                    type="text"
-                    value={childName}
-                    onChange={(event) =>
-                      handleChildNameChange(event.target.value)
-                    }
-                    placeholder="Enter child name"
-                    autoComplete="username"
-                    disabled={submitting}
-                    maxLength={255}
-                    required
-                  />
-                </FormField>
-              </>
-            ) : null}
+            <FormField label="Parent Email or Username">
+              <TextInput
+                type="text"
+                value={childParentEmail}
+                onChange={(event) =>
+                  handleChildParentEmailChange(event.target.value)
+                }
+                placeholder="Parent email or legacy username"
+                autoComplete="username"
+                disabled={submitting}
+                maxLength={320}
+                required
+              />
+            </FormField>
+            <FormField label="Child Name">
+              <TextInput
+                type="text"
+                value={childName}
+                onChange={(event) => handleChildNameChange(event.target.value)}
+                placeholder="Enter child name"
+                autoComplete="username"
+                disabled={submitting}
+                maxLength={255}
+                required
+              />
+            </FormField>
             <FormField label="Child Password">
               <TextInput
                 type="password"
@@ -325,11 +239,6 @@ export function LoginPage(): ReactElement {
         {mode === "child" ? (
           <p className="password-reset-guidance">
             Ask a parent to reset their password from the Parent sign-in screen.
-          </p>
-        ) : null}
-        {accountPicker.accountListUnavailable ? (
-          <p className="password-reset-guidance">
-            Account list unavailable. Enter the login details manually.
           </p>
         ) : null}
         <Button type="submit" disabled={submitting}>

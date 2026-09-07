@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -14,19 +14,6 @@ class LoginRequest(BaseModel):
 
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(min_length=1, max_length=1024)
-
-
-class LoginAccountRequest(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
-
-    account_token: str = Field(min_length=1, max_length=1024)
-    password: str = Field(min_length=1, max_length=1024)
-
-
-class LoginAccountResponse(BaseModel):
-    account_token: str
-    display_name: str
-    mode: Literal["parent", "child"]
 
 
 class ChildLoginRequest(BaseModel):
