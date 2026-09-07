@@ -178,6 +178,7 @@ class CsrfProtectionMiddleware(BaseHTTPMiddleware):
     # cookie; all other authenticated mutations continue to require CSRF.
     _exempt_paths = {
         "/chore-api/auth/login",
+        "/chore-api/auth/login-account",
         "/chore-api/auth/child-login",
         "/chore-api/auth/password-reset/request",
         "/chore-api/auth/password-reset/confirm",

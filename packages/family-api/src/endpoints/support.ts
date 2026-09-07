@@ -8,6 +8,8 @@ import type {
   AuthSessionResponse,
   ChangePasswordRequest,
   ChildLoginRequest,
+  LoginAccount,
+  LoginAccountRequest,
   LoginRequest,
   PasswordResetConfirmRequest,
   PasswordResetConfirmResponse,
@@ -50,6 +52,21 @@ export abstract class FamilySupportApiEndpoints extends FamilyApiClientCore {
   async login(payload: LoginRequest): Promise<AuthSessionResponse> {
     const session = await this.post<AuthSessionResponse, LoginRequest>(
       "/auth/login",
+      payload,
+    );
+    this.afterAuthSession(session);
+    return session;
+  }
+
+  async listLoginAccounts(): Promise<LoginAccount[]> {
+    return this.get<LoginAccount[]>("/auth/login-accounts");
+  }
+
+  async loginAccount(
+    payload: LoginAccountRequest,
+  ): Promise<AuthSessionResponse> {
+    const session = await this.post<AuthSessionResponse, LoginAccountRequest>(
+      "/auth/login-account",
       payload,
     );
     this.afterAuthSession(session);

@@ -5,6 +5,17 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface LoginAccount {
+  account_token: string;
+  display_name: string;
+  mode: "parent" | "child";
+}
+
+export interface LoginAccountRequest {
+  account_token: string;
+  password: string;
+}
+
 export interface ChildLoginRequest {
   parent_email: string;
   child_name: string;

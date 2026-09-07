@@ -15,6 +15,8 @@ from app.schemas.auth import (
     AuthUserResponse,
     ChangePasswordRequest,
     ChildLoginRequest,
+    LoginAccountRequest,
+    LoginAccountResponse,
     LoginRequest,
     PasswordResetConfirmPayload,
     PasswordResetRequestPayload,
@@ -27,7 +29,7 @@ from app.security.audit import account_key_hash, audit, record_login_attempt, re
 from app.security.csrf import CSRF_COOKIE_NAME, CSRF_HEADER_NAME, create_csrf_token, is_valid_csrf_token
 from app.security.passwords import PASSWORD_MAX_LENGTH, PARENT_PASSWORD_MIN_LENGTH
 from app.security.sessions import SESSION_COOKIE_NAME, create_session_token, resolve_session, revoke_session, revoke_user_sessions
-from app.services.auth import AuthService
+from app.services.auth import AuthService, create_login_account_token, resolve_login_account_token
 from app.services.password_resets import PasswordResetService
 from app.services.registrations import RegistrationService
 
@@ -154,6 +156,22 @@ def _login_failed(session: Session, request: Request, key_hash: str, ip: str) ->
     session.commit()
 
 
+@router.get("/login-accounts", response_model=list[LoginAccountResponse])
+def list_login_accounts(response: Response, session: Session = Depends(get_db_session)) -> list[LoginAccountResponse]:
+    """Return the intentionally minimal account picker for this private app."""
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    secret_key = get_settings().secret_key
+    return [
+        LoginAccountResponse(
+            account_token=create_login_account_token(account.user_id, secret_key),
+            display_name=account.display_name,
+            mode=account.mode,
+        )
+        for account in _service.list_login_accounts(session)
+    ]
+
+
 @router.post("/login", response_model=AuthSessionResponse)
 def login(payload: LoginRequest, request: Request, response: Response, session: Session = Depends(get_db_session)) -> AuthSessionResponse:
     key_hash = account_key_hash("parent", payload.email)
@@ -175,6 +193,41 @@ def login(payload: LoginRequest, request: Request, response: Response, session: 
     if csrf_token is None:
         session.rollback()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
+    session.commit()
+    return _build_session_response(user, session, csrf_token=csrf_token)
+
+
+@router.post("/login-account", response_model=AuthSessionResponse)
+def login_account(
+    payload: LoginAccountRequest,
+    request: Request,
+    response: Response,
+    session: Session = Depends(get_db_session),
+) -> AuthSessionResponse:
+    key_hash = account_key_hash("account-picker", payload.account_token)
+    ip = _enforce_login_limit(session, request, key_hash)
+    user_id = resolve_login_account_token(payload.account_token, get_settings().secret_key)
+    authenticated = (
+        _service.authenticate_account(session, user_id, payload.password)
+        if user_id is not None
+        else None
+    )
+    if authenticated is None or not authenticated.user.active:
+        _login_failed(session, request, key_hash, ip)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid account or password.")
+    user = authenticated.user
+    record_login_attempt(session, key_hash, ip, succeeded=True)
+    audit(session, "login.success", request=request, actor=user)
+    csrf_token = _set_session_cookies(
+        user,
+        request,
+        response,
+        session,
+        expected_session_generation=authenticated.session_generation,
+    )
+    if csrf_token is None:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid account or password.")
     session.commit()
     return _build_session_response(user, session, csrf_token=csrf_token)
 
