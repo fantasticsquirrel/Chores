@@ -107,17 +107,27 @@ export function useSessionBootstrap({
     [applyAuthenticatedSession],
   );
 
-  const handleLogout = useCallback(async () => {
-    await apiClient.logout();
+  const clearSession = useCallback((message: string | null = null) => {
+    apiClient.clearAuthentication();
     setSession(null);
     setModules([]);
     setActiveTab("home");
+    setBootstrapError(message);
   }, [setModules]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await apiClient.logout();
+    } finally {
+      clearSession();
+    }
+  }, [clearSession]);
 
   return {
     activeTab,
     bootstrapping,
     bootstrapError,
+    clearSession,
     handleChildLogin,
     handleLogout,
     handleParentLogin,

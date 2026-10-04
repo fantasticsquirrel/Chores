@@ -34,7 +34,7 @@ describe("AccountScreen subscription mode", () => {
       available_actions: [],
     });
 
-    render(<AccountScreen modules={[]} onLogout={noopLogout} session={ownerSession} />);
+    render(<AccountScreen modules={[]} onLogout={noopLogout} onPasswordChanged={() => undefined} session={ownerSession} />);
 
     expect(screen.getAllByText("Profile").length).toBeGreaterThan(0);
     expect(billing).not.toHaveBeenCalled();
@@ -55,7 +55,7 @@ describe("AccountScreen subscription mode", () => {
       user: { ...ownerSession.user, id: 2, role, child_id, is_household_owner: false },
     };
 
-    render(<AccountScreen modules={[]} onLogout={noopLogout} session={session} />);
+    render(<AccountScreen modules={[]} onLogout={noopLogout} onPasswordChanged={() => undefined} session={session} />);
 
     expect(screen.queryByText("Subscription")).toBeNull();
     await waitFor(() => expect(billing).not.toHaveBeenCalled());

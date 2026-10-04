@@ -3,7 +3,15 @@ import { ApiClient } from "./client";
 
 const response = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { "Content-Type": "application/json" } });
 
-describe("mobile cookbook transport parity", () => {
+describe("native cookbook transport", () => {
+  it("drops CSRF state when the local authenticated session is cleared", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(response({user:{id:1},csrf_token:"qa-csrf"})).mockResolvedValueOnce(response({}));
+    const client = new ApiClient({baseUrl:"https://qa.example.test/chore-api",fetchImpl:fetchMock});
+    await client.login({email:"qa@example.test",password:"not-production"});
+    client.clearAuthentication();
+    await client.createRecipe({title:"QA"} as never);
+    expect(fetchMock.mock.calls[1][1].headers).not.toHaveProperty("X-CSRF-Token");
+  });
   it("exposes recipe reads and scaling through the native transport", async () => {
     const fetchImpl = vi.fn().mockImplementation(async () => response({}));
     const client = new ApiClient({baseUrl: "https://family.example.test/chore-api", fetchImpl});

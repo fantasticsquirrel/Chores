@@ -48,7 +48,7 @@ describe("LoginScreen password recovery", () => {
   });
 
   it("uses the shared 15-character parent password policy copy", () => {
-    render(<ChangePasswordScreen />);
+    render(<ChangePasswordScreen onPasswordChanged={() => undefined} />);
 
     expect(screen.getByPlaceholderText("At least 15 characters")).toBeTruthy();
   });

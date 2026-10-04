@@ -10,7 +10,7 @@ import { formStyles } from "../../styles/forms";
 import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
-export function ChangePasswordScreen() {
+export function ChangePasswordScreen({ onPasswordChanged }: { onPasswordChanged: () => void }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -57,7 +57,8 @@ export function ChangePasswordScreen() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setSuccess("Password changed successfully.");
+      setSuccess("Password changed. Sign in again.");
+      onPasswordChanged();
     } catch (changeError) {
       setError(`Could not change password: ${formatError(changeError)}`);
     } finally {

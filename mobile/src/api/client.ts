@@ -47,6 +47,10 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
     this.csrfToken = null;
   }
 
+  clearAuthentication(): void {
+    this.csrfToken = null;
+  }
+
   get apiBaseUrl(): string {
     return this.baseUrl;
   }

@@ -32,6 +32,7 @@ export function AppShell() {
     activeTab,
     bootstrapping,
     bootstrapError,
+    clearSession,
     handleChildLogin,
     handleLogout,
     handleParentLogin,
@@ -121,6 +122,7 @@ export function AppShell() {
         <AccountScreen
           modules={modules}
           onLogout={handleLogout}
+          onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
           session={session}
         />
       ) : null}
@@ -129,6 +131,7 @@ export function AppShell() {
     <AccountScreen
       modules={modules}
       onLogout={handleLogout}
+          onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
       session={session}
     />
   ) : activeTab === "money" && canAccessMobileModule(modules, "chores") ? (
