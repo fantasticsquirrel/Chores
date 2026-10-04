@@ -26,6 +26,7 @@ type LoginMode = "parent" | "child";
 // Keep recovery in the hardened browser route: native apps never receive or
 // retain reset capabilities, and the endpoint is intentionally not configurable.
 const PARENT_PASSWORD_RECOVERY_URL = "https://family.multihost.ing/chore/forgot-password";
+const HOUSEHOLD_REGISTRATION_URL = "https://family.multihost.ing/chore/register";
 
 export function LoginScreen({
   apiBaseUrl,
@@ -80,6 +81,15 @@ export function LoginScreen({
         childName.trim().length > 0 &&
         childPassword.length > 0 &&
         !loading;
+
+  async function openPublicPage(url: string): Promise<void> {
+    setError(null);
+    try {
+      await Linking.openURL(url);
+    } catch {
+      setError("Could not open the browser. Please try again.");
+    }
+  }
 
   return (
     <SafeAreaScreen>
@@ -182,7 +192,7 @@ export function LoginScreen({
                 accessibilityRole="button"
                 disabled={loading}
                 onPress={() => {
-                  void Linking.openURL(PARENT_PASSWORD_RECOVERY_URL);
+                  void openPublicPage(PARENT_PASSWORD_RECOVERY_URL);
                 }}
                 style={({ pressed }) => [
                   authStyles.recoveryLink,
@@ -191,6 +201,17 @@ export function LoginScreen({
               >
                 <Text style={authStyles.recoveryLinkText}>Forgot password?</Text>
               </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={loading}
+                onPress={() => { void openPublicPage(HOUSEHOLD_REGISTRATION_URL); }}
+                style={authStyles.recoveryLink}
+              >
+                <Text style={authStyles.recoveryLinkText}>Create household account</Text>
+              </Pressable>
+              <Text style={authStyles.recoveryGuidance}>
+                Account creation and email verification open in your browser.
+              </Text>
             </>
           ) : (
             <>

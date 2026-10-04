@@ -5,6 +5,8 @@ export type AppTab =
   | "review"
   | "money"
   | "homeschool"
+  | "recipes"
+  | "notifications"
   | "admin"
   | "today"
   | "account";
