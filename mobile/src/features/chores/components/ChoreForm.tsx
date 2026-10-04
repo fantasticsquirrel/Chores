@@ -297,6 +297,7 @@ export function ChoreForm({
             compact
             disabled={submitting}
             label={submitting ? "Saving..." : "Save Chore"}
+            requiresManage
             onPress={() => {
               void onSubmit();
             }}

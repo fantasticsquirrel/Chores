@@ -121,6 +121,7 @@ export function ChoreEligibilityPanel({
               <ActionButton
                 compact
                 disabled={childState.submittingChoreId !== null}
+                requiresManage
                 label={
                   childState.submittingChoreId === chore.chore_id
                     ? "Submitting"
@@ -247,6 +248,7 @@ export function SelectedChoreSubmitPanel({
           submitting || selectedChild === null || selectedChoreIds.length === 0
         }
         label={submitting ? "Submitting..." : "Submit Selected"}
+        requiresManage
         onPress={() => {
           void onSubmit();
         }}

@@ -47,6 +47,7 @@ export function ChoresScreen({ session }: { session: AuthSessionResponse }) {
             compact
             label="Add"
             onPress={mutations.openCreateForm}
+            requiresManage
             variant="secondary"
           />
         }

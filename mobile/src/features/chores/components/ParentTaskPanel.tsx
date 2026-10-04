@@ -26,6 +26,7 @@ export function ParentTaskPanel({
               <ActionButton
                 compact
                 label="Done"
+                requiresManage
                 onPress={() => {
                   void onComplete(task.id);
                 }}

@@ -47,6 +47,7 @@ export function ChildAccountPanels({
               actions.linkAccount.submitting ? "Linking..." : "Create Login"
             }
             onPress={actions.linkAccount.submit}
+            requiresManage
           />
         </View>
         {actions.linkAccount.error !== null ? (
@@ -79,6 +80,7 @@ export function ChildAccountPanels({
               actions.resetEmail.submitting ? "Resetting..." : "Reset Email"
             }
             onPress={actions.resetEmail.submit}
+            requiresManage
             variant="secondary"
           />
         </View>
@@ -124,6 +126,7 @@ export function ChildAccountPanels({
                 : "Reset Password"
             }
             onPress={actions.resetPassword.submit}
+            requiresManage
             variant="secondary"
           />
         </View>

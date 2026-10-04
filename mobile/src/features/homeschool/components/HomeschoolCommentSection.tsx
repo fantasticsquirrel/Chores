@@ -66,6 +66,7 @@ export function HomeschoolCommentSection({
           disabled={busy || form.childId === ""}
           label={busy ? "Saving..." : "Save Comment"}
           onPress={onSave}
+          requiresManage
         />
       </SectionCard>
 
@@ -85,6 +86,7 @@ export function HomeschoolCommentSection({
                 disabled={busy}
                 label="Edit"
                 onPress={() => onEdit(comment)}
+                requiresManage
                 variant="secondary"
               />
               <ActionButton
@@ -92,6 +94,7 @@ export function HomeschoolCommentSection({
                 disabled={busy}
                 label="Delete"
                 onPress={() => onDelete(comment)}
+                requiresManage
                 variant="danger"
               />
             </View>

@@ -11,6 +11,7 @@ import type {
 } from "../../../api/models";
 import { todayDateString } from "../../../utils/date";
 import { formatError } from "../../../utils/format";
+import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 import {
   buildCreateChoreRequest,
   buildDefaultChoreForm,
@@ -68,6 +69,7 @@ export function useChoreMutations({
   targetDate,
   userId,
 }: UseChoreMutationsOptions) {
+  const { canManageRef } = useModuleAccess();
   const [form, setForm] = useState<MobileChoreFormState>(() =>
     buildDefaultChoreForm(todayDateString()),
   );
@@ -87,6 +89,7 @@ export function useChoreMutations({
   }
 
   function openCreateForm(): void {
+    if (!canManageRef.current) return;
     setEditingId(null);
     setForm(buildDefaultChoreForm(todayDateString()));
     clearSubmitError();
@@ -94,6 +97,7 @@ export function useChoreMutations({
   }
 
   function openEditForm(chore: Chore): void {
+    if (!canManageRef.current) return;
     setEditingId(chore.id);
     setForm(buildEditChoreForm(chore));
     clearSubmitError();
@@ -114,6 +118,7 @@ export function useChoreMutations({
   }
 
   async function submitChoreForm(): Promise<void> {
+    if (!canManageRef.current) return;
     let operation: ChoreFormOperation;
     try {
       operation =
@@ -154,6 +159,7 @@ export function useChoreMutations({
   }
 
   async function archiveChore(chore: Chore): Promise<void> {
+    if (!canManageRef.current) return;
     setArchivingId(chore.id);
     try {
       await apiClient.archiveChore(chore.id, householdId);
@@ -167,6 +173,7 @@ export function useChoreMutations({
   }
 
   function confirmArchive(chore: Chore): void {
+    if (!canManageRef.current) return;
     Alert.alert(
       "Archive chore?",
       `"${chore.name}" will stop appearing for children but history stays intact.`,
@@ -176,6 +183,7 @@ export function useChoreMutations({
           style: "destructive",
           text: "Archive",
           onPress: () => {
+            if (!canManageRef.current) return;
             void archiveChore(chore);
           },
         },
@@ -187,6 +195,7 @@ export function useChoreMutations({
     child: Child,
     chore: EligibleChore,
   ): Promise<void> {
+    if (!canManageRef.current) return;
     patchEligibleChildState(child.id, {
       submittingChoreId: chore.chore_id,
       error: null,
@@ -213,6 +222,7 @@ export function useChoreMutations({
   }
 
   async function submitSelected(): Promise<void> {
+    if (!canManageRef.current) return;
     if (selectedChild === null) {
       setSelectedSubmitError("Select a child first.");
       return;
@@ -243,6 +253,7 @@ export function useChoreMutations({
   }
 
   async function completeParentTask(choreId: number): Promise<void> {
+    if (!canManageRef.current) return;
     await apiClient.completeParentTask(choreId, targetDate);
     await loadMyTasks();
   }

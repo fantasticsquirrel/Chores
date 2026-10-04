@@ -8,12 +8,14 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
+import { useModuleAccess } from "../../modules/ModuleAccessContext";
 import { cardStyles } from "../../styles/cards";
 import { formStyles } from "../../styles/forms";
 import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
 export function ParentReviewScreen() {
+  const { canManageRef } = useModuleAccess();
   const [submissions, setSubmissions] = useState<SubmissionReview[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function ParentReviewScreen() {
   }, [refresh]);
 
   async function approveAll(submissionId: number) {
+    if (!canManageRef.current) return;
     setActionId(`submission-${submissionId}`);
     setError(null);
     setSuccess(null);
@@ -57,6 +60,7 @@ export function ParentReviewScreen() {
     item: SubmissionReviewItem,
     status: "APPROVED" | "REJECTED",
   ) {
+    if (!canManageRef.current) return;
     setActionId(`item-${item.id}-${status}`);
     setError(null);
     setSuccess(null);
@@ -114,6 +118,7 @@ export function ParentReviewScreen() {
                     compact
                     disabled={actionId !== null}
                     label="Approve"
+                    requiresManage
                     onPress={() => decideItem(submission.id, item, "APPROVED")}
                     variant="secondary"
                   />
@@ -121,6 +126,7 @@ export function ParentReviewScreen() {
                     compact
                     disabled={actionId !== null}
                     label="Reject"
+                    requiresManage
                     onPress={() => decideItem(submission.id, item, "REJECTED")}
                     variant="danger"
                   />
@@ -135,6 +141,7 @@ export function ParentReviewScreen() {
                   : "Approve all"
               }
               onPress={() => approveAll(submission.id)}
+              requiresManage
             />
           </SectionCard>
         ))

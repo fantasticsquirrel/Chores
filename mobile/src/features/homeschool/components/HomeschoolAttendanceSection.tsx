@@ -93,6 +93,7 @@ export function HomeschoolAttendanceSection({
           disabled={busy || form.childId === "" || form.subjectId === ""}
           label={busy ? "Saving..." : "Save Attendance"}
           onPress={onSave}
+          requiresManage
         />
       </SectionCard>
 
@@ -117,6 +118,7 @@ export function HomeschoolAttendanceSection({
                 disabled={busy}
                 label="Edit"
                 onPress={() => onEdit(record)}
+                requiresManage
                 variant="secondary"
               />
               <ActionButton
@@ -124,6 +126,7 @@ export function HomeschoolAttendanceSection({
                 disabled={busy}
                 label="Delete"
                 onPress={() => onDelete(record)}
+                requiresManage
                 variant="danger"
               />
             </View>

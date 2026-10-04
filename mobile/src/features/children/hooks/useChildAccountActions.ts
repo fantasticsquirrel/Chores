@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { apiClient } from "../../../api/client";
 import type { Child } from "../../../api/models";
+import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 import { formatError } from "../../../utils/format";
 
 type UseChildAccountActionsOptions = {
@@ -52,6 +53,7 @@ export function useChildAccountActions({
   householdId,
   selectedChildId,
 }: UseChildAccountActionsOptions): UseChildAccountActionsResult {
+  const { canManageRef } = useModuleAccess();
   const [childEmail, setChildEmailState] = useState("");
   const [childPassword, setChildPasswordState] = useState("");
   const [linkingAccount, setLinkingAccount] = useState(false);
@@ -112,6 +114,7 @@ export function useChildAccountActions({
   }
 
   async function createChildAccount() {
+    if (!canManageRef.current) return;
     setLinkAccountError(null);
     setLinkAccountSuccess(null);
     if (selectedChildId === null) {
@@ -149,6 +152,7 @@ export function useChildAccountActions({
   }
 
   async function resetChildEmail() {
+    if (!canManageRef.current) return;
     setResetEmailError(null);
     setResetEmailSuccess(null);
     if (selectedChildId === null) {
@@ -178,6 +182,7 @@ export function useChildAccountActions({
   }
 
   async function resetChildPassword() {
+    if (!canManageRef.current) return;
     setResetPasswordError(null);
     setResetPasswordSuccess(null);
     if (selectedChildId === null) {

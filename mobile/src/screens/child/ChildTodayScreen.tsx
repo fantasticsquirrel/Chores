@@ -8,12 +8,14 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
+import { useModuleAccess } from "../../modules/ModuleAccessContext";
 import { formStyles } from "../../styles/forms";
 import { shellStyles } from "../../styles/shell";
 import { todayDateString } from "../../utils/date";
 import { formatError } from "../../utils/format";
 
 export function ChildTodayScreen() {
+  const { canManageRef } = useModuleAccess();
   const initialDate = useMemo(() => todayDateString(), []);
   const [date, setDate] = useState(initialDate);
   const [chores, setChores] = useState<EligibleChore[]>([]);
@@ -58,6 +60,7 @@ export function ChildTodayScreen() {
   }
 
   async function submitSelected() {
+    if (!canManageRef.current) return;
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -155,6 +158,7 @@ export function ChildTodayScreen() {
       </SectionCard>
       <ActionButton
         disabled={selectedChoreIds.size === 0 || submitting}
+        requiresManage
         label={
           submitting
             ? "Submitting..."

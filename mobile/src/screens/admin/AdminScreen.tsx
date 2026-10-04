@@ -14,6 +14,7 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
+import { useModuleAccess } from "../../modules/ModuleAccessContext";
 import { familyModules, type FamilyModuleKey } from "../../modules/registry";
 import { adminStyles } from "../../features/admin/styles";
 import { cardStyles } from "../../styles/cards";
@@ -57,6 +58,7 @@ export function AdminScreen({
 }: {
   onModulesChanged?: () => void | Promise<void>;
 }) {
+  const { canManage, canManageRef } = useModuleAccess();
   const [state, setState] = useState<AdminState>({
     users: [],
     loading: true,
@@ -123,6 +125,7 @@ export function AdminScreen({
   }, [refreshHouseholdModules]);
 
   async function toggleHouseholdModule(module: HouseholdModuleAccess) {
+    if (!canManageRef.current) return;
     if (!module.can_disable || updatingHouseholdModule !== null) {
       return;
     }
@@ -160,6 +163,7 @@ export function AdminScreen({
   }
 
   async function createParent() {
+    if (!canManageRef.current) return;
     setActionError(null);
     setActionMessage(null);
     const email = newParentEmail.trim().toLowerCase();
@@ -203,6 +207,7 @@ export function AdminScreen({
     user: UserModuleAccess,
     moduleKey: FamilyModuleKey,
   ) {
+    if (!canManageRef.current) return;
     setActionError(null);
     setActionMessage(null);
     const nextCanView = !hasModule(user, moduleKey);
@@ -275,7 +280,7 @@ export function AdminScreen({
         ) : null}
         {householdState.modules.map((module) => {
           const disabled =
-            !module.can_disable || updatingHouseholdModule !== null;
+            !canManage || !module.can_disable || updatingHouseholdModule !== null;
           return (
             <View key={module.key} style={formStyles.selectableRow}>
               <View style={formStyles.rowMain}>
@@ -296,6 +301,7 @@ export function AdminScreen({
                       compact
                       disabled={updatingHouseholdModule !== null}
                       label={`Retry ${module.name} update`}
+                      requiresManage
                       onPress={() => toggleHouseholdModule(module)}
                       variant="secondary"
                     />
@@ -383,6 +389,7 @@ export function AdminScreen({
           disabled={creatingParent}
           label={creatingParent ? "Creating..." : "Create Parent Login"}
           onPress={createParent}
+          requiresManage
         />
       </SectionCard>
 
@@ -423,6 +430,7 @@ export function AdminScreen({
                   (row) => row.key === module.key && !row.enabled,
                 );
                 const disabled =
+                  !canManage ||
                   updatingAccess !== null ||
                   householdStateUnavailable ||
                   globallyDisabled ||

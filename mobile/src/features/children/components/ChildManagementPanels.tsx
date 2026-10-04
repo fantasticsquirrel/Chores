@@ -57,6 +57,7 @@ export function AddChildPanel({
           disabled={mutations.submitting}
           label={mutations.submitting ? "Saving..." : "Create Child"}
           onPress={mutations.createChild}
+          requiresManage
         />
       </SectionCard>
 
@@ -158,6 +159,7 @@ export function ChildrenListPanel({
                       : "Set Active"
                 }
                 onPress={() => mutations.toggleActive(child)}
+                requiresManage
                 variant={child.active ? "danger" : "secondary"}
               />
             </View>
