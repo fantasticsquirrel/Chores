@@ -1,4 +1,4 @@
-import { FamilyCoreApiEndpoints } from "@family-manager/family-api/endpoints";
+import { FamilyRecipeApiEndpoints } from "@family-manager/family-api/endpoints";
 import {
   buildUrl,
   extractErrorDetail,
@@ -29,7 +29,7 @@ export type ApiClientConfig = {
   fetchImpl?: typeof fetch;
 };
 
-export class ApiClient extends FamilyCoreApiEndpoints {
+export class ApiClient extends FamilyRecipeApiEndpoints {
   private baseUrl: string;
   private csrfToken: string | null;
   private fetchImpl: typeof fetch;
