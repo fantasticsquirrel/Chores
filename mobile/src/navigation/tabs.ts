@@ -32,8 +32,9 @@ export function buildNavigationLayout(
         { key: "today", label: "Today" },
         { key: "money", label: "My Money" },
         { key: "account", label: "Account" },
+        { key: "more", label: "More" },
       ],
-      overflow: [],
+      overflow: [{ key: "notifications", label: "Notifications" }],
     };
   }
 
@@ -51,14 +52,19 @@ export function buildNavigationLayout(
       key: "homeschool",
       label: getMobileModule("homeschool").label,
     });
-    overflow.push({ key: "children", label: "Children" });
-  } else {
+    if (choresEnabled) overflow.push({ key: "children", label: "Children" });
+  } else if (choresEnabled) {
     primary.push({ key: "children", label: "Children" });
   }
 
   if (choresEnabled) {
     overflow.push({ key: "review", label: "Review" });
     overflow.push({ key: "money", label: "Money" });
+    overflow.push({ key: "notifications", label: "Notifications" });
+  }
+
+  if (hasModule(modules, "recipes")) {
+    overflow.push({ key: "recipes", label: getMobileModule("recipes").label });
   }
 
   if (role === "PARENT_ADMIN" && hasModule(modules, "admin")) {

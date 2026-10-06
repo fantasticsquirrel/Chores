@@ -8,6 +8,7 @@ import type {
   ChoreTransactionType,
 } from "../../../api/models";
 import { formatError } from "../../../utils/format";
+import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 
 export type ChoreTransactionActionType = Exclude<
   ChoreTransactionType,
@@ -30,6 +31,7 @@ export type UseChoreFinanceResult = {
 };
 
 export function useChoreFinance(): UseChoreFinanceResult {
+  const { canManageRef } = useModuleAccess();
   const [balances, setBalances] = useState<ChildBalance[]>([]);
   const [childId, setChildId] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<ChoreTransaction[]>([]);
@@ -64,6 +66,7 @@ export function useChoreFinance(): UseChoreFinanceResult {
   }
 
   async function save() {
+    if (!canManageRef.current) return;
     if (childId === null) return;
     const parsed = parseChoreTransactionDraft({
       amount,

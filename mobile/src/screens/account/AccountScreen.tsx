@@ -19,10 +19,12 @@ type AccountMode = "profile" | "security" | "subscription";
 export function AccountScreen({
   modules,
   onLogout,
+  onPasswordChanged,
   session,
 }: {
   modules: FamilyModule[];
   onLogout: () => Promise<void>;
+  onPasswordChanged: () => void;
   session: AuthSessionResponse;
 }) {
   const [mode, setMode] = useState<AccountMode>("profile");
@@ -60,7 +62,7 @@ export function AccountScreen({
       <SectionCard title="Appearance" subtitle="Saved on this device">
         <ThemePicker />
       </SectionCard>
-      {mode === "security" ? <ChangePasswordScreen /> : null}
+      {mode === "security" ? <ChangePasswordScreen onPasswordChanged={onPasswordChanged} /> : null}
       {mode === "subscription" && session.user.is_household_owner ? <SubscriptionScreen /> : null}
       {mode === "profile" ? (
         <>

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { apiClient } from "../../../api/client";
 import type { Child } from "../../../api/models";
+import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 import { formatError } from "../../../utils/format";
 
 type UseChildMutationsOptions = {
@@ -26,6 +27,7 @@ export function useChildMutations({
   householdId,
   loadChildren,
 }: UseChildMutationsOptions): UseChildMutationsResult {
+  const { canManageRef } = useModuleAccess();
   const [nameInput, setNameInputState] = useState("");
   const [activeOnCreate, setActiveOnCreate] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -40,6 +42,7 @@ export function useChildMutations({
   }
 
   async function createChild() {
+    if (!canManageRef.current) return;
     const trimmedName = nameInput.trim();
     if (trimmedName.length === 0) {
       setSubmitSuccess(null);
@@ -68,6 +71,7 @@ export function useChildMutations({
   }
 
   async function toggleActive(child: Child) {
+    if (!canManageRef.current) return;
     setUpdatingChildId(child.id);
     setSubmitError(null);
     setSubmitSuccess(null);

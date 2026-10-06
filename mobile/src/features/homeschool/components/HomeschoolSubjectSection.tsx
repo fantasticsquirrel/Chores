@@ -103,6 +103,7 @@ export function HomeschoolSubjectFormSection({
           disabled={busy || form.name.trim().length === 0}
           label={editingSubjectId === null ? "Create" : "Update"}
           onPress={onSave}
+          requiresManage
         />
         {editingSubjectId !== null ? (
           <ActionButton
@@ -148,6 +149,7 @@ export function HomeschoolSubjectListSection({
               disabled={busy}
               label="Edit"
               onPress={() => onEdit(subject)}
+              requiresManage
               variant="secondary"
             />
             <ActionButton
@@ -155,6 +157,7 @@ export function HomeschoolSubjectListSection({
               disabled={busy}
               label="Delete"
               onPress={() => onDelete(subject)}
+              requiresManage
               variant="danger"
             />
           </View>

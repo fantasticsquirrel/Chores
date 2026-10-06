@@ -1,0 +1,2 @@
+# Preserve upstream vendored package/license/patch bytes exactly.
+vendor/security-backports/** -whitespace -text

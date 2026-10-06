@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 
 import { apiClient } from "./api/client";
@@ -8,6 +8,7 @@ import { SafeAreaScreen } from "./components/SafeAreaScreen";
 import { useModules } from "./hooks/useModules";
 import { useSessionBootstrap } from "./hooks/useSessionBootstrap";
 import { canAccessMobileModule } from "./modules/registry";
+import { ModuleAccessProvider } from "./modules/ModuleAccessContext";
 import { BottomNavigation } from "./navigation/BottomNavigation";
 import { OverflowMenu } from "./navigation/OverflowMenu";
 import { buildNavigationLayout, resolveActiveTab } from "./navigation/tabs";
@@ -21,9 +22,12 @@ import { ChoresScreen } from "./screens/parent/ChoresScreen";
 import { ParentHomeScreen } from "./screens/parent/ParentHomeScreen";
 import { ParentReviewScreen } from "./screens/parent/ReviewScreen";
 import { MoneyScreen } from "./screens/parent/MoneyScreen";
+import { RecipesScreen } from "./screens/recipes/RecipesScreen";
+import { NotificationsScreen } from "./screens/notifications/NotificationsScreen";
 import { shellStyles } from "./styles/shell";
 import { isParentRole } from "./utils/format";
 import { useTheme } from "./theme/ThemeContext";
+import { useNativePush } from "./features/notifications/lib/useNativePush";
 
 export function AppShell() {
   const { definition, theme } = useTheme();
@@ -32,6 +36,7 @@ export function AppShell() {
     activeTab,
     bootstrapping,
     bootstrapError,
+    clearSession,
     handleChildLogin,
     handleLogout,
     handleParentLogin,
@@ -39,8 +44,12 @@ export function AppShell() {
     setActiveTab,
   } = useSessionBootstrap({ loadModules, setModules });
 
+  const nativePush = useNativePush(session, modules, setActiveTab);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<View>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const resetScroll = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: false }), []);
+  useEffect(resetScroll, [activeTab, resetScroll]);
   const navigation = useMemo(
     () =>
       session === null
@@ -93,10 +102,11 @@ export function AppShell() {
         <ParentHomeScreen
           modules={modules}
           onModulesLoaded={setModules}
+          onNavigate={setActiveTab}
           session={session}
         />
       ) : null}
-      {activeTab === "children" ? <ChildrenScreen session={session} /> : null}
+      {activeTab === "children" && canAccessMobileModule(modules, "chores") ? <ChildrenScreen session={session} /> : null}
       {activeTab === "chores" && canAccessMobileModule(modules, "chores") ? (
         <ChoresScreen session={session} />
       ) : null}
@@ -117,10 +127,13 @@ export function AppShell() {
           }}
         />
       ) : null}
+      {activeTab === "recipes" && canAccessMobileModule(modules, "recipes") ? <RecipesScreen session={session} modules={modules} onViewChanged={resetScroll} /> : null}
+      {activeTab === "notifications" ? <NotificationsScreen session={session} modules={modules} onNavigate={setActiveTab} nativePush={nativePush} /> : null}
       {activeTab === "account" ? (
         <AccountScreen
           modules={modules}
           onLogout={handleLogout}
+          onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
           session={session}
         />
       ) : null}
@@ -129,10 +142,13 @@ export function AppShell() {
     <AccountScreen
       modules={modules}
       onLogout={handleLogout}
+          onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
       session={session}
     />
   ) : activeTab === "money" && canAccessMobileModule(modules, "chores") ? (
     <MoneyScreen readOnly />
+  ) : activeTab === "notifications" ? (
+    <NotificationsScreen session={session} modules={modules} onNavigate={setActiveTab} nativePush={nativePush} />
   ) : canAccessMobileModule(modules, "chores") ? (
     <ChildTodayScreen />
   ) : (
@@ -141,6 +157,11 @@ export function AppShell() {
       message="This module is not enabled for your account."
     />
   );
+
+  const moduleKey = ["children", "chores", "review", "money", "today"].includes(activeTab)
+    ? "chores"
+    : activeTab === "homeschool" || activeTab === "admin" || activeTab === "recipes" ? activeTab : null;
+  const activeModule = moduleKey === null ? null : modules.find(module => module.key === moduleKey) ?? null;
 
   return (
     <SafeAreaScreen bottom={false} key={theme}>
@@ -162,10 +183,14 @@ export function AppShell() {
         <InlineNotice tone="warning" message={bootstrapError} />
       ) : null}
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={shellStyles.screenContent}
         keyboardShouldPersistTaps="handled"
       >
-        {renderedTab}
+        {moduleKey !== null ? <ModuleAccessProvider module={activeModule}>
+          {activeModule?.can_manage !== true ? <InlineNotice tone="warning" message="View-only access" /> : null}
+          {renderedTab}
+        </ModuleAccessProvider> : renderedTab}
       </ScrollView>
       <BottomNavigation
         activeTab={activeTab}

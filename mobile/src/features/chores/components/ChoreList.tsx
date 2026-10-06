@@ -90,6 +90,7 @@ export function ChoreCard({
           compact
           label="Edit"
           onPress={() => onEdit(chore)}
+          requiresManage
           variant="secondary"
         />
         {chore.archived_at === null ? (
@@ -98,6 +99,7 @@ export function ChoreCard({
             disabled={archiving}
             label={archiving ? "Archiving" : "Archive"}
             onPress={() => onArchive(chore)}
+            requiresManage
             variant="danger"
           />
         ) : null}

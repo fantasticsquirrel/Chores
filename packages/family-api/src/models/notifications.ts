@@ -1,3 +1,11 @@
+export interface NativePushConfigResponse { enabled: boolean }
+export type NativePushPlatform = "android" | "ios";
+export type ExpoPushToken = `ExpoPushToken[${string}]` | `ExponentPushToken[${string}]`;
+export interface NativePushSubscriptionCreate { token: ExpoPushToken; platform: NativePushPlatform }
+// Deliberately excludes token and user/session/household identifiers.
+export interface NativePushSubscriptionResponse { id: number; platform: NativePushPlatform; enabled: boolean }
+export interface NativePushSubscriptionListResponse { items: NativePushSubscriptionResponse[] }
+
 export interface NotificationItem {
   id: number;
   module_key: string;

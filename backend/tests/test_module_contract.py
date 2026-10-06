@@ -13,8 +13,8 @@ def test_backend_module_registry_matches_shared_contract() -> None:
         "admin",
     ]
     assert AVAILABLE_MODULES[0].labels == {"web": "Chores", "mobile": "Chores"}
-    assert AVAILABLE_MODULES[2].platforms["mobile"].supported is False
-    assert AVAILABLE_MODULES[2].platforms["mobile"].destination is None
+    assert AVAILABLE_MODULES[2].platforms["mobile"].supported is True
+    assert AVAILABLE_MODULES[2].platforms["mobile"].destination == "recipes"
     assert {
         role.value: list(module_keys)
         for role, module_keys in DEFAULT_ROLE_MODULES.items()

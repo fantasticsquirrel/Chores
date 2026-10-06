@@ -28,13 +28,15 @@ describe("buildNavigationLayout", () => {
         { key: "today", label: "Today" },
         { key: "money", label: "My Money" },
         { key: "account", label: "Account" },
+        { key: "more", label: "More" },
       ],
-      overflow: [],
+      overflow: [{ key: "notifications", label: "Notifications" }],
     });
     expect(navigationDestinations(layout)).toEqual([
       "today",
       "money",
       "account",
+      "notifications",
     ]);
   });
 
@@ -56,6 +58,7 @@ describe("buildNavigationLayout", () => {
       overflow: [
         { key: "review", label: "Review" },
         { key: "money", label: "Money" },
+        { key: "notifications", label: "Notifications" },
         { key: "account", label: "Account" },
       ],
     });
@@ -75,6 +78,7 @@ describe("buildNavigationLayout", () => {
         { key: "children", label: "Children" },
         { key: "review", label: "Review" },
         { key: "money", label: "Money" },
+        { key: "notifications", label: "Notifications" },
         { key: "account", label: "Account" },
       ],
     });

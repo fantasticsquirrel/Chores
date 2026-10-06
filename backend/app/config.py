@@ -4,7 +4,7 @@ import base64
 import hashlib
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
 
@@ -31,6 +31,8 @@ class Settings:
     push_vapid_public_key: str = ""
     push_vapid_private_key: str = ""
     push_vapid_claims_sub: str = "mailto:admin@multihost.ing"
+    native_push_enabled: bool = False
+    native_push_access_token: str = field(default="", repr=False)
     # Password reset is deliberately disabled until the host-side MTA and DNS
     # prerequisites have been reviewed and activated.
     password_reset_enabled: bool = False
@@ -213,6 +215,8 @@ def get_settings() -> Settings:
         push_vapid_public_key=os.getenv("PUSH_VAPID_PUBLIC_KEY", "").strip(),
         push_vapid_private_key=os.getenv("PUSH_VAPID_PRIVATE_KEY", "").strip(),
         push_vapid_claims_sub=os.getenv("PUSH_VAPID_CLAIMS_SUB", "mailto:admin@multihost.ing").strip(),
+        native_push_enabled=_parse_bool(os.getenv("NATIVE_PUSH_ENABLED", "false"), field_name="NATIVE_PUSH_ENABLED"),
+        native_push_access_token=os.getenv("NATIVE_PUSH_ACCESS_TOKEN", "").strip(),
         password_reset_enabled=password_reset_enabled,
         password_reset_public_app_url=password_reset_public_app_url,
         password_reset_from_address=password_reset_from_address,

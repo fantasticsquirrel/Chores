@@ -12,6 +12,10 @@
     "apk": {
       "distribution": "internal",
       "environment": "preview",
+      "node": "20.19.4",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://family.multihost.ing/chore-api"
+      },
       "android": {
         "buildType": "apk"
       }

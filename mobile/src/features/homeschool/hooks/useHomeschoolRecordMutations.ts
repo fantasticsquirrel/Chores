@@ -11,6 +11,7 @@ import type {
   HomeschoolSubject,
 } from "../../../api/models";
 import { todayDateString } from "../../../utils/date";
+import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 import { toYearMonth } from "../lib/dates";
 import {
   buildDefaultAttendanceForm,
@@ -59,6 +60,7 @@ export function useHomeschoolRecordMutations({
   setSelectedDate: (date: string) => void;
   subjects: HomeschoolSubject[];
 }) {
+  const { canManageRef } = useModuleAccess();
   const [attendanceForm, setAttendanceForm] = useState<AttendanceFormState>(
     () => buildDefaultAttendanceForm(todayDateString()),
   );
@@ -115,6 +117,7 @@ export function useHomeschoolRecordMutations({
   }
 
   async function saveAttendance() {
+    if (!canManageRef.current) return;
     const validation = validateAttendanceForm(attendanceForm);
     if (validation !== null) {
       setActionError(validation);
@@ -142,6 +145,7 @@ export function useHomeschoolRecordMutations({
   }
 
   function editAttendance(record: HomeschoolAttendance) {
+    if (!canManageRef.current) return;
     setSelectedChildId(record.child_id);
     setSelectedDate(record.date);
     setCalendarYearMonth(toYearMonth(record.date));
@@ -156,6 +160,7 @@ export function useHomeschoolRecordMutations({
   }
 
   function confirmDeleteAttendance(record: HomeschoolAttendance) {
+    if (!canManageRef.current) return;
     Alert.alert(
       "Delete attendance?",
       "This attendance entry will be removed.",
@@ -163,6 +168,7 @@ export function useHomeschoolRecordMutations({
         { style: "cancel", text: "Cancel" },
         {
           onPress: () => {
+            if (!canManageRef.current) return;
             void deleteAttendance(record);
           },
           style: "destructive",
@@ -173,12 +179,14 @@ export function useHomeschoolRecordMutations({
   }
 
   async function deleteAttendance(record: HomeschoolAttendance) {
+    if (!canManageRef.current) return;
     await runAction("delete", "Deleted attendance.", async () => {
       await apiClient.deleteHomeschoolAttendance(record.id, householdId);
     });
   }
 
   async function saveComment() {
+    if (!canManageRef.current) return;
     const validation = validateCommentForm(commentForm);
     if (validation !== null) {
       setActionError(validation);
@@ -197,6 +205,7 @@ export function useHomeschoolRecordMutations({
   }
 
   function editComment(comment: HomeschoolDayComment) {
+    if (!canManageRef.current) return;
     setSelectedChildId(comment.child_id);
     setSelectedDate(comment.date);
     setCalendarYearMonth(toYearMonth(comment.date));
@@ -209,10 +218,12 @@ export function useHomeschoolRecordMutations({
   }
 
   function confirmDeleteComment(comment: HomeschoolDayComment) {
+    if (!canManageRef.current) return;
     Alert.alert("Delete day comment?", "This day comment will be removed.", [
       { style: "cancel", text: "Cancel" },
       {
         onPress: () => {
+          if (!canManageRef.current) return;
           void deleteComment(comment);
         },
         style: "destructive",
@@ -222,12 +233,14 @@ export function useHomeschoolRecordMutations({
   }
 
   async function deleteComment(comment: HomeschoolDayComment) {
+    if (!canManageRef.current) return;
     await runAction("delete", "Deleted day comment.", async () => {
       await apiClient.deleteHomeschoolDayComment(comment.id, householdId);
     });
   }
 
   async function saveGrade() {
+    if (!canManageRef.current) return;
     const validation = validateGradeForm(gradeForm);
     if (validation !== null) {
       setActionError(validation);
@@ -247,6 +260,7 @@ export function useHomeschoolRecordMutations({
   }
 
   function editGrade(grade: HomeschoolGrade) {
+    if (!canManageRef.current) return;
     setSelectedChildId(grade.child_id);
     setGradeForm({
       childId: grade.child_id.toString(),
@@ -258,10 +272,12 @@ export function useHomeschoolRecordMutations({
   }
 
   function confirmDeleteGrade(grade: HomeschoolGrade) {
+    if (!canManageRef.current) return;
     Alert.alert("Delete grade?", "This grade record will be removed.", [
       { style: "cancel", text: "Cancel" },
       {
         onPress: () => {
+          if (!canManageRef.current) return;
           void deleteGrade(grade);
         },
         style: "destructive",
@@ -271,12 +287,14 @@ export function useHomeschoolRecordMutations({
   }
 
   async function deleteGrade(grade: HomeschoolGrade) {
+    if (!canManageRef.current) return;
     await runAction("delete", "Deleted grade.", async () => {
       await apiClient.deleteHomeschoolGrade(grade.id, householdId);
     });
   }
 
   function openAttendanceForSelectedDay() {
+    if (!canManageRef.current) return;
     if (selectedChildId !== null) {
       setAttendanceForm((previous) => ({
         ...previous,
@@ -287,6 +305,7 @@ export function useHomeschoolRecordMutations({
   }
 
   function openCommentForSelectedDay() {
+    if (!canManageRef.current) return;
     if (selectedChildId !== null) {
       const existingComment = selectedChildComments.find(
         (comment) => comment.date === selectedDate,

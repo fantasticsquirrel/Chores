@@ -71,7 +71,7 @@ export function FinancialActionPanel({
         value={finance.memo}
         onChangeText={finance.setMemo}
       />
-      <ActionButton label="Record" onPress={finance.save} />
+      <ActionButton label="Record" onPress={finance.save} requiresManage />
     </SectionCard>
   );
 }

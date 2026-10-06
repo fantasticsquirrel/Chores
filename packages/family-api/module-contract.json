@@ -57,7 +57,7 @@
           "destination": "homeschool",
           "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
-          "dashboard": false
+          "dashboard": true
         }
       }
     },
@@ -83,11 +83,11 @@
           "dashboard": true
         },
         "mobile": {
-          "supported": false,
-          "destination": null,
-          "roles": [],
-          "navigation": false,
-          "dashboard": false
+          "supported": true,
+          "destination": "recipes",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
         }
       }
     },

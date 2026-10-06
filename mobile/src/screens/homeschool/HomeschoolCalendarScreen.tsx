@@ -219,12 +219,14 @@ export function HomeschoolCalendarScreen({
                   compact
                   label="Edit"
                   onPress={() => onEditAttendance(record)}
+                  requiresManage
                   variant="secondary"
                 />
                 <ActionButton
                   compact
                   label="Delete"
                   onPress={() => onDeleteAttendance(record)}
+                  requiresManage
                   variant="danger"
                 />
               </View>
@@ -240,12 +242,14 @@ export function HomeschoolCalendarScreen({
                 compact
                 label="Edit"
                 onPress={() => onEditComment(selectedDayComment)}
+                requiresManage
                 variant="secondary"
               />
               <ActionButton
                 compact
                 label="Delete"
                 onPress={() => onDeleteComment(selectedDayComment)}
+                requiresManage
                 variant="danger"
               />
             </View>
@@ -259,6 +263,7 @@ export function HomeschoolCalendarScreen({
             disabled={selectedChildId === null}
             label="Log Attendance"
             onPress={onOpenAttendance}
+            requiresManage
             variant="secondary"
           />
           <ActionButton
@@ -266,6 +271,7 @@ export function HomeschoolCalendarScreen({
             disabled={selectedChildId === null}
             label={selectedDayComment === null ? "Add Note" : "Edit Note"}
             onPress={onOpenComments}
+            requiresManage
             variant="secondary"
           />
         </View>

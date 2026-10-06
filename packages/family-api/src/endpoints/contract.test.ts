@@ -185,6 +185,20 @@ describe("split endpoint contracts", () => {
     ]);
   });
 
+  it("uses the session-scoped native contract without browser tokens or owner IDs", async () => {
+    const api = new EndpointHarness();
+    await api.getNativePushConfig();
+    await api.listNativePushSubscriptions();
+    await api.createNativePushSubscription({ token: "ExpoPushToken[test]", platform: "android" });
+    await api.deleteNativePushSubscription(7);
+    expect(api.calls).toEqual([
+      { method: "GET", path: "/push/native/config", query: undefined },
+      { method: "GET", path: "/push/native/subscriptions", query: undefined },
+      { method: "POST", path: "/push/native/subscriptions", body: { token: "ExpoPushToken[test]", platform: "android" }, query: undefined },
+      { method: "DELETE", path: "/push/native/subscriptions/7", query: undefined },
+    ]);
+  });
+
   it("preserves core routes, query mapping, and auth lifecycle hooks", async () => {
     const api = new EndpointHarness();
     api.response = session;

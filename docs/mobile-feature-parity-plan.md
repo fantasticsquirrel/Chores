@@ -2,6 +2,8 @@
 
 > **Historical reference (2026-06-06):** This document records the initial mobile parity pass on `feature/mobile-family-app`. It is not the active delivery checklist. Current work is tracked in [`docs/implementation/family-manager-hardening-and-product-finish.md`](implementation/family-manager-hardening-and-product-finish.md).
 
+> **Current parity audit (2026-10-04):** The new cookbook/inbox/access-control pass and remaining release/native-push gates are documented in [`mobile-website-parity-audit-2026-10-04.md`](mobile-website-parity-audit-2026-10-04.md). The checklist below remains historical.
+
 Created: 2026-06-06
 Branch: `feature/mobile-family-app`
 

@@ -92,6 +92,7 @@ export function HomeschoolSemesterFormSection({
           disabled={busy || form.name.trim().length === 0}
           label={editingSemesterId === null ? "Create" : "Update"}
           onPress={onSave}
+          requiresManage
         />
         {editingSemesterId !== null ? (
           <ActionButton
@@ -133,6 +134,7 @@ export function HomeschoolSemesterListSection({
               disabled={busy}
               label="Edit"
               onPress={() => onEdit(semester)}
+              requiresManage
               variant="secondary"
             />
             <ActionButton
@@ -140,6 +142,7 @@ export function HomeschoolSemesterListSection({
               disabled={busy}
               label="Delete"
               onPress={() => onDelete(semester)}
+              requiresManage
               variant="danger"
             />
           </View>

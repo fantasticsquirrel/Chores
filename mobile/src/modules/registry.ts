@@ -27,6 +27,7 @@ export const familyModules: Array<{
 const MOBILE_NAVIGATION_MODULE_KEYS = [
   "chores",
   "homeschool",
+  "recipes",
   "admin",
 ] as const satisfies ReadonlyArray<FamilyModuleKey>;
 
@@ -40,15 +41,18 @@ export const MOBILE_MODULE_REGISTRATION: ModulePlatformRegistration = {
     { moduleKey: "chores", destination: "review" },
     { moduleKey: "chores", destination: "money" },
     { moduleKey: "chores", destination: "today" },
+    { moduleKey: "chores", destination: "children" },
+    { moduleKey: "chores", destination: "notifications" },
     { moduleKey: "homeschool", destination: "homeschool" },
+    { moduleKey: "recipes", destination: "recipes" },
     { moduleKey: "admin", destination: "admin" },
   ],
   navigation: mobileModuleNavigationItems.map(({ key, destination }) => ({
     moduleKey: key,
     destination,
   })),
-  guards: ["chores", "homeschool", "admin"],
-  dashboardCards: ["chores"],
+  guards: ["chores", "homeschool", "recipes", "admin"],
+  dashboardCards: ["chores", "homeschool", "recipes"],
 };
 
 export function getMobileModule(moduleKey: FamilyModuleKey) {

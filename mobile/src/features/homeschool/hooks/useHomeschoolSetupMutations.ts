@@ -7,6 +7,7 @@ import type {
   HomeschoolSubject,
 } from "../../../api/models";
 import { todayDateString } from "../../../utils/date";
+import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 import {
   buildDefaultSemesterForm,
   buildDefaultSubjectForm,
@@ -30,6 +31,7 @@ export function useHomeschoolSetupMutations({
   setActionError: (message: string | null) => void;
   setActionMessage: (message: string | null) => void;
 }) {
+  const { canManageRef } = useModuleAccess();
   const [semesterForm, setSemesterForm] = useState<SemesterFormState>(() =>
     buildDefaultSemesterForm(todayDateString()),
   );
@@ -62,6 +64,7 @@ export function useHomeschoolSetupMutations({
   }
 
   function editSemester(semester: HomeschoolSemester) {
+    if (!canManageRef.current) return;
     setEditingSemesterId(semester.id);
     setSemesterForm({
       active: semester.active,
@@ -73,6 +76,7 @@ export function useHomeschoolSetupMutations({
   }
 
   function editSubject(subject: HomeschoolSubject) {
+    if (!canManageRef.current) return;
     setEditingSubjectId(subject.id);
     setSubjectForm({
       active: subject.active,
@@ -83,6 +87,7 @@ export function useHomeschoolSetupMutations({
   }
 
   async function saveSemester() {
+    if (!canManageRef.current) return;
     const validation = validateSemesterForm({
       endDate: semesterForm.end_date,
       name: semesterForm.name,
@@ -120,6 +125,7 @@ export function useHomeschoolSetupMutations({
   }
 
   async function saveSubject() {
+    if (!canManageRef.current) return;
     const validation = validateSubjectForm(subjectForm);
     if (validation !== null) {
       setActionError(validation);
@@ -153,6 +159,7 @@ export function useHomeschoolSetupMutations({
   }
 
   function confirmDeleteSemester(semester: HomeschoolSemester) {
+    if (!canManageRef.current) return;
     Alert.alert(
       "Delete semester?",
       `"${semester.name}" will be removed only if no grades depend on it.`,
@@ -160,6 +167,7 @@ export function useHomeschoolSetupMutations({
         { style: "cancel", text: "Cancel" },
         {
           onPress: () => {
+            if (!canManageRef.current) return;
             void deleteSemester(semester);
           },
           style: "destructive",
@@ -170,6 +178,7 @@ export function useHomeschoolSetupMutations({
   }
 
   async function deleteSemester(semester: HomeschoolSemester) {
+    if (!canManageRef.current) return;
     await runAction(
       "delete",
       "Deleted semester.",
@@ -185,6 +194,7 @@ export function useHomeschoolSetupMutations({
   }
 
   function confirmDeleteSubject(subject: HomeschoolSubject) {
+    if (!canManageRef.current) return;
     Alert.alert(
       "Delete subject?",
       `"${subject.name}" will be removed only if no attendance or grades depend on it.`,
@@ -192,6 +202,7 @@ export function useHomeschoolSetupMutations({
         { style: "cancel", text: "Cancel" },
         {
           onPress: () => {
+            if (!canManageRef.current) return;
             void deleteSubject(subject);
           },
           style: "destructive",
@@ -202,6 +213,7 @@ export function useHomeschoolSetupMutations({
   }
 
   async function deleteSubject(subject: HomeschoolSubject) {
+    if (!canManageRef.current) return;
     await runAction(
       "delete",
       "Deleted subject.",

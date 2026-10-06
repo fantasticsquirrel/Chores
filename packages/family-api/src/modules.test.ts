@@ -19,7 +19,7 @@ describe("shared family module metadata", () => {
     ).toBe(true);
   });
 
-  it("keeps recipes web-only until the mobile app implements it", () => {
+  it("supports the implemented cookbook on both web and mobile", () => {
     expect(getFamilyModulesForPlatform("web").map((module) => module.key)).toEqual([
       "chores",
       "homeschool",
@@ -29,9 +29,10 @@ describe("shared family module metadata", () => {
     expect(getFamilyModulesForPlatform("mobile").map((module) => module.key)).toEqual([
       "chores",
       "homeschool",
+      "recipes",
       "admin",
     ]);
     expect(isFamilyModuleSupportedOnPlatform("recipes", "web")).toBe(true);
-    expect(isFamilyModuleSupportedOnPlatform("recipes", "mobile")).toBe(false);
+    expect(isFamilyModuleSupportedOnPlatform("recipes", "mobile")).toBe(true);
   });
 });

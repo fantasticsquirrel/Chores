@@ -125,6 +125,23 @@ describe("OverflowMenu", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("uses DOM focus on web without unsupported native handles", async () => {
+    jest.replaceProperty(ReactNative.Platform, "OS", "web");
+    const nativeHandle = jest.spyOn(ReactNative, "findNodeHandle").mockImplementation(() => { throw new Error("findNodeHandle is not supported on web"); });
+    const nativeFocus = jest.spyOn(AccessibilityInfo, "setAccessibilityFocus").mockImplementation(() => undefined);
+    const focus = jest.fn();
+    const returnFocusRef = { current: { focus, hasAttribute: () => true } } as unknown as { current: View | null };
+    function WebOverflow() {
+      const [visible,setVisible] = useState(true);
+      return <OverflowMenu activeTab="home" items={layout.overflow} onClose={() => setVisible(false)} onNavigate={jest.fn()} returnFocusRef={returnFocusRef} visible={visible} />;
+    }
+    const view = await renderWithInsets(<WebOverflow />);
+    expect(() => view.UNSAFE_getByType(Modal).props.onShow()).not.toThrow();
+    await act(async () => {view.UNSAFE_getByType(Modal).props.onRequestClose();});
+    await waitFor(() => expect(focus).toHaveBeenCalledTimes(1));
+    expect(nativeHandle).not.toHaveBeenCalled();expect(nativeFocus).not.toHaveBeenCalled();
+  });
+
   it("focuses the heading on iOS show and restores More on dismissal", async () => {
     jest.replaceProperty(ReactNative.Platform, "OS", "ios");
     const events: string[] = [];
