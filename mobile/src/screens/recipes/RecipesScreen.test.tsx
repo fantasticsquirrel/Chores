@@ -1,14 +1,17 @@
 import React from 'react';
 import { afterEach, beforeEach, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { BackHandler, Linking, Share } from 'react-native';
+import { BackHandler, Linking } from 'react-native';
+import { printRecipe, shareCookbookBackup } from '../../features/recipes/lib/recipe-output';
 import { apiClient } from '../../api/client';
 import { modules, recipe, scaled, session } from './fixtures';
 import { RecipesScreen } from './RecipesScreen';
+import {ActionButton} from '../../components/ActionButton';
 
 jest.mock('../../api/client', () => ({ apiClient: Object.fromEntries(['listRecipes', 'listRecipeCategories', 'listRecipeTags', 'listChildren', 'getRecipe', 'scaleRecipe', 'createRecipe', 'updateRecipe', 'importRecipeFromUrl', 'exportRecipeBackup', 'importRecipeBackup', 'duplicateRecipe', 'createRecipeVariant', 'upsertRecipeFeedback', 'deleteRecipe'].map(k => [k, jest.fn()])) }));
+jest.mock('../../features/recipes/lib/recipe-output',()=>({printRecipe:jest.fn(),shareCookbookBackup:jest.fn()}));
 const api = apiClient as unknown as Record<string, jest.Mock<(...args: unknown[]) => Promise<unknown>>>;
-const press = (label: string) => fireEvent.press(screen.getByRole('button', { name: label }));
+const press = (label: string) => fireEvent.press(screen.queryByRole('button', { name: label }) ?? screen.getByRole('checkbox', { name: label }));
 const change = (label: string, text: string) => fireEvent.changeText(screen.getByLabelText(label), text);
 async function open() {
   render(<RecipesScreen modules={modules} session={session} />);
@@ -28,6 +31,15 @@ beforeEach(() => {
 });
 afterEach(() => { jest.restoreAllMocks(); });
 
+it.each(['list','detail','editor','cooking'] as const)('keeps one primary action in the %s workflow',async(state)=>{
+ if(state==='list'||state==='editor'){
+  render(<RecipesScreen modules={modules} session={session}/>);await screen.findByRole('button',{name:'New Recipe'});
+  if(state==='editor'){press('New Recipe');change('Title','Soup draft');}
+ }else{await open();if(state==='cooking')press('Start Cooking');}
+ const primary=screen.UNSAFE_getAllByType(ActionButton).filter(node=>!node.props.disabled&&(node.props.variant??'primary')==='primary');
+ expect(primary.map(node=>node.props.label)).toEqual([state==='list'?'New Recipe':state==='detail'?'Start Cooking':state==='editor'?'Save Recipe':'Next step']);
+});
+
 it('disabled module makes no requests', () => {
   render(<RecipesScreen modules={[]} session={session} />);
   expect(screen.getByText('Recipes is not enabled for this account.')).toBeTruthy();
@@ -38,8 +50,15 @@ it('child role makes no requests even with a module', () => {
   expect(screen.getByText('Recipes is not enabled for this account.')).toBeTruthy();
   expect(api.listRecipes).not.toHaveBeenCalled();
 });
+it('resets the real shell scroll when changing recipe workflow views',async()=>{
+ const changed=jest.fn();render(<RecipesScreen modules={modules} session={session} onViewChanged={changed}/>);
+ await screen.findByRole('button',{name:'Open Soup'});changed.mockClear();press('Open Soup');await screen.findByRole('button',{name:'Back to Recipes'});
+ await waitFor(()=>expect(changed).toHaveBeenCalled());changed.mockClear();press('Edit Recipe');await waitFor(()=>expect(changed).toHaveBeenCalled());
+ expect(screen.UNSAFE_queryByType(require('react-native').ScrollView)).toBeNull();
+});
 it('opens standalone detail and Back restores cookbook', async () => {
   await open(); expect(screen.queryByLabelText('Search recipes')).toBeNull();
+  expect(await screen.findByText(/Uses: 2 cup water hot/)).toBeTruthy();
   expect(api.getRecipe).toHaveBeenCalledWith(11);
   press('Back to Recipes'); expect(await screen.findByLabelText('Search recipes')).toBeTruthy();
 });
@@ -64,11 +83,19 @@ it('imports a URL and navigates to attributable detail', async () => {
   await waitFor(() => expect(api.importRecipeFromUrl).toHaveBeenCalledWith('https://example.test/soup')); expect(await screen.findByText('Default Servings: 4')).toBeTruthy();
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined); press('Open source: Test Kitchen'); await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith(recipe.source_url));
 });
-it('exports selectable JSON and invokes native Share with genuine backup', async () => {
-  jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
+it('exports selectable JSON and shares a cookbook file with genuine backup', async () => {
   render(<RecipesScreen modules={modules} session={session} />); await screen.findByRole('button', { name: 'Open Soup' }); press('Backup & Restore'); press('Export JSON');
   await screen.findByLabelText('Exported backup JSON'); press('Share JSON');
-  await waitFor(() => expect(Share.share).toHaveBeenCalledWith(expect.objectContaining({ message: JSON.stringify({ version: 1, recipes: [recipe] }, null, 2) })));
+  await waitFor(() => expect(shareCookbookBackup).toHaveBeenCalledWith({version:1,recipes:[recipe]}));
+});
+it('prints the current recipe through the native document output',async()=>{
+ await open();press('Print / PDF');await waitFor(()=>expect(printRecipe).toHaveBeenCalledWith(recipe,null));
+});
+it('keeps a recipe-only account functional without requesting chores-protected children',async()=>{
+ api.listChildren.mockRejectedValue(new Error('Chores access is denied.'));
+ render(<RecipesScreen session={session} modules={modules.filter(module=>module.key==='recipes')}/>);
+ expect(await screen.findByRole('button',{name:'Open Soup'})).toBeTruthy();
+ expect(api.listChildren).not.toHaveBeenCalled();
 });
 it('restores portable JSON stripping database identities and foreign references', async () => {
   render(<RecipesScreen modules={modules} session={session} />); await screen.findByRole('button', { name: 'Open Soup' }); press('Backup & Restore'); change('Restore JSON', JSON.stringify({ version: 1, recipes: [{ ...recipe, parent_recipe_id: 999 }] })); press('Restore backup');
@@ -107,8 +134,35 @@ it('view-only access hides every recipe mutation but allows detail cooking and e
   render(<RecipesScreen modules={[{ ...modules[0], can_manage: false }]} session={session} />); await screen.findByRole('button', { name: 'Open Soup' }); expect(screen.queryByRole('button', { name: 'New Recipe' })).toBeNull(); expect(screen.queryByRole('button', { name: 'Import URL' })).toBeNull(); press('Open Soup'); await screen.findByText('Default Servings: 4');
   for (const name of ['Edit Recipe', 'Delete Recipe', 'Duplicate Recipe', 'Add Variant', 'Save Feedback']) expect(screen.queryByRole('button', { name })).toBeNull(); expect(screen.getByRole('button', { name: 'Start Cooking' })).toBeTruthy();
 });
-it('other owner recipe has no mutation actions even for household admin', async () => {
-  api.getRecipe.mockResolvedValue({ ...recipe, owner_user_id: 99 }); render(<RecipesScreen modules={modules} session={{ ...session, user: { ...session.user, role: 'PARENT_ADMIN' } }} />); await screen.findByRole('button', { name: 'Open Soup' }); press('Open Soup'); await screen.findByText('Default Servings: 4'); expect(screen.queryByRole('button', { name: 'Edit Recipe' })).toBeNull(); expect(screen.queryByRole('button', { name: 'Delete Recipe' })).toBeNull();
+it('household admin can edit another creator recipe with an explicit manage grant', async () => {
+  api.getRecipe.mockResolvedValue({ ...recipe, owner_user_id: 99 });
+  render(<RecipesScreen modules={modules} session={{ ...session, user: { ...session.user, role: 'PARENT_ADMIN' } }} />);
+  await screen.findByRole('button', { name: 'Open Soup' }); press('Open Soup'); await screen.findByText('Default Servings: 4');
+  expect(screen.getByRole('button', { name: 'Delete Recipe' })).toBeTruthy();
+  press('Edit Recipe'); change('Title', 'Admin edit'); press('Save Changes');
+  await waitFor(() => expect(api.updateRecipe).toHaveBeenCalledWith(11, expect.objectContaining({ title: 'Admin edit' })));
+});
+it.each(['duplicate', 'variant', 'feedback'] as const)('non-owner parent can create %s without editing another creator recipe', async (action) => {
+  api.getRecipe.mockResolvedValue({ ...recipe, owner_user_id: 99 });
+  await open();
+  expect(screen.queryByRole('button', { name: 'Edit Recipe' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Delete Recipe' })).toBeNull();
+  if (action === 'duplicate') {
+    press('Duplicate Recipe'); await waitFor(() => expect(api.duplicateRecipe).toHaveBeenCalledWith(11, { as_variant: false }));
+  } else if (action === 'variant') {
+    press('Add Variant'); change('Title', 'My variant'); press('Save Variant');
+    await waitFor(() => expect(api.createRecipeVariant).toHaveBeenCalledWith(11, expect.objectContaining({ title: 'My variant' })));
+  } else {
+    change('Family rating', '5'); press('Save Feedback');
+    await waitFor(() => expect(api.upsertRecipeFeedback).toHaveBeenCalledWith(11, expect.objectContaining({ parent_user_id: session.user.id, rating: 5 })));
+  }
+  expect(api.updateRecipe).not.toHaveBeenCalled(); expect(api.deleteRecipe).not.toHaveBeenCalled();
+});
+it.each([false, undefined])('admin authority does not bypass manage grant %s', async (can_manage) => {
+  api.getRecipe.mockResolvedValue({ ...recipe, owner_user_id: 99 });
+  render(<RecipesScreen modules={[{ ...modules[0], can_manage }]} session={{ ...session, user: { ...session.user, role: 'PARENT_ADMIN' } }} />);
+  await screen.findByRole('button', { name: 'Open Soup' }); press('Open Soup'); await screen.findByText('Default Servings: 4');
+  for (const name of ['Edit Recipe', 'Delete Recipe', 'Duplicate Recipe', 'Add Variant', 'Save Feedback']) expect(screen.queryByRole('button', { name })).toBeNull();
 });
 it('duplicate and variant creation use separate endpoints and open their saved detail', async () => {
   await open(); api.getRecipe.mockResolvedValue({ ...recipe, id: 12, title: 'Soup copy' }); press('Duplicate Recipe'); await waitFor(() => expect(api.duplicateRecipe).toHaveBeenCalledWith(11, { as_variant: false })); expect(await screen.findByText('Soup copy')).toBeTruthy();

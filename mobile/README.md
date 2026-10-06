@@ -83,6 +83,16 @@ EXPO_PUBLIC_API_BASE_URL=https://family.multihost.ing/chore-api npm run mobile:s
 
 Real phones should use HTTPS/TLS in production. Plain HTTP may be blocked or limited by device and network security settings.
 
+## Household feature parity
+
+The app includes an actionable Home screen, notification inbox/personal reminder settings and a Recipes destination in More. Recipes supports detail/cooking, serving/multiplier scaling, manual/URL import, editing, variants, feedback, deletion and JSON backup/restore. Print/PDF uses Expo Print; native JSON export shares a file. Restore accepts pasted version-1 JSON.
+
+Household write actions require an explicit server `can_manage` grant. Registration and parent recovery open the website. Native Expo push registration, opt-in controls, session-bound queue/delivery and receipt processing are implemented but default off. Real delivery requires provider credentials, an approved backend activation, a rebuilt app and eligible devices; an in-app inbox is not push delivery proof.
+
+See [native push setup](../docs/native-push-setup.md) and [source-verified dependency backports](../docs/dependency-security-backports.md). Raw npm version advisories remain visible; do not skip install scripts or backport integrity checks.
+
+See [the current parity audit](../docs/mobile-website-parity-audit-2026-10-04.md) for scope, adaptations, state invariants and release holds. Source/tests or an Expo Web preview are not proof that these features are installed in the distributed APK.
+
 ## iOS Limitations
 
 Running the iOS simulator or creating iOS builds requires macOS with Xcode, or an EAS build workflow. The Expo project intentionally avoids native `ios/` and `android/` folders.

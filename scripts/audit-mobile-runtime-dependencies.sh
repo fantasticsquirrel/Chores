@@ -28,4 +28,6 @@ if [[ "$audit_status" -ne 0 && "$audit_status" -ne 1 ]]; then
   exit "$audit_status"
 fi
 
-node "$ROOT_DIR/scripts/verify-mobile-build-toolchain-audit.mjs" "$AUDIT_OUTPUT"
+# Keep npm's original report visible; normalization never overwrites this file.
+cat "$AUDIT_OUTPUT"
+node "$ROOT_DIR/scripts/verify-mobile-source-backports-audit.mjs" "$AUDIT_OUTPUT"

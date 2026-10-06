@@ -59,19 +59,16 @@ Android uses `versionCode` for APK upgrade/install decisions. Reusing an old
 version code can produce a generic "something went wrong" install failure on a
 phone.
 
-If Android still refuses the APK, remove any old build with the same package
-name before installing the new one:
-
-```bash
-adb uninstall com.fantasticsquirrel.familymanager
-adb install -r path/to/family-manager.apk
-```
-
-If that still fails, capture the exact package-manager reason with:
+If Android refuses an upgrade, first preserve app data and capture the exact
+package-manager error:
 
 ```bash
 adb install -r path/to/family-manager.apk
 ```
+
+Do not uninstall as an automatic workaround. A clean uninstall erases local
+app state and requires explicit approval and a backup/reset plan. Diagnose a
+signing-key or version mismatch before considering that destructive action.
 
 Common failures are `INSTALL_FAILED_UPDATE_INCOMPATIBLE` for a signing-key
 conflict, `INSTALL_FAILED_VERSION_DOWNGRADE` for version code problems, and

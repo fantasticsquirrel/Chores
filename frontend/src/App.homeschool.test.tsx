@@ -219,7 +219,11 @@ describe("Homeschool page", () => {
     );
 
     expect(await screen.findByText("Select a child to record attendance.")).toBeVisible();
-    expect(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" })).toBeDisabled();
+    // With no child the calendar can use the current month; verify every
+    // currently rendered date instead of assuming the fixture's September month.
+    for (const button of screen.getAllByRole("button", { name: /^\d{4}-\d{2}-\d{2}, no attendance recorded$/ })) {
+      expect(button).toBeDisabled();
+    }
   });
 
 

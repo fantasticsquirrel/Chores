@@ -4,6 +4,22 @@ import { ApiClient } from "./client";
 const response = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { "Content-Type": "application/json" } });
 
 describe("native cookbook transport", () => {
+  it('serializes cookie-changing authentication so an older logout cannot expire a newer sign-in',async()=>{
+    let release!:(value:Response)=>void;const pending=new Promise<Response>(resolve=>{release=resolve;});
+    const fetchMock=vi.fn().mockResolvedValueOnce(response({csrf_token:'old',user:{id:1}})).mockReturnValueOnce(pending).mockResolvedValueOnce(response({csrf_token:'new',user:{id:2}})).mockResolvedValueOnce(response({}));
+    const client=new ApiClient({baseUrl:'https://qa.example.test/chore-api',fetchImpl:fetchMock});
+    await client.login({email:'old@example.test',password:'fixture'});const logout=client.logout();await vi.waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(2));
+    const login=client.login({email:'next@example.test',password:'fixture'});await Promise.resolve();await Promise.resolve();
+    try{expect(fetchMock).toHaveBeenCalledTimes(2);}finally{release(new Response(null,{status:204}));await Promise.all([logout,login]);}
+    await client.createRecipe({title:'QA'});expect(fetchMock.mock.calls.at(-1)?.[1].headers).toHaveProperty('X-CSRF-Token','new');
+  });
+  it('does not restore CSRF from a bootstrap response after local session teardown',async()=>{
+    let release!:(value:Response)=>void;const pending=new Promise<Response>(resolve=>{release=resolve;});
+    const fetchMock=vi.fn().mockReturnValueOnce(pending).mockResolvedValueOnce(response({}));
+    const client=new ApiClient({baseUrl:'https://qa.example.test/chore-api',fetchImpl:fetchMock});const session=client.getCurrentSession();
+    await vi.waitFor(()=>expect(fetchMock).toHaveBeenCalledTimes(1));client.clearAuthentication();release(response({csrf_token:'old',user:{id:1}}));await session;
+    await client.createRecipe({title:'QA'});expect(fetchMock.mock.calls.at(-1)?.[1].headers).not.toHaveProperty('X-CSRF-Token');
+  });
   it("drops CSRF state when the local authenticated session is cleared", async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce(response({user:{id:1},csrf_token:"qa-csrf"})).mockResolvedValueOnce(response({}));
     const client = new ApiClient({baseUrl:"https://qa.example.test/chore-api",fetchImpl:fetchMock});

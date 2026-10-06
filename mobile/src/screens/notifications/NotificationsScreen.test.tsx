@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { Linking } from "react-native";
 
 import { apiClient } from "../../api/client";
+import { ActionButton } from "../../components/ActionButton";
 import type { AuthSessionResponse, FamilyModule, NotificationItem, NotificationSettings } from "../../api/models";
 import { NotificationsScreen } from "./NotificationsScreen";
 
@@ -24,6 +25,35 @@ describe("NotificationsScreen", () => {
     jest.spyOn(Linking, "openURL").mockResolvedValue(true);
   });
   afterEach(() => { jest.restoreAllMocks(); });
+  it.each(["off","error"] as const)("keeps Disable operable with verified registration in %s, while explicit Enable can recover",async status=>{
+    const disable=jest.fn();const enable=jest.fn();
+    const nativePush={state:{status,busy:false,hasRegistration:true,message:"Permission is blocked; device remains registered."},refresh:jest.fn(),enable,disable};
+    render(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={nativePush} />);
+    await screen.findByText("Approval waiting");
+    expect(screen.getByRole("button",{name:"Disable device notifications"}).props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(screen.getByRole("button",{name:"Disable device notifications"}));expect(disable).toHaveBeenCalledTimes(1);
+    fireEvent.press(screen.getByRole("button",{name:"Enable device notifications"}));expect(enable).toHaveBeenCalledTimes(1);
+  });
+  it.each([
+    {status:"off",busy:false},{status:"error",busy:false},{status:"enabled",busy:false},{status:"off",busy:true},
+  ] as const)("keeps Save reminder settings the only enabled primary in composed device state %j",async state=>{
+    const nativePush={state:{...state,hasRegistration:state.status==="enabled",message:"Device status"},refresh:jest.fn(),enable:jest.fn(),disable:jest.fn()};
+    const view=render(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={nativePush} />);
+    await screen.findByText("Approval waiting");
+    const primary=view.UNSAFE_getAllByType(ActionButton).filter(button=>!button.props.disabled&&(button.props.variant??"primary")==="primary");
+    expect(primary.map(button=>button.props.label)).toEqual(["Save reminder settings"]);
+    expect(view.UNSAFE_getAllByType(ActionButton).find(button=>button.props.label==="Enable device notifications")?.props.variant).toBe("secondary");
+  });
+  it.each(["error", "unavailable"] as const)("offers accessible device retry for %s and disables it while busy", async status => {
+    const refresh=jest.fn();const enable=jest.fn();const disable=jest.fn();
+    const nativePush={state:{status,busy:false,hasRegistration:false,message:"Could not check device notifications. Try again."},refresh,enable,disable};
+    const view=render(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={nativePush} />);
+    await screen.findByText("Approval waiting");
+    fireEvent.press(screen.getByRole("button",{name:"Retry device notifications"}));expect(refresh).toHaveBeenCalledTimes(1);expect(enable).not.toHaveBeenCalled();expect(disable).not.toHaveBeenCalled();
+    view.rerender(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={{...nativePush,state:{...nativePush.state,busy:true}}} />);
+    expect(screen.getByRole("button",{name:"Retry device notifications"}).props.accessibilityState.disabled).toBe(true);
+    fireEvent.press(screen.getByRole("button",{name:"Retry device notifications"}));expect(refresh).toHaveBeenCalledTimes(1);
+  });
   it("loads all inbox items, authoritative unread count and settings without writes", async () => {
     mount(); expect(screen.getByText("Loading notifications...")).toBeTruthy();
     expect(await screen.findByText("Approval waiting")).toBeTruthy();
@@ -80,7 +110,8 @@ describe("NotificationsScreen", () => {
     jest.mocked(apiClient.getNotificationSettings).mockResolvedValue({ chores: changed });
     fireEvent.press(screen.getByRole("button", { name: "Save reminder settings" }));
     await screen.findByText("Reminder settings saved.");
-    expect(apiClient.updateNotificationSettings).toHaveBeenCalledWith("chores", changed); expect(apiClient.getNotificationSettings).toHaveBeenCalledTimes(2);
+    const {push_enabled: _push, ...preferences} = changed;
+    expect(apiClient.updateNotificationSettings).toHaveBeenCalledWith("chores", preferences); expect(apiClient.getNotificationSettings).toHaveBeenCalledTimes(2);
   });
   it.each([["Due soon hours", "0"], ["Due soon hours", "169"], ["Due soon hours", "1.5"], ["Due soon hours", ""], ["Daily digest time", "24:00"], ["Quiet hours start", "9:00"], ["Quiet hours end", "07:60"]])("rejects invalid %s = %s before writing", async (label, value) => {
     mount(); await screen.findByText("Approval waiting"); fireEvent.changeText(screen.getByLabelText(label), value);

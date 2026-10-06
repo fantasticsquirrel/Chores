@@ -12,6 +12,7 @@ describe("mobile family module registry", () => {
     expect(familyModules.map((module) => module.key)).toEqual([
       "chores",
       "homeschool",
+      "recipes",
       "admin",
     ]);
   });
@@ -28,7 +29,7 @@ describe("mobile family module registry", () => {
       label: "School",
       navigation: true,
     });
-    expect(MOBILE_MODULE_REGISTRATION.dashboardCards).toEqual(["chores"]);
+    expect(MOBILE_MODULE_REGISTRATION.dashboardCards).toEqual(["chores", "homeschool", "recipes"]);
     expect(canAccessMobileModule([{ key: "chores" }], "chores")).toBe(true);
     expect(canAccessMobileModule([], "chores")).toBe(false);
   });

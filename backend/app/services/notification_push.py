@@ -123,7 +123,7 @@ def process_pending_push_deliveries(
         candidate_ids = list(
             session.scalars(
                 select(NotificationDeliveryAttempt.id)
-                .where(eligible_for_claim)
+                .where(eligible_for_claim, NotificationDeliveryAttempt.channel.like("push:%"))
                 .order_by(NotificationDeliveryAttempt.id)
                 .limit(limit)
             ).all()
@@ -132,7 +132,7 @@ def process_pending_push_deliveries(
         for attempt_id in candidate_ids:
             result = session.execute(
                 update(NotificationDeliveryAttempt)
-                .where(NotificationDeliveryAttempt.id == attempt_id, eligible_for_claim)
+                .where(NotificationDeliveryAttempt.id == attempt_id, eligible_for_claim, NotificationDeliveryAttempt.channel.like("push:%"))
                 .values(status="processing", attempted_at=current_db)
             )
             if result.rowcount == 1:

@@ -231,6 +231,8 @@ def register_exception_handlers(app: FastAPI) -> None:
             return _public_password_reset_response(
                 "Verification processed. Try signing in; if it does not work, register again."
             )
+        if request.url.path.startswith("/chore-api/push/native/"):
+            return JSONResponse(status_code=422, content={"detail": "Invalid native push details."})
         return await request_validation_exception_handler(request, error)
 
     @app.exception_handler(Exception)

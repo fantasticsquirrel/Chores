@@ -16,6 +16,18 @@ import type { AppTab, NavigationItem } from "./types";
 function focusAccessibilityTarget(
   ref: RefObject<Text | View | null> | undefined,
 ) {
+  if (ReactNative.Platform.OS === "web") {
+    const node = ref?.current as unknown as {
+      focus?: () => void;
+      hasAttribute?: (name: string) => boolean;
+      setAttribute?: (name: string, value: string) => void;
+    } | null | undefined;
+    // The heading needs a programmatic focus target; keep an existing button's
+    // tabindex unchanged so restoration does not remove it from keyboard order.
+    if (node && !node.hasAttribute?.("tabindex")) node.setAttribute?.("tabindex", "-1");
+    node?.focus?.();
+    return;
+  }
   const handle =
     ref?.current === null
       ? null

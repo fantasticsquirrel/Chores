@@ -11,7 +11,10 @@ import type { AppTab } from "../../navigation/types";
 import { cardStyles } from "../../styles/cards";
 import { formStyles } from "../../styles/forms";
 import { shellStyles } from "../../styles/shell";
+import { useFormTheme } from "../../styles/themedForms";
 import { formatError, isParentRole } from "../../utils/format";
+import { relatedTab } from "../../features/notifications/lib/relatedTab";
+import type { NativePushBinding } from "../../features/notifications/lib/useNativePush";
 
 type ReminderDraft = Omit<NotificationSettings, "due_soon_hours"> & { due_soon_hours: string };
 type ReminderState = { key: string; server: NotificationSettings; draft: ReminderDraft };
@@ -20,32 +23,14 @@ function reminderState(key: string, server: NotificationSettings): ReminderState
   return { key, server, draft: { ...server, due_soon_hours: String(server.due_soon_hours) } };
 }
 
-// Notification URLs are untrusted. Only known, granted native destinations are used.
-function relatedTab(item: NotificationItem, modules: FamilyModule[], parent: boolean): AppTab | null {
-  if (!modules.some((module) => module.key === item.module_key)) return null;
-  const path = item.link_url.split(/[?#]/)[0];
-  if (!path.startsWith("/") || path.startsWith("//")) return null;
-  if (item.module_key === "chores") {
-    if (!parent) return path === "/chore/child/today" ? "today" : null;
-    const destinations: Record<string, AppTab> = {
-      "/chore/board": "review",
-      "/chore/parent/dashboard": "home",
-      "/chore/parent/chores": "chores",
-      "/chore/parent/children": "children",
-      "/chore/parent/reports": "money",
-    };
-    return destinations[path] ?? null;
-  }
-  if (parent && item.module_key === "homeschool" && path === "/homeschool") return "homeschool";
-  if (parent && item.module_key === "recipes" && path === "/recipes") return "recipes";
-  return null;
-}
-
-export function NotificationsScreen({ modules, session, onNavigate }: {
+export function NotificationsScreen({ modules, session, onNavigate, nativePush }: {
   modules: FamilyModule[];
   session: AuthSessionResponse;
   onNavigate: (tab: AppTab) => void;
+  nativePush?: NativePushBinding;
 }) {
+  const formTheme = useFormTheme();
+  const [focusedInput, setFocusedInput] = useState<keyof ReminderDraft | null>(null);
   const grantKey = JSON.stringify(modules.map((module) => [module.key, module.can_manage !== false]).sort());
   const key = `${session.user.id}:${session.user.household_id}:${session.user.role}:${grantKey}`;
   const liveKey = useRef(key);
@@ -148,10 +133,9 @@ export function NotificationsScreen({ modules, session, onNavigate }: {
       return;
     }
     void runAction(async (current) => {
+      const { push_enabled: _push, ...preferences } = draft;
       await apiClient.updateNotificationSettings("chores", {
-        ...draft,
-        // Browser push is not an editable native preference.
-        push_enabled: reminder.server.push_enabled,
+        ...preferences,
         due_soon_hours: hours,
       });
       if (!current()) return;
@@ -171,15 +155,15 @@ export function NotificationsScreen({ modules, session, onNavigate }: {
 
   const editable = canManage && !busy && !loading;
   function toggle(label: string, field: "in_app_enabled" | "daily_digest_enabled" | "due_soon_enabled" | "approval_notifications_enabled") {
-    return <View style={formStyles.selectableRow}>
-      <Text style={formStyles.rowTitle}>{label}</Text>
-      <Switch accessibilityLabel={label} disabled={!editable} value={reminder?.draft[field] ?? false} onValueChange={(value) => edit(field, value)} />
+    return <View style={[formStyles.selectableRow, formTheme.row]}>
+      <Text style={[formStyles.rowTitle, formTheme.title]}>{label}</Text>
+      <Switch accessibilityLabel={label} disabled={!editable} value={reminder?.draft[field] ?? false} onValueChange={(value) => edit(field, value)} trackColor={formTheme.switchTrack} thumbColor={formTheme.switchThumb} ios_backgroundColor={formTheme.switchTrack.false} />
     </View>;
   }
   function input(label: string, field: "daily_digest_time" | "due_soon_hours" | "quiet_hours_start" | "quiet_hours_end") {
     return <View>
-      <Text style={formStyles.fieldLabel}>{label}</Text>
-      <TextInput accessibilityLabel={label} editable={editable} value={reminder?.draft[field] ?? ""} onChangeText={(value) => edit(field, value)} style={formStyles.input} keyboardType={field === "due_soon_hours" ? "number-pad" : "default"} autoCapitalize="none" />
+      <Text style={[formStyles.fieldLabel, formTheme.label]}>{label}</Text>
+      <TextInput accessibilityLabel={label} editable={editable} value={reminder?.draft[field] ?? ""} onChangeText={(value) => edit(field, value)} style={[formStyles.input, formTheme.input, focusedInput === field && formTheme.inputFocused]} keyboardType={field === "due_soon_hours" ? "number-pad" : "default"} autoCapitalize="none" placeholder={field === "due_soon_hours" ? "1–168" : "HH:MM"} placeholderTextColor={formTheme.placeholder} onFocus={() => setFocusedInput(field)} onBlur={() => setFocusedInput(null)} />
     </View>;
   }
 
@@ -220,8 +204,16 @@ export function NotificationsScreen({ modules, session, onNavigate }: {
       {input("Quiet hours end", "quiet_hours_end")}
       {canManage ? <View style={formStyles.inlineButtons}><ActionButton label="Save reminder settings" disabled={!editable} onPress={saveReminders} /></View> : null}
     </SectionCard> : null}
+    <SectionCard title="Device notifications">
+      <Text accessibilityLiveRegion="polite" style={shellStyles.mutedText}>{nativePush?.state.message ?? "Native push notifications are not available in this preview."}</Text>
+      {nativePush ? <View style={formStyles.inlineButtons}>
+        {["error", "unavailable"].includes(nativePush.state.status) ? <ActionButton label="Retry device notifications" variant="secondary" disabled={busy || nativePush.state.busy} onPress={nativePush.refresh} /> : null}
+        <ActionButton label="Enable device notifications" variant="secondary" disabled={busy || nativePush.state.busy || ["loading", "enabled", "unavailable", "signed-out"].includes(nativePush.state.status)} onPress={nativePush.enable} />
+        <ActionButton label="Disable device notifications" variant="secondary" disabled={busy || nativePush.state.busy || !nativePush.state.hasRegistration || nativePush.state.status === "signed-out"} onPress={nativePush.disable} />
+      </View> : null}
+    </SectionCard>
     <SectionCard title="Browser push">
-      <Text style={shellStyles.mutedText}>Native push notifications are not available. Browser push is managed on the website; you may need to sign in there separately.</Text>
+      <Text style={shellStyles.mutedText}>Browser push is managed separately on the website; you may need to sign in there separately.</Text>
       {canManage && data && !loadError ? <ActionButton label="Manage browser push" variant="secondary" disabled={loading || busy} onPress={() => {
         void runAction(async () => { await Linking.openURL("https://family.multihost.ing/chore/notifications"); });
       }} /> : null}

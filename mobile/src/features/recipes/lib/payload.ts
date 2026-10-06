@@ -1,4 +1,14 @@
-import type { CreateRecipeRequest, RecipeDetail, RecipeIngredientRequest, RecipeStepRequest } from '@family-manager/family-api/models';
+import type { CreateRecipeRequest, RecipeDetail, RecipeIngredient, RecipeIngredientRequest, RecipeStep, RecipeStepRequest } from '@family-manager/family-api/models';
+
+// Persisted serializer responses bind steps by ingredient ID. Convert those IDs
+// before composing ID-free edits/restores; legacy portable exports can carry positions.
+export function stepIngredientPositions(step: RecipeStep, ingredients: readonly RecipeIngredient[]): number[] {
+  if (Array.isArray(step.ingredient_ids) && step.ingredient_ids.length) {
+    const positions = new Map(ingredients.map(ingredient => [ingredient.id, ingredient.position]));
+    return [...new Set(step.ingredient_ids.flatMap(id => positions.has(id) ? [positions.get(id)!] : []))];
+  }
+  return [...(step.ingredient_position_refs ?? [])];
+}
 
 export const emptyIngredient = (position: number): RecipeIngredientRequest => ({ position, group_name: '', quantity: null, unit: '', item: '', preparation: '', note: '', is_optional: false });
 export const emptyStep = (position: number): RecipeStepRequest => ({ position, section: '', instruction: '', ingredient_position_refs: [] });
@@ -12,7 +22,7 @@ export function payloadFromRecipe(r: RecipeDetail): CreateRecipeRequest {
     servings: r.servings, yield_quantity: r.yield_quantity, yield_unit: r.yield_unit, rating: r.rating, favorite: r.favorite, notes: r.notes,
     category_ids: r.categories.map(c => c.id), tag_ids: r.tags.map(t => t.id),
     ingredients: r.ingredients.map(i => ({ position: i.position, group_name: i.group_name, quantity: i.quantity, unit: i.unit, item: i.item, preparation: i.preparation, note: i.note, is_optional: i.is_optional })),
-    steps: r.steps.map(s => ({ position: s.position, section: s.section, instruction: s.instruction, ingredient_position_refs: [...s.ingredient_position_refs] })),
+    steps: r.steps.map(s => ({ position: s.position, section: s.section, instruction: s.instruction, ingredient_position_refs: stepIngredientPositions(s, r.ingredients) })),
     components: r.components.map(c => ({ component_recipe_id: c.component_recipe_id, label: c.label, quantity: c.quantity, unit: c.unit })),
   };
 }

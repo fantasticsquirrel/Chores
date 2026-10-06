@@ -1,4 +1,8 @@
 import type {
+  NativePushConfigResponse,
+  NativePushSubscriptionCreate,
+  NativePushSubscriptionListResponse,
+  NativePushSubscriptionResponse,
   NotificationListResponse,
   NotificationSettingResponse,
   NotificationSettingsByModule,
@@ -10,6 +14,22 @@ import type {
 import { FamilySupportApiEndpoints } from "./support";
 
 export abstract class FamilyNotificationApiEndpoints extends FamilySupportApiEndpoints {
+  async getNativePushConfig(): Promise<NativePushConfigResponse> {
+    return this.get<NativePushConfigResponse>("/push/native/config");
+  }
+
+  async listNativePushSubscriptions(): Promise<NativePushSubscriptionListResponse> {
+    return this.get<NativePushSubscriptionListResponse>("/push/native/subscriptions");
+  }
+
+  async createNativePushSubscription(payload: NativePushSubscriptionCreate): Promise<NativePushSubscriptionResponse> {
+    return this.post<NativePushSubscriptionResponse, NativePushSubscriptionCreate>("/push/native/subscriptions", payload);
+  }
+
+  async deleteNativePushSubscription(id: number): Promise<void> {
+    await this.delete(`/push/native/subscriptions/${id}`);
+  }
+
   async listNotifications(
     params: { unread?: number; limit?: number } = {},
   ): Promise<NotificationListResponse> {

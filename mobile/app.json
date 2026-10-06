@@ -2,7 +2,7 @@
   "expo": {
     "name": "Family Manager",
     "slug": "family-manager",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.fantasticsquirrel.familymanager",
-      "versionCode": 9,
+      "versionCode": 10,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -29,6 +29,10 @@
         "projectId": "53bf095d-ad94-4ad4-a619-609c57026257"
       }
     },
-    "owner": "cabbageman2"
+    "owner": "cabbageman2",
+    "plugins": [
+      "expo-sharing",
+      "expo-notifications"
+    ]
   }
 }

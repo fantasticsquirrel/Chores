@@ -1,29 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { BackHandler, Image, Linking, ScrollView, Share, Text, View } from 'react-native';
+import { BackHandler, Image, Linking, View } from 'react-native';
+import {RecipeText as Text} from '../../features/recipes/components/RecipeText';
 import type { AuthSessionResponse, CreateRecipeRequest, FamilyModule, ListRecipesParams, RecipeCategory, RecipeDetail, RecipeIngredient, RecipeScaleResponse, RecipeStep, RecipeSummary, RecipeTag } from '@family-manager/family-api/models';
 import { apiClient } from '../../api/client';
 import { ActionButton } from '../../components/ActionButton';
 import { SectionCard } from '../../components/SectionCard';
 import { RecipeEditor } from '../../features/recipes/components/RecipeEditor';
 import { Copy, Field, Toggle } from '../../features/recipes/components/RecipeFields';
-import { emptyPayload, parseBackup, payloadFromRecipe, preparePayload } from '../../features/recipes/lib/payload';
+import { emptyPayload, parseBackup, payloadFromRecipe, preparePayload, stepIngredientPositions } from '../../features/recipes/lib/payload';
+import { printRecipe, shareCookbookBackup } from '../../features/recipes/lib/recipe-output';
 
-type Props = { session: AuthSessionResponse; modules: FamilyModule[] };
+type Props = { session: AuthSessionResponse; modules: FamilyModule[]; onViewChanged?: () => void };
 type Child = Awaited<ReturnType<typeof apiClient.listChildren>>[number];
 type Current = () => boolean;
 type EditorMode = 'new' | 'edit' | 'variant';
 
 // Mount no data-owning component until a current module grant is available.
 // A grant/session change unmounts pending work and clears the previous account's data.
-export function RecipesScreen({ session, modules }: Props) {
+export function RecipesScreen({ session, modules, onViewChanged }: Props) {
   const grant = modules?.find(module => module.key === 'recipes');
   const parent = session.user.role === 'PARENT' || session.user.role === 'PARENT_ADMIN';
   if (!grant || !parent) return <Text>Recipes is not enabled for this account.</Text>;
   const canManage = grant.can_manage === true;
-  return <Cookbook key={`${session.user.household_id}:${session.user.id}:${session.user.role}:${canManage}`} session={session} canManage={canManage} />;
+  const canReadChildren = modules.some(module => module.key === 'chores');
+  return <Cookbook key={`${session.user.household_id}:${session.user.id}:${session.user.role}:${canManage}:${canReadChildren}`} session={session} canManage={canManage} canReadChildren={canReadChildren} onViewChanged={onViewChanged} />;
 }
 
-function Cookbook({ session, canManage }: { session: AuthSessionResponse; canManage: boolean }) {
+function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { session: AuthSessionResponse; canManage: boolean; canReadChildren: boolean; onViewChanged?: () => void }) {
   const mounted = useRef(true);
   const locked = useRef(false);
   const retry = useRef<(() => void) | null>(null);
@@ -62,7 +65,8 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   const [familyRating, setFamilyRating] = useState('');
   const [verdict, setVerdict] = useState('');
   const [feedbackNotes, setFeedbackNotes] = useState('');
-  const ownsDetail = canManage && detail?.owner_user_id === session.user.id;
+  const canWriteDetail = canManage && detail !== null;
+  const canEditDetail = canWriteDetail && (detail?.owner_user_id === session.user.id || session.user.role === 'PARENT_ADMIN');
 
   async function run(task: (current: Current) => Promise<void>, onRetry: (() => void) | null = null) {
     if (!mounted.current || locked.current) return;
@@ -89,7 +93,7 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
     void run(async current => {
       const [rows, cats, labels, reviewers] = await Promise.all([
         apiClient.listRecipes(applied), apiClient.listRecipeCategories(), apiClient.listRecipeTags(),
-        canManage ? apiClient.listChildren({ household_id: session.user.household_id, active_only: true }) : Promise.resolve([] as Child[]),
+        canManage && canReadChildren ? apiClient.listChildren({ household_id: session.user.household_id, active_only: true }) : Promise.resolve([] as Child[]),
       ]);
       if (!current()) return;
       setRecipes(rows); setAvailable(rows); setCategories(cats); setTags(labels);
@@ -138,7 +142,7 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   });
 
   function startEditor(mode: EditorMode) {
-    if (!canManage || locked.current || (mode !== 'new' && !ownsDetail)) return;
+    if (!canManage || locked.current || (mode === 'edit' && !canEditDetail) || (mode === 'variant' && !canWriteDetail)) return;
     setPayload(mode === 'new' ? emptyPayload() : { ...payloadFromRecipe(detail!), ...(mode === 'variant' ? { title: `${detail!.title} variant`, parent_recipe_id: detail!.id } : {}) });
     setEditor(mode); setError(''); setNotice('');
     if (applied.query || applied.category_id || applied.tag_id || applied.favorite || applied.min_rating != null || applied.ingredient) {
@@ -150,7 +154,7 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   }
 
   function saveRecipe() {
-    if (!canManage || !editor || !payload.title.trim() || (editor !== 'new' && !ownsDetail)) return;
+    if (!canManage || !editor || !payload.title.trim() || (editor === 'edit' && !canEditDetail) || (editor === 'variant' && !canWriteDetail)) return;
     const request = preparePayload(payload, detail?.id);
     void run(async current => {
       const saved = editor === 'edit' ? await apiClient.updateRecipe(detail!.id, request)
@@ -214,7 +218,7 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   }
 
   function duplicate() {
-    if (!ownsDetail) return;
+    if (!canWriteDetail) return;
     void run(async current => {
       const saved = await apiClient.duplicateRecipe(detail!.id, { as_variant: false });
       if (!current()) return;
@@ -231,7 +235,7 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   }
 
   function saveFeedback() {
-    if (!ownsDetail) return;
+    if (!canWriteDetail) return;
     if (reviewer === 'CHILD' && !children.some(child => child.id === childId)) { setError('Choose an active household child.'); return; }
     const rating = familyRating.trim() ? Number(familyRating) : null;
     if (rating !== null && (!Number.isInteger(rating) || rating < 1 || rating > 5)) { setError('Family rating must be an integer from 1 to 5.'); return; }
@@ -245,7 +249,7 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   }
 
   function removeRecipe() {
-    if (!ownsDetail || !deleting || typedTitle !== detail!.title) return;
+    if (!canEditDetail || !deleting || typedTitle !== detail!.title) return;
     void run(async current => {
       await apiClient.deleteRecipe(detail!.id);
       if (!current()) return;
@@ -258,7 +262,8 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
   const steps = scaled?.steps ?? detail?.steps ?? [];
   function renderStep(step: RecipeStep, index: number) {
     const scaledStep = scaled?.steps[index];
-    const linked = scaledStep?.linked_ingredients ?? ingredients.filter(item => step.ingredient_position_refs.includes(item.position));
+    const positions = stepIngredientPositions(step, ingredients);
+    const linked = scaledStep?.linked_ingredients ?? ingredients.filter(item => positions.includes(item.position));
     return <View key={step.id} style={{ marginVertical: 8 }}>
       {!!step.section && <Text>{step.section}</Text>}
       <Text>{scaledStep?.scaled_instruction ?? step.instruction}</Text>
@@ -266,7 +271,9 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
     </View>;
   }
 
-  return <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }} keyboardShouldPersistTaps="handled">
+  useEffect(() => { onViewChanged?.(); }, [detail?.id, editor, cooking, backup, deleting, onViewChanged]);
+
+  return <View style={{ gap: 12 }}>
     {busy && <Text accessibilityLiveRegion="polite">Loading recipes…</Text>}
     {!!error && <View><Text accessibilityRole="alert">{error}</Text>{retry.current && <ActionButton label="Retry" disabled={busy} onPress={() => retry.current?.()} />}</View>}
     {!!notice && <Text accessibilityRole="alert">{notice}</Text>}
@@ -299,18 +306,19 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
               void run(async () => { if (!/^https?:\/\//i.test(detail.source_url!)) throw new Error('Only http and https source links can be opened.'); await Linking.openURL(detail.source_url!); });
             }} />}
             {!detail.source_url && !!detail.source_name && <Text>Source: {detail.source_name}</Text>}
-            {ownsDetail && <>
-              <ActionButton label="Edit Recipe" disabled={busy} onPress={() => startEditor('edit')} />
-              <ActionButton label="Duplicate Recipe" disabled={busy} onPress={duplicate} />
-              <ActionButton label="Add Variant" disabled={busy} onPress={() => startEditor('variant')} />
-              <ActionButton label="Delete Recipe" variant="danger" disabled={busy} onPress={() => { setTypedTitle(''); setDeleting(true); }} />
+            <ActionButton label="Print / PDF" variant="secondary" disabled={busy} onPress={() => { void run(async () => { await printRecipe(detail, scaled); }); }} />
+            {canEditDetail && <ActionButton label="Edit Recipe" variant="secondary" disabled={busy} onPress={() => startEditor('edit')} />}
+            {canWriteDetail && <>
+              <ActionButton label="Duplicate Recipe" variant="secondary" disabled={busy} onPress={duplicate} />
+              <ActionButton label="Add Variant" variant="secondary" disabled={busy} onPress={() => startEditor('variant')} />
             </>}
+            {canEditDetail && <ActionButton label="Delete Recipe" variant="danger" disabled={busy} onPress={() => { setTypedTitle(''); setDeleting(true); }} />}
           </SectionCard>
           <SectionCard title="Scale recipe">
             <Field label="Target servings" numeric value={servings} onChange={setServings} disabled={busy} />
-            <ActionButton label="Scale servings" disabled={busy} onPress={() => scale('servings')} />
+            <ActionButton label="Scale servings" variant="secondary" disabled={busy} onPress={() => scale('servings')} />
             <Field label="Multiplier" numeric value={multiplier} onChange={setMultiplier} disabled={busy} />
-            <ActionButton label="Scale multiplier" disabled={busy} onPress={() => scale('multiplier')} />
+            <ActionButton label="Scale multiplier" variant="secondary" disabled={busy} onPress={() => scale('multiplier')} />
             {scaled?.warnings.map((warning, index) => <Text key={index} accessibilityRole="alert">{warning}</Text>)}
           </SectionCard>
           <SectionCard title="Ingredients">
@@ -327,24 +335,24 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
           {!!detail.components.length && <SectionCard title="Sub-recipes / Components">
             {detail.components.map(component => <View key={component.component_recipe_id}>
               <Text>{component.label || component.component_recipe.title} · {component.quantity ?? ''} {component.unit}</Text>
-              <ActionButton label={`Open component: ${component.component_recipe.title}`} disabled={busy} onPress={() => openRecipe(component.component_recipe_id)} />
+              <ActionButton label={`Open component: ${component.component_recipe.title}`} variant="secondary" disabled={busy} onPress={() => openRecipe(component.component_recipe_id)} />
             </View>)}
           </SectionCard>}
           {(detail.core_recipe || detail.variants.length > 0) && <SectionCard title="Recipe family">
-            {detail.core_recipe && <ActionButton label={`Open core: ${detail.core_recipe.title}`} disabled={busy} onPress={() => openRecipe(detail.core_recipe!.id)} />}
-            {detail.variants.map(variant => <ActionButton key={variant.id} label={`Open variant: ${variant.title}`} disabled={busy} onPress={() => openRecipe(variant.id)} />)}
+            {detail.core_recipe && <ActionButton label={`Open core: ${detail.core_recipe.title}`} variant="secondary" disabled={busy} onPress={() => openRecipe(detail.core_recipe!.id)} />}
+            {detail.variants.map(variant => <ActionButton key={variant.id} label={`Open variant: ${variant.title}`} variant="secondary" disabled={busy} onPress={() => openRecipe(variant.id)} />)}
           </SectionCard>}
           <SectionCard title="Family feedback">
             <Text>Family average: {detail.feedback_summary.average_rating ?? 'unrated'} ({detail.feedback_summary.rating_count} ratings)</Text>
             {detail.feedback.map(row => <View key={row.id}><Text>{row.reviewer_name}: {row.rating ?? 'unrated'} · {row.verdict}</Text><Copy text={row.notes} /></View>)}
-            {ownsDetail && <>
-              <ActionButton label="Parent feedback" variant={reviewer === 'PARENT' ? 'primary' : 'secondary'} disabled={busy} onPress={() => selectReviewer('PARENT')} />
-              <ActionButton label="Child feedback" variant={reviewer === 'CHILD' ? 'primary' : 'secondary'} disabled={busy} onPress={() => selectReviewer('CHILD')} />
-              {reviewer === 'CHILD' && children.map(child => <ActionButton key={child.id} label={`Reviewer ${child.name}`} variant={childId === child.id ? 'primary' : 'secondary'} disabled={busy} onPress={() => selectReviewer('CHILD', child.id)} />)}
+            {canWriteDetail && <>
+              <Toggle label="Parent feedback" checked={reviewer === 'PARENT'} disabled={busy} onPress={() => selectReviewer('PARENT')} />
+              {canReadChildren && <Toggle label="Child feedback" checked={reviewer === 'CHILD'} disabled={busy} onPress={() => selectReviewer('CHILD')} />}
+              {reviewer === 'CHILD' && children.map(child => <Toggle key={child.id} label={`Reviewer ${child.name}`} checked={childId === child.id} disabled={busy} onPress={() => selectReviewer('CHILD', child.id)} />)}
               <Field label="Family rating" numeric value={familyRating} onChange={setFamilyRating} disabled={busy} />
               <Field label="Verdict" value={verdict} onChange={setVerdict} disabled={busy} />
               <Field label="Feedback notes" value={feedbackNotes} onChange={setFeedbackNotes} multiline disabled={busy} />
-              <ActionButton label="Save Feedback" disabled={busy || (reviewer === 'CHILD' && childId === null)} onPress={saveFeedback} />
+              <ActionButton label="Save Feedback" variant="secondary" disabled={busy || (reviewer === 'CHILD' && childId === null)} onPress={saveFeedback} />
             </>}
           </SectionCard>
         </>}
@@ -353,40 +361,40 @@ function Cookbook({ session, canManage }: { session: AuthSessionResponse; canMan
           <Field label="Search recipes" value={query} onChange={setQuery} disabled={busy} />
           <ActionButton label="Advanced Filters" variant="secondary" disabled={busy} onPress={() => setAdvanced(value => !value)} />
           {advanced && <>
-            {categories.map(category => <ActionButton key={category.id} label={`Category ${category.name}`} variant={categoryId === category.id ? 'primary' : 'secondary'} disabled={busy} onPress={() => setCategoryId(value => value === category.id ? undefined : category.id)} />)}
-            {tags.map(tag => <ActionButton key={tag.id} label={`Tag ${tag.name}`} variant={tagId === tag.id ? 'primary' : 'secondary'} disabled={busy} onPress={() => setTagId(value => value === tag.id ? undefined : tag.id)} />)}
-            <ActionButton label="Favorites only" variant={favorite ? 'primary' : 'secondary'} disabled={busy} onPress={() => setFavorite(value => !value)} />
+            {categories.map(category => <Toggle key={category.id} label={`Category ${category.name}`} checked={categoryId === category.id} disabled={busy} onPress={() => setCategoryId(value => value === category.id ? undefined : category.id)} />)}
+            {tags.map(tag => <Toggle key={tag.id} label={`Tag ${tag.name}`} checked={tagId === tag.id} disabled={busy} onPress={() => setTagId(value => value === tag.id ? undefined : tag.id)} />)}
+            <Toggle label="Favorites only" checked={favorite} disabled={busy} onPress={() => setFavorite(value => !value)} />
             <Field label="Minimum rating" numeric value={minRating} onChange={setMinRating} disabled={busy} />
             <Field label="Ingredient filter" value={ingredient} onChange={setIngredient} disabled={busy} />
           </>}
-          <ActionButton label="Apply filters" disabled={busy} onPress={applyFilters} />
+          <ActionButton label="Apply filters" variant="secondary" disabled={busy} onPress={applyFilters} />
           {canManage && <>
             <ActionButton label="New Recipe" disabled={busy} onPress={() => startEditor('new')} />
             <Field label="Recipe URL" value={url} onChange={setUrl} disabled={busy} />
-            <ActionButton label="Import URL" disabled={busy || !url.trim()} onPress={importUrl} />
+            <ActionButton label="Import URL" variant="secondary" disabled={busy || !url.trim()} onPress={importUrl} />
           </>}
           <ActionButton label="Backup & Restore" variant="secondary" disabled={busy} onPress={() => setBackup(value => !value)} />
         </SectionCard>
         {backup && <SectionCard title="Backup & Restore">
           <Text>Export and share a portable JSON backup. This is not a PDF.</Text>
-          <ActionButton label="Export JSON" disabled={busy} onPress={exportBackup} />
+          <ActionButton label="Export JSON" variant="secondary" disabled={busy} onPress={exportBackup} />
           {!!exported && <>
             <Text accessibilityLabel="Exported backup JSON" selectable>{exported}</Text>
-            <ActionButton label="Share JSON" disabled={busy} onPress={() => { void run(async () => { await Share.share({ message: exported, title: 'Recipe backup JSON' }); }); }} />
+            <ActionButton label="Share JSON" variant="secondary" disabled={busy} onPress={() => { void run(async () => { await shareCookbookBackup(JSON.parse(exported)); }); }} />
           </>}
           {canManage && <>
             <Text>Restore creates new recipes. Database IDs and cross-recipe links are not portable and are removed.</Text>
             <Field label="Restore JSON" value={restore} onChange={setRestore} multiline disabled={busy} />
-            <ActionButton label="Restore backup" disabled={busy || !restore.trim()} onPress={restoreBackup} />
+            <ActionButton label="Restore backup" variant="secondary" disabled={busy || !restore.trim()} onPress={restoreBackup} />
           </>}
         </SectionCard>}
         {!busy && !error && !recipes.length && <Text>No recipes match these filters.</Text>}
         {recipes.map(recipe => <SectionCard key={recipe.id} title={recipe.title} subtitle={recipe.description}>
           <Text>{recipe.ingredient_count} ingredients · {recipe.servings ?? '—'} servings</Text>
-          <ActionButton label={`Open ${recipe.title}`} disabled={busy} onPress={() => openRecipe(recipe.id)} />
+          <ActionButton label={`Open ${recipe.title}`} variant="secondary" disabled={busy} onPress={() => openRecipe(recipe.id)} />
         </SectionCard>)}
       </>}
-  </ScrollView>;
+  </View>;
 }
 
 function ingredientText(item: RecipeIngredient & { scaled_quantity?: number | null }) {

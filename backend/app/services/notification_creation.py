@@ -72,9 +72,13 @@ def _enqueue_push_if_enabled(
 ) -> None:
     from app.config import get_settings
 
-    if settings.get("push_enabled") is not True or not get_settings().push_vapid_private_key:
+    if settings.get("push_enabled") is not True:
         return
-    enqueue_push_delivery_attempts(session, notification)
+    from app.services.native_push_delivery import enqueue_native_push_delivery_attempts
+
+    enqueue_native_push_delivery_attempts(session, notification)
+    if get_settings().push_vapid_private_key:
+        enqueue_push_delivery_attempts(session, notification)
 
 
 __all__ = ["create_notification", "utc_now"]

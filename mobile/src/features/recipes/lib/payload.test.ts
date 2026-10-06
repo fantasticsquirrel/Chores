@@ -4,6 +4,14 @@ import { recipe } from '../../../screens/recipes/fixtures';
 import type { CreateRecipeRequest } from '@family-manager/family-api/models';
 const h = helpers as unknown as { payloadFromRecipe: (r: typeof recipe) => CreateRecipeRequest; preparePayload: (p: CreateRecipeRequest, id?: number) => CreateRecipeRequest; parseBackup: (s: string) => CreateRecipeRequest[]; removeIngredient: (p: CreateRecipeRequest, index: number) => CreateRecipeRequest; emptyPayload: () => CreateRecipeRequest };
 describe('native recipe payload semantics', () => {
+  it('restore preserves canonical backend ingredient ID links as new local positions', () => {
+    const [row] = h.parseBackup(JSON.stringify({version:1,recipes:[recipe]}));
+    expect(row.steps?.map(step=>step.ingredient_position_refs)).toEqual([[1],[2]]);
+  });
+  it('legacy positional-only backups preserve links without trusting database IDs', () => {
+    const legacy={...recipe,steps:recipe.steps.map((step,index)=>({...step,ingredient_ids:[],ingredient_position_refs:[index+1]}))};
+    expect(h.payloadFromRecipe(legacy).steps?.map(step=>step.ingredient_position_refs)).toEqual([[1],[2]]);
+  });
   it('preserves all editable fields but strips database-only fields', () => { const p = h.payloadFromRecipe(recipe); expect(p).toMatchObject({ servings: 4, yield_quantity: 2, yield_unit: 'liters', photo_url: recipe.photo_url, category_ids: [3], tag_ids: [5] }); expect(p).not.toHaveProperty('id'); expect(p.ingredients?.[0]).not.toHaveProperty('id'); expect(p.steps?.[0].ingredient_position_refs).toEqual([1]); });
   it('remaps stable positions when blank ingredients are omitted without linking another item', () => { const p = h.preparePayload({ title: ' Soup ', ingredients: [{ position: 1, item: '' }, { position: 2, item: 'water' }], steps: [{ position: 1, instruction: 'Boil', ingredient_position_refs: [1, 2, 2, 99] }] }); expect(p.title).toBe('Soup'); expect(p.steps?.[0].ingredient_position_refs).toEqual([1]); });
   it('removal remaps links and never silently reassigns deleted ingredients', () => { const p = h.removeIngredient(h.payloadFromRecipe(recipe), 0); expect(p.ingredients?.[0].item).toBe('herbs'); expect(p.steps?.map(s => s.ingredient_position_refs)).toEqual([[], [1]]); });

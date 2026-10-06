@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 
 import { apiClient } from "../../api/client";
@@ -17,6 +17,23 @@ export function ChangePasswordScreen({ onPasswordChanged }: { onPasswordChanged:
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const mounted = useRef(false);
+  const authenticationGeneration = apiClient.authenticationGeneration;
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
+
+  useEffect(() => {
+    // A replacement session must not inherit another actor's credentials or notices.
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setSubmitting(false);
+    setError(null);
+    setSuccess(null);
+  }, [authenticationGeneration]);
 
   function clearNotices() {
     setError(null);
@@ -49,20 +66,27 @@ export function ChangePasswordScreen({ onPasswordChanged }: { onPasswordChanged:
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+    const generation = apiClient.authenticationGeneration;
+    const current = () => mounted.current && generation === apiClient.authenticationGeneration;
     try {
       await apiClient.changePassword({
         current_password: currentPassword,
         new_password: newPassword,
       });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setSuccess("Password changed. Sign in again.");
+      if (generation !== apiClient.authenticationGeneration) return;
+      if (mounted.current) {
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setSuccess("Password changed. Sign in again.");
+      }
+      // Revocation belongs to the matching auth controller, not the form's
+      // visibility. Leaving Security must not retain a server-revoked session.
       onPasswordChanged();
     } catch (changeError) {
-      setError(`Could not change password: ${formatError(changeError)}`);
+      if (current()) setError(`Could not change password: ${formatError(changeError)}`);
     } finally {
-      setSubmitting(false);
+      if (current()) setSubmitting(false);
     }
   }
 
