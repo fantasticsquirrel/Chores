@@ -3,6 +3,7 @@
 ## 1.0.9 — household mobile parity
 
 - Android build 10, with the production API explicitly bound in the APK build profile.
+- Patched `source-map-js` to 1.2.2 and removed the obsolete Istanbul YAML 3 / `sprintf-js` chain using a narrowly scoped YAML 4 override; audits remain fail-closed.
 - Native push remains disabled until private provider configuration and installed-device verification are complete.
 
 - Native household cookbook, recipe editing/scaling/variants, portable backup,
