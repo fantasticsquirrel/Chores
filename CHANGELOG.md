@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.10 — Android build preparation
+
+- Updated `shell-quote` to 1.12.0 and prepared mobile release 1.0.10 as Android build 11.
+- This preparation does not claim native 16 KB compatibility or physical-device verification.
+
 ## 1.0.9 — household mobile parity
 
 - Android build 10, with the production API explicitly bound in the APK build profile.
