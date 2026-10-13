@@ -1,9 +1,12 @@
 import { FamilyRecipeApiEndpoints } from "@family-manager/family-api/endpoints";
 import {
   buildUrl,
+  extractDomainError,
+  extractDownloadFilename,
   extractErrorDetail,
   normalizeBaseUrl,
   requiresCsrfToken,
+  type BinaryDownload,
   type RequestQuery,
 } from "@family-manager/family-api/client-core";
 
@@ -13,6 +16,7 @@ export const CSRF_HEADER_NAME = "X-CSRF-Token";
 export class ApiClientError extends Error {
   status: number;
   detail: string;
+  code: string | null;
   data: unknown;
 
   constructor(status: number, detail: string, data: unknown) {
@@ -20,6 +24,7 @@ export class ApiClientError extends Error {
     this.name = "ApiClientError";
     this.status = status;
     this.detail = detail;
+    this.code = extractDomainError(data)?.code ?? null;
     this.data = data;
   }
 }
@@ -167,6 +172,32 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
     );
   }
 
+  protected override postMultipart<TResponse>(
+    path: string,
+    body: FormData,
+  ): Promise<TResponse> {
+    // Browser/native fetch owns the multipart boundary and file representation.
+    return this.request<TResponse>(
+      path,
+      { method: "POST", body, cache: "no-store" },
+      undefined,
+      "safe-json",
+    );
+  }
+
+  protected override getBinary(path: string): Promise<BinaryDownload> {
+    return this.request<BinaryDownload>(
+      path,
+      {
+        method: "GET",
+        headers: { Accept: "*/*" },
+        cache: "no-store",
+      },
+      undefined,
+      "binary",
+    );
+  }
+
   protected async postNoContent(path: string): Promise<void> {
     await this.request<void>(path, { method: "POST" });
   }
@@ -212,6 +243,7 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
     path: string,
     init: RequestInit,
     query?: RequestQuery,
+    responseType: "json" | "safe-json" | "binary" = "json",
   ): Promise<TResponse> {
     const csrfToken = requiresCsrfToken(init.method) ? this.csrfToken : null;
     const response = await this.fetchImpl(buildUrl(this.baseUrl, path, query), {
@@ -230,11 +262,40 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
       !noBody &&
       contentType !== null &&
       contentType.includes("application/json");
-    const data: unknown = hasJsonBody ? await response.json() : undefined;
+    let data: unknown;
+    if (hasJsonBody && (responseType !== "binary" || !response.ok)) {
+      try {
+        data = await response.json();
+      } catch (error) {
+        // Failed file responses can be HTML/truncated JSON with private paths.
+        // Never surface a decoder exception (which may embed the raw body).
+        if (response.ok) {
+          if (responseType === "safe-json") {
+            throw new ApiClientError(
+              response.status,
+              "Invalid server response.",
+              undefined,
+            );
+          }
+          throw error;
+        }
+      }
+    }
 
     if (!response.ok) {
       const detail = extractErrorDetail(data, response.statusText);
       throw new ApiClientError(response.status, detail, data);
+    }
+
+    if (responseType === "binary") {
+      const download: BinaryDownload = {
+        bytes: await response.arrayBuffer(),
+        content_type: contentType ?? "application/octet-stream",
+        filename: extractDownloadFilename(
+          response.headers.get("content-disposition"),
+        ),
+      };
+      return download as TResponse;
     }
 
     return data as TResponse;
