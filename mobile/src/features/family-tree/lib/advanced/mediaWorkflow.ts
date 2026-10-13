@@ -18,11 +18,13 @@ export class MediaWorkflow {
         kind: "remove";
         asset: number;
         reference: number;
+        reviewedReference: FT.FamilyTreeMediaReference;
         body: FT.FamilyTreeCommand;
       }
     | null = null;
   constructor(private r: ToolRuntime) {
     r.onReset(() => this.clear());
+    r.onPersonRetired(() => this.clear());
   }
   async load(personId: number) {
     const revision =
@@ -145,6 +147,7 @@ export class MediaWorkflow {
         kind: "remove",
         asset: reference.asset_id,
         reference: reference.id,
+        reviewedReference: reference,
         body: {
           expected_graph_revision:
             this.referencesRevision ?? this.r.core.state.detail!.graph_revision,
@@ -191,6 +194,14 @@ export class MediaWorkflow {
       this.image = imageDataUri(download);
       this.r.changed();
     }
+  }
+  get attachmentReview() {
+    return this.intent?.kind === "attach" ? this.intent.body : null;
+  }
+  get removalReview() {
+    return this.intent?.kind === "remove"
+      ? this.intent.reviewedReference
+      : null;
   }
   get pending() {
     return this.intent !== null;

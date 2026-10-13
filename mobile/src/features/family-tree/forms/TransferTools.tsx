@@ -18,12 +18,12 @@ export function TransferTools({
   tools: TreeTools;
   state: TreeState;
 }) {
+  const t = tools.transfer;
   const [open, setOpen] = useState(false),
-    [confirmed, setConfirmed] = useState(false),
-    [duplicate, setDuplicate] = useState(false),
+    [confirmed, setConfirmed] = useState(t.pending),
+    [duplicate, setDuplicate] = useState(t.acknowledgement),
     [cancel, setCancel] = useState(false);
-  const t = tools.transfer,
-    r = tools.runtime,
+  const r = tools.runtime,
     disabled = state.busy || state.loading || !!state.pending || !!state.error;
   const commitDisabled =
     state.busy ||
@@ -36,7 +36,7 @@ export function TransferTools({
   const canExport =
     manager && state.collection?.capabilities.can_export === true;
   const exporting = t.exporting && readFamilyTreeExportSummary(t.exporting),
-    importing = t.importing && readFamilyTreeImportSummary(t.importing);
+    importing = t.importReview && readFamilyTreeImportSummary(t.importReview);
   const task = (f: () => Promise<unknown>) => {
     void f().catch((e) => r.fail(e));
   };
@@ -189,7 +189,7 @@ export function TransferTools({
               {importing.duplicate_provenance ? (
                 <TreeToggle
                   label="Acknowledge duplicate import provenance"
-                  value={duplicate}
+                  value={t.pending ? t.acknowledgement : duplicate}
                   disabled={disabled || t.pending}
                   onChange={setDuplicate}
                 />
@@ -221,7 +221,7 @@ export function TransferTools({
               commitDisabled ||
               !confirmed ||
               !importing ||
-              (importing.duplicate_provenance && !duplicate) ||
+              (!t.pending && importing.duplicate_provenance && !duplicate) ||
               (!t.pending &&
                 !validateJob(
                   t.importing,
@@ -231,7 +231,10 @@ export function TransferTools({
             }
             onPress={() =>
               task(async () => {
-                await t.commit(confirmed, duplicate);
+                await t.commit(
+                  confirmed,
+                  t.pending ? t.acknowledgement : duplicate,
+                );
                 setConfirmed(false);
                 setDuplicate(false);
               })

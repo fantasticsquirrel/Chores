@@ -13,6 +13,7 @@ export class TransferWorkflow {
   selected: NativeSelection | null = null;
   private untrack: (() => void) | null = null;
   private stageRevision: number | null = null;
+  private reviewedImport: FT.FamilyTreeJob | null = null;
   private intent: {
     job: number;
     body: FT.FamilyTreeImportCommitRequest;
@@ -152,6 +153,7 @@ export class TransferWorkflow {
         throw new Error(
           "Review a fresh append preview, including duplicate provenance.",
         );
+      this.reviewedImport = job;
       this.r.claimIntent("import");
       this.intent = {
         job: job.id,
@@ -184,12 +186,14 @@ export class TransferWorkflow {
         this.r.releaseIntent("import");
         this.importing = null;
         this.intent = null;
+        this.reviewedImport = null;
         this.r.changed();
       },
     );
     this.r.releaseIntent("import");
     this.importing = null;
     this.intent = null;
+    this.reviewedImport = null;
     this.r.changed();
   }
   async cancel() {
@@ -209,8 +213,15 @@ export class TransferWorkflow {
     this.r.releaseIntent("import");
     this.importing = null;
     this.intent = null;
+    this.reviewedImport = null;
     this.releaseSelection();
     this.r.changed();
+  }
+  get importReview() {
+    return this.reviewedImport ?? this.importing;
+  }
+  get acknowledgement() {
+    return this.intent?.body.acknowledge_duplicate_provenance ?? false;
   }
   get pending() {
     return this.intent !== null;
@@ -227,6 +238,7 @@ export class TransferWorkflow {
     this.exporting = null;
     this.importing = null;
     this.intent = null;
+    this.reviewedImport = null;
     this.releaseSelection();
     this.r.changed();
   }

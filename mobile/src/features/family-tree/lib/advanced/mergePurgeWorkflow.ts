@@ -10,6 +10,10 @@ export class MergePurgeWorkflow {
   merge: FT.FamilyTreePreview | null = null;
   targetPerson: FT.FamilyTreePerson | null = null;
   purge: FT.FamilyTreePreview | null = null;
+  mergeReview: {
+    choices: Record<string, "source" | "target">;
+    episodes: boolean;
+  } | null = null;
   private mergeIntent: {
     body: FT.FamilyTreePreviewCommitRequest;
     source: number;
@@ -21,6 +25,7 @@ export class MergePurgeWorkflow {
   } | null = null;
   constructor(private r: ToolRuntime) {
     r.onReset(() => this.clear());
+    r.onPersonRetired(() => this.clear());
   }
   async previewMerge(
     source: number,
@@ -84,6 +89,7 @@ export class MergePurgeWorkflow {
       throw new Error("Merge preview is invalid or stale.");
     this.targetPerson = detail.person;
     this.merge = preview;
+    this.mergeReview = { choices: { ...choices }, episodes: retainEpisodes };
     this.r.changed();
   }
   async commitMerge(source: number, target: number, confirmed: boolean) {
@@ -136,6 +142,8 @@ export class MergePurgeWorkflow {
     );
     this.r.releaseIntent("merge");
     this.merge = null;
+    this.targetPerson = null;
+    this.mergeReview = null;
     this.mergeIntent = null;
     this.r.changed();
   }
@@ -230,6 +238,7 @@ export class MergePurgeWorkflow {
     this.r.releaseIntent("merge");
     this.merge = null;
     this.targetPerson = null;
+    this.mergeReview = null;
     this.mergeIntent = null;
     this.r.changed();
   }

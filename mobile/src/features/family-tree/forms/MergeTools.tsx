@@ -22,12 +22,22 @@ export function MergeTools({
   const d = tools.decisions,
     r = tools.runtime,
     p = state.detail!.person;
-  const [target, setTarget] = useState<number | null>(null),
-    [choices, setChoices] = useState<Record<string, "source" | "target">>({}),
-    [episodes, setEpisodes] = useState(false),
-    [confirmed, setConfirmed] = useState(false),
+  const [target, setTarget] = useState<number | null>(
+      d.pendingMerge ? (d.targetPerson?.id ?? null) : null,
+    ),
+    [choices, setChoices] = useState<Record<string, "source" | "target">>(
+      d.pendingMerge ? (d.mergeReview?.choices ?? {}) : {},
+    ),
+    [episodes, setEpisodes] = useState(
+      d.pendingMerge && !!d.mergeReview?.episodes,
+    ),
+    [confirmed, setConfirmed] = useState(d.pendingMerge),
     [query, setQuery] = useState(""),
-    [fields, setFields] = useState<string[]>([]);
+    [fields, setFields] = useState<string[]>(
+      d.pendingMerge && d.merge
+        ? (readFamilyTreeMergeSummary(d.merge)?.conflicting_fields ?? [])
+        : [],
+    );
   const available = (state.candidatePeople ?? state.people)?.items ?? [],
     suggestions = duplicateSuggestions(p, available);
   const summary = d.merge && readFamilyTreeMergeSummary(d.merge);

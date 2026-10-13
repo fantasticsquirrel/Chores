@@ -18,10 +18,16 @@ export function MediaTools({
   const m = tools.media,
     r = tools.runtime,
     p = state.detail!.person;
-  const [role, setRole] = useState<FT.FamilyTreeMediaRole>("gallery"),
-    [story, setStory] = useState<number | null>(null),
-    [remove, setRemove] = useState<FT.FamilyTreeMediaReference | null>(null),
-    [confirmed, setConfirmed] = useState(false),
+  const [role, setRole] = useState<FT.FamilyTreeMediaRole>(
+      m.attachmentReview?.role ?? "gallery",
+    ),
+    [story, setStory] = useState<number | null>(
+      m.attachmentReview?.story_id ?? null,
+    ),
+    [remove, setRemove] = useState<FT.FamilyTreeMediaReference | null>(
+      m.removalReview,
+    ),
+    [confirmed, setConfirmed] = useState(!!m.removalReview),
     [discard, setDiscard] = useState(false);
   const manager =
     state.access === "manage" &&
@@ -220,7 +226,7 @@ export function MediaTools({
           />
           <ActionButton
             label="Keep photograph reference"
-            disabled={state.busy}
+            disabled={state.busy || m.pending}
             onPress={() => {
               setRemove(null);
               setConfirmed(false);

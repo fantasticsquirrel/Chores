@@ -1,5 +1,5 @@
 import { shellStyles } from "../../../styles/shell";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, View } from "react-native";
 import { ActionButton } from "../../../components/ActionButton";
 import type { TreeState, TreeWorkflow } from "../lib/workflows/treeWorkflow";
@@ -21,25 +21,18 @@ export function PersonAdvanced({
   requestDiscard: (f: () => void) => void;
 }) {
   const [panel, setPanel] = useState<"media" | "merge" | "purge" | null>(null);
-  useEffect(
-    () => () => {
-      tools.media.clear();
-      tools.decisions.clear();
-    },
-    [tools],
-  );
-  const [lastDetail, setLastDetail] = useState(state.detail);
-  useEffect(() => {
-    if (state.detail) setLastDetail(state.detail);
-  }, [state.detail]);
-  if (
-    !state.detail &&
-    (tools.media.pending ||
-      tools.decisions.pendingPurge ||
-      tools.decisions.pendingMerge)
-  )
-    state = { ...state, detail: lastDetail };
-  if (!state.detail) return null;
+  // The screen-scoped runtime owns retirement. Discovery hiding is not discard.
+  const recoveryPanel = tools.media.pending
+    ? "media"
+    : tools.decisions.pendingMerge
+      ? "merge"
+      : tools.decisions.pendingPurge
+        ? "purge"
+        : null;
+  const visiblePanel = recoveryPanel ?? panel;
+  if (recoveryPanel && tools.runtime.recoveryDetail)
+    state = { ...state, detail: tools.runtime.recoveryDetail };
+  if (!["view", "manage"].includes(state.access) || !state.detail) return null;
   const manager =
     state.access === "manage" &&
     state.collection?.capabilities.can_manage === true;
@@ -56,7 +49,16 @@ export function PersonAdvanced({
   }
   return (
     <View>
-      {!panel ? (
+      {recoveryPanel ? (
+        <Text style={shellStyles.mutedText}>
+          Original command review only; these retained facts are not a fresh
+          snapshot. Retry sends the original revision and command key.
+        </Text>
+      ) : null}
+      {visiblePanel === "media" ? (
+        <Text accessibilityRole="header">Photographs</Text>
+      ) : null}
+      {!visiblePanel ? (
         <>
           <ActionButton
             label="Photographs"
@@ -97,13 +99,13 @@ export function PersonAdvanced({
           {tools.runtime.error}
         </Text>
       ) : null}
-      {panel === "media" ? (
+      {visiblePanel === "media" ? (
         <MediaTools tools={tools} state={state} onDirty={onDirty} />
       ) : null}
-      {panel === "merge" ? (
+      {visiblePanel === "merge" ? (
         <MergeTools tools={tools} state={state} core={core} onDirty={onDirty} />
       ) : null}
-      {panel === "purge" ? (
+      {visiblePanel === "purge" ? (
         <PurgeTools
           key={`purge:${state.collection?.capabilities.can_purge}`}
           tools={tools}
@@ -111,7 +113,7 @@ export function PersonAdvanced({
           onDirty={onDirty}
         />
       ) : null}
-      {panel ? (
+      {visiblePanel ? (
         <ActionButton
           label="Back from advanced person tools"
           disabled={state.busy}

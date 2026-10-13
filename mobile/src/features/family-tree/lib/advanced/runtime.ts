@@ -21,6 +21,9 @@ export class ToolRuntime {
   private requests = new Set<AbortController>();
   private transferCleanups = new Set<() => void>();
   private intentOwner: string | null = null;
+  // Review-only facts, never a substitute for newly discovered authority.
+  recoveryDetail: TreeWorkflow["state"]["detail"] = null;
+  private personRetirements = new Set<() => void>();
   private cleanups = new Set<() => void>();
   private resets = new Set<() => void>();
   private unsubscribe: () => void = () => {};
@@ -34,6 +37,7 @@ export class ToolRuntime {
   ) {
     this.generation = api.authenticationGeneration;
     this.draftEpoch = core.state.draftEpoch;
+    let selectedId = core.state.selectedId;
     let access = core.state.access,
       caps = core.state.collection?.capabilities;
     this.unsubscribe = core.subscribe(() => {
@@ -62,6 +66,10 @@ export class ToolRuntime {
         core.markToolPending(false, true);
         return;
       }
+      if (selectedId !== next.selectedId) {
+        selectedId = next.selectedId;
+        this.personRetirements.forEach((clear) => clear());
+      }
       access = next.access;
       if (currentCaps) caps = currentCaps;
     });
@@ -88,12 +96,16 @@ export class ToolRuntime {
       this.cleanups.delete(release);
     };
   };
+  onPersonRetired(clear: () => void) {
+    this.personRetirements.add(clear);
+  }
   onReset(clear: () => void) {
     this.resets.add(clear);
   }
   reset() {
     this.unsubscribe();
     this.closed = true;
+    this.recoveryDetail = null;
     this.interrupt();
     this.requests.clear();
     this.resets.forEach((clear) => clear());
@@ -120,12 +132,15 @@ export class ToolRuntime {
   claimIntent(owner: string) {
     if (this.intentOwner && this.intentOwner !== owner)
       throw new Error("Retry or discard the original pending command first.");
+    if (!this.intentOwner && owner !== "import")
+      this.recoveryDetail = this.core.state.detail;
     this.intentOwner = owner;
     this.core.markToolPending(true);
   }
   releaseIntent(owner: string) {
     if (this.intentOwner === owner) {
       this.intentOwner = null;
+      this.recoveryDetail = null;
       this.core.markToolPending(false);
     }
   }

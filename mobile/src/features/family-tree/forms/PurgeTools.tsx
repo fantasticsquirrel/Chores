@@ -20,7 +20,7 @@ export function PurgeTools({
     r = tools.runtime,
     p = state.detail!.person;
   const [password, setPassword] = useState(""),
-    [confirmed, setConfirmed] = useState(false);
+    [confirmed, setConfirmed] = useState(d.pendingPurge);
   const disabled =
     state.busy ||
     state.loading ||
