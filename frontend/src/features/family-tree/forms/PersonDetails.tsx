@@ -13,6 +13,7 @@ import {
   type EditorSpec,
 } from "../lib/workflows/editors";
 import { SafeMarkdown } from "./SafeMarkdown";
+import { identityFacts } from "../lib/workflows/review";
 import { personFieldsRead } from "../lib/workflows/personPresentation";
 import { PersonRelationships } from "./PersonRelationships";
 import { PersonMedia } from "./PersonMedia";
@@ -209,8 +210,8 @@ export function PersonDetails({
               <Button
                 disabled={!editable}
                 onClick={() =>
-                  onEdit(
-                    confirmEditor(
+                  onEdit({
+                    ...confirmEditor(
                       "Unlink identity",
                       `Unlink ${detail.identity_link!.label} from ${personName(person)}. The account and genealogy person remain unchanged.`,
                       (command, requestOptions) =>
@@ -220,7 +221,9 @@ export function PersonDetails({
                           requestOptions,
                         ),
                     ),
-                  )
+                    reviewFacts: identityFacts(detail.identity_link),
+                    reviewTarget: { entity: "identity", id: person.id },
+                  })
                 }
               >
                 Unlink identity

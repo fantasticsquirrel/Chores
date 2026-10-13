@@ -74,6 +74,9 @@ export function RecordEditor({
     window.addEventListener("beforeunload", guard);
     return () => window.removeEventListener("beforeunload", guard);
   }, [touched, command.hasAttempt]);
+  function complete(result: FamilyTreeMutationResult | null) {
+    if (result && !command.savedReadbackPending()) onSaved(result);
+  }
   async function save() {
     setValidation(null);
     try {
@@ -96,7 +99,7 @@ export function RecordEditor({
       }
 
       const result = await command.submit(operation(facts), baseline.current);
-      if (result && !command.savedReadbackPending()) onSaved(result);
+      complete(result);
     } catch (error) {
       setValidation(
         error instanceof Error ? error.message : "Check the entered facts.",
@@ -195,11 +198,7 @@ export function RecordEditor({
                   runtime.busy ||
                   (!!reviewTarget && !currentFacts)
                 }
-                onClick={() =>
-                  void command.reapply().then((result) => {
-                    if (result) onSaved(result);
-                  })
-                }
+                onClick={() => void command.reapply().then(complete)}
               >
                 Reapply reviewed draft at revision{" "}
                 {command.state.reviewedRevision}
@@ -232,11 +231,7 @@ export function RecordEditor({
               !runtime.online ||
               runtime.busy
             }
-            onClick={() =>
-              void command.reapply().then((result) => {
-                if (result) onSaved(result);
-              })
-            }
+            onClick={() => void command.reapply().then(complete)}
           >
             Save after chronology review
           </Button>
@@ -256,11 +251,7 @@ export function RecordEditor({
               runtime.busy ||
               runtime.checking
             }
-            onClick={() =>
-              void command.retrySavedReadback(true).then((result) => {
-                if (result) onSaved(result);
-              })
-            }
+            onClick={() => void command.retrySavedReadback(true).then(complete)}
           >
             Retry saved readback
           </Button>

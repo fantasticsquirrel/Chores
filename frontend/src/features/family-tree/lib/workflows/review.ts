@@ -2,11 +2,13 @@ import type {
   FamilyTreePersonDetail,
   FamilyTreeStoriesPage,
   FamilyTreeResidencesPage,
+  FamilyTreeIdentityLink,
 } from "../../../../api";
 import type { Facts } from "./workflows";
 export type ReviewTarget = {
   entity:
     | "person"
+    | "identity"
     | "story"
     | "residence"
     | "parent"
@@ -16,6 +18,12 @@ export type ReviewTarget = {
     | "media";
   id: number;
 };
+export function identityFacts(link: FamilyTreeIdentityLink | null): Facts {
+  return {
+    identity_kind: link ? (link.user_id !== null ? "user" : "child") : null,
+    identity_link: link ? { ...link } : null,
+  };
+}
 export function latestFacts(
   target: ReviewTarget | undefined,
   queries: readonly [readonly unknown[], unknown][],
@@ -41,6 +49,8 @@ export function latestFacts(
     if (key[2] === "person") {
       const detail = value as FamilyTreePersonDetail;
       if (detail.graph_revision < minimumRevision) continue;
+      if (target.entity === "identity" && detail.person.id === target.id)
+        return identityFacts(detail.identity_link);
       if (target.entity === "person" && detail.person.id === target.id)
         return { ...detail.person };
       const list =
