@@ -53,11 +53,50 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "upsertHomeschoolDayComment",
     "upsertHomeschoolGrade",
   ],
+  "family-tree.ts": [
+    "archiveFamilyTreePerson",
+    "compareFamilyTreePeople",
+    "createFamilyTreeCareLink",
+    "createFamilyTreeParentLink",
+    "createFamilyTreePartnerEpisode",
+    "createFamilyTreePerson",
+    "createFamilyTreeRelative",
+    "createFamilyTreeResidence",
+    "createFamilyTreeStory",
+    "deleteFamilyTreeCareLink",
+    "deleteFamilyTreeParentLink",
+    "deleteFamilyTreePartnerEpisode",
+    "deleteFamilyTreeResidence",
+    "deleteFamilyTreeStory",
+    "getFamilyTreeCollection",
+    "getFamilyTreeGraph",
+    "getFamilyTreePerson",
+    "linkFamilyTreeIdentity",
+    "listFamilyTreeIdentityCandidates",
+    "listFamilyTreePeople",
+    "listFamilyTreeResidences",
+    "listFamilyTreeStories",
+    "lockFamilyTreePerson",
+    "patchFamilyTreeCareLink",
+    "patchFamilyTreeParentLink",
+    "patchFamilyTreePartnerEpisode",
+    "patchFamilyTreePerson",
+    "patchFamilyTreeResidence",
+    "patchFamilyTreeStory",
+    "reorderFamilyTreeStories",
+    "restoreFamilyTreePerson",
+    "unlinkFamilyTreeIdentity",
+    "unlockFamilyTreePerson",
+  ],
   "notifications.ts": [
+    "createNativePushSubscription",
     "createPushSubscription",
+    "deleteNativePushSubscription",
     "disablePushSubscriptions",
+    "getNativePushConfig",
     "getNotificationSettings",
     "getPushConfig",
+    "listNativePushSubscriptions",
     "listNotifications",
     "markAllNotificationsRead",
     "markNotificationRead",
@@ -137,6 +176,7 @@ describe("endpoint group structure", () => {
   it("owns each endpoint exactly once in the intended domain file", () => {
     expect(endpointFiles).toEqual([
       "core.ts",
+      "family-tree.ts",
       "notifications.ts",
       "recipes.ts",
       "support.ts",
@@ -187,7 +227,7 @@ describe("endpoint group structure", () => {
     ) as { exports: Record<string, string> };
 
     expect(
-      [...endpointBarrel.matchAll(/from "\.\/(\w+)"/g)]
+      [...endpointBarrel.matchAll(/from "\.\/([\w-]+)"/g)]
         .map((match) => `${match[1]}.ts`)
         .sort(),
     ).toEqual(endpointFiles);

@@ -1,4 +1,4 @@
-import { FamilyRecipeApiEndpoints } from "@family-manager/family-api/endpoints";
+import { FamilyTreeApiEndpoints } from "@family-manager/family-api/endpoints";
 import {
   buildUrl,
   extractDomainError,
@@ -35,7 +35,7 @@ export type ApiClientConfig = {
   fetchImpl?: typeof fetch;
 };
 
-export class ApiClient extends FamilyRecipeApiEndpoints {
+export class ApiClient extends FamilyTreeApiEndpoints {
   private baseUrl: string;
   private fetchImpl: typeof fetch;
   private csrfToken: string | null;
@@ -145,6 +145,17 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
   ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  protected override deleteWithBody<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse> {
+    return this.request<TResponse>(path, {
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });

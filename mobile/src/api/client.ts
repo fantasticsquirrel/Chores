@@ -1,4 +1,4 @@
-import { FamilyRecipeApiEndpoints } from "@family-manager/family-api/endpoints";
+import { FamilyTreeApiEndpoints } from "@family-manager/family-api/endpoints";
 import {
   buildUrl,
   extractDomainError,
@@ -34,7 +34,7 @@ export type ApiClientConfig = {
   fetchImpl?: typeof fetch;
 };
 
-export class ApiClient extends FamilyRecipeApiEndpoints {
+export class ApiClient extends FamilyTreeApiEndpoints {
   private baseUrl: string;
   private csrfToken: string | null;
   private fetchImpl: typeof fetch;
@@ -95,11 +95,11 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
     return result;
   }
 
-  override login(payload: Parameters<FamilyRecipeApiEndpoints["login"]>[0]) {
+  override login(payload: Parameters<FamilyTreeApiEndpoints["login"]>[0]) {
     return this.enqueueAuth(() => super.login(payload));
   }
 
-  override childLogin(payload: Parameters<FamilyRecipeApiEndpoints["childLogin"]>[0]) {
+  override childLogin(payload: Parameters<FamilyTreeApiEndpoints["childLogin"]>[0]) {
     return this.enqueueAuth(() => super.childLogin(payload));
   }
 
@@ -111,7 +111,7 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
     return this.enqueueAuth(() => super.logout());
   }
 
-  override changePassword(payload: Parameters<FamilyRecipeApiEndpoints["changePassword"]>[0]) {
+  override changePassword(payload: Parameters<FamilyTreeApiEndpoints["changePassword"]>[0]) {
     const generation = this.authGeneration;
     return this.enqueueAuth(async () => {
       // A queued form must not change credentials for a replacement actor.
@@ -230,6 +230,17 @@ export class ApiClient extends FamilyRecipeApiEndpoints {
   ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  protected override deleteWithBody<TResponse, TBody>(
+    path: string,
+    body: TBody,
+  ): Promise<TResponse> {
+    return this.request<TResponse>(path, {
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });

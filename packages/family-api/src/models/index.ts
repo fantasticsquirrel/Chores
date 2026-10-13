@@ -4,6 +4,7 @@ export type * from "./children";
 export type * from "./chores";
 export type * from "./common";
 export type * from "./finance";
+export type * from "./family-tree";
 export type * from "./homeschool";
 export type * from "./modules";
 export type * from "./notifications";

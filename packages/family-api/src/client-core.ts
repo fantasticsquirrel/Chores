@@ -1,6 +1,11 @@
 import type { AuthSessionResponse } from "./models/auth";
 
-export type RequestQueryValue = string | number | boolean | null | undefined;
+export type RequestQueryScalar = string | number | boolean;
+export type RequestQueryValue =
+  | RequestQueryScalar
+  | readonly RequestQueryScalar[]
+  | null
+  | undefined;
 export type RequestQuery = object;
 
 export type BinaryDownload = {
@@ -35,6 +40,14 @@ export abstract class FamilyApiClientCore {
     body: TBody,
   ): Promise<TResponse>;
   protected abstract delete(path: string, query?: RequestQuery): Promise<void>;
+
+  // JSON-only subclasses remain compatible, but cannot silently drop a body.
+  protected deleteWithBody<TResponse, TBody>(
+    _path: string,
+    _body: TBody,
+  ): Promise<TResponse> {
+    return Promise.reject(new Error("JSON DELETE transport is not supported."));
+  }
   protected abstract postNoContent(path: string): Promise<void>;
   protected abstract postNoContentWithBody<TBody>(
     path: string,
@@ -114,7 +127,10 @@ export function appendQueryParams(
   for (const [key, value] of Object.entries(
     query as Record<string, RequestQueryValue>,
   )) {
-    if (value !== undefined && value !== null) {
+    if (Array.isArray(value)) {
+      searchParams.delete(key);
+      for (const item of value) searchParams.append(key, String(item));
+    } else if (value !== undefined && value !== null) {
       searchParams.set(key, String(value));
     }
   }

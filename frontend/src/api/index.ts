@@ -86,3 +86,4 @@ export type {
   UserModuleAccess,
   UserRole,
 } from "./models";
+export type * from "@family-manager/family-api/models/family-tree";
