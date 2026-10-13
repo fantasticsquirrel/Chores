@@ -263,4 +263,3 @@ OR EXISTS (SELECT 1 FROM family_tree_media_pins WHERE asset_id=NEW.id AND expire
 BEGIN SELECT RAISE(ABORT, 'asset retained'); END""")
 for statement in FT3_TRIGGERS:
     event.listen(Base.metadata, 'after_create', DDL(statement.replace('CREATE TRIGGER ', 'CREATE TRIGGER IF NOT EXISTS ')).execute_if(dialect='sqlite'))
-
