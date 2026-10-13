@@ -51,6 +51,7 @@ function mockAdminSession(): void {
       household_id: 1,
       email: "admin@example.com",
       role: "PARENT_ADMIN",
+      is_household_owner: false,
       child_id: null,
     },
     csrf_token: null,
@@ -59,8 +60,12 @@ function mockAdminSession(): void {
 
 describe("Admin dashboard module access", () => {
   beforeEach(() => {
-    vi.spyOn(apiClient, "listHouseholdModules").mockResolvedValue(householdModules);
-    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({ modules: allModules });
+    vi.spyOn(apiClient, "listHouseholdModules").mockResolvedValue(
+      householdModules,
+    );
+    vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
+      modules: allModules,
+    });
   });
 
   afterEach(() => {
@@ -101,7 +106,7 @@ describe("Admin dashboard module access", () => {
       });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -138,7 +143,7 @@ describe("Admin dashboard module access", () => {
       .mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -178,7 +183,7 @@ describe("Admin dashboard module access", () => {
     ]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -202,15 +207,17 @@ describe("Admin dashboard module access", () => {
       .spyOn(apiClient, "listUserModuleAccess")
       .mockResolvedValue([]);
     let resolveToggle!: (value: (typeof householdModules)[number]) => void;
-    const togglePromise = new Promise<(typeof householdModules)[number]>((resolve) => {
-      resolveToggle = resolve;
-    });
+    const togglePromise = new Promise<(typeof householdModules)[number]>(
+      (resolve) => {
+        resolveToggle = resolve;
+      },
+    );
     const setHouseholdSpy = vi
       .spyOn(apiClient, "setHouseholdModuleAccess")
       .mockReturnValue(togglePromise);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -229,7 +236,9 @@ describe("Admin dashboard module access", () => {
     resolveToggle({ ...householdModules[0], enabled: false });
 
     await waitFor(() => expect(listUsersSpy).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(apiClient.getMyModules).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(apiClient.getMyModules).toHaveBeenCalledTimes(2),
+    );
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Chores is now disabled for the whole household.",
     );
@@ -242,7 +251,7 @@ describe("Admin dashboard module access", () => {
     const setHouseholdSpy = vi.spyOn(apiClient, "setHouseholdModuleAccess");
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -263,7 +272,9 @@ describe("Admin dashboard module access", () => {
   it("announces household module load errors and retries without hiding the user matrix", async () => {
     mockAdminSession();
     vi.mocked(apiClient.listHouseholdModules)
-      .mockRejectedValueOnce(new ApiClientError(503, "Modules unavailable.", null))
+      .mockRejectedValueOnce(
+        new ApiClientError(503, "Modules unavailable.", null),
+      )
       .mockResolvedValueOnce(householdModules);
     vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([
       {
@@ -277,7 +288,7 @@ describe("Admin dashboard module access", () => {
     ]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -287,7 +298,9 @@ describe("Admin dashboard module access", () => {
       "Could not load household module toggles: Modules unavailable.",
     );
     expect(
-      screen.getByRole("button", { name: "Household state unavailable Chores" }),
+      screen.getByRole("button", {
+        name: "Household state unavailable Chores",
+      }),
     ).toBeDisabled();
     fireEvent.click(
       screen.getByRole("button", { name: "Retry household modules" }),
@@ -307,7 +320,7 @@ describe("Admin dashboard module access", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -347,7 +360,7 @@ describe("Admin dashboard module access", () => {
       });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -403,7 +416,7 @@ describe("Admin dashboard module access", () => {
     ]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -439,7 +452,7 @@ describe("Admin dashboard module access", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/admin/dashboard"]}>
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
         <App />
       </MemoryRouter>,
     );

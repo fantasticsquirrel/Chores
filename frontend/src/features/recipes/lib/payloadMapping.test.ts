@@ -1,4 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { createElement } from "react";
+import { describe, expect, it, vi } from "vitest";
+
+import type { CreateRecipeRequest } from "../../../api";
+import { RecipeEditor } from "../components/RecipeEditor";
 
 import {
   buildEmptyRecipePayload,
@@ -8,6 +13,43 @@ import {
 } from "./payloadMapping";
 
 describe("recipe payload mapping", () => {
+  it("preserves a selected sub-recipe and sibling metadata when editing component fields", () => {
+    let payload: CreateRecipeRequest = {
+      ...buildEmptyRecipePayload(),
+      components: [{ component_recipe_id: 11 }],
+    };
+    const setPayload = vi.fn((next: CreateRecipeRequest | ((previous: CreateRecipeRequest) => CreateRecipeRequest)) => {
+      payload = typeof next === "function" ? next(payload) : next;
+    });
+    const editor = () => createElement(RecipeEditor, {
+      payload,
+      setPayload,
+      categories: [],
+      tags: [],
+      availableRecipes: [],
+      submitLabel: "Save Recipe",
+      onSubmit: vi.fn(),
+    });
+    const { rerender } = render(editor());
+
+    fireEvent.change(screen.getByLabelText("Sub-recipe 1 label"), { target: { value: "Sauce" } });
+    expect(payload.components).toEqual([
+      { component_recipe_id: 11, label: "Sauce", quantity: null, unit: "" },
+    ]);
+    rerender(editor());
+    fireEvent.change(screen.getByLabelText("Sub-recipe 1 quantity"), { target: { value: "2" } });
+    rerender(editor());
+    fireEvent.change(screen.getByLabelText("Sub-recipe 1 unit"), { target: { value: "cups" } });
+    expect(payload.components).toEqual([
+      { component_recipe_id: 11, label: "Sauce", quantity: 2, unit: "cups" },
+    ]);
+    rerender(editor());
+    fireEvent.change(screen.getByLabelText("Sub-recipe 1 quantity"), { target: { value: "" } });
+    expect(payload.components).toEqual([
+      { component_recipe_id: 11, label: "Sauce", quantity: null, unit: "cups" },
+    ]);
+  });
+
   it("starts new recipes with one ingredient and one step", () => {
     const payload = buildEmptyRecipePayload();
 

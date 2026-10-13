@@ -61,7 +61,7 @@ export function ChoreFinancePage(): ReactElement {
               <li className="balance-item" key={row.id}>
                 <div>
                   <p className="balance-name">
-                    {row.type.replaceAll("_", " ")}
+                    {row.type.replace(/_/g, " ")}
                   </p>
                   <p className="balance-meta">
                     {new Date(row.created_at).toLocaleDateString()}

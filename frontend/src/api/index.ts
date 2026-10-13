@@ -16,6 +16,7 @@ export type {
   ChildBalance,
   ChildLoginRequest,
   Chore,
+  ChoreTransaction,
   CompletionMode,
   CreateChildAccountRequest,
   CreateChildRequest,

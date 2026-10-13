@@ -25,6 +25,7 @@ describe("Login page", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: "csrf-token",
@@ -33,7 +34,7 @@ describe("Login page", () => {
     listChildrenSpy.mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -52,9 +53,7 @@ describe("Login page", () => {
         password: "password123",
       }),
     );
-    expect(
-      await screen.findByRole("heading", { name: "Today" }),
-    ).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
   });
 
   it("submits parent email, child name, and child password then navigates to child today", async () => {
@@ -66,6 +65,7 @@ describe("Login page", () => {
         household_id: 1,
         email: "generated-jordan@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 4,
       },
       csrf_token: "child-csrf-token",
@@ -73,7 +73,7 @@ describe("Login page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -113,7 +113,7 @@ describe("Login page", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -146,7 +146,7 @@ describe("Login page", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -170,9 +170,9 @@ describe("Login page", () => {
   });
 
   it("shows submitting state while login request is in flight", async () => {
-    let resolveLogin: (() => void) | null = null;
-    const loginPromise = new Promise((resolve) => {
-      resolveLogin = () => resolve(undefined);
+    let resolveLogin!: () => void;
+    const loginPromise = new Promise<void>((resolve) => {
+      resolveLogin = resolve;
     });
 
     const loginSpy = vi.spyOn(apiClient, "login");
@@ -184,6 +184,7 @@ describe("Login page", () => {
           household_id: 1,
           email: "parent@example.com",
           role: "PARENT",
+          is_household_owner: false,
           child_id: null,
         },
         csrf_token: "csrf-token",
@@ -192,7 +193,7 @@ describe("Login page", () => {
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -210,12 +211,10 @@ describe("Login page", () => {
     ).toBeDisabled();
     expect(screen.getByText("Signing you in...")).toBeVisible();
 
-    resolveLogin?.();
+    resolveLogin();
 
     await waitFor(() => expect(loginSpy).toHaveBeenCalledTimes(1));
-    expect(
-      await screen.findByRole("heading", { name: "Today" }),
-    ).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
   });
 
   it("submits a legacy username for parent login without email validation", async () => {
@@ -226,6 +225,7 @@ describe("Login page", () => {
         household_id: 1,
         email: "legacy-parent",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: "csrf-token",
@@ -233,7 +233,7 @@ describe("Login page", () => {
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
@@ -265,6 +265,7 @@ describe("Login page", () => {
         household_id: 1,
         email: "generated-jordan@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 4,
       },
       csrf_token: "child-csrf-token",
@@ -272,7 +273,7 @@ describe("Login page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );

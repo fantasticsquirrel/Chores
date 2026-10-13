@@ -11,7 +11,7 @@ const VERIFY_PATHNAME = `${BASE_PATH}/verify-email`;
 function renderVerifyPage(pathname = VERIFY_PATHNAME) {
   window.history.replaceState(null, "", `${pathname}#token=${TOKEN}`);
   return render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <MemoryRouter>
       <VerifyEmailPage />
     </MemoryRouter>,
   );

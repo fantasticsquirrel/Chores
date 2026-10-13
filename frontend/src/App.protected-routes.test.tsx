@@ -11,18 +11,22 @@ describe("Protected routes", () => {
 
   it("redirects anonymous users to login for protected routes", async () => {
     vi.spyOn(apiClient, "getCurrentSession").mockRejectedValue(
-      new ApiClientError(401, "Not authenticated.", { detail: "Not authenticated." }),
+      new ApiClientError(401, "Not authenticated.", {
+        detail: "Not authenticated.",
+      }),
     );
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy.mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Welcome Back" }),
+    ).toBeVisible();
     await waitFor(() => expect(listChildrenSpy).not.toHaveBeenCalled());
   });
 
@@ -33,6 +37,7 @@ describe("Protected routes", () => {
         household_id: 1,
         email: "child@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 11,
       },
       csrf_token: null,
@@ -42,13 +47,17 @@ describe("Protected routes", () => {
     listEligibleChoresSpy.mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Parent Dashboard" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Child Today" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Parent Dashboard" }),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(listChildrenSpy).not.toHaveBeenCalled());
   });
 
@@ -59,6 +68,7 @@ describe("Protected routes", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -68,13 +78,15 @@ describe("Protected routes", () => {
     const listEligibleChoresSpy = vi.spyOn(apiClient, "listEligibleChores");
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
+      <MemoryRouter initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Child Today" }),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(listEligibleChoresSpy).not.toHaveBeenCalled());
   });
 
@@ -85,6 +97,7 @@ describe("Protected routes", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -93,23 +106,33 @@ describe("Protected routes", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Today" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Children" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Board" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Children" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Board" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Child Today" }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("link", { name: "Manage Children" }));
-    expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Children Management" }),
+    ).toBeVisible();
 
     fireEvent.click(screen.getByRole("link", { name: "Today" }));
     fireEvent.click(await screen.findByRole("link", { name: "Open Board" }));
-    expect(await screen.findByRole("heading", { name: "Submission Review" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Submission Review" }),
+    ).toBeVisible();
   });
 
   it("shows child navigation and keeps child users on child routes", async () => {
@@ -119,6 +142,7 @@ describe("Protected routes", () => {
         household_id: 1,
         email: "child@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 14,
       },
       csrf_token: null,
@@ -126,37 +150,59 @@ describe("Protected routes", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
+      <MemoryRouter initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Child Today" }),
+    ).toBeVisible();
     expect(screen.getByRole("link", { name: "Child Today" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Parent Dashboard" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Children" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Board" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Parent Dashboard" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Children" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Board" }),
+    ).not.toBeInTheDocument();
   });
-
 
   it("renders view-only modules without management controls", async () => {
     vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
-      user: { id: 16, household_id: 1, email: "viewer@example.com", role: "PARENT", child_id: null },
+      user: {
+        id: 16,
+        household_id: 1,
+        email: "viewer@example.com",
+        role: "PARENT",
+        is_household_owner: false,
+        child_id: null,
+      },
       csrf_token: null,
     });
     vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
-      modules: [{ key: "chores", name: "Chores", description: "", can_manage: false }],
+      modules: [
+        { key: "chores", name: "Chores", description: "", can_manage: false },
+      ],
     });
     vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("You have view-only access. Management controls are hidden.")).toBeVisible();
-    expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
+    expect(
+      await screen.findByText(
+        "You have view-only access. Management controls are hidden.",
+      ),
+    ).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Children Management" }),
+    ).toBeVisible();
     expect(document.querySelector(".module-read-only")).not.toBeNull();
   });
 
@@ -167,13 +213,19 @@ describe("Protected routes", () => {
     const listSemestersSpy = vi.spyOn(apiClient, "listHomeschoolSemesters");
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Module Not Available" })).toBeVisible();
-    expect(screen.getByText("This module is not enabled for your account. Ask a household admin to update module access.")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Module Not Available" }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        "This module is not enabled for your account. Ask a household admin to update module access.",
+      ),
+    ).toBeVisible();
     await waitFor(() => expect(listSemestersSpy).not.toHaveBeenCalled());
   });
 
@@ -184,6 +236,7 @@ describe("Protected routes", () => {
         household_id: 1,
         email: "child@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 14,
       },
       csrf_token: null,
@@ -192,13 +245,14 @@ describe("Protected routes", () => {
     const listEligibleChoresSpy = vi.spyOn(apiClient, "listEligibleChores");
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
+      <MemoryRouter initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Module Not Available" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Module Not Available" }),
+    ).toBeVisible();
     await waitFor(() => expect(listEligibleChoresSpy).not.toHaveBeenCalled());
   });
-
 });

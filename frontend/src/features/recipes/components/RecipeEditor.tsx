@@ -46,7 +46,7 @@ export function RecipeEditor({ payload, setPayload, categories, tags, availableR
   function updateComponent(index: number, patch: Partial<NonNullable<CreateRecipeRequest["components"]>[number]>): void {
     setPayload((prev) => {
       const rows = [...(prev.components ?? [])];
-      rows[index] = { component_recipe_id: 0, label: "", quantity: null, unit: "", ...rows[index], ...patch };
+      rows[index] = { label: "", quantity: null, unit: "", ...(rows[index] ?? { component_recipe_id: 0 }), ...patch };
       return { ...prev, components: rows };
     });
   }

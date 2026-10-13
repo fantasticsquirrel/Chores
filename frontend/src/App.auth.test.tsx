@@ -21,6 +21,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -29,12 +30,14 @@ describe("Auth bootstrap and logout", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Signed in as parent@example.com")).toBeVisible();
+    expect(
+      await screen.findByText("Signed in as parent@example.com"),
+    ).toBeVisible();
     expect(screen.getByRole("button", { name: "Log Out" })).toBeVisible();
     expect(meSpy).toHaveBeenCalledTimes(1);
   });
@@ -46,6 +49,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -54,13 +58,15 @@ describe("Auth bootstrap and logout", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Welcome Back" }),
+    ).not.toBeInTheDocument();
   });
 
   it("redirects an authenticated parent away from the login route", async () => {
@@ -70,6 +76,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -78,13 +85,15 @@ describe("Auth bootstrap and logout", () => {
     vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
 
     expect(await screen.findByRole("heading", { name: "Today" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Welcome Back" }),
+    ).not.toBeInTheDocument();
   });
 
   it("redirects an authenticated child away from the login route", async () => {
@@ -94,6 +103,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "child@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 4,
       },
       csrf_token: null,
@@ -101,13 +111,17 @@ describe("Auth bootstrap and logout", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Child Today" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Welcome Back" }),
+    ).not.toBeInTheDocument();
   });
 
   it("redirects an authenticated child from the site root to child today", async () => {
@@ -117,6 +131,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "child@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 4,
       },
       csrf_token: null,
@@ -124,13 +139,17 @@ describe("Auth bootstrap and logout", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Child Today" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Welcome Back" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the login route for an anonymous user", async () => {
@@ -141,25 +160,33 @@ describe("Auth bootstrap and logout", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/login"]}>
+      <MemoryRouter initialEntries={["/login"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Welcome Back" }),
+    ).toBeVisible();
   });
 
   it("does not flash the login page while root session bootstrap is pending", () => {
-    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(new Promise<never>(() => undefined));
+    vi.spyOn(apiClient, "getCurrentSession").mockReturnValue(
+      new Promise<never>(() => undefined),
+    );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: "Checking Session" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Welcome Back" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Checking Session" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Welcome Back" }),
+    ).not.toBeInTheDocument();
   });
 
   it("logs out through API and returns to the login page", async () => {
@@ -169,6 +196,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "admin@example.com",
         role: "PARENT_ADMIN",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -179,7 +207,7 @@ describe("Auth bootstrap and logout", () => {
     logoutSpy.mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -187,7 +215,9 @@ describe("Auth bootstrap and logout", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Log Out" }));
 
     await waitFor(() => expect(logoutSpy).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole("heading", { name: "Welcome Back" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Welcome Back" }),
+    ).toBeVisible();
   });
 
   it("shows logout error and keeps session when logout fails", async () => {
@@ -197,6 +227,7 @@ describe("Auth bootstrap and logout", () => {
         household_id: 1,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -211,14 +242,16 @@ describe("Auth bootstrap and logout", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/dashboard"]}>
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
 
     fireEvent.click(await screen.findByRole("button", { name: "Log Out" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("Could not sign out: Service unavailable.");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not sign out: Service unavailable.",
+    );
     expect(screen.getByText("Signed in as parent@example.com")).toBeVisible();
     expect(screen.getByRole("button", { name: "Log Out" })).toBeVisible();
     expect(logoutSpy).toHaveBeenCalledTimes(1);

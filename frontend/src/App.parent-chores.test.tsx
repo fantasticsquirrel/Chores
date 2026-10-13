@@ -59,7 +59,9 @@ function buildEligibleChore(
 }
 
 describe("Parent chores page", () => {
-  beforeEach(() => { vi.spyOn(apiClient, "listMyParentTasks").mockResolvedValue([]); });
+  beforeEach(() => {
+    vi.spyOn(apiClient, "listMyParentTasks").mockResolvedValue([]);
+  });
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -72,7 +74,7 @@ describe("Parent chores page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -110,7 +112,7 @@ describe("Parent chores page", () => {
       .mockResolvedValue(createdChore);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -120,7 +122,9 @@ describe("Parent chores page", () => {
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Vacuum" },
     });
-    fireEvent.change(screen.getByLabelText("Reward ($)"), { target: { value: "2.75" } });
+    fireEvent.change(screen.getByLabelText("Reward ($)"), {
+      target: { value: "2.75" },
+    });
     fireEvent.click(screen.getByRole("checkbox", { name: "Riley" }));
     fireEvent.click(screen.getByRole("button", { name: "Create Chore" }));
 
@@ -157,7 +161,7 @@ describe("Parent chores page", () => {
       .mockResolvedValue(updatedChore);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -209,7 +213,7 @@ describe("Parent chores page", () => {
       });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -247,7 +251,7 @@ describe("Parent chores page", () => {
       });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -284,7 +288,7 @@ describe("Parent chores page", () => {
       .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );
@@ -307,7 +311,7 @@ describe("Parent chores page", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/chores"]}>
+      <MemoryRouter initialEntries={["/parent/chores"]}>
         <App />
       </MemoryRouter>,
     );

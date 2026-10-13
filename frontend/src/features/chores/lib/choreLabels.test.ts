@@ -17,6 +17,7 @@ function chore(overrides: Partial<Chore> = {}): Chore {
   return {
     id: 10,
     household_id: 1,
+    owner_user_id: null,
     name: "Laundry",
     reward_cents: 0,
     reward_dollars: 0,

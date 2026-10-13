@@ -120,12 +120,25 @@ export function useChoreMutations({
     event.preventDefault();
     if (householdId === null) return;
 
-    let payload;
+    let command:
+      | { kind: "create"; payload: ReturnType<typeof buildCreateChorePayload> }
+      | {
+          kind: "update";
+          choreId: number;
+          payload: ReturnType<typeof buildUpdateChorePayload>;
+        };
     try {
-      payload =
+      command =
         editingId === null
-          ? buildCreateChorePayload(form, householdId, userId)
-          : buildUpdateChorePayload(form, householdId, userId);
+          ? {
+              kind: "create",
+              payload: buildCreateChorePayload(form, householdId, userId),
+            }
+          : {
+              kind: "update",
+              choreId: editingId,
+              payload: buildUpdateChorePayload(form, householdId, userId),
+            };
     } catch (error: unknown) {
       setSubmitError(formatApiError(error));
       return;
@@ -135,10 +148,10 @@ export function useChoreMutations({
     setSubmitError(null);
 
     try {
-      if (editingId !== null) {
-        await apiClient.updateChore(editingId, payload);
+      if (command.kind === "update") {
+        await apiClient.updateChore(command.choreId, command.payload);
       } else {
-        await apiClient.createChore(payload);
+        await apiClient.createChore(command.payload);
       }
 
       setShowForm(false);

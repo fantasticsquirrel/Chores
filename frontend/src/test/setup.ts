@@ -10,6 +10,7 @@ beforeEach(() => {
       household_id: 1,
       email: "parent@example.com",
       role: "PARENT",
+      is_household_owner: false,
       child_id: null,
     },
     csrf_token: null,
