@@ -22,7 +22,7 @@ describe("Parent children page", () => {
     ]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -53,7 +53,7 @@ describe("Parent children page", () => {
     });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -97,7 +97,7 @@ describe("Parent children page", () => {
     });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -129,7 +129,7 @@ describe("Parent children page", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -166,7 +166,7 @@ describe("Parent children page", () => {
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -193,6 +193,7 @@ describe("Parent children page", () => {
         household_id: 42,
         email: "parent42@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -227,7 +228,7 @@ describe("Parent children page", () => {
     });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -285,7 +286,7 @@ describe("Parent children page", () => {
     });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
@@ -321,7 +322,7 @@ describe("Parent children page", () => {
     const resetPasswordSpy = vi.spyOn(apiClient, "resetChildAccountPassword");
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );

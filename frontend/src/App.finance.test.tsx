@@ -44,10 +44,7 @@ describe("Chore finance page", () => {
       );
 
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/parent/money"]}
-      >
+      <MemoryRouter initialEntries={["/parent/money"]}>
         <App />
       </MemoryRouter>,
     );
@@ -92,16 +89,14 @@ describe("Chore finance page", () => {
         household_id: 1,
         email: "riley@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 11,
       },
       csrf_token: null,
     });
 
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/child/history"]}
-      >
+      <MemoryRouter initialEntries={["/child/history"]}>
         <App />
       </MemoryRouter>,
     );

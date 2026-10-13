@@ -55,6 +55,7 @@ class Settings:
     password_reset_delivery_max_attempts: int = 3
     password_reset_retention_days: int = 30
     password_reset_response_floor_ms: int = 100
+    family_tree_receipt_ttl_seconds: int = 86400
     registration_enabled: bool = False
     registration_token_ttl_seconds: int = 24 * 60 * 60
     registration_request_window_seconds: int = 15 * 60
@@ -268,6 +269,7 @@ def get_settings() -> Settings:
         password_reset_response_floor_ms=_parse_positive_int(
             os.getenv("PASSWORD_RESET_RESPONSE_FLOOR_MS", "100"), field_name="PASSWORD_RESET_RESPONSE_FLOOR_MS"
         ),
+        family_tree_receipt_ttl_seconds=_parse_positive_int(os.getenv("FAMILY_TREE_RECEIPT_TTL_SECONDS", "86400"), field_name="FAMILY_TREE_RECEIPT_TTL_SECONDS"),
         registration_enabled=registration_enabled,
         registration_token_ttl_seconds=_parse_positive_int(
             os.getenv("REGISTRATION_TOKEN_TTL_SECONDS", "86400"), field_name="REGISTRATION_TOKEN_TTL_SECONDS"

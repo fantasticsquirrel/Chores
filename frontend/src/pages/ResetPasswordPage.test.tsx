@@ -20,7 +20,6 @@ function renderResetPage(hash = `#token=${TOKEN}`, search = "", pathname = TEST_
   window.history.replaceState(null, "", `${pathname}${search}${hash}`);
   return render(
     <MemoryRouter
-      future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
       initialEntries={["/reset-password"]}
     >
       <ResetPasswordPage />

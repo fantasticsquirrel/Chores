@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 import json
@@ -68,7 +70,7 @@ def _seed_user(
     factory = get_session_factory(get_settings().database_url)
     with factory() as session:
         if household_id is None:
-            household = Household(name=f"Home {email}", timezone="UTC")
+            household = household_with_owner(session, name=f"Home {email}", timezone="UTC")
             session.add(household)
             session.flush()
             household_id = household.id

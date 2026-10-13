@@ -37,8 +37,12 @@ test("CI pins the supported Node 20 line and strictly runs every audit gate", ()
   assert.equal(manifest.engines?.node, ">=20.19.4 <21");
   assert.equal(
     manifest.scripts?.["mobile:gate"],
-    "npm run mobile:typecheck && npm run mobile:test && cd mobile && npx expo install --check",
+    "npm run mobile:typecheck && npm run mobile:test && npm run check:dependencies --workspace mobile",
   );
+  const mobileManifest = JSON.parse(
+    readFileSync(path.join(repositoryRoot, "mobile", "package.json"), "utf8"),
+  );
+  assert.equal(mobileManifest.scripts?.["check:dependencies"], "expo install --check");
   assert.equal(
     exactWorkflowStepRun(workflow, "Mobile quality and Expo dependency alignment"),
     "npm run mobile:gate",

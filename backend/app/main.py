@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.api import auth_router, billing_router, children_router, chores_router, finance_router, homeschool_router, households_router, modules_router, notifications_router, ops_router, recipes_router, workflow_router
 from app.api.native_push import router as native_push_router
+from app.api.family_tree import router as family_tree_router
 from app.config import get_settings
 from app.db import initialize_database
 from app.error_handling import (
@@ -18,6 +19,7 @@ from app.error_handling import (
 from app.health import build_readiness_payload
 from app.logging_config import configure_logging
 from app.startup import run_startup_checks
+from app.security.family_tree_limits import FamilyTreeBodyLimitMiddleware
 
 API_PREFIX = "/chore-api"
 FRONTEND_BASE_PATH = "/chore"
@@ -73,10 +75,14 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
                 response.headers["Content-Security-Policy"] = RESET_CONTENT_SECURITY_POLICY
         else:
             response.headers.setdefault("Referrer-Policy", "same-origin")
+        if request.url.path.startswith(f"{API_PREFIX}/family-tree"):
+            response.headers["Cache-Control"] = "no-store, private"
+            response.headers["Referrer-Policy"] = "no-referrer"
         # HSTS is owned by the HTTPS edge.  The ASGI app must not infer trusted
         # transport state from client-controlled forwarding headers.
         return response
 
+    app.add_middleware(FamilyTreeBodyLimitMiddleware)
     app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     # Added last so it wraps logging/CSRF/security while remaining inside
@@ -94,6 +100,7 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
     app.include_router(notifications_router, prefix=API_PREFIX)
     app.include_router(native_push_router, prefix=API_PREFIX)
     app.include_router(recipes_router, prefix=API_PREFIX)
+    app.include_router(family_tree_router, prefix=API_PREFIX)
     app.include_router(workflow_router, prefix=API_PREFIX)
     app.include_router(ops_router, prefix="/ops-api")
 

@@ -44,7 +44,22 @@ from app.models.recovery import (
     PasswordResetRequest,
 )
 
-ALL_MODELS = (
+from app.models.family_tree import (
+    FAMILY_TREE_MODELS,
+    FamilyTreeCollection,
+    FamilyTreePerson,
+    FamilyTreePersonTag,
+    FamilyTreeOtherName,
+    FamilyTreeParentLink,
+    FamilyTreeCareLink,
+    FamilyTreePartnerEpisode,
+    FamilyTreeStory,
+    FamilyTreeResidence,
+    FamilyTreeIdentityLink,
+    FamilyTreeMutationReceipt,
+)
+
+ALL_MODELS = (*FAMILY_TREE_MODELS,
     Household,
     Child,
     User,

@@ -87,6 +87,7 @@ describe("useRecipeDetail", () => {
         household_id: 7,
         email: "parent@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: "token",

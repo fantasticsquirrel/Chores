@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 # Shared, testable runtime selection for the isolated Playwright wrapper.
-# No application or fixture data is inspected here.
+# No application data is inspected here.
+
+create_playwright_smoke_directory() (
+  set -e
+  umask 077
+  : "${TMPDIR:?Set TMPDIR to the approved disposable workspace}"
+  if [[ ! -d "$TMPDIR" ]]; then
+    printf 'TMPDIR must be an existing disposable workspace.\n' >&2
+    return 1
+  fi
+  directory="$(mktemp -d "$TMPDIR/family-manager-playwright-XXXXXX")"
+  chmod 700 "$directory"
+  : > "$directory/.family-manager-smoke"
+  chmod 600 "$directory/.family-manager-smoke"
+  printf '%s\n' "$directory"
+)
 
 resolve_playwright_chromium_executable() {
   local explicit="${PLAYWRIGHT_CHROMIUM_EXECUTABLE:-}"

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { getFamilyModulesForPlatform } from "@family-manager/family-api/modules";
 
 import {
   familyModules,
@@ -8,11 +9,15 @@ import {
 
 describe("frontend family module registry", () => {
   it("lists the currently supported web modules in display order", () => {
+    const supported = getFamilyModulesForPlatform("web");
     expect(familyModules.map((module) => module.key)).toEqual([
       "chores",
       "homeschool",
       "recipes",
       "admin",
+      ...(supported.some((module) => module.key === "family-tree")
+        ? ["family-tree"]
+        : []),
     ]);
   });
 
@@ -22,12 +27,13 @@ describe("frontend family module registry", () => {
     expect(adminModule?.roles).toEqual(["PARENT_ADMIN"]);
   });
 
-  it("derives web destinations and dashboard requests from the canonical manifest", () => {
+  it("derives web destinations and registers implemented dashboard cards", () => {
     expect(getWebModuleDestination("recipes")).toBe("/recipes");
     expect(WEB_MODULE_REGISTRATION.dashboardCards).toEqual([
       "chores",
       "homeschool",
       "recipes",
+      "family-tree",
     ]);
   });
 });

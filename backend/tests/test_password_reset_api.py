@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 import logging
@@ -59,7 +61,7 @@ def _seed_user(
     password = "existing parent password"
     with factory() as session:
         if household_id is None:
-            household = Household(name=f"Home {email}", timezone="UTC")
+            household = household_with_owner(session, name=f"Home {email}", timezone="UTC")
             session.add(household)
             session.flush()
             household_id = household.id

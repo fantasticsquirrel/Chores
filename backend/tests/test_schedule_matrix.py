@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import date
 from pathlib import Path
 
@@ -29,7 +31,7 @@ def _seed_household_with_parent_and_children() -> tuple[int, int, int]:
     settings = get_settings()
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        hh = Household(name="Home", timezone="UTC")
+        hh = household_with_owner(session, name="Home", timezone="UTC")
         session.add(hh)
         session.flush()
 

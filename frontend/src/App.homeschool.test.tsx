@@ -1,15 +1,59 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
 import { ApiClientError, apiClient } from "./api";
 
 const children = [{ id: 1, household_id: 1, name: "Maya", active: true }];
-const semesters = [{ id: 10, household_id: 1, name: "Fall 2026", start_date: "2026-08-15", end_date: "2026-12-20", active: true }];
-const subjects = [{ id: 20, household_id: 1, name: "Math", color: "#ef4444", active: true }];
-const attendanceRecords = [{ id: 30, household_id: 1, child_id: 1, subject_id: 20, date: "2026-09-01", present: true, comment: "Fractions" }];
-const dayComments = [{ id: 40, household_id: 1, child_id: 1, date: "2026-09-01", comment: "Good focus" }];
-const grades = [{ id: 50, household_id: 1, child_id: 1, subject_id: 20, semester_id: 10, grade: "A" }];
+const semesters = [
+  {
+    id: 10,
+    household_id: 1,
+    name: "Fall 2026",
+    start_date: "2026-08-15",
+    end_date: "2026-12-20",
+    active: true,
+  },
+];
+const subjects = [
+  { id: 20, household_id: 1, name: "Math", color: "#ef4444", active: true },
+];
+const attendanceRecords = [
+  {
+    id: 30,
+    household_id: 1,
+    child_id: 1,
+    subject_id: 20,
+    date: "2026-09-01",
+    present: true,
+    comment: "Fractions",
+  },
+];
+const dayComments = [
+  {
+    id: 40,
+    household_id: 1,
+    child_id: 1,
+    date: "2026-09-01",
+    comment: "Good focus",
+  },
+];
+const grades = [
+  {
+    id: 50,
+    household_id: 1,
+    child_id: 1,
+    subject_id: 20,
+    semester_id: 10,
+    grade: "A",
+  },
+];
 
 function mockHomeschoolApi(): void {
   vi.spyOn(apiClient, "getMyModules").mockResolvedValue({
@@ -21,8 +65,12 @@ function mockHomeschoolApi(): void {
   vi.spyOn(apiClient, "listChildren").mockResolvedValue(children);
   vi.spyOn(apiClient, "listHomeschoolSemesters").mockResolvedValue(semesters);
   vi.spyOn(apiClient, "listHomeschoolSubjects").mockResolvedValue(subjects);
-  vi.spyOn(apiClient, "listHomeschoolAttendance").mockResolvedValue(attendanceRecords);
-  vi.spyOn(apiClient, "listHomeschoolDayComments").mockResolvedValue(dayComments);
+  vi.spyOn(apiClient, "listHomeschoolAttendance").mockResolvedValue(
+    attendanceRecords,
+  );
+  vi.spyOn(apiClient, "listHomeschoolDayComments").mockResolvedValue(
+    dayComments,
+  );
   vi.spyOn(apiClient, "listHomeschoolGrades").mockResolvedValue(grades);
 }
 
@@ -35,268 +83,444 @@ describe("Homeschool page", () => {
     mockHomeschoolApi();
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Homeschool" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Homeschool" }),
+    ).toBeVisible();
     expect(await screen.findByText("Children: Maya")).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Setup & Records" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Calendar & Progress" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Setup & Records" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Calendar & Progress" }),
+    ).toBeVisible();
     expect(screen.getByText("Subjects: 1")).toBeVisible();
-    expect(await screen.findByText("Fall 2026 · 2026-08-15 to 2026-12-20")).toBeVisible();
+    expect(
+      await screen.findByText("Fall 2026 · 2026-08-15 to 2026-12-20"),
+    ).toBeVisible();
     expect(await screen.findByText("Grade: A")).toBeVisible();
     expect(apiClient.listHomeschoolAttendance).toHaveBeenCalledWith(1);
   });
 
   it("creates semesters and subjects through the Family Manager APIs", async () => {
     mockHomeschoolApi();
-    const createSemesterSpy = vi.spyOn(apiClient, "createHomeschoolSemester").mockResolvedValue({
-      id: 11,
-      household_id: 1,
-      name: "Spring 2027",
-      start_date: "2027-01-10",
-      end_date: "2027-05-20",
-      active: true,
-    });
-    const createSubjectSpy = vi.spyOn(apiClient, "createHomeschoolSubject").mockResolvedValue({
-      id: 21,
-      household_id: 1,
-      name: "Reading",
-      color: "#3b82f6",
-      active: true,
-    });
+    const createSemesterSpy = vi
+      .spyOn(apiClient, "createHomeschoolSemester")
+      .mockResolvedValue({
+        id: 11,
+        household_id: 1,
+        name: "Spring 2027",
+        start_date: "2027-01-10",
+        end_date: "2027-05-20",
+        active: true,
+      });
+    const createSubjectSpy = vi
+      .spyOn(apiClient, "createHomeschoolSubject")
+      .mockResolvedValue({
+        id: 21,
+        household_id: 1,
+        name: "Reading",
+        color: "#3b82f6",
+        active: true,
+      });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
     await screen.findByText("Children: Maya");
 
-    const semesterPanel = screen.getByRole("heading", { name: "Create Semester" }).closest("article");
+    const semesterPanel = screen
+      .getByRole("heading", { name: "Create Semester" })
+      .closest("article");
     expect(semesterPanel).not.toBeNull();
-    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("Semester Name"), { target: { value: "Spring 2027" } });
-    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("Start Date"), { target: { value: "2027-01-10" } });
-    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("End Date"), { target: { value: "2027-05-20" } });
-    fireEvent.click(within(semesterPanel as HTMLElement).getByRole("button", { name: "Create Semester" }));
+    fireEvent.change(
+      within(semesterPanel as HTMLElement).getByLabelText("Semester Name"),
+      { target: { value: "Spring 2027" } },
+    );
+    fireEvent.change(
+      within(semesterPanel as HTMLElement).getByLabelText("Start Date"),
+      { target: { value: "2027-01-10" } },
+    );
+    fireEvent.change(
+      within(semesterPanel as HTMLElement).getByLabelText("End Date"),
+      { target: { value: "2027-05-20" } },
+    );
+    fireEvent.click(
+      within(semesterPanel as HTMLElement).getByRole("button", {
+        name: "Create Semester",
+      }),
+    );
 
-    await waitFor(() => expect(createSemesterSpy).toHaveBeenCalledWith({
-      household_id: 1,
-      name: "Spring 2027",
-      start_date: "2027-01-10",
-      end_date: "2027-05-20",
-    }));
+    await waitFor(() =>
+      expect(createSemesterSpy).toHaveBeenCalledWith({
+        household_id: 1,
+        name: "Spring 2027",
+        start_date: "2027-01-10",
+        end_date: "2027-05-20",
+      }),
+    );
 
-    const subjectPanel = screen.getByRole("heading", { name: "Create Subject" }).closest("article");
+    const subjectPanel = screen
+      .getByRole("heading", { name: "Create Subject" })
+      .closest("article");
     expect(subjectPanel).not.toBeNull();
-    fireEvent.change(within(subjectPanel as HTMLElement).getByLabelText("Subject Name"), { target: { value: "Reading" } });
-    fireEvent.change(within(subjectPanel as HTMLElement).getByLabelText("Color"), { target: { value: "#3b82f6" } });
-    fireEvent.click(within(subjectPanel as HTMLElement).getByRole("button", { name: "Create Subject" }));
+    fireEvent.change(
+      within(subjectPanel as HTMLElement).getByLabelText("Subject Name"),
+      { target: { value: "Reading" } },
+    );
+    fireEvent.change(
+      within(subjectPanel as HTMLElement).getByLabelText("Color"),
+      { target: { value: "#3b82f6" } },
+    );
+    fireEvent.click(
+      within(subjectPanel as HTMLElement).getByRole("button", {
+        name: "Create Subject",
+      }),
+    );
 
-    await waitFor(() => expect(createSubjectSpy).toHaveBeenCalledWith({
-      household_id: 1,
-      name: "Reading",
-      color: "#3b82f6",
-    }));
+    await waitFor(() =>
+      expect(createSubjectSpy).toHaveBeenCalledWith({
+        household_id: 1,
+        name: "Reading",
+        color: "#3b82f6",
+      }),
+    );
   });
 
   it("saves attendance, day comments, and grades", async () => {
     mockHomeschoolApi();
-    const attendanceSpy = vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockResolvedValue(attendanceRecords[0]);
-    const commentSpy = vi.spyOn(apiClient, "upsertHomeschoolDayComment").mockResolvedValue(dayComments[0]);
-    const gradeSpy = vi.spyOn(apiClient, "upsertHomeschoolGrade").mockResolvedValue(grades[0]);
+    const attendanceSpy = vi
+      .spyOn(apiClient, "upsertHomeschoolAttendance")
+      .mockResolvedValue(attendanceRecords[0]);
+    const commentSpy = vi
+      .spyOn(apiClient, "upsertHomeschoolDayComment")
+      .mockResolvedValue(dayComments[0]);
+    const gradeSpy = vi
+      .spyOn(apiClient, "upsertHomeschoolGrade")
+      .mockResolvedValue(grades[0]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
     await screen.findByText("Children: Maya");
 
-    const attendancePanel = screen.getByRole("heading", { name: "Quick Attendance" }).closest("article");
+    const attendancePanel = screen
+      .getByRole("heading", { name: "Quick Attendance" })
+      .closest("article");
     expect(attendancePanel).not.toBeNull();
-    fireEvent.change(within(attendancePanel as HTMLElement).getByLabelText("Date"), { target: { value: "2026-09-02" } });
-    fireEvent.change(within(attendancePanel as HTMLElement).getByLabelText("Comment"), { target: { value: "Decimals" } });
-    fireEvent.click(within(attendancePanel as HTMLElement).getByRole("button", { name: "Save Attendance" }));
+    fireEvent.change(
+      within(attendancePanel as HTMLElement).getByLabelText("Date"),
+      { target: { value: "2026-09-02" } },
+    );
+    fireEvent.change(
+      within(attendancePanel as HTMLElement).getByLabelText("Comment"),
+      { target: { value: "Decimals" } },
+    );
+    fireEvent.click(
+      within(attendancePanel as HTMLElement).getByRole("button", {
+        name: "Save Attendance",
+      }),
+    );
 
-    await waitFor(() => expect(attendanceSpy).toHaveBeenCalledWith({
-      household_id: 1,
-      child_id: 1,
-      subject_id: 20,
-      date: "2026-09-02",
-      present: true,
-      comment: "Decimals",
-    }));
+    await waitFor(() =>
+      expect(attendanceSpy).toHaveBeenCalledWith({
+        household_id: 1,
+        child_id: 1,
+        subject_id: 20,
+        date: "2026-09-02",
+        present: true,
+        comment: "Decimals",
+      }),
+    );
 
-    const commentPanel = screen.getByRole("heading", { name: "Day Comment" }).closest("article");
+    const commentPanel = screen
+      .getByRole("heading", { name: "Day Comment" })
+      .closest("article");
     expect(commentPanel).not.toBeNull();
-    fireEvent.change(within(commentPanel as HTMLElement).getByLabelText("Date"), { target: { value: "2026-09-02" } });
-    fireEvent.change(within(commentPanel as HTMLElement).getByLabelText("Comment"), { target: { value: "Field trip" } });
-    fireEvent.click(within(commentPanel as HTMLElement).getByRole("button", { name: "Save Comment" }));
+    fireEvent.change(
+      within(commentPanel as HTMLElement).getByLabelText("Date"),
+      { target: { value: "2026-09-02" } },
+    );
+    fireEvent.change(
+      within(commentPanel as HTMLElement).getByLabelText("Comment"),
+      { target: { value: "Field trip" } },
+    );
+    fireEvent.click(
+      within(commentPanel as HTMLElement).getByRole("button", {
+        name: "Save Comment",
+      }),
+    );
 
-    await waitFor(() => expect(commentSpy).toHaveBeenCalledWith({
-      household_id: 1,
-      child_id: 1,
-      date: "2026-09-02",
-      comment: "Field trip",
-    }));
+    await waitFor(() =>
+      expect(commentSpy).toHaveBeenCalledWith({
+        household_id: 1,
+        child_id: 1,
+        date: "2026-09-02",
+        comment: "Field trip",
+      }),
+    );
 
-    const gradePanel = screen.getByRole("heading", { name: "Subject Grade" }).closest("article");
+    const gradePanel = screen
+      .getByRole("heading", { name: "Subject Grade" })
+      .closest("article");
     expect(gradePanel).not.toBeNull();
-    fireEvent.change(within(gradePanel as HTMLElement).getByLabelText("Grade"), { target: { value: "A+" } });
-    fireEvent.click(within(gradePanel as HTMLElement).getByRole("button", { name: "Save Grade" }));
+    fireEvent.change(
+      within(gradePanel as HTMLElement).getByLabelText("Grade"),
+      { target: { value: "A+" } },
+    );
+    fireEvent.click(
+      within(gradePanel as HTMLElement).getByRole("button", {
+        name: "Save Grade",
+      }),
+    );
 
-    await waitFor(() => expect(gradeSpy).toHaveBeenCalledWith({
-      household_id: 1,
-      child_id: 1,
-      subject_id: 20,
-      semester_id: 10,
-      grade: "A+",
-    }));
+    await waitFor(() =>
+      expect(gradeSpy).toHaveBeenCalledWith({
+        household_id: 1,
+        child_id: 1,
+        subject_id: 20,
+        semester_id: 10,
+        grade: "A+",
+      }),
+    );
   });
 
   it("opens the calendar day editor and saves attendance for the tapped date", async () => {
     mockHomeschoolApi();
-    const attendanceSpy = vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockResolvedValue({
-      ...attendanceRecords[0],
-      date: "2026-09-02",
-      comment: "Decimals",
-    });
+    const attendanceSpy = vi
+      .spyOn(apiClient, "upsertHomeschoolAttendance")
+      .mockResolvedValue({
+        ...attendanceRecords[0],
+        date: "2026-09-02",
+        comment: "Decimals",
+      });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Tap or click a date to record attendance.")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
+    expect(
+      await screen.findByText("Tap or click a date to record attendance."),
+    ).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-02, no attendance recorded",
+      }),
+    );
 
-    const editorHeading = screen.getByRole("heading", { name: "Record attendance for 2026-09-02" });
+    const editorHeading = screen.getByRole("heading", {
+      name: "Record attendance for 2026-09-02",
+    });
     expect(editorHeading).toBeVisible();
     const editor = editorHeading.closest("section");
     expect(editor).not.toBeNull();
-    fireEvent.change(within(editor as HTMLElement).getByLabelText("Comment"), { target: { value: "Decimals" } });
-    fireEvent.click(within(editor as HTMLElement).getByRole("button", { name: "Save Attendance" }));
+    fireEvent.change(within(editor as HTMLElement).getByLabelText("Comment"), {
+      target: { value: "Decimals" },
+    });
+    fireEvent.click(
+      within(editor as HTMLElement).getByRole("button", {
+        name: "Save Attendance",
+      }),
+    );
 
-    await waitFor(() => expect(attendanceSpy).toHaveBeenCalledWith({
-      household_id: 1,
-      child_id: 1,
-      subject_id: 20,
-      date: "2026-09-02",
-      present: true,
-      comment: "Decimals",
-    }));
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Record attendance for 2026-09-02" })).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(attendanceSpy).toHaveBeenCalledWith({
+        household_id: 1,
+        child_id: 1,
+        subject_id: 20,
+        date: "2026-09-02",
+        present: true,
+        comment: "Decimals",
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", {
+          name: "Record attendance for 2026-09-02",
+        }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("cancels the calendar day editor and disables date actions without a child", async () => {
     mockHomeschoolApi();
 
     const { unmount } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
     await screen.findByText("Tap or click a date to record attendance.");
-    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
-    const editorHeading = screen.getByRole("heading", { name: "Record attendance for 2026-09-02" });
-    fireEvent.click(within(editorHeading.closest("section") as HTMLElement).getByRole("button", { name: "Cancel" }));
-    expect(screen.queryByRole("heading", { name: "Record attendance for 2026-09-02" })).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "2026-09-02, no attendance recorded",
+      }),
+    );
+    const editorHeading = screen.getByRole("heading", {
+      name: "Record attendance for 2026-09-02",
+    });
+    fireEvent.click(
+      within(editorHeading.closest("section") as HTMLElement).getByRole(
+        "button",
+        { name: "Cancel" },
+      ),
+    );
+    expect(
+      screen.queryByRole("heading", {
+        name: "Record attendance for 2026-09-02",
+      }),
+    ).not.toBeInTheDocument();
 
     unmount();
     vi.mocked(apiClient.listChildren).mockResolvedValue([]);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Select a child to record attendance.")).toBeVisible();
+    expect(
+      await screen.findByText("Select a child to record attendance."),
+    ).toBeVisible();
     // With no child the calendar can use the current month; verify every
     // currently rendered date instead of assuming the fixture's September month.
-    for (const button of screen.getAllByRole("button", { name: /^\d{4}-\d{2}-\d{2}, no attendance recorded$/ })) {
+    for (const button of screen.getAllByRole("button", {
+      name: /^\d{4}-\d{2}-\d{2}, no attendance recorded$/,
+    })) {
       expect(button).toBeDisabled();
     }
   });
 
-
   it("edits existing semester and subject setup records", async () => {
     mockHomeschoolApi();
-    const updateSemesterSpy = vi.spyOn(apiClient, "updateHomeschoolSemester").mockResolvedValue({
-      id: 10,
-      household_id: 1,
-      name: "Spring 2027",
-      start_date: "2027-01-10",
-      end_date: "2027-05-20",
-      active: true,
-    });
-    const updateSubjectSpy = vi.spyOn(apiClient, "updateHomeschoolSubject").mockResolvedValue({
-      id: 20,
-      household_id: 1,
-      name: "Reading",
-      color: "#3b82f6",
-      active: true,
-    });
+    const updateSemesterSpy = vi
+      .spyOn(apiClient, "updateHomeschoolSemester")
+      .mockResolvedValue({
+        id: 10,
+        household_id: 1,
+        name: "Spring 2027",
+        start_date: "2027-01-10",
+        end_date: "2027-05-20",
+        active: true,
+      });
+    const updateSubjectSpy = vi
+      .spyOn(apiClient, "updateHomeschoolSubject")
+      .mockResolvedValue({
+        id: 20,
+        household_id: 1,
+        name: "Reading",
+        color: "#3b82f6",
+        active: true,
+      });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const semesterList = await screen.findByRole("list", { name: "Semester entries" });
+    const semesterList = await screen.findByRole("list", {
+      name: "Semester entries",
+    });
     fireEvent.click(within(semesterList).getByRole("button", { name: "Edit" }));
-    const semesterPanel = screen.getByRole("heading", { name: "Edit Semester" }).closest("article");
+    const semesterPanel = screen
+      .getByRole("heading", { name: "Edit Semester" })
+      .closest("article");
     expect(semesterPanel).not.toBeNull();
-    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("Semester Name"), { target: { value: "Spring 2027" } });
-    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("Start Date"), { target: { value: "2027-01-10" } });
-    fireEvent.change(within(semesterPanel as HTMLElement).getByLabelText("End Date"), { target: { value: "2027-05-20" } });
-    fireEvent.click(within(semesterPanel as HTMLElement).getByRole("button", { name: "Update Semester" }));
+    fireEvent.change(
+      within(semesterPanel as HTMLElement).getByLabelText("Semester Name"),
+      { target: { value: "Spring 2027" } },
+    );
+    fireEvent.change(
+      within(semesterPanel as HTMLElement).getByLabelText("Start Date"),
+      { target: { value: "2027-01-10" } },
+    );
+    fireEvent.change(
+      within(semesterPanel as HTMLElement).getByLabelText("End Date"),
+      { target: { value: "2027-05-20" } },
+    );
+    fireEvent.click(
+      within(semesterPanel as HTMLElement).getByRole("button", {
+        name: "Update Semester",
+      }),
+    );
 
-    await waitFor(() => expect(updateSemesterSpy).toHaveBeenCalledWith(10, {
-      household_id: 1,
-      name: "Spring 2027",
-      start_date: "2027-01-10",
-      end_date: "2027-05-20",
-    }));
+    await waitFor(() =>
+      expect(updateSemesterSpy).toHaveBeenCalledWith(10, {
+        household_id: 1,
+        name: "Spring 2027",
+        start_date: "2027-01-10",
+        end_date: "2027-05-20",
+      }),
+    );
 
-    const subjectList = await screen.findByRole("list", { name: "Subject entries" });
+    const subjectList = await screen.findByRole("list", {
+      name: "Subject entries",
+    });
     fireEvent.click(within(subjectList).getByRole("button", { name: "Edit" }));
-    const subjectPanel = screen.getByRole("heading", { name: "Edit Subject" }).closest("article");
+    const subjectPanel = screen
+      .getByRole("heading", { name: "Edit Subject" })
+      .closest("article");
     expect(subjectPanel).not.toBeNull();
-    fireEvent.change(within(subjectPanel as HTMLElement).getByLabelText("Subject Name"), { target: { value: "Reading" } });
-    fireEvent.change(within(subjectPanel as HTMLElement).getByLabelText("Color"), { target: { value: "#3b82f6" } });
-    fireEvent.click(within(subjectPanel as HTMLElement).getByRole("button", { name: "Update Subject" }));
+    fireEvent.change(
+      within(subjectPanel as HTMLElement).getByLabelText("Subject Name"),
+      { target: { value: "Reading" } },
+    );
+    fireEvent.change(
+      within(subjectPanel as HTMLElement).getByLabelText("Color"),
+      { target: { value: "#3b82f6" } },
+    );
+    fireEvent.click(
+      within(subjectPanel as HTMLElement).getByRole("button", {
+        name: "Update Subject",
+      }),
+    );
 
-    await waitFor(() => expect(updateSubjectSpy).toHaveBeenCalledWith(20, {
-      household_id: 1,
-      name: "Reading",
-      color: "#3b82f6",
-    }));
+    await waitFor(() =>
+      expect(updateSubjectSpy).toHaveBeenCalledWith(20, {
+        household_id: 1,
+        name: "Reading",
+        color: "#3b82f6",
+      }),
+    );
   });
-
 
   it("clears an existing attendance entry", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolAttendance").mockResolvedValue(undefined);
+    const deleteSpy = vi
+      .spyOn(apiClient, "deleteHomeschoolAttendance")
+      .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const attendanceEntries = await screen.findByRole("list", { name: "Attendance entries" });
-    expect(within(attendanceEntries).getByText("2026-09-01 · Math")).toBeVisible();
-    fireEvent.click(within(attendanceEntries).getByRole("button", { name: "Clear" }));
+    const attendanceEntries = await screen.findByRole("list", {
+      name: "Attendance entries",
+    });
+    expect(
+      within(attendanceEntries).getByText("2026-09-01 · Math"),
+    ).toBeVisible();
+    fireEvent.click(
+      within(attendanceEntries).getByRole("button", { name: "Clear" }),
+    );
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(30, 1));
     expect(await screen.findByText("Cleared attendance entry.")).toBeVisible();
@@ -305,10 +529,12 @@ describe("Homeschool page", () => {
   it("clears an existing day comment", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolDayComment").mockResolvedValue(undefined);
+    const deleteSpy = vi
+      .spyOn(apiClient, "deleteHomeschoolDayComment")
+      .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
@@ -324,15 +550,19 @@ describe("Homeschool page", () => {
   it("clears an existing grade", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolGrade").mockResolvedValue(undefined);
+    const deleteSpy = vi
+      .spyOn(apiClient, "deleteHomeschoolGrade")
+      .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const gradesList = await screen.findByRole("list", { name: "Grade entries" });
+    const gradesList = await screen.findByRole("list", {
+      name: "Grade entries",
+    });
     expect(within(gradesList).getByText("Math: A")).toBeVisible();
     fireEvent.click(within(gradesList).getByRole("button", { name: "Clear" }));
 
@@ -343,17 +573,23 @@ describe("Homeschool page", () => {
   it("deletes an existing semester", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSemester").mockResolvedValue(undefined);
+    const deleteSpy = vi
+      .spyOn(apiClient, "deleteHomeschoolSemester")
+      .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const semesterList = await screen.findByRole("list", { name: "Semester entries" });
+    const semesterList = await screen.findByRole("list", {
+      name: "Semester entries",
+    });
     expect(within(semesterList).getByText("Fall 2026")).toBeVisible();
-    fireEvent.click(within(semesterList).getByRole("button", { name: "Delete" }));
+    fireEvent.click(
+      within(semesterList).getByRole("button", { name: "Delete" }),
+    );
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(10, 1));
     expect(await screen.findByText("Deleted semester.")).toBeVisible();
@@ -362,17 +598,23 @@ describe("Homeschool page", () => {
   it("deletes an existing subject", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolSubject").mockResolvedValue(undefined);
+    const deleteSpy = vi
+      .spyOn(apiClient, "deleteHomeschoolSubject")
+      .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const subjectList = await screen.findByRole("list", { name: "Subject entries" });
+    const subjectList = await screen.findByRole("list", {
+      name: "Subject entries",
+    });
     expect(within(subjectList).getByText("Math")).toBeVisible();
-    fireEvent.click(within(subjectList).getByRole("button", { name: "Delete" }));
+    fireEvent.click(
+      within(subjectList).getByRole("button", { name: "Delete" }),
+    );
 
     await waitFor(() => expect(deleteSpy).toHaveBeenCalledWith(20, 1));
     expect(await screen.findByText("Deleted subject.")).toBeVisible();
@@ -381,15 +623,19 @@ describe("Homeschool page", () => {
   it("does not clear a grade when confirmation is cancelled", async () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(false);
-    const deleteSpy = vi.spyOn(apiClient, "deleteHomeschoolGrade").mockResolvedValue(undefined);
+    const deleteSpy = vi
+      .spyOn(apiClient, "deleteHomeschoolGrade")
+      .mockResolvedValue(undefined);
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const gradesList = await screen.findByRole("list", { name: "Grade entries" });
+    const gradesList = await screen.findByRole("list", {
+      name: "Grade entries",
+    });
     fireEvent.click(within(gradesList).getByRole("button", { name: "Clear" }));
 
     expect(window.confirm).toHaveBeenCalledWith("Clear this grade?");
@@ -400,23 +646,31 @@ describe("Homeschool page", () => {
     mockHomeschoolApi();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.spyOn(apiClient, "deleteHomeschoolSubject").mockRejectedValue(
-      new ApiClientError(400, "Subject has homeschool records. Clear related attendance and grades first.", {
-        detail: "Subject has homeschool records. Clear related attendance and grades first.",
-      }),
+      new ApiClientError(
+        400,
+        "Subject has homeschool records. Clear related attendance and grades first.",
+        {
+          detail:
+            "Subject has homeschool records. Clear related attendance and grades first.",
+        },
+      ),
     );
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/homeschool"]}>
+      <MemoryRouter initialEntries={["/homeschool"]}>
         <App />
       </MemoryRouter>,
     );
 
-    const subjectList = await screen.findByRole("list", { name: "Subject entries" });
-    fireEvent.click(within(subjectList).getByRole("button", { name: "Delete" }));
+    const subjectList = await screen.findByRole("list", {
+      name: "Subject entries",
+    });
+    fireEvent.click(
+      within(subjectList).getByRole("button", { name: "Delete" }),
+    );
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Homeschool action failed: Subject has homeschool records. Clear related attendance and grades first.",
     );
   });
-
 });

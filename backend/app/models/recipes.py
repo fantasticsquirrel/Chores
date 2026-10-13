@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 import secrets
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import Column, Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base, TimestampMixin
@@ -149,7 +149,10 @@ class RecipeComponent(Base):
 
 class RecipeFeedback(TimestampMixin, Base):
     __tablename__ = "recipe_feedback"
+    # Historical persistence timestamp is not part of the public feedback DTO.
+    __mapper_args__ = {"exclude_properties": ["updated_at"]}
     __table_args__ = (
+        Column("updated_at", DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")),
         UniqueConstraint("recipe_id", "reviewer_type", "reviewer_key"),
         CheckConstraint("rating IS NULL OR (rating >= 1 AND rating <= 5)", name="recipe_feedback_rating_range"),
         CheckConstraint("reviewer_type IN ('PARENT', 'CHILD')", name="recipe_feedback_reviewer_type"),

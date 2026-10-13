@@ -1,4 +1,6 @@
 """Native enqueue and advancing runtime-clock regressions; offline providers only."""
+from household_fixtures import household_with_owner
+
 from datetime import datetime, timedelta
 import json
 
@@ -57,7 +59,7 @@ def test_direct_enqueue_applies_notification_policy(queue, denial):
                 "push_enabled" if denial == "prefs" else "approval_notifications_enabled": False,
             })
         elif denial == "household":
-            other = Household(name="Other", timezone="UTC")
+            other = household_with_owner(db, name="Other", timezone="UTC")
             db.add(other)
             db.flush()
             user.household_id = other.id

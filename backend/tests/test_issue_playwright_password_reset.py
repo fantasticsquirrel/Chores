@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 import ast
 import os
 from pathlib import Path
@@ -151,7 +153,7 @@ def test_isolated_playwright_bridge_captures_a_real_worker_message_only_in_memor
 
         factory = get_session_factory(settings.database_url)
         with factory() as session:
-            household = Household(name="Playwright reset harness", timezone="UTC")
+            household = household_with_owner(session, name="Playwright reset harness", timezone="UTC")
             session.add(household)
             session.flush()
             user = User(

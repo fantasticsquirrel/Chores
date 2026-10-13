@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 import json
 from pathlib import Path
 
@@ -24,7 +26,7 @@ def _configure(tmp_path: Path, monkeypatch) -> tuple[User, User, str]:
     initialize_database(get_settings())
     factory = get_session_factory(get_settings().database_url)
     with factory() as session:
-        household = Household(name="Home", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
         session.add(household)
         session.flush()
         admin = User(
@@ -92,6 +94,14 @@ def test_admin_manager_can_list_household_module_toggles(tmp_path: Path, monkeyp
             "can_manage": True,
             "enabled": True,
             "can_disable": False,
+        },
+        {
+            "key": "family-tree",
+            "name": "Family Tree",
+            "description": "Household family history, relationships, stories and photographs.",
+            "can_manage": True,
+            "enabled": False,
+            "can_disable": True,
         },
     ]
 

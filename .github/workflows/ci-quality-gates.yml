@@ -10,6 +10,13 @@ jobs:
   web-mobile-quality:
     runs-on: ubuntu-latest
     steps:
+      - name: Configure runner scratch
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          test -d "$TMPDIR"
+          printf 'TMPDIR=%s\n' "$TMPDIR" >> "$GITHUB_ENV"
+
       - name: Check out repository
         uses: actions/checkout@v4
 
@@ -37,8 +44,19 @@ jobs:
       - name: Frontend production build
         run: npm run build --workspace frontend
 
+      - name: Set up Python for executable shared contracts
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend runtime for shared contracts
+        run: pip install -e backend
+
       - name: Shared API contract tests
-        run: npx vitest run packages/family-api/src/*.test.ts --environment node
+        run: npm run shared-api:gate
+
+      - name: Family Tree pure core types and nonempty tests
+        run: npm run family-tree-core:gate
 
       - name: Mobile quality and Expo dependency alignment
         run: npm run mobile:gate
@@ -55,8 +73,17 @@ jobs:
   backend-quality:
     runs-on: ubuntu-latest
     steps:
+      - name: Configure runner scratch
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: |
+          test -d "$TMPDIR"
+          printf 'TMPDIR=%s\n' "$TMPDIR" >> "$GITHUB_ENV"
+
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5

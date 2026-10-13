@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import date
 from pathlib import Path
 
@@ -31,7 +33,7 @@ def _seed_household() -> dict[str, int | str]:
     initialize_database(settings)
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        household = Household(name="Home", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
         session.add(household)
         session.flush()
         child = Child(household_id=household.id, name="Riley", active=True)
@@ -61,6 +63,13 @@ def _seed_household() -> dict[str, int | str]:
             assignment_mode=AssignmentMode.STATIC,
         )
         session.add_all([parent, child_user, chore])
+        session.flush()
+        # This fixture asserts exact recipient cardinality: the real parent is
+        # the valid owner, not an additional synthetic notification recipient.
+        fixture_owner = session.get(User, household.owner_user_id)
+        household.owner_user_id = parent.id
+        session.flush()
+        session.delete(fixture_owner)
         session.commit()
         return {
             "household_id": household.id,
@@ -181,7 +190,7 @@ def test_submission_notification_orchestration_scopes_recipients_and_deduplicate
             password_hash=hash_password("password123"),
             role=UserRole.PARENT_ADMIN,
         )
-        other_household = Household(name="Other Home", timezone="UTC")
+        other_household = household_with_owner(session, name="Other Home", timezone="UTC")
         session.add_all([parent_admin, other_household])
         session.flush()
         other_parent = User(

@@ -115,6 +115,10 @@ class RegistrationService:
                 )
                 session.add(user)
                 session.flush()
+                from app.models import HouseholdModuleAccess
+                from app.services.modules import ModuleService
+                ModuleService().ensure_catalog(session)
+                session.add(HouseholdModuleAccess(household_id=household.id, module_key="family-tree", enabled=False))
                 registration.consumed_at = now
                 session.add(SecurityAuditEvent(event_type="registration.completed", target_user_id=user.id, household_id=household.id, ip_address="redacted", details_json="{}"))
                 session.flush()

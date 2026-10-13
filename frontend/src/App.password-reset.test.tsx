@@ -24,13 +24,16 @@ describe("Password-reset routes and login entry", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("link", { name: "Forgot password?" })).toHaveAttribute(
-      "href",
-      "/forgot-password",
-    );
+    expect(
+      await screen.findByRole("link", { name: "Forgot password?" }),
+    ).toHaveAttribute("href", "/forgot-password");
     fireEvent.click(screen.getByRole("tab", { name: "Child" }));
     expect(screen.queryByRole("link", { name: "Forgot password?" })).toBeNull();
-    expect(screen.getByText("Ask a parent to reset their password from the Parent sign-in screen.")).toBeVisible();
+    expect(
+      screen.getByText(
+        "Ask a parent to reset their password from the Parent sign-in screen.",
+      ),
+    ).toBeVisible();
   });
 
   it("permits anonymous access to both recovery routes", async () => {
@@ -39,7 +42,9 @@ describe("Password-reset routes and login entry", () => {
         <App />
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("heading", { name: "Forgot Your Password?" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Forgot Your Password?" }),
+    ).toBeVisible();
   });
 
   it("shows a safe recovery fallback when the reset fragment is absent", async () => {
@@ -48,7 +53,9 @@ describe("Password-reset routes and login entry", () => {
         <App />
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("heading", { name: "Reset Link Unavailable" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Reset Link Unavailable" }),
+    ).toBeVisible();
   });
 
   it("uses non-affirmative guidance after a generic reset acknowledgement", async () => {
@@ -58,7 +65,11 @@ describe("Password-reset routes and login entry", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Try signing in. If you cannot sign in, request a new reset link.")).toBeVisible();
+    expect(
+      await screen.findByText(
+        "Try signing in. If you cannot sign in, request a new reset link.",
+      ),
+    ).toBeVisible();
     expect(screen.queryByText(/password has been updated/i)).toBeNull();
   });
 });

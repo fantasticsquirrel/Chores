@@ -53,11 +53,70 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "upsertHomeschoolDayComment",
     "upsertHomeschoolGrade",
   ],
+  "family-tree-core.ts": [
+    "archiveFamilyTreePerson",
+    "compareFamilyTreePeople",
+    "createFamilyTreeCareLink",
+    "createFamilyTreeParentLink",
+    "createFamilyTreePartnerEpisode",
+    "createFamilyTreePerson",
+    "createFamilyTreeRelative",
+    "createFamilyTreeResidence",
+    "createFamilyTreeStory",
+    "deleteFamilyTreeCareLink",
+    "deleteFamilyTreeParentLink",
+    "deleteFamilyTreePartnerEpisode",
+    "deleteFamilyTreeResidence",
+    "deleteFamilyTreeStory",
+    "getFamilyTreeCollection",
+    "getFamilyTreeGraph",
+    "getFamilyTreePerson",
+    "linkFamilyTreeIdentity",
+    "listFamilyTreeIdentityCandidates",
+    "listFamilyTreePeople",
+    "listFamilyTreeResidences",
+    "listFamilyTreeStories",
+    "lockFamilyTreePerson",
+    "patchFamilyTreeCareLink",
+    "patchFamilyTreeParentLink",
+    "patchFamilyTreePartnerEpisode",
+    "patchFamilyTreePerson",
+    "patchFamilyTreeResidence",
+    "patchFamilyTreeStory",
+    "reorderFamilyTreeStories",
+    "restoreFamilyTreePerson",
+    "unlinkFamilyTreeIdentity",
+    "unlockFamilyTreePerson",
+  ],
+  "family-tree-transfer.ts": [
+    "cancelFamilyTreeImport",
+    "commitFamilyTreeImport",
+    "createFamilyTreeExport",
+    "downloadFamilyTreeExport",
+    "getFamilyTreeExportJob",
+    "getFamilyTreeImportJob",
+    "stageFamilyTreeImport",
+  ],
+  "family-tree.ts": [
+    "attachFamilyTreeMedia",
+    "commitFamilyTreeMerge",
+    "commitFamilyTreePurge",
+    "getFamilyTreeMediaContent",
+    "listFamilyTreeMediaReferences",
+    "previewFamilyTreeMerge",
+    "previewFamilyTreePurge",
+    "removeFamilyTreeMediaReference",
+    "uploadFamilyTreeMedia",
+  ],
   "notifications.ts": [
+    "createNativePushSubscription",
     "createPushSubscription",
+    "deleteNativePushSubscription",
     "disablePushSubscriptions",
+    "getNativePushConfig",
     "getNotificationSettings",
     "getPushConfig",
+    "listNativePushSubscriptions",
     "listNotifications",
     "markAllNotificationsRead",
     "markNotificationRead",
@@ -134,9 +193,25 @@ function productionTypeScriptFiles(directory: string): string[] {
 }
 
 describe("endpoint group structure", () => {
+  it("keeps every shared production TypeScript file at or below 500 lines", () => {
+    const hotspots = productionTypeScriptFiles(sourceDirectory)
+      .map((file) => {
+        const source = readSource(file);
+        return {
+          file,
+          lines: source.split("\n").length - Number(source.endsWith("\n")),
+        };
+      })
+      .filter(({ lines }) => lines > 500);
+    expect(hotspots).toEqual([]);
+  });
+
   it("owns each endpoint exactly once in the intended domain file", () => {
     expect(endpointFiles).toEqual([
       "core.ts",
+      "family-tree-core.ts",
+      "family-tree-transfer.ts",
+      "family-tree.ts",
       "notifications.ts",
       "recipes.ts",
       "support.ts",
@@ -187,7 +262,7 @@ describe("endpoint group structure", () => {
     ) as { exports: Record<string, string> };
 
     expect(
-      [...endpointBarrel.matchAll(/from "\.\/(\w+)"/g)]
+      [...endpointBarrel.matchAll(/from "\.\/([\w-]+)"/g)]
         .map((match) => `${match[1]}.ts`)
         .sort(),
     ).toEqual(endpointFiles);

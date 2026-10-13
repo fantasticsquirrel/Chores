@@ -31,7 +31,7 @@ class HomeschoolSemester(TimestampMixin, Base):
 
 class HomeschoolSubject(TimestampMixin, Base):
     __tablename__ = "homeschool_subjects"
-    __table_args__ = (UniqueConstraint("household_id", "name"),)
+    __table_args__ = (UniqueConstraint("household_id", "name", name="uq_homeschool_subjects_household_name"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -42,7 +42,7 @@ class HomeschoolSubject(TimestampMixin, Base):
 
 class HomeschoolAttendance(TimestampMixin, Base):
     __tablename__ = "homeschool_attendance"
-    __table_args__ = (UniqueConstraint("child_id", "subject_id", "date"),)
+    __table_args__ = (UniqueConstraint("child_id", "subject_id", "date", name="uq_homeschool_attendance_child_subject_date"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -55,7 +55,7 @@ class HomeschoolAttendance(TimestampMixin, Base):
 
 class HomeschoolDayComment(TimestampMixin, Base):
     __tablename__ = "homeschool_day_comments"
-    __table_args__ = (UniqueConstraint("child_id", "date"),)
+    __table_args__ = (UniqueConstraint("child_id", "date", name="uq_homeschool_day_comments_child_date"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -66,7 +66,7 @@ class HomeschoolDayComment(TimestampMixin, Base):
 
 class HomeschoolGrade(TimestampMixin, Base):
     __tablename__ = "homeschool_grades"
-    __table_args__ = (UniqueConstraint("child_id", "subject_id", "semester_id"),)
+    __table_args__ = (UniqueConstraint("child_id", "subject_id", "semester_id", name="uq_homeschool_grades_child_subject_semester"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)

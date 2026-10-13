@@ -11,6 +11,7 @@ def test_backend_module_registry_matches_shared_contract() -> None:
         "homeschool",
         "recipes",
         "admin",
+        "family-tree",
     ]
     assert AVAILABLE_MODULES[0].labels == {"web": "Chores", "mobile": "Chores"}
     assert AVAILABLE_MODULES[2].platforms["mobile"].supported is True
@@ -19,8 +20,8 @@ def test_backend_module_registry_matches_shared_contract() -> None:
         role.value: list(module_keys)
         for role, module_keys in DEFAULT_ROLE_MODULES.items()
     } == {
-        "PARENT_ADMIN": ["chores", "homeschool", "recipes", "admin"],
-        "PARENT": ["chores", "homeschool", "recipes"],
+        "PARENT_ADMIN": ["chores", "homeschool", "recipes", "admin", "family-tree"],
+        "PARENT": ["chores", "homeschool", "recipes", "family-tree"],
         "CHILD": ["chores"],
     }
     assert set(DEFAULT_ROLE_MODULES) == {UserRole.PARENT_ADMIN, UserRole.PARENT, UserRole.CHILD}

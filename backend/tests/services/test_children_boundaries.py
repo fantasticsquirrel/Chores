@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from pathlib import Path
 
 from app.config import Settings
@@ -52,8 +54,8 @@ def test_child_repository_filters_by_household_and_active(tmp_path: Path) -> Non
 
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        household = Household(name="Home", timezone="UTC")
-        other_household = Household(name="Other Home", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
+        other_household = household_with_owner(session, name="Other Home", timezone="UTC")
         session.add_all([household, other_household])
         session.flush()
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 import secrets
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import Column, Boolean, CheckConstraint, Date, DateTime, Enum, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db import Base, TimestampMixin
@@ -116,7 +116,11 @@ class CompletionRecord(Base):
 
 class ParentChoreCompletion(TimestampMixin, Base):
     __tablename__ = "parent_chore_completions"
-    __table_args__ = (UniqueConstraint("chore_id", "user_id", "date"),)
+    __mapper_args__ = {"exclude_properties": ["updated_at"]}
+    __table_args__ = (
+        UniqueConstraint("chore_id", "user_id", "date"),
+        Column("updated_at", DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)

@@ -22,6 +22,7 @@ import { ChoresScreen } from "./screens/parent/ChoresScreen";
 import { ParentHomeScreen } from "./screens/parent/ParentHomeScreen";
 import { ParentReviewScreen } from "./screens/parent/ReviewScreen";
 import { MoneyScreen } from "./screens/parent/MoneyScreen";
+import { FamilyTreeScreen } from "./screens/FamilyTreeScreen";
 import { RecipesScreen } from "./screens/recipes/RecipesScreen";
 import { NotificationsScreen } from "./screens/notifications/NotificationsScreen";
 import { shellStyles } from "./styles/shell";
@@ -48,7 +49,10 @@ export function AppShell() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreButtonRef = useRef<View>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const resetScroll = useCallback(() => scrollRef.current?.scrollTo({ y: 0, animated: false }), []);
+  const resetScroll = useCallback(
+    () => scrollRef.current?.scrollTo({ y: 0, animated: false }),
+    [],
+  );
   useEffect(resetScroll, [activeTab, resetScroll]);
   const navigation = useMemo(
     () =>
@@ -106,7 +110,9 @@ export function AppShell() {
           session={session}
         />
       ) : null}
-      {activeTab === "children" && canAccessMobileModule(modules, "chores") ? <ChildrenScreen session={session} /> : null}
+      {activeTab === "children" && canAccessMobileModule(modules, "chores") ? (
+        <ChildrenScreen session={session} />
+      ) : null}
       {activeTab === "chores" && canAccessMobileModule(modules, "chores") ? (
         <ChoresScreen session={session} />
       ) : null}
@@ -127,13 +133,37 @@ export function AppShell() {
           }}
         />
       ) : null}
-      {activeTab === "recipes" && canAccessMobileModule(modules, "recipes") ? <RecipesScreen session={session} modules={modules} onViewChanged={resetScroll} /> : null}
-      {activeTab === "notifications" ? <NotificationsScreen session={session} modules={modules} onNavigate={setActiveTab} nativePush={nativePush} /> : null}
+      {activeTab === "family-tree" &&
+      canAccessMobileModule(modules, "family-tree") ? (
+        <FamilyTreeScreen
+          key={`${session.user.household_id}:${session.user.id}`}
+          session={session}
+          modules={modules}
+          onModulesLoaded={setModules}
+        />
+      ) : null}
+      {activeTab === "recipes" && canAccessMobileModule(modules, "recipes") ? (
+        <RecipesScreen
+          session={session}
+          modules={modules}
+          onViewChanged={resetScroll}
+        />
+      ) : null}
+      {activeTab === "notifications" ? (
+        <NotificationsScreen
+          session={session}
+          modules={modules}
+          onNavigate={setActiveTab}
+          nativePush={nativePush}
+        />
+      ) : null}
       {activeTab === "account" ? (
         <AccountScreen
           modules={modules}
           onLogout={handleLogout}
-          onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
+          onPasswordChanged={() =>
+            clearSession("Password changed. Sign in again.")
+          }
           session={session}
         />
       ) : null}
@@ -142,13 +172,18 @@ export function AppShell() {
     <AccountScreen
       modules={modules}
       onLogout={handleLogout}
-          onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
+      onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
       session={session}
     />
   ) : activeTab === "money" && canAccessMobileModule(modules, "chores") ? (
     <MoneyScreen readOnly />
   ) : activeTab === "notifications" ? (
-    <NotificationsScreen session={session} modules={modules} onNavigate={setActiveTab} nativePush={nativePush} />
+    <NotificationsScreen
+      session={session}
+      modules={modules}
+      onNavigate={setActiveTab}
+      nativePush={nativePush}
+    />
   ) : canAccessMobileModule(modules, "chores") ? (
     <ChildTodayScreen />
   ) : (
@@ -158,10 +193,20 @@ export function AppShell() {
     />
   );
 
-  const moduleKey = ["children", "chores", "review", "money", "today"].includes(activeTab)
+  const moduleKey = ["children", "chores", "review", "money", "today"].includes(
+    activeTab,
+  )
     ? "chores"
-    : activeTab === "homeschool" || activeTab === "admin" || activeTab === "recipes" ? activeTab : null;
-  const activeModule = moduleKey === null ? null : modules.find(module => module.key === moduleKey) ?? null;
+    : activeTab === "homeschool" ||
+        activeTab === "admin" ||
+        activeTab === "recipes" ||
+        activeTab === "family-tree"
+      ? activeTab
+      : null;
+  const activeModule =
+    moduleKey === null
+      ? null
+      : (modules.find((module) => module.key === moduleKey) ?? null);
 
   return (
     <SafeAreaScreen bottom={false} key={theme}>
@@ -187,10 +232,16 @@ export function AppShell() {
         contentContainerStyle={shellStyles.screenContent}
         keyboardShouldPersistTaps="handled"
       >
-        {moduleKey !== null ? <ModuleAccessProvider module={activeModule}>
-          {activeModule?.can_manage !== true ? <InlineNotice tone="warning" message="View-only access" /> : null}
-          {renderedTab}
-        </ModuleAccessProvider> : renderedTab}
+        {moduleKey !== null ? (
+          <ModuleAccessProvider module={activeModule}>
+            {activeModule?.can_manage !== true ? (
+              <InlineNotice tone="warning" message="View-only access" />
+            ) : null}
+            {renderedTab}
+          </ModuleAccessProvider>
+        ) : (
+          renderedTab
+        )}
       </ScrollView>
       <BottomNavigation
         activeTab={activeTab}

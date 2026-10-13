@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -28,7 +30,7 @@ def _create_user(role: UserRole, email: str = "user@example.com", password: str 
     initialize_database(settings)
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        household = Household(name="Home", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
         session.add(household)
         session.flush()
 
@@ -47,6 +49,12 @@ def _create_user(role: UserRole, email: str = "user@example.com", password: str 
             child_id=child_id,
         )
         session.add(user)
+        session.flush()
+        if role != UserRole.CHILD:
+            fixture_owner = session.get(User, household.owner_user_id)
+            household.owner_user_id = user.id
+            session.flush()
+            session.delete(fixture_owner)
         session.commit()
         session.refresh(user)
         return user, password

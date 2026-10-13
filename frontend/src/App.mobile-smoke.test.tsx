@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -24,25 +30,38 @@ describe("Mobile browser smoke flows", () => {
   it("runs parent key flow on mobile: load and create child", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
     listChildrenSpy
-      .mockResolvedValueOnce([{ id: 1, household_id: 1, name: "Maya", active: true }])
+      .mockResolvedValueOnce([
+        { id: 1, household_id: 1, name: "Maya", active: true },
+      ])
       .mockResolvedValueOnce([
         { id: 1, household_id: 1, name: "Maya", active: true },
         { id: 2, household_id: 1, name: "Leo", active: true },
       ]);
     const createChildSpy = vi.spyOn(apiClient, "createChild");
-    createChildSpy.mockResolvedValue({ id: 2, household_id: 1, name: "Leo", active: true });
+    createChildSpy.mockResolvedValue({
+      id: 2,
+      household_id: 1,
+      name: "Leo",
+      active: true,
+    });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/parent/children"]}>
+      <MemoryRouter initialEntries={["/parent/children"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Children Management" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Children Management" }),
+    ).toBeVisible();
     expect(screen.getByRole("link", { name: "Today" })).toBeVisible();
-    expect(screen.queryByRole("link", { name: "Child Today" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Child Today" }),
+    ).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Leo" } });
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Leo" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Create Child" }));
 
     await waitFor(() =>
@@ -52,7 +71,9 @@ describe("Mobile browser smoke flows", () => {
         active: true,
       }),
     );
-    const childrenList = await screen.findByRole("list", { name: "Children list" });
+    const childrenList = await screen.findByRole("list", {
+      name: "Children list",
+    });
     expect(within(childrenList).getByText("Leo")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledTimes(2);
   });
@@ -64,6 +85,7 @@ describe("Mobile browser smoke flows", () => {
         household_id: 1,
         email: "child@example.com",
         role: "CHILD",
+        is_household_owner: false,
         child_id: 12,
       },
       csrf_token: null,
@@ -96,16 +118,20 @@ describe("Mobile browser smoke flows", () => {
     });
 
     render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }} initialEntries={["/child/today"]}>
+      <MemoryRouter initialEntries={["/child/today"]}>
         <App />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Child Today" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Child Today" }),
+    ).toBeVisible();
     expect(await screen.findByText("Make Bed")).toBeVisible();
 
     fireEvent.click(screen.getByRole("checkbox"));
-    fireEvent.click(screen.getByRole("button", { name: "Submit Selected Chores" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Submit Selected Chores" }),
+    );
 
     await waitFor(() =>
       expect(createSubmissionSpy).toHaveBeenCalledWith({
@@ -113,7 +139,9 @@ describe("Mobile browser smoke flows", () => {
         chore_ids: [7],
       }),
     );
-    expect(await screen.findByText("Submitted 1 chore(s) for review.")).toBeVisible();
+    expect(
+      await screen.findByText("Submitted 1 chore(s) for review."),
+    ).toBeVisible();
     expect(listEligibleChoresSpy).toHaveBeenCalledTimes(2);
   });
 });

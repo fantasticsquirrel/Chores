@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -41,7 +43,7 @@ def _seed(*, timezone: str = "UTC") -> dict[str, object]:
     initialize_database(settings)
     factory = get_session_factory(settings.database_url)
     with factory() as session:
-        household = Household(name="Home", timezone=timezone)
+        household = household_with_owner(session, name="Home", timezone=timezone)
         session.add(household)
         session.flush()
         child = Child(household_id=household.id, name="Riley", active=True)

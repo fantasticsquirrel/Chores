@@ -383,11 +383,11 @@ describe("ApiClient", () => {
 
     await expect(
       client.updateChild(11, { household_id: 2, active: false }),
-    ).rejects.toMatchObject<ApiClientError>({
+    ).rejects.toMatchObject({
       name: "ApiClientError",
       status: 404,
       detail: "Child not found.",
-    });
+    } satisfies Partial<ApiClientError>);
   });
 
   it("calls eligible chores endpoint with date query param", async () => {

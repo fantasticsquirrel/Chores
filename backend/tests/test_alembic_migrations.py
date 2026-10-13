@@ -167,7 +167,9 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
     alembic_config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
     alembic_config.set_main_option("sqlalchemy.url", database_url)
 
-    command.upgrade(alembic_config, "head")
+    # This deliberately sparse fixture tests historical email/session migrations,
+    # not the complete current application schema. FT-0022 fails closed otherwise.
+    command.upgrade(alembic_config, "20260714_0013")
 
     with engine.connect() as connection:
         rows = connection.execute(text("SELECT id, email FROM users WHERE id IN (1, 2) ORDER BY id")).all()
@@ -185,7 +187,7 @@ def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, mo
     assert "auth_sessions" not in downgraded.get_table_names()
     assert "active" not in {column["name"] for column in downgraded.get_columns("users")}
 
-    command.upgrade(alembic_config, "head")
+    command.upgrade(alembic_config, "20260714_0013")
     upgraded = inspect(create_engine(database_url))
     assert "auth_sessions" in upgraded.get_table_names()
     assert "active" in {column["name"] for column in upgraded.get_columns("users")}
@@ -217,7 +219,8 @@ def test_recipe_timestamp_compatibility_migration_repairs_runtime_created_schema
     alembic_config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
     alembic_config.set_main_option("sqlalchemy.url", database_url)
     command.stamp(alembic_config, "20260714_0013")
-    command.upgrade(alembic_config, "head")
+    # Repair-only historical fixture has no identity/household schema.
+    command.upgrade(alembic_config, "20260715_0014")
 
     engine = create_engine(database_url)
     with engine.connect() as connection:

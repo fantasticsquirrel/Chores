@@ -8,6 +8,10 @@
 
 **Tech stack:** FastAPI, SQLAlchemy, Alembic, SQLite/WAL, React/Vite, Expo/React Native, Pytest, Vitest, Playwright, systemd, nginx, GitHub Actions.
 
+## Related planned module specifications
+
+- [Family Tree module specification](../specifications/family-tree-module.md) owns the FT-0 through FT-4 contract and delivery checklist. Its implementation candidate is present but disabled and unreleased; source-completeness remediation, final independent review, exact-head CI and operator/device admission remain open. This separate feature does not complete or expand the existing hardening/release gates below. Follow the standing architecture and standard-module guides.
+
 ## Current verified strengths
 
 - [x] Auth, role, module, household, child, and CSRF boundaries exist.

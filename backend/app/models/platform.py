@@ -11,11 +11,12 @@ from app.models.enums import PlatformRole
 
 class PlatformUser(TimestampMixin, Base):
     __tablename__ = "platform_users"
+    __table_args__ = (UniqueConstraint("email"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
-    role: Mapped[PlatformRole] = mapped_column(Enum(PlatformRole, native_enum=False), nullable=False)
+    role: Mapped[PlatformRole] = mapped_column(Enum(PlatformRole, native_enum=False, length=32), nullable=False)
     totp_secret_ciphertext: Mapped[str] = mapped_column(Text, nullable=False)
     totp_key_version: Mapped[str] = mapped_column(String(32), nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -35,10 +36,11 @@ class PlatformUser(TimestampMixin, Base):
 
 class PlatformSession(TimestampMixin, Base):
     __tablename__ = "platform_sessions"
+    __table_args__ = (UniqueConstraint("token_hash"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     platform_user_id: Mapped[int] = mapped_column(ForeignKey("platform_users.id", ondelete="CASCADE"), nullable=False, index=True)
-    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     mfa_verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

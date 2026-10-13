@@ -26,6 +26,20 @@ _PASSWORD_RESET_REQUEST_ACK = "If an eligible account exists for that address, r
 _PASSWORD_RESET_CONFIRM_ACK = "Try signing in. If you cannot sign in, request a new reset link."
 
 
+def _request_correlation_id(request: Request) -> str:
+    """Keep legacy IDs elsewhere; genealogy logs accept only opaque UUID IDs."""
+    value = request.headers.get("X-Request-ID")
+    if request.url.path.startswith("/chore-api/family-tree"):
+        value = getattr(request.state, "request_id", None) or value
+        if isinstance(value, str) and len(value) == 36:
+            try:
+                return str(uuid.UUID(value))
+            except ValueError:
+                pass
+        return str(uuid.uuid4())
+    return value if value is not None else str(uuid.uuid4())
+
+
 async def _best_effort_public_response_floor(started_at: float, floor_ms: int) -> None:
     """Apply a public timing floor without allowing equalization failure to escape."""
     try:
@@ -125,17 +139,18 @@ class PublicPasswordResetContainmentMiddleware(BaseHTTPMiddleware):
             path = request.url.path
             if path not in {_PASSWORD_RESET_REQUEST_PATH, _PASSWORD_RESET_CONFIRM_PATH}:
                 raise
-            request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+            request_id = _request_correlation_id(request)
             return _last_resort_password_reset_response(path, request_id=request_id)
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable):  # type: ignore[override]
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request_id = _request_correlation_id(request)
+        request.state.request_id = request_id
         start = time.perf_counter()
         try:
             response = await call_next(request)
-        except Exception:
+        except Exception as exc:
             # Catch ordinary public reset failures here; if this acknowledgement
             # path itself fails, the outer reset-only containment middleware
             # returns the last-resort response before ServerErrorMiddleware.
@@ -156,6 +171,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     request.url.path,
                 )
                 response = await _password_reset_confirmation_acknowledgement()
+            elif request.url.path.startswith('/chore-api/family-tree'):
+                # Contain private exceptions before ServerErrorMiddleware can
+                # re-raise them to the ASGI server's traceback logger.
+                logger.error('family_tree.request_failed request_id=%s method=%s path=%s exception_type=%s', request_id, request.method, request.url.path, type(exc).__name__)
+                response = JSONResponse(status_code=500, content=_error_payload('Internal server error.'), headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'})
             else:
                 raise
         duration_ms = (time.perf_counter() - start) * 1000
@@ -237,7 +257,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+        request_id = _request_correlation_id(request)
         # Reset capabilities are supplied only in request bodies/fragments. Do
         # not hand an exception object to a logger for these routes: framework
         # validation/transport details could otherwise retain the raw body.
@@ -251,13 +271,18 @@ def register_exception_handlers(app: FastAPI) -> None:
             if request.url.path == _PASSWORD_RESET_REQUEST_PATH:
                 return await _password_reset_request_acknowledgement(request_id=request_id)
             return await _password_reset_confirmation_acknowledgement(request_id=request_id)
-        logger.exception(
-            "request.failed request_id=%s method=%s path=%s",
-            request_id,
-            request.method,
-            request.url.path,
-            exc_info=exc,
-        )
+        if request.url.path.startswith('/chore-api/family-tree'):
+            # Response validation and storage exceptions may contain private
+            # facts in their messages/inputs/tracebacks. Log metadata only.
+            logger.error('family_tree.request_failed request_id=%s method=%s path=%s exception_type=%s', request_id, request.method, request.url.path, type(exc).__name__)
+        else:
+            logger.exception(
+                "request.failed request_id=%s method=%s path=%s",
+                request_id,
+                request.method,
+                request.url.path,
+                exc_info=exc,
+            )
         return JSONResponse(
             status_code=500,
             content=_error_payload("Internal server error."),

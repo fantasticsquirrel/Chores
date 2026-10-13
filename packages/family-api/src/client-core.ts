@@ -1,32 +1,94 @@
 import type { AuthSessionResponse } from "./models/auth";
 
-export type RequestQueryValue = string | number | boolean | null | undefined;
+export type RequestOptions = { signal?: AbortSignal };
+
+export type RequestQueryScalar = string | number | boolean;
+export type RequestQueryValue =
+  | RequestQueryScalar
+  | readonly RequestQueryScalar[]
+  | null
+  | undefined;
 export type RequestQuery = object;
+
+export type BinaryDownload = {
+  bytes: ArrayBuffer;
+  content_type: string;
+  filename: string | null;
+};
+
+// Field-error shapes belong to the endpoint contract, not transport mechanics.
+export type DomainErrorDetail = {
+  code: string;
+  message: string;
+  field_errors?: unknown;
+};
 
 export abstract class FamilyApiClientCore {
   protected abstract get<TResponse>(
     path: string,
     query?: RequestQuery,
+    options?: RequestOptions,
   ): Promise<TResponse>;
   protected abstract post<TResponse, TBody>(
     path: string,
     body: TBody,
     query?: RequestQuery,
+    options?: RequestOptions,
   ): Promise<TResponse>;
   protected abstract put<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse>;
   protected abstract patch<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse>;
-  protected abstract delete(path: string, query?: RequestQuery): Promise<void>;
+  protected abstract delete(
+    path: string,
+    query?: RequestQuery,
+    options?: RequestOptions,
+  ): Promise<void>;
+
+  // JSON-only subclasses remain compatible, but cannot silently drop a body.
+  protected deleteWithBody<TResponse, TBody>(
+    _path: string,
+    _body: TBody,
+    _options?: RequestOptions,
+  ): Promise<TResponse> {
+    return Promise.reject(new Error("JSON DELETE transport is not supported."));
+  }
+  // A no-body staging cancellation is distinct from revisioned JSON commands.
+  protected deleteWithResponse<TResponse>(
+    _path: string,
+    _options?: RequestOptions,
+  ): Promise<TResponse> {
+    return Promise.reject(
+      new Error("Response DELETE transport is not supported."),
+    );
+  }
   protected abstract postNoContent(path: string): Promise<void>;
   protected abstract postNoContentWithBody<TBody>(
     path: string,
     body: TBody,
   ): Promise<void>;
+
+  // Keep JSON-only consumers source-compatible while failing closed if used.
+  protected postMultipart<TResponse>(
+    _path: string,
+    _body: FormData,
+    _options?: RequestOptions,
+  ): Promise<TResponse> {
+    return Promise.reject(new Error("Multipart transport is not supported."));
+  }
+
+  protected getBinary(
+    _path: string,
+    _options?: RequestOptions,
+  ): Promise<BinaryDownload> {
+    return Promise.reject(new Error("Binary transport is not supported."));
+  }
 
   protected afterAuthSession(_session: AuthSessionResponse): void {}
   protected afterLogout(): void {}
@@ -86,8 +148,13 @@ export function appendQueryParams(
     return;
   }
 
-  for (const [key, value] of Object.entries(query as Record<string, RequestQueryValue>)) {
-    if (value !== undefined && value !== null) {
+  for (const [key, value] of Object.entries(
+    query as Record<string, RequestQueryValue>,
+  )) {
+    if (Array.isArray(value)) {
+      searchParams.delete(key);
+      for (const item of value) searchParams.append(key, String(item));
+    } else if (value !== undefined && value !== null) {
       searchParams.set(key, String(value));
     }
   }
@@ -102,7 +169,68 @@ export function requiresCsrfToken(method?: string): boolean {
   );
 }
 
+export function extractDomainError(data: unknown): DomainErrorDetail | null {
+  if (
+    !isApiErrorResponse(data) ||
+    typeof data.detail !== "object" ||
+    data.detail === null
+  ) {
+    return null;
+  }
+  const detail = data.detail as Record<string, unknown>;
+  if (
+    typeof detail.code !== "string" ||
+    detail.code.trim().length === 0 ||
+    typeof detail.message !== "string" ||
+    detail.message.trim().length === 0
+  ) {
+    return null;
+  }
+  return {
+    code: detail.code,
+    message: detail.message,
+    ...("field_errors" in detail ? { field_errors: detail.field_errors } : {}),
+  };
+}
+
+// Presentation metadata only: never return filesystem paths or control characters.
+export function extractDownloadFilename(
+  contentDisposition: string | null,
+): string | null {
+  if (contentDisposition === null) return null;
+  const extended = /(?:^|;)\s*filename\*\s*=\s*([^;]*)/i.exec(
+    contentDisposition,
+  );
+  let filename: string;
+  if (extended !== null) {
+    const encoded = /^UTF-8'[^']*'(.*)$/i.exec(extended[1].trim());
+    if (encoded === null) return null;
+    try {
+      filename = decodeURIComponent(encoded[1]);
+    } catch {
+      return null;
+    }
+  } else {
+    const plain = /(?:^|;)\s*filename\s*=\s*(?:"([^"\r\n]*)"|([^;\s]+))/i.exec(
+      contentDisposition,
+    );
+    if (plain === null) return null;
+    filename = plain[1] ?? plain[2];
+  }
+  if (
+    filename.trim().length === 0 ||
+    filename === "." ||
+    filename === ".." ||
+    /[\/\\\u0000-\u001f\u007f]/.test(filename)
+  ) {
+    return null;
+  }
+  return filename;
+}
+
 export function extractErrorDetail(data: unknown, fallback: string): string {
+  const domainError = extractDomainError(data);
+  if (domainError !== null) return domainError.message;
   if (!isApiErrorResponse(data)) {
     return fallback || "Request failed";
   }

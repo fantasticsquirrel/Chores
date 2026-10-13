@@ -10,9 +10,11 @@ from app.api.notifications import router as notifications_router
 from app.api.billing import router as billing_router
 from app.api.households import router as households_router
 from app.api.ops import router as ops_router
+from app.api.family_tree import router as family_tree_router
 
 __all__ = [
     "auth_router",
+    "family_tree_router",
     "billing_router",
     "children_router",
     "chores_router",

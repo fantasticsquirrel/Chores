@@ -8,12 +8,13 @@
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
     "test:smoke": "./scripts/run-playwright-smoke.sh",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json && vite build",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
   },
   "dependencies": {
     "@family-manager/family-api": "file:../packages/family-api",
+    "@family-manager/family-tree-core": "file:../packages/family-tree-core",
     "@tanstack/react-query": "^5.66.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

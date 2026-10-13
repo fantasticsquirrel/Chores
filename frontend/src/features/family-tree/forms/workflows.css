@@ -1,0 +1,89 @@
+.family-tree-workspace {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-4, 1rem);
+}
+.family-tree-workspace .glass-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.family-tree-directory-filters,
+.family-tree-record-form {
+  display: grid;
+  gap: var(--space-3, 0.75rem);
+}
+.family-tree-directory-filters label,
+.family-tree-record-form label,
+.family-tree-workspace label {
+  display: grid;
+  gap: 0.35rem;
+}
+.family-tree-record-form fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, currentColor);
+  border-radius: 0.5rem;
+}
+.family-tree-workspace input,
+.family-tree-workspace select,
+.family-tree-record-form input,
+.family-tree-record-form textarea,
+.family-tree-record-form select {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.family-tree-workspace input[type="checkbox"],
+.family-tree-record-form input[type="checkbox"] {
+  width: auto;
+  justify-self: start;
+}
+.family-tree-workspace article {
+  border-top: 1px solid var(--border-color, currentColor);
+  margin-block: 1rem;
+  padding-block: 0.75rem;
+}
+.family-tree-workspace dd {
+  margin-inline-start: 1rem;
+}
+.family-tree-record-form button,
+.family-tree-workspace button {
+  white-space: normal;
+  min-height: 2.75rem;
+}
+.family-tree-safe-text {
+  overflow-wrap: anywhere;
+}
+@media (min-width: 720px) {
+  .family-tree-directory-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Portalled advanced editors cannot inherit workspace-descendant selectors. */
+.family-tree-advanced-form {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.family-tree-advanced-form + .family-tree-advanced-form {
+  border-top: 1px solid var(--surface-border, currentColor);
+  margin-top: var(--space-4, 1rem);
+  padding-top: var(--space-4, 1rem);
+}
+.family-tree-advanced-form label {
+  min-height: 2.75rem;
+}
+.family-tree-advanced-form input:not([type="checkbox"]),
+.family-tree-advanced-form select,
+.family-tree-advanced-form textarea {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--surface-border, currentColor);
+  border-radius: var(--radius-button, 0.9rem);
+  background: var(--surface-solid, transparent);
+  color: var(--text-main, inherit);
+}

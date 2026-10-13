@@ -39,10 +39,7 @@ describe("Parent dashboard", () => {
     ]);
 
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/parent/dashboard"]}
-      >
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -78,10 +75,7 @@ describe("Parent dashboard", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/parent/dashboard"]}
-      >
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -98,6 +92,7 @@ describe("Parent dashboard", () => {
         household_id: 42,
         email: "parent42@example.com",
         role: "PARENT",
+        is_household_owner: false,
         child_id: null,
       },
       csrf_token: null,
@@ -110,10 +105,7 @@ describe("Parent dashboard", () => {
     vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([]);
 
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/parent/dashboard"]}
-      >
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );
@@ -136,10 +128,7 @@ describe("Parent dashboard", () => {
     const listSubmissionsSpy = vi.spyOn(apiClient, "listSubmissions");
 
     render(
-      <MemoryRouter
-        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
-        initialEntries={["/parent/dashboard"]}
-      >
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
         <App />
       </MemoryRouter>,
     );

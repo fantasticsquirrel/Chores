@@ -41,6 +41,8 @@ export const webModuleNavigationItems = familyModules
 
 export const WEB_MODULE_REGISTRATION: ModulePlatformRegistration = {
   routes: [
+    { moduleKey: "family-tree", destination: "/family-tree" },
+    { moduleKey: "family-tree", destination: "/family-tree/people/:personId" },
     { moduleKey: "chores", destination: "/parent/chores" },
     { moduleKey: "chores", destination: "/board" },
     { moduleKey: "chores", destination: "/parent/children" },
@@ -56,8 +58,8 @@ export const WEB_MODULE_REGISTRATION: ModulePlatformRegistration = {
     moduleKey,
     destination: to,
   })),
-  guards: ["chores", "homeschool", "recipes", "admin"],
-  dashboardCards: ["chores", "homeschool", "recipes"],
+  guards: ["chores", "homeschool", "recipes", "admin", "family-tree"],
+  dashboardCards: ["chores", "homeschool", "recipes", "family-tree"],
 };
 
 export function getWebModuleDestination(moduleKey: FamilyModuleKey): string {

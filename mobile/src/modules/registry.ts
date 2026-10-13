@@ -28,11 +28,18 @@ const MOBILE_NAVIGATION_MODULE_KEYS = [
   "chores",
   "homeschool",
   "recipes",
+  "family-tree",
   "admin",
 ] as const satisfies ReadonlyArray<FamilyModuleKey>;
 
-export const mobileModuleNavigationItems = MOBILE_NAVIGATION_MODULE_KEYS.map(
-  (moduleKey) => getMobileModule(moduleKey),
+export const mobileModuleNavigationItems = MOBILE_NAVIGATION_MODULE_KEYS.filter(
+  (moduleKey) =>
+    familyModules.some(
+      (module) => module.key === moduleKey && module.navigation,
+    ),
+).map((moduleKey) => getMobileModule(moduleKey));
+const treeSupported = familyModules.some(
+  (module) => module.key === "family-tree",
 );
 
 export const MOBILE_MODULE_REGISTRATION: ModulePlatformRegistration = {
@@ -46,13 +53,30 @@ export const MOBILE_MODULE_REGISTRATION: ModulePlatformRegistration = {
     { moduleKey: "homeschool", destination: "homeschool" },
     { moduleKey: "recipes", destination: "recipes" },
     { moduleKey: "admin", destination: "admin" },
+    ...(treeSupported
+      ? [{ moduleKey: "family-tree", destination: "family-tree" }]
+      : []),
   ],
   navigation: mobileModuleNavigationItems.map(({ key, destination }) => ({
     moduleKey: key,
     destination,
   })),
-  guards: ["chores", "homeschool", "recipes", "admin"],
-  dashboardCards: ["chores", "homeschool", "recipes"],
+  guards: [
+    "chores",
+    "homeschool",
+    "recipes",
+    "admin",
+    ...(treeSupported ? ["family-tree"] : []),
+  ],
+  dashboardCards: [
+    "chores",
+    "homeschool",
+    "recipes",
+    ...(treeSupported &&
+    familyModules.some((m) => m.key === "family-tree" && m.dashboard)
+      ? ["family-tree"]
+      : []),
+  ],
 };
 
 export function getMobileModule(moduleKey: FamilyModuleKey) {

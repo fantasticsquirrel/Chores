@@ -14,7 +14,7 @@ class ModuleService:
         for module in AVAILABLE_MODULES:
             if module.key in existing:
                 continue
-            session.add(Module(key=module.key, name=module.name, description=module.description, enabled=True))
+            session.add(Module(key=module.key, name=module.name, description=module.description, enabled=module.key != "family-tree"))
         session.flush()
 
     def list_effective_modules(self, session: Session, user: User) -> list[AppModule]:
@@ -30,7 +30,7 @@ class ModuleService:
         household_overrides = {
             row.module_key: row.enabled
             for row in session.scalars(
-                select(HouseholdModuleAccess).where(HouseholdModuleAccess.household_id == user.household_id)
+                select(HouseholdModuleAccess).where(HouseholdModuleAccess.household_id == user.household_id).execution_options(populate_existing=True)
             ).all()
         }
         household_enabled_keys = set(enabled_catalog_keys)
@@ -43,7 +43,7 @@ class ModuleService:
 
         user_overrides = {
             row.module_key: row
-            for row in session.scalars(select(UserModuleAccess).where(UserModuleAccess.user_id == user.id)).all()
+            for row in session.scalars(select(UserModuleAccess).where(UserModuleAccess.user_id == user.id).execution_options(populate_existing=True)).all()
         }
         for key, override in user_overrides.items():
             if override.can_view and key in household_enabled_keys:
@@ -51,6 +51,9 @@ class ModuleService:
             else:
                 allowed_keys.discard(key)
 
+        # Genealogy is deliberately opt-in, including missing-row and corrupt child grants.
+        if not household_overrides.get("family-tree", False) or user.role == UserRole.CHILD:
+            allowed_keys.discard("family-tree")
         return [module for module in AVAILABLE_MODULES if module.key in allowed_keys and module.key in catalog]
 
     def can_access_module(self, session: Session, user: User, module_key: str, *, manage: bool = False) -> bool:
@@ -58,7 +61,7 @@ class ModuleService:
             return False
         if not manage:
             return True
-        override = session.get(UserModuleAccess, {"user_id": user.id, "module_key": module_key})
+        override = session.get(UserModuleAccess, {"user_id": user.id, "module_key": module_key}, populate_existing=True)
         # Default role/household access remains fully usable. An explicit user override
         # is the only place that can intentionally reduce a user to view-only.
         return override is None or override.can_manage
@@ -77,7 +80,7 @@ class ModuleService:
             ).all()
         }
         return [
-            (module, module.key in globally_enabled and overrides.get(module.key, True))
+            (module, module.key in globally_enabled and overrides.get(module.key, module.key != "family-tree"))
             for module in AVAILABLE_MODULES
         ]
 
