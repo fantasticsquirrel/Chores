@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 import os
 from pathlib import Path
 import subprocess
+import sys
 from threading import Event
 import pytest
 from sqlalchemy import select, delete
@@ -26,7 +27,7 @@ def test_actual_process_death_recovers_claim_and_unpublished_object(ft3):
     c,factory,_=ft3
     person_id(create(c));asset=upload(c).json()['id'];key=age_and_release_upload(factory,asset)
     env=dict(os.environ,APP_ENV='test',DATABASE_URL=str(factory.kw['bind'].url),PYTHONPATH=str(Path(__file__).resolve().parents[1]))
-    runner=os.getenv('FAMILY_TREE_TEST_PYTHON','/var/ralph-projects/chore_tracking/.venv/bin/python')
+    runner=os.getenv('FAMILY_TREE_TEST_PYTHON',sys.executable)
     source="from app.config import get_settings;from app.db import get_session_factory;from app.services.family_tree import media;import os;factory=get_session_factory(get_settings().database_url);s=factory();assert media.claim_deletion(s,"+str(asset)+") is not None;os._exit(73)"
     result=subprocess.run([runner,'-c',source],env=env,capture_output=True,timeout=30)
     assert result.returncode==73
