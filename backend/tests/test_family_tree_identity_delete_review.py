@@ -128,10 +128,19 @@ def test_previous_head_forward_trigger_repair_preserves_rows_and_schema(tmp_path
     with engine.connect() as connection:
         tables = dict(connection.execute(text("SELECT name,sql FROM sqlite_master WHERE type='table'")).all())
         rows = {name: connection.execute(text(f'SELECT * FROM "{name}"')).all() for name in tables if name != 'alembic_version'}
+    # The trigger-only revision preserves every table definition. Later 0026
+    # intentionally adds portable alias history, so keep this assertion pinned
+    # to the repair it characterizes, then check the latest unfiltered schema.
+    command.upgrade(cfg(), '20261013_0025')
+    with engine.connect() as connection:
+        assert dict(connection.execute(text("SELECT name,sql FROM sqlite_master WHERE type='table'")).all()) == tables
+        for name, expected in rows.items():
+            assert connection.execute(text(f'SELECT * FROM "{name}"')).all() == expected, name
+        guard = connection.scalar(text("SELECT sql FROM sqlite_master WHERE name='trg_ft_identity_update'"))
+        assert 'UPDATE OF user_id, household_id' in guard
     command.upgrade(cfg(), 'head')
     command.check(cfg())
     with engine.connect() as connection:
-        assert dict(connection.execute(text("SELECT name,sql FROM sqlite_master WHERE type='table'")).all()) == tables
         for name, expected in rows.items():
             assert connection.execute(text(f'SELECT * FROM "{name}"')).all() == expected, name
         guard = connection.scalar(text("SELECT sql FROM sqlite_master WHERE name='trg_ft_identity_update'"))

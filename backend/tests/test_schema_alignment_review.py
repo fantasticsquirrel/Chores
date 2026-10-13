@@ -32,6 +32,13 @@ def test_unfiltered_migration_parity_and_existing_rows(tmp_path,monkeypatch,prev
         with get_engine(url).connect() as c:
             before={row[0]:row[1] for row in c.execute(text("SELECT name,sql FROM sqlite_master WHERE type='table'"))}
             rows={t:list(c.execute(text(f'SELECT * FROM "{t}"')).tuples()) for t in before if t!='alembic_version'}
+        # Index/trigger-only repairs preserve all original table DDL. Assert
+        # that exact boundary before the intentional alias column in 0026.
+        command.upgrade(cfg(),'20261013_0025')
+        with get_engine(url).connect() as c:
+            repaired={row[0]:row[1] for row in c.execute(text("SELECT name,sql FROM sqlite_master WHERE type='table'"))}
+            assert before==repaired
+            for t,expected in rows.items(): assert list(c.execute(text(f'SELECT * FROM "{t}"')).tuples())==expected, t
     command.upgrade(cfg(),'head')
     command.check(cfg())
     with get_engine(url).connect() as c:
@@ -39,7 +46,5 @@ def test_unfiltered_migration_parity_and_existing_rows(tmp_path,monkeypatch,prev
         assert inspect(c).get_columns('households')[3]['nullable'] is False
         assert c.execute(text('PRAGMA foreign_key_check')).all()==[]
         if previous:
-            after={row[0]:row[1] for row in c.execute(text("SELECT name,sql FROM sqlite_master WHERE type='table'"))}
-            assert before==after
             for t,expected in rows.items(): assert list(c.execute(text(f'SELECT * FROM "{t}"')).tuples())==expected, t
             c.execute(text('DELETE FROM users WHERE id=902')) if False else None
