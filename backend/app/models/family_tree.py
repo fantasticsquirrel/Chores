@@ -171,7 +171,10 @@ for action in ['INSERT', 'UPDATE']:
       OR EXISTS (SELECT 1 FROM family_tree_people WHERE merged_into_person_id=NEW.id))
     BEGIN SELECT RAISE(ABORT, 'merged aliases must be flat'); END''')
 for action in ['INSERT','UPDATE']:
-    TRIGGERS.append(f'''CREATE TRIGGER trg_ft_identity_{action.lower()} BEFORE {action} ON family_tree_identity_links
+    # Creator SET NULL is attribution cleanup, not an identity-target change.
+    # During user deletion the target CASCADE may run after creator nulling.
+    mutation = 'UPDATE OF user_id, household_id' if action == 'UPDATE' else action
+    TRIGGERS.append(f'''CREATE TRIGGER trg_ft_identity_{action.lower()} BEFORE {mutation} ON family_tree_identity_links
     WHEN NEW.user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM users WHERE id=NEW.user_id AND household_id=NEW.household_id AND role IN ('PARENT','PARENT_ADMIN'))
     BEGIN SELECT RAISE(ABORT, 'identity target must be an adult'); END''')
 for statement in TRIGGERS:
