@@ -25,6 +25,7 @@
     "postinstall": "node scripts/security-backports.mjs",
     "security:backports": "node scripts/security-backports.mjs --check && node --test scripts/security-backports.test.mjs scripts/security-backports-installer.test.mjs",
     "architecture:report": "python3 scripts/architecture-report.py",
+    "family-tree-core:gate": "npm run typecheck --workspace @family-manager/family-tree-core && npm run test --workspace @family-manager/family-tree-core",
     "modules:validate": "vitest run packages/family-api/src/module-manifest-validator.test.ts packages/family-api/src/module-integrations.test.ts --environment node",
     "lint": "npm run lint --workspace frontend",
     "test": "npm run test --workspace frontend",

@@ -40,6 +40,9 @@ jobs:
       - name: Shared API contract tests
         run: npx vitest run packages/family-api/src/*.test.ts --environment node
 
+      - name: Family Tree pure core types and nonempty tests
+        run: npm run family-tree-core:gate
+
       - name: Mobile quality and Expo dependency alignment
         run: npm run mobile:gate
 
