@@ -45,7 +45,7 @@ def test_alias_history_migration_preserves_existing_rows_and_unfiltered_schema(t
             c.execute(text("INSERT INTO family_tree_people (id,household_id,collection_id,facts,search_text,is_locked,created_by_user_id,created_at,updated_at) VALUES (801,501,701,:facts,'sentinel',0,601,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)"), {'facts': json.dumps({'display_name': 'Sentinel', 'aliases': [{'name': 'Original'}]})})
             c.execute(text("INSERT INTO family_tree_other_names (id,household_id,collection_id,person_id,name,label,position,created_by_user_id,created_at,updated_at) VALUES (901,501,701,801,'Original','Citation',0,601,'2001-02-03 04:05:06','2001-02-03 04:05:06')"))
             before = snapshot(c)
-    command.upgrade(cfg, 'head')
+    command.upgrade(cfg, '20261013_0028')
     with engine.connect() as c:
         assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261013_0028'
         assert not c.execute(text('PRAGMA foreign_key_check')).all()
@@ -58,10 +58,21 @@ def test_alias_history_migration_preserves_existing_rows_and_unfiltered_schema(t
                     assert 'portable_provenance JSON' in after[table][0]
                 else:
                     assert after[table] == (ddl, rows), table
-    # Invoke the real, unfiltered Alembic check on BOTH paths.
-    command.check(cfg)
+    # Keep the exact original alias/disable-only boundary pinned to 0028.
     with pytest.raises(RuntimeError, match='disable-only'):
         command.downgrade(cfg, '20261013_0025')
     with engine.connect() as c:
         assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261013_0028'
+        previous_head = snapshot(c)
+    command.upgrade(cfg, 'head')
+    with engine.connect() as c:
+        from app.models import RETAINED_HOMESCHOOL_TABLES
+        after_head = snapshot(c)
+        assert set(after_head) == set(previous_head) | {table.name for table in RETAINED_HOMESCHOOL_TABLES}
+        for name, old in previous_head.items():
+            assert after_head[name] == old, name
+        for table in RETAINED_HOMESCHOOL_TABLES:
+            assert after_head[table.name][1] == []
+        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261014_0029'
+    command.check(cfg)
     engine.dispose()
