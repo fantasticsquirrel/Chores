@@ -32,7 +32,15 @@
     "owner": "cabbageman2",
     "plugins": [
       "expo-sharing",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Family Manager to select photographs for your household family history. Uploads are sanitized copies; originals stay on your device.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }
