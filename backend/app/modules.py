@@ -177,6 +177,7 @@ MODULE_CHORES = _registered_key("chores")
 MODULE_HOMESCHOOL = _registered_key("homeschool")
 MODULE_ADMIN = _registered_key("admin")
 MODULE_RECIPES = _registered_key("recipes")
+MODULE_FAMILY_TREE = _registered_key("family-tree")
 
 DEFAULT_ROLE_MODULES: dict[UserRole, tuple[str, ...]] = {
     role: tuple(module.key for module in AVAILABLE_MODULES if module.default_grants[role])

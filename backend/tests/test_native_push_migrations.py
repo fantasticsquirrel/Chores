@@ -81,8 +81,9 @@ def test_sparse_upgrade_downgrade_reupgrade_preserves_unrelated_rows(migration_d
     with engine.begin() as connection:
         connection.exec_driver_sql("CREATE TABLE legacy_records (id INTEGER PRIMARY KEY, value TEXT NOT NULL)")
         connection.exec_driver_sql("INSERT INTO legacy_records VALUES (7, 'preserved-browser-record')")
+    # This intentionally sparse fixture owns only the native-push revision.
     command.stamp(config, PREVIOUS)
-    command.upgrade(config, "head")
+    command.upgrade(config, REVISION)
     assert TABLE in inspect(engine).get_table_names(), "Sparse SQLite needs the native table too"
     with engine.connect() as connection:
         assert connection.exec_driver_sql(f"SELECT count(*) FROM {TABLE}").scalar_one() == 0
@@ -91,7 +92,7 @@ def test_sparse_upgrade_downgrade_reupgrade_preserves_unrelated_rows(migration_d
     assert TABLE not in inspect(engine).get_table_names()
     with engine.connect() as connection:
         assert connection.exec_driver_sql("SELECT * FROM legacy_records").all() == [(7, "preserved-browser-record")]
-    command.upgrade(config, "head")
+    command.upgrade(config, REVISION)
     with engine.connect() as connection:
         assert connection.exec_driver_sql(f"SELECT count(*) FROM {TABLE}").scalar_one() == 0
         assert connection.exec_driver_sql("SELECT * FROM legacy_records").all() == [(7, "preserved-browser-record")]
@@ -102,8 +103,9 @@ def seed_sparse_identity(config, engine):
         for table in ("households", "users", "auth_sessions"):
             connection.exec_driver_sql(f"CREATE TABLE {table} (id INTEGER PRIMARY KEY)")
             connection.exec_driver_sql(f"INSERT INTO {table} VALUES (1)")
+    # This intentionally sparse fixture owns only the native-push revision.
     command.stamp(config, PREVIOUS)
-    command.upgrade(config, "head")
+    command.upgrade(config, REVISION)
     assert TABLE in inspect(engine).get_table_names(), "Native migration missing"
 
 

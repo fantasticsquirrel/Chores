@@ -35,6 +35,7 @@ class Household(TimestampMixin, Base):
 
 class Child(TimestampMixin, Base):
     __tablename__ = "children"
+    __table_args__ = (Index("ux_children_id_household", "id", "household_id", unique=True),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -47,6 +48,7 @@ class User(TimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("household_id", "email"),
         UniqueConstraint("email", name="uq_users_email"),
+        Index("ux_users_id_household", "id", "household_id", unique=True),
         CheckConstraint(
             "(role = 'CHILD' AND child_id IS NOT NULL) OR (role IN ('PARENT_ADMIN', 'PARENT') AND child_id IS NULL)",
             name="user_role_child_link",

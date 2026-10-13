@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.api import auth_router, billing_router, children_router, chores_router, finance_router, homeschool_router, households_router, modules_router, notifications_router, ops_router, recipes_router, workflow_router
 from app.api.native_push import router as native_push_router
+from app.api.family_tree import router as family_tree_router
 from app.config import get_settings
 from app.db import initialize_database
 from app.error_handling import (
@@ -73,6 +74,9 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
                 response.headers["Content-Security-Policy"] = RESET_CONTENT_SECURITY_POLICY
         else:
             response.headers.setdefault("Referrer-Policy", "same-origin")
+        if request.url.path.startswith(f"{API_PREFIX}/family-tree"):
+            response.headers["Cache-Control"] = "no-store, private"
+            response.headers["Referrer-Policy"] = "no-referrer"
         # HSTS is owned by the HTTPS edge.  The ASGI app must not infer trusted
         # transport state from client-controlled forwarding headers.
         return response
@@ -94,6 +98,7 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
     app.include_router(notifications_router, prefix=API_PREFIX)
     app.include_router(native_push_router, prefix=API_PREFIX)
     app.include_router(recipes_router, prefix=API_PREFIX)
+    app.include_router(family_tree_router, prefix=API_PREFIX)
     app.include_router(workflow_router, prefix=API_PREFIX)
     app.include_router(ops_router, prefix="/ops-api")
 

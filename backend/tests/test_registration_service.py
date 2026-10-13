@@ -56,6 +56,10 @@ def test_registration_creates_no_identity_until_single_use_verification(tmp_path
         assert user.role is UserRole.PARENT_ADMIN
         household = session.get(Household, user.household_id)
         assert household is not None and household.owner_user_id == user.id
+        from app.models import HouseholdModuleAccess, Module
+        access=session.get(HouseholdModuleAccess,{'household_id':household.id,'module_key':'family-tree'})
+        assert access is not None and access.enabled is False
+        assert session.get(Module,'family-tree').enabled is False
     with factory() as session:
         assert service.verify(session, token=token) is None
 

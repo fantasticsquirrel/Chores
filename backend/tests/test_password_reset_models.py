@@ -112,7 +112,7 @@ def test_password_reset_migration_creates_secret_free_tables(tmp_path: Path, mon
     } <= delivery_indexes
 
 
-def _upgrade_password_reset_database(tmp_path: Path, monkeypatch) -> tuple[str, Config]:
+def _upgrade_password_reset_database(tmp_path: Path, monkeypatch, revision="head") -> tuple[str, Config]:
     database_url = f"sqlite:///{tmp_path / 'password-reset-orm.db'}"
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("DATABASE_URL", database_url)
@@ -122,7 +122,7 @@ def _upgrade_password_reset_database(tmp_path: Path, monkeypatch) -> tuple[str, 
     get_engine.cache_clear()
     get_session_factory.cache_clear()
     config = _alembic_config(database_url)
-    command.upgrade(config, "head")
+    command.upgrade(config, revision)
     return database_url, config
 
 
@@ -211,13 +211,15 @@ def test_password_reset_models_enforce_active_capability_and_secret_free_cascade
 
 
 def test_password_reset_migration_round_trip_and_sparse_identity_fixture(tmp_path: Path, monkeypatch) -> None:
-    database_url, config = _upgrade_password_reset_database(tmp_path, monkeypatch)
+    # Historical rollback fixtures stop at the last revision they own; the
+    # Family Tree head deliberately cannot destroy newly recorded history.
+    database_url, config = _upgrade_password_reset_database(tmp_path, monkeypatch, revision="20260813_0018")
     command.downgrade(config, "20260719_0016")
     downgraded = inspect(create_engine(database_url))
     assert "password_resets" not in downgraded.get_table_names()
     assert "session_generation" not in {column["name"] for column in downgraded.get_columns("users")}
     assert "session_generation" not in {column["name"] for column in downgraded.get_columns("auth_sessions")}
-    command.upgrade(config, "head")
+    command.upgrade(config, "20260813_0018")
     upgraded = inspect(create_engine(database_url))
     assert {"password_resets", "password_reset_requests", "password_reset_deliveries"} <= set(upgraded.get_table_names())
 
@@ -227,7 +229,7 @@ def test_password_reset_migration_round_trip_and_sparse_identity_fixture(tmp_pat
     with sparse_engine.begin() as connection:
         connection.exec_driver_sql("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL)")
         connection.exec_driver_sql("INSERT INTO alembic_version (version_num) VALUES ('20260719_0016')")
-    command.upgrade(sparse_config, "head")
+    command.upgrade(sparse_config, "20260813_0018")
     assert "password_resets" not in inspect(sparse_engine).get_table_names()
     # A subsystem-only historical fixture can reach this revision without
     # identity tables. Its downgrade must be as harmless as its no-op upgrade.
@@ -253,7 +255,7 @@ def test_session_generation_migration_round_trip_preserves_password_reset_schema
     assert "session_generation" not in {column["name"] for column in before.get_columns("auth_sessions")}
     assert {"password_resets", "password_reset_requests", "password_reset_deliveries"} <= set(before.get_table_names())
 
-    command.upgrade(config, "head")
+    command.upgrade(config, "20260813_0018")
     upgraded = inspect(create_engine(database_url))
     assert "session_generation" in {column["name"] for column in upgraded.get_columns("users")}
     assert "session_generation" in {column["name"] for column in upgraded.get_columns("auth_sessions")}

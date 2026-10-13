@@ -93,6 +93,14 @@ def test_admin_manager_can_list_household_module_toggles(tmp_path: Path, monkeyp
             "enabled": True,
             "can_disable": False,
         },
+        {
+            "key": "family-tree",
+            "name": "Family Tree",
+            "description": "Household family history, relationships, stories and photographs.",
+            "can_manage": True,
+            "enabled": False,
+            "can_disable": True,
+        },
     ]
 
 
