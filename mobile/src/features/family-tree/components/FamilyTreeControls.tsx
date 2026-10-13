@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Pressable, Text } from "react-native";
+import type { ReactNode, Ref } from "react";
+import { Pressable, Text, type View } from "react-native";
 import { useTheme } from "../../../theme/ThemeContext";
 
 export function FamilyTreeButton({
@@ -8,18 +8,21 @@ export function FamilyTreeButton({
   selected,
   disabled = false,
   children,
+  buttonRef,
 }: {
   label: string;
   onPress: () => void;
   selected?: boolean;
   disabled?: boolean;
   children?: ReactNode;
+  buttonRef?: Ref<View>;
 }) {
   const {
     definition: { colors },
   } = useTheme();
   return (
     <Pressable
+      ref={buttonRef}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{
@@ -51,10 +54,12 @@ export function FamilyTreeToggle({
   label,
   checked,
   onPress,
+  disabled = false,
 }: {
   label: string;
   checked: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }) {
   const {
     definition: { colors },
@@ -63,7 +68,8 @@ export function FamilyTreeToggle({
     <Pressable
       accessibilityRole="checkbox"
       accessibilityLabel={label}
-      accessibilityState={{ checked }}
+      accessibilityState={{ checked, disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={{
         minWidth: 44,

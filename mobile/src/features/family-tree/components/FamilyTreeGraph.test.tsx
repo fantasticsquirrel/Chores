@@ -18,6 +18,73 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 describe("FamilyTreeGraph native presentation", () => {
+  it("semantically disables network lens and person actions during an owned request", () => {
+    const change = jest.fn();
+    const select = jest.fn();
+    const focus = jest.fn();
+    const view = render(
+      <FamilyTreeGraph
+        {...props({
+          loading: true,
+          onOptionsChange: change,
+          onSelectPerson: select,
+          onFocusPerson: focus,
+        })}
+      />,
+    );
+    const history = view.getByRole("checkbox", {
+      name: "Show historical partnerships",
+    });
+    expect(history.props.accessibilityState.disabled).toBe(true);
+    fireEvent.press(history);
+    fireEvent.press(view.getByRole("button", { name: "Select Alex" }));
+    fireEvent.press(view.getByRole("button", { name: "Show Alex in tree" }));
+    expect(change).not.toHaveBeenCalled();
+    expect(select).not.toHaveBeenCalled();
+    expect(focus).not.toHaveBeenCalled();
+  });
+  it("expands server-horizon counts and explicitly disables at production depth cap", () => {
+    const graph: GraphInput = {
+      nodes: [{ id: 1, label: "Frontier" }],
+      edges: [],
+    };
+    const change = jest.fn();
+    const p = props({
+      graph,
+      focusPersonId: 1,
+      options: { ancestorDepth: 9, descendantDepth: 2 },
+      onOptionsChange: change,
+      maxDepth: 10,
+      expansionCounts: { 1: { parents: 2, children: 0 } },
+    });
+    const view = render(<FamilyTreeGraph {...p} />);
+    fireEvent.press(
+      view.getByRole("button", { name: "Expand ancestors of Frontier" }),
+    );
+    expect(change).toHaveBeenLastCalledWith(
+      expect.objectContaining({ ancestorDepth: 10 }),
+    );
+    view.rerender(
+      <FamilyTreeGraph
+        {...p}
+        options={{ ancestorDepth: 10, descendantDepth: 2 }}
+      />,
+    );
+    expect(
+      view.getByRole("button", { name: "Expand ancestors of Frontier" }).props
+        .accessibilityState.disabled,
+    ).toBe(true);
+    fireEvent.press(
+      view.getByRole("button", { name: "Expand ancestors of Frontier" }),
+    );
+    expect(change).toHaveBeenCalledTimes(1);
+    expect(view.getByText(/Maximum server depth: 10/)).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Relationship list" }));
+    expect(
+      view.getByRole("button", { name: "Expand ancestors of Frontier" }).props
+        .accessibilityState.disabled,
+    ).toBe(true);
+  });
   it("publishes server lens changes and invalidates old continuation", () => {
     const onOptionsChange =
       jest.fn<

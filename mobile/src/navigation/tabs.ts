@@ -1,5 +1,5 @@
 import type { FamilyModule, UserRole } from "../api/models";
-import { getMobileModule } from "../modules/registry";
+import { familyModules, getMobileModule } from "../modules/registry";
 import { isParentRole } from "../utils/format";
 import type {
   AppTab,
@@ -65,6 +65,15 @@ export function buildNavigationLayout(
 
   if (hasModule(modules, "recipes")) {
     overflow.push({ key: "recipes", label: getMobileModule("recipes").label });
+  }
+
+  const tree = familyModules.find((module) => module.key === "family-tree");
+  if (
+    tree?.navigation &&
+    tree.roles.includes(role) &&
+    hasModule(modules, "family-tree")
+  ) {
+    overflow.push({ key: "family-tree", label: tree.label });
   }
 
   if (role === "PARENT_ADMIN" && hasModule(modules, "admin")) {

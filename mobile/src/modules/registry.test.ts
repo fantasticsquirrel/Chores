@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { isFamilyModuleSupportedOnPlatform } from "@family-manager/family-api/modules";
+const treeSupported = isFamilyModuleSupportedOnPlatform(
+  "family-tree",
+  "mobile",
+);
 
 import {
   canAccessMobileModule,
@@ -14,6 +19,7 @@ describe("mobile family module registry", () => {
       "homeschool",
       "recipes",
       "admin",
+      ...(treeSupported ? ["family-tree"] : []),
     ]);
   });
 
@@ -29,7 +35,12 @@ describe("mobile family module registry", () => {
       label: "School",
       navigation: true,
     });
-    expect(MOBILE_MODULE_REGISTRATION.dashboardCards).toEqual(["chores", "homeschool", "recipes"]);
+    expect(MOBILE_MODULE_REGISTRATION.dashboardCards).toEqual([
+      "chores",
+      "homeschool",
+      "recipes",
+      ...(treeSupported ? ["family-tree"] : []),
+    ]);
     expect(canAccessMobileModule([{ key: "chores" }], "chores")).toBe(true);
     expect(canAccessMobileModule([], "chores")).toBe(false);
   });

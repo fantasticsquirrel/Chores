@@ -1,3 +1,4 @@
+import { useRef, type RefObject } from "react";
 import { Text, View } from "react-native";
 import type { GraphNode, ListRow } from "@family-manager/family-tree-core";
 import { useTheme } from "../../../theme/ThemeContext";
@@ -15,6 +16,8 @@ interface FamilyTreePersonCardProps {
   crossRowKeys: ReadonlySet<string>;
   branches: readonly BranchAction[];
   onSelectPerson: (id: number) => void;
+  onPersonTrigger?: (ref: RefObject<View | null>) => void;
+  disabled?: boolean;
   onFocusPerson: (id: number) => void;
 }
 /** Display only pre-indexed relationships; never scan all people for candidates. */
@@ -25,12 +28,15 @@ export function FamilyTreePersonCard({
   crossRowKeys,
   branches,
   onSelectPerson,
+  onPersonTrigger,
+  disabled = false,
   onFocusPerson,
 }: FamilyTreePersonCardProps) {
   const {
     definition: { colors },
   } = useTheme();
   const { node, birthYear, relationships } = row;
+  const trigger = useRef<View>(null);
   return (
     <View
       style={{
@@ -48,7 +54,12 @@ export function FamilyTreePersonCard({
       <FamilyTreeButton
         label={`Select ${node.label}`}
         selected={focusPersonId === node.id}
-        onPress={() => onSelectPerson(node.id)}
+        buttonRef={trigger}
+        disabled={disabled}
+        onPress={() => {
+          onPersonTrigger?.(trigger);
+          onSelectPerson(node.id);
+        }}
       >
         {focusPersonId === node.id ? "✓ " : ""}
         {node.label}
@@ -58,6 +69,7 @@ export function FamilyTreePersonCard({
       </Text>
       <FamilyTreeButton
         label={`Show ${node.label} in tree`}
+        disabled={disabled}
         onPress={() => onFocusPerson(node.id)}
       />
       {branches.map((action) => (

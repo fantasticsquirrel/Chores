@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { ScrollView, Text, View } from "react-native";
 import {
   layoutGraph,
@@ -24,12 +24,18 @@ export interface FamilyTreeGraphProps {
   focusPersonId: number | null;
   graphRevision: number;
   onSelectPerson: (id: number) => void;
+  onPersonTrigger?: (ref: RefObject<View | null>) => void;
   onFocusPerson: (id: number) => void;
   options?: LayoutOptions;
   onOptionsChange?: (options: LayoutOptions) => void;
   expansionToken?: string | null;
   onLoadMore?: () => void;
   loading?: boolean;
+  /** Production query cap may be lower than pure-layout limit. */
+  maxDepth?: number;
+  expansionCounts?: Readonly<
+    Record<number, { parents: number; children: number }>
+  >;
 }
 type Direction = "ancestors" | "descendants";
 interface LocalLens {
@@ -69,12 +75,15 @@ export function FamilyTreeGraph({
   focusPersonId,
   graphRevision,
   onSelectPerson,
+  onPersonTrigger,
   onFocusPerson,
   options = {},
   onOptionsChange,
   expansionToken,
   onLoadMore,
   loading = false,
+  maxDepth = 32,
+  expansionCounts,
 }: FamilyTreeGraphProps) {
   const {
     definition: { colors },
@@ -104,6 +113,7 @@ export function FamilyTreeGraph({
     };
   }
   function update(change: (current: LocalLens) => LocalLens) {
+    if (loading) return;
     const next = change(local);
     setState(next);
     if (expansionToken) setInvalidatedToken(expansionToken);
@@ -171,14 +181,42 @@ export function FamilyTreeGraph({
     // Fresh native onLayout measurements perform the fit. Never reuse old
     // coordinates across a changed focus/lens. Incidental renders do not fit.
   }, [context, isGraph]);
+  function missingServerEdges(id: number, direction: Direction) {
+    const total =
+      expansionCounts?.[id]?.[
+        direction === "ancestors" ? "parents" : "children"
+      ] ?? 0;
+    const loaded =
+      (direction === "ancestors" ? prepared.parents : prepared.children).get(id)
+        ?.length ?? 0;
+    return total > loaded;
+  }
   function branch(id: number, direction: Direction) {
+    if (loading) return;
     const set =
       direction === "ancestors"
         ? effective.collapsedAncestors
         : effective.collapsedDescendants;
     const shut = set?.includes(id) ?? false;
+    const missing = missingServerEdges(id, direction);
+    if (
+      !shut &&
+      missing &&
+      expansionToken &&
+      expansionToken !== invalidatedToken &&
+      onLoadMore
+    ) {
+      onLoadMore();
+      return;
+    }
     const depthLimited =
-      expansions.get(`${id}:${direction}`)?.reason === "depth";
+      !shut &&
+      (expansions.get(`${id}:${direction}`)?.reason === "depth" || missing);
+    const depth =
+      direction === "ancestors"
+        ? effective.ancestorDepth!
+        : effective.descendantDepth!;
+    if (depthLimited && depth >= maxDepth) return;
     update((current) => ({
       ...current,
       [direction]: { ...current[direction], [id]: !shut && !depthLimited },
@@ -186,13 +224,13 @@ export function FamilyTreeGraph({
         ? direction === "ancestors"
           ? {
               ancestorExtra: Math.min(
-                32 - (options.ancestorDepth ?? 2),
+                maxDepth - (options.ancestorDepth ?? 2),
                 current.ancestorExtra + 1,
               ),
             }
           : {
               descendantExtra: Math.min(
-                32 - (options.descendantDepth ?? 2),
+                maxDepth - (options.descendantDepth ?? 2),
                 current.descendantExtra + 1,
               ),
             }
@@ -207,13 +245,15 @@ export function FamilyTreeGraph({
               direction === "ancestors"
                 ? prepared.parents.get(row.node.id)
                 : prepared.children.get(row.node.id);
-            if (!edges?.length) return [];
+            const missing = missingServerEdges(row.node.id, direction);
+            if (!edges?.length && !missing) return [];
             const ids =
               direction === "ancestors"
                 ? effective.collapsedAncestors
                 : effective.collapsedDescendants;
             const expansion = expansions.get(`${row.node.id}:${direction}`);
-            const expand = !!ids?.includes(row.node.id) || !!expansion;
+            const expand =
+              !!ids?.includes(row.node.id) || !!expansion || missing;
             const limit =
               direction === "ancestors"
                 ? effective.ancestorDepth!
@@ -221,7 +261,17 @@ export function FamilyTreeGraph({
             return [
               {
                 label: `${expand ? "Expand" : "Collapse"} ${direction} of ${row.node.label}`,
-                disabled: expansion?.reason === "depth" && limit >= 32,
+                disabled:
+                  loading ||
+                  (!ids?.includes(row.node.id) &&
+                    (expansion?.reason === "depth" || missing) &&
+                    limit >= maxDepth &&
+                    !(
+                      missing &&
+                      expansionToken &&
+                      expansionToken !== invalidatedToken &&
+                      onLoadMore
+                    )),
                 onPress: () => branch(row.node.id, direction),
               },
             ];
@@ -235,6 +285,8 @@ export function FamilyTreeGraph({
         crossRowKeys={crossRowKeys}
         branches={branches}
         onSelectPerson={onSelectPerson}
+        onPersonTrigger={onPersonTrigger}
+        disabled={loading}
         onFocusPerson={onFocusPerson}
       />
     );
@@ -261,6 +313,7 @@ export function FamilyTreeGraph({
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <FamilyTreeToggle
           label="Show partnerships"
+          disabled={loading}
           checked={effective.includePartners === true}
           onPress={() =>
             update((current) => ({
@@ -272,6 +325,7 @@ export function FamilyTreeGraph({
         {effective.includePartners ? (
           <FamilyTreeToggle
             label="Show historical partnerships"
+            disabled={loading}
             checked={effective.showHistoricalPartners === true}
             onPress={() =>
               update((current) => ({
@@ -283,6 +337,7 @@ export function FamilyTreeGraph({
         ) : null}
         <FamilyTreeToggle
           label="Show care connections"
+          disabled={loading}
           checked={effective.includeCare === true}
           onPress={() =>
             update((current) => ({ ...current, care: !effective.includeCare }))
@@ -293,6 +348,12 @@ export function FamilyTreeGraph({
         Care connections do not assert ancestry. Co-parents do not imply a
         partnership.
       </Text>
+      {maxDepth < 32 ? (
+        <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
+          Maximum server depth: {maxDepth}. Focus a frontier person to explore
+          further.
+        </Text>
+      ) : null}
       {loading ? (
         <Text style={{ color: colors.text, fontSize: 16 }}>
           Loading family tree…

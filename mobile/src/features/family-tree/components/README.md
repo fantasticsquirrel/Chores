@@ -15,12 +15,15 @@ interface FamilyTreeGraphProps {
   focusPersonId: number | null;
   graphRevision: number;
   onSelectPerson: (id: number) => void;
+  onPersonTrigger?: (ref: RefObject<View | null>) => void;
   onFocusPerson: (id: number) => void;
   options?: LayoutOptions;
   onOptionsChange?: (options: LayoutOptions) => void;
   expansionToken?: string | null;
   onLoadMore?: () => void;
   loading?: boolean;
+  maxDepth?: number;
+  expansionCounts?: Readonly<Record<number, { parents: number; children: number }>>;
 }
 ```
 
@@ -72,6 +75,22 @@ manifests. An installed root workspace link resolves the focused tests.
   screen owns vertical page scrolling, access/loading/error/stale-state policy,
   authorized focus and lifetime boundaries. Unmount/clear presentation on the
   appropriate session/household/access boundary; there is no persistent cache.
+
+## Production workflow integration
+
+- The native screen supplies `maxDepth={10}`, matching the live server query
+  validator rather than the pure-core depth limit of 32. Expansion is explicitly
+  disabled at that cap; focus a frontier person to explore further.
+- Pass server `expansion_counts` through `expansionCounts`. A frontier with
+  unprojected parents/children gets a real Expand control even when no matching
+  edge is loaded. Current continuation pages are requested first when available;
+  otherwise the owning screen receives a deeper lens. Same-revision pages are
+  unioned by IDs, bounded to server hard limits, and old query tokens are cleared.
+- `onPersonTrigger` passes the actual graph selection button ref to the screen
+  before `onSelectPerson`. The screen passes this surviving trigger, or the actual
+  directory/Add trigger, to the dialog with a safe header fallback.
+- `FamilyTreeButton` also accepts optional `buttonRef?: Ref<View>` for this
+  integration. No native gesture, pinch or zoom behavior was added.
 
 ## Dialog props and lifecycle
 
