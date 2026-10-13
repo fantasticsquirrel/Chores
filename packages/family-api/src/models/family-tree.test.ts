@@ -76,6 +76,9 @@ const inputModels: Record<string, string> = {
   ExportRequest: "FamilyTreeExportRequest",
   ImportCommit: "FamilyTreeImportCommitRequest",
   Provenance: "FamilyTreePortableProvenanceInput",
+  AliasProvenance: "FamilyTreePortableAliasProvenanceInput",
+  PortableAlias: "FamilyTreePortableAliasInput",
+  PortablePersonData: "FamilyTreePortablePersonDataInput",
   PortablePerson: "FamilyTreePortablePersonInput",
   PortableParent: "FamilyTreePortableParentInput",
   PortableCare: "FamilyTreePortableCareInput",
@@ -118,7 +121,9 @@ const outputModels: Record<string, string> = {
   JobDTO: "FamilyTreeJob",
   PreviewDTO: "FamilyTreePreview",
   Provenance: "FamilyTreePortableProvenance",
-  PersonCreate: "FamilyTreePortablePersonData",
+  AliasProvenance: "FamilyTreePortableAliasProvenance",
+  PortableAlias: "FamilyTreePortableAlias",
+  PortablePersonData: "FamilyTreePortablePersonData",
   PortablePerson: "FamilyTreePortablePerson",
   PortableParent: "FamilyTreePortableParent",
   PortableCare: "FamilyTreePortableCare",
@@ -320,9 +325,12 @@ describe("Family Tree DTO parity with executable Pydantic schemas", () => {
       })
       .join("\n");
     const manifest = `const actual_manifest: DTO.FamilyTreeManifest = ${JSON.stringify(familyTreeProducer.manifest)};`;
+    const aliasHistory = Object.entries(familyTreeProducer.alias_history)
+      .map(([stage, aliases]) => `const aliases_${stage}: DTO.FamilyTreePortableAlias[] = ${JSON.stringify(aliases)};`)
+      .join("\n");
     expect(
       compile(
-        contractSource(producer.schemas) + "\n" + examples + "\n" + manifest,
+        contractSource(producer.schemas) + "\n" + examples + "\n" + manifest + "\n" + aliasHistory,
       ),
     ).toEqual([]);
   }, 30000);

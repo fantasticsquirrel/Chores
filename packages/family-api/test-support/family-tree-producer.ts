@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import type { FamilyTreePortableAlias } from "../src/models/family-tree";
 export interface ProducerRecord {
   name: string;
   method: string;
@@ -23,4 +24,8 @@ export const familyTreeProducer = JSON.parse(
     [fileURLToPath(new URL("./family_tree_producer.py", import.meta.url))],
     { encoding: "utf8", timeout: 60000, maxBuffer: 4 * 1024 * 1024 },
   ),
-) as { records: ProducerRecord[]; manifest: unknown };
+) as {
+  records: ProducerRecord[];
+  manifest: unknown;
+  alias_history: Record<"original" | "imported" | "merged", FamilyTreePortableAlias[]>;
+};

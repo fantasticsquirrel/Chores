@@ -137,7 +137,8 @@ def commit(session, actor, c, body):
         # Preserve an alias's obsolete entered-name copy, including people
         # whose only name is an other-name, while retaining target attribution.
         session.add(Name(household_id=actor.household_id,collection_id=c.id,person_id=target.id,
-            name=row.name,label=row.label,position=row.position,created_by_user_id=row.created_by_user_id,created_at=row.created_at))
+            name=row.name,label=row.label,position=row.position,created_by_user_id=row.created_by_user_id,created_at=row.created_at,
+            portable_provenance=row.portable_provenance))
     for link in session.scalars(select(Identity).where(Identity.household_id==actor.household_id,Identity.person_id==source.id)):
         link.person_id=target.id
     # Move record provenance independently of the alias's obsolete scalar copy,

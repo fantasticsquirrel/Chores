@@ -1,7 +1,7 @@
 """Strict FT-3 wire/portable schemas. No local account or storage authority."""
 from typing import Annotated, Literal
-from pydantic import Field, model_validator, StringConstraints
-from app.schemas.family_tree import Strict, Command, Id, Key, PersonCreate, Citation, DatedCitation, StoryData, ResidenceData
+from pydantic import ConfigDict, Field, model_validator, StringConstraints
+from app.schemas.family_tree import Strict, Command, Id, Key, Alias, PersonCreate, Citation, DatedCitation, StoryData, ResidenceData
 
 class AttachMedia(Command):
     person_id: Id
@@ -66,9 +66,28 @@ class Provenance(Strict):
     source_label: str | None = Field(default=None,max_length=1000)
     created_at: str | None = Field(default=None,max_length=100)
     attribution: str | None = Field(default=None,max_length=1000)
+class AliasProvenance(Provenance):
+    # Quoted historical text is not normalized into newly asserted facts.
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=False)
+    # Legacy v1 omitted history is explicitly unknown, not the importing actor.
+    status: Literal['known','unknown'] = 'unknown'
+    @model_validator(mode='after')
+    def history(self):
+        if self.status == 'known' and (not self.created_at or not self.created_at.strip() or not self.attribution or not self.attribution.strip()):
+            raise ValueError('Known alias history requires a timestamp and textual contributor.')
+        if self.status == 'unknown' and self.attribution is not None:
+            raise ValueError('Unknown alias history cannot assert a contributor.')
+        return self
+
+class PortableAlias(Alias):
+    provenance: AliasProvenance = Field(default_factory=AliasProvenance)
+
+class PortablePersonData(PersonCreate):
+    aliases: Annotated[list[PortableAlias],Field(max_length=50)] = Field(default_factory=list)
+
 class PortablePerson(Strict):
     key: SourceKey
-    person: PersonCreate
+    person: PortablePersonData
     is_locked: Annotated[bool, Field(strict=True)] = False
     lock_reason: str | None = Field(default=None,max_length=1000)
     archived: Annotated[bool, Field(strict=True)] = False

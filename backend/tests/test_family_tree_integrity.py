@@ -165,7 +165,7 @@ def test_fresh_and_previous_head_migration_disables_catalog(tmp_path,monkeypatch
                 assert s.get(UserModuleAccess,{'user_id':601,'module_key':'recipes'}).can_manage is False
         with pytest.raises(RuntimeError,match='disable-only'):command.downgrade(cfg,'20261005_0021')
         with get_session_factory(url)() as s:
-            assert s.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='20261013_0025'
+            assert s.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='20261013_0026'
         # Whole-schema parity is required; historical DDL remains unchanged.
         from alembic.autogenerate import compare_metadata
         from alembic.migration import MigrationContext

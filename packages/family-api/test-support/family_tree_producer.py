@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'backend'))
@@ -150,6 +151,14 @@ def produce():
                 return response
 
             p = person_id(create(client, name='Original', birth_date={'value': '1984', 'uncertain': True}, aliases=[{'name': 'Entered alias'}]))
+            login = client.post('/chore-api/auth/login', json={'email': 'PARENT@example.test', 'password': 'password123'})
+            assert login.status_code == 200; client.headers['X-CSRF-Token'] = login.json()['csrf_token']
+            changed = client.request('PATCH', BASE + f'/people/{p}', json={
+                'expected_graph_revision': revision(), 'changes': {'aliases': [
+                    {'name': 'Entered alias'}, {'name': 'Second contributor alias', 'label': 'Original citation'}]}})
+            assert changed.status_code == 200, changed.text
+            login = client.post('/chore-api/auth/login', json={'email': 'PARENT_ADMIN@example.test', 'password': 'password123'})
+            assert login.status_code == 200; client.headers['X-CSRF-Token'] = login.json()['csrf_token']
             child = person_id(create(client, rev=revision(), name='Child', key='child'))
             source = person_id(create(client, rev=revision(), name='Duplicate', key='source'))
             for path, fields in [('/parent-links', {'parent_person_id': p, 'child_person_id': child, 'kind': 'adoptive'}),
@@ -178,6 +187,15 @@ def produce():
                 data = call('downloadFamilyTreeExport', 'get', f'/exports/{job["id"]}/download', (job['id'],), binary=True).content
                 exports.append(data)
             manifest = Manifest.model_validate_json(exports[0]).model_dump(mode='json')
+            with zipfile.ZipFile(io.BytesIO(exports[1])) as archive:
+                original_aliases = json.loads(archive.read('manifest.json'))['people'][0]['person']['aliases']
+            assert len({a['provenance']['attribution'] for a in original_aliases}) == 2
+            def exported_aliases(pid):
+                job = client.post(BASE + '/exports', json={'format': 'json'})
+                assert job.status_code == 200, job.text
+                data = client.get(BASE + f'/exports/{job.json()["id"]}/download')
+                assert data.status_code == 200, data.text
+                return next(p['person']['aliases'] for p in data.json()['people'] if p['key'] == f'p:{pid}')
             imp = call('stageFamilyTreeImport', 'post', '/imports', response_model='JobDTO', files={'file': ('tree.zip', exports[1], 'application/zip')}, fields={'expected_graph_revision': str(revision())}).json()
             call('getFamilyTreeImportJob', 'get', f'/imports/{imp["id"]}', (imp['id'],), response_model='JobDTO')
             # Same-household alternate actor cannot use the creator's job.
@@ -191,7 +209,13 @@ def produce():
             result = call('commitFamilyTreeImport', 'post', f'/imports/{imp["id"]}/commit', (imp['id'],), commit, 'ImportCommit', 'MutationResult').json()
             retry = call('commitFamilyTreeImport', 'post', f'/imports/{imp["id"]}/commit', (imp['id'],), commit, 'ImportCommit', 'MutationResult').json()
             assert retry['replayed'] is True and retry['committed_revision'] == result['committed_revision']
-            assert client.get(BASE + f'/people/{result["affected"]["person_ids"][0]}').status_code == 200
+            imported = result['affected']['person_ids'][0]
+            imported_detail = client.get(BASE + f'/people/{imported}').json()
+            assert imported_detail['identity_link'] is None
+            assert {a['created_by_user_id'] for a in imported_detail['person']['aliases']} == {imported_detail['person']['created_by_user_id']}
+            imported_aliases = exported_aliases(imported)
+            assert imported_aliases == original_aliases
+            source = imported  # Exercise imported alias history in the actual merge.
             call('getFamilyTreeImportJob', 'get', f'/imports/{imp["id"]}', (imp['id'],), response_model='JobDTO')
             duplicate = call('stageFamilyTreeImport', 'post', '/imports', response_model='JobDTO', files={'file': ('tree.zip', exports[1], 'application/zip')}, fields={'expected_graph_revision': str(revision())}).json()
             assert duplicate['summary']['duplicate_provenance'] is True
@@ -217,7 +241,10 @@ def produce():
             for record in records:
                 if record.get('response_model') == 'JobDTO':
                     assert set(record['response']) == {'id', 'kind', 'state', 'expected_graph_revision', 'expires_at', 'summary'}
-            return {'records': records, 'manifest': manifest}
+            merged_aliases = [a for a in exported_aliases(p) if a in original_aliases]
+            assert merged_aliases == original_aliases
+            return {'records': records, 'manifest': manifest, 'alias_history': {
+                'original': original_aliases, 'imported': imported_aliases, 'merged': merged_aliases}}
 
 if __name__ == '__main__':
     print(json.dumps(produce()))

@@ -22,7 +22,7 @@ from app.models.family_tree import FamilyTreeCollection as Collection, FamilyTre
 from app.schemas.family_tree_transfer import Manifest
 from app.schemas.family_tree import PersonCreate
 from .access import authorize, collection, error
-from . import jobs, media, portable, storage, people
+from . import jobs, media, portable, storage, people, alias_provenance
 
 
 def _consistent_write_snapshot(session, actor):
@@ -228,7 +228,8 @@ def commit_import(session,actor,c,job_id,body,prepared):
 
     person_map={}; story_map={}; asset_map={}; provenance={}; relationship_ids=[]; residence_ids=[]
     for source in manifest.people:
-        p,_=people.add(session,actor,c,source.person)
+        p,_=people.add(session,actor,c,alias_provenance.local_person(source.person))
+        alias_provenance.retain_import(session,p,source.person)
         p.is_locked=source.is_locked; p.lock_reason=source.lock_reason
         if source.is_locked: p.locked_by_user_id=actor.id; p.locked_at=datetime.now(UTC)
         if source.archived: p.archived_at=datetime.now(UTC)

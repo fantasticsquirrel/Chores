@@ -8,6 +8,7 @@ from app.schemas.family_tree_transfer import Manifest
 from app.schemas.family_tree import chronology, PersonCreate
 from .access import error, collection
 from .serialization import person_dto
+from . import alias_provenance
 from .merge import acyclic
 
 
@@ -106,10 +107,11 @@ def snapshot(session,actor,metadata_only=False):
     def prov(group,row):
         return provenance.get((group,row.id),{'created_at':row.created_at.isoformat(),'attribution':'Household contributor' if row.created_by_user_id is not None else None})
     people=[]
+    contributors={}
     for p in rows(Person,5000):
         facts=person_dto(session,p)
         person={k:facts[k] for k in PersonCreate.model_fields}
-        person['aliases']=[{'name':a['name'],'label':a['label']} for a in facts['aliases']]
+        person['aliases']=alias_provenance.export_aliases(session,p,contributors)
         people.append({'key':f'p:{p.id}','person':person,'is_locked':p.is_locked,'lock_reason':p.lock_reason,'archived':p.archived_at is not None,
             'merged_into_key':f'p:{p.merged_into_person_id}' if p.merged_into_person_id else None,'provenance':prov('people',p)})
     result={'schema_version':1,'producer':'Family Manager/1','exported_at':datetime.now(UTC).isoformat(),

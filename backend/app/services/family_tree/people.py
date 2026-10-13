@@ -23,7 +23,7 @@ def replace_tags(session,actor,c,p,tags):
 
 
 def replace_aliases(session,actor,c,p,aliases):
-    old=list(session.scalars(select(FamilyTreeOtherName).where(FamilyTreeOtherName.household_id==actor.household_id,FamilyTreeOtherName.person_id==p.id)))
+    old=list(session.scalars(select(FamilyTreeOtherName).where(FamilyTreeOtherName.household_id==actor.household_id,FamilyTreeOtherName.person_id==p.id).order_by(FamilyTreeOtherName.position,FamilyTreeOtherName.id)))
     remaining=list(old)
     for position,alias in enumerate(aliases):
         row=next((r for r in remaining if r.name==alias.name and r.label==alias.label),None)

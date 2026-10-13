@@ -78,6 +78,9 @@ class FamilyTreeOtherName(Scoped, Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     label: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Quoted portable history, never local operational/account attribution.
+    # NULL means locally entered; a legacy import stores explicit unknown.
+    portable_provenance: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
 
 
 class FamilyTreeParentLink(Scoped, Base):

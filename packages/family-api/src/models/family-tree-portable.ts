@@ -23,9 +23,27 @@ export interface FamilyTreePortableProvenanceInput {
 }
 export type FamilyTreePortableProvenance =
   Required<FamilyTreePortableProvenanceInput>;
+export interface FamilyTreePortableAliasProvenanceInput
+  extends FamilyTreePortableProvenanceInput {
+  status?: "known" | "unknown";
+}
+export type FamilyTreePortableAliasProvenance =
+  Required<FamilyTreePortableAliasProvenanceInput>;
+export interface FamilyTreePortableAliasInput extends FamilyTreeAliasInput {
+  provenance?: FamilyTreePortableAliasProvenanceInput;
+}
+export interface FamilyTreePortableAlias extends Required<FamilyTreeAliasInput> {
+  provenance: FamilyTreePortableAliasProvenance;
+}
+export interface FamilyTreePortablePersonDataInput extends Omit<
+  FamilyTreePersonInput,
+  "aliases"
+> {
+  aliases?: FamilyTreePortableAliasInput[];
+}
 export interface FamilyTreePortablePersonInput {
   key: string;
-  person: FamilyTreePersonInput;
+  person: FamilyTreePortablePersonDataInput;
   is_locked?: boolean;
   lock_reason?: string | null;
   archived?: boolean;
@@ -104,7 +122,7 @@ export interface FamilyTreePortablePersonData extends Omit<
   Required<FamilyTreePersonInput>,
   "aliases" | "birth_date" | "death_date"
 > {
-  aliases: Required<FamilyTreeAliasInput>[];
+  aliases: FamilyTreePortableAlias[];
   birth_date: FamilyTreePartialDate | null;
   death_date: FamilyTreePartialDate | null;
 }
