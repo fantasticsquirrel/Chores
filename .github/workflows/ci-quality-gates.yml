@@ -40,8 +40,16 @@ jobs:
       - name: Frontend production build
         run: npm run build --workspace frontend
 
+      - name: Set up Python for executable shared contracts
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend runtime for shared contracts
+        run: pip install -e backend
+
       - name: Shared API contract tests
-        run: npx vitest run packages/family-api/src/*.test.ts --environment node
+        run: npm run shared-api:gate
 
       - name: Family Tree pure core types and nonempty tests
         run: npm run family-tree-core:gate
