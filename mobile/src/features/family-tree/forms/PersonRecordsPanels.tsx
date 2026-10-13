@@ -23,7 +23,7 @@ export function PersonRecordsPanels({
   workflow: TreeWorkflow;
   disabled: boolean;
   open: (editor: Editor) => void;
-  submit: (action: TreeAction) => Promise<boolean>;
+  submit: (action: TreeAction, revision?: number) => Promise<boolean>;
   setConfirmation: (confirmation: {
     action: TreeAction;
     label: string;
@@ -34,7 +34,10 @@ export function PersonRecordsPanels({
     if (disabled || state.stories?.next_cursor) return;
     const ids = state.stories!.items.map((s) => s.id);
     [ids[index], ids[index + delta]] = [ids[index + delta], ids[index]];
-    await submit({ type: "reorderStories", personId: p.id, storyIds: ids });
+    await submit(
+      { type: "reorderStories", personId: p.id, storyIds: ids },
+      state.stories!.graph_revision,
+    );
   }
   return (
     <>
@@ -148,11 +151,14 @@ export function PersonRecordsPanels({
                 disabled={disabled || r.is_primary}
                 variant="secondary"
                 onPress={() =>
-                  void submit({
-                    type: "patchResidence",
-                    id: r.id,
-                    changes: { is_primary: true },
-                  })
+                  void submit(
+                    {
+                      type: "patchResidence",
+                      id: r.id,
+                      changes: { is_primary: true },
+                    },
+                    state.residences!.graph_revision,
+                  )
                 }
               />
               <ActionButton

@@ -2,6 +2,7 @@ import type { RequestOptions } from "@family-manager/family-api/client-core";
 // The hook owns one ledger per mounted household/user/auth generation.
 export type TreeRequestOptions = RequestOptions;
 export type RequestGroup =
+  | "authority"
   | "snapshot"
   | "graph"
   | "detail"

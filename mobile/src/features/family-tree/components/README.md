@@ -126,7 +126,117 @@ app is background/inactive; a pending restoration resolves the then-surviving
 ref on active return. Unmount removes the AppState subscription and does not
 attempt restoration into an abandoned screen.
 
-## Verified evidence and limits
+## Native FT3 composition
+
+`FamilyTreeScreen` composes `useTreeTools`, `PersonAdvanced` and `TransferTools`
+with the existing authoritative FT2 workflow; these graph/dialog components
+remain presentation-only. Feature-owned controllers live in `lib/advanced`.
+
+- Media uses installed Expo ImagePicker (photos only), File/Directory, document
+  picker and sharing APIs. Native multipart uses real URI/name/MIME parts, not
+  editable URI text. Photo upload stages a sanitized server copy, then attaches
+  a revisioned primary/gallery/story reference. Removal and private binary view
+  use the real reference/content endpoints. Display bytes become a bounded
+  in-memory data URI; photographs are never saved to a download cache.
+- Picker copies are copied into an opaque module-owned cache directory and
+  deleted on upload, discard, failure cleanup or scope invalidation. Only SDK
+  ImagePicker copies (including its installed iOS direct-cache UUID form) are
+  removed; selected library/document originals are never deleted. Imports
+  disable the SDK's implicit document-picker cache copy. User-requested exports
+  write exact authorized ArrayBuffer bytes to a temporary File, invoke native
+  share/save and delete the module-owned file on completion/error/interruption
+  or scope invalidation. The recipient's explicitly saved copy is outside the
+  module's cleanup boundary.
+- Duplicate suggestions are bounded advisory name/alias matches from the
+  available authorized directory. Merge requires an explicit canonical target,
+  actual retained scalar values, a resolved server preview, separate episode
+  review and target-specific confirmation. Preview shows retained records,
+  relationship changes and flat-alias retargeting. Cancellation never unmerges.
+- Purge is gated by affirmative collection `can_purge` plus module manage, not
+  by administrator/owner labels. Fresh password is body-only and cleared from
+  the input after each call. Unknown-outcome retry retains only immutable
+  revision/token/key/person facts, never the password. Each explicit attempt
+  reads newly entered authentication and releases it immediately after the API
+  attempt; password is outside the backend receipt digest. Original receipt
+  retry can pass a now-stale preview, but a new stale intent cannot. No password
+  enters DraftMemory/storage/logs/URLs. Blocking alias IDs are shown
+  only from the actual scoped structured error. Alias purge never implies
+  canonical purge; a new target preview is required after explicit alias removal.
+- Logical ZIP/metadata-only JSON export has create/status/download controls and
+  explicit media omissions. Staged JSON/ZIP import has picker/upload, counts,
+  warnings, missing media, unsupported fields, duplicate suggestions/provenance,
+  explicit reviewed append confirmation, status refresh and confirmed cancel.
+  No Replace/GEDCOM/raw database or account-reconnection controls exist.
+- The core owns coarse loading/write/revision state, including reservation of
+  uncertain advanced commands. Different writes cannot replace a pending key.
+  Immutable command bodies/keys and uploaded asset IDs survive timeout/abort
+  for explicit retry. Changed decisions require an explicitly discarded intent
+  and fresh preview/key; revision, expiry, kind/state, target and current
+  capabilities are checked independently of display-summary readers. No stale
+  revision is clamped and no request is automatically replayed.
+- Every owned API call forwards a per-request AbortSignal. Module discovery
+  itself now forwards its feature-owned signal to `/modules/me`; the global
+  auth/module hooks and transport mechanisms are unchanged. Scope/permission
+  invalidation synchronously aborts work and clears private data, decisions,
+  temporary files and drafts. Commits supersede old reads and refresh the
+  affected collection/directory/graph/person before allowing another write.
+
+Feature limits: 10 MiB JPEG/PNG/WebP photographs, 25 megapixels, 100 MiB input
+packages, bounded 250 MiB exported bytes; server decoding/archive/domain quotas
+remain authoritative. No new dependency, persistent genealogy cache, token URL,
+remote image fetch, activation or device installation is introduced.
+
+`FamilyTreeScreen.ft3.test.tsx` invokes actual API-method seams and installed
+platform adapters with only external OS seams controlled. `nativeFiles.test.tsx`
+also executes the installed RN FormData and actual production ApiClient binary/
+multipart transport with fetch controlled. `workflows.test.ts` exercises all 16
+new method seams and scoped retry/denial/stale/cleanup behavior;
+`discoveryTransport.test.ts` exercises actual feature-owned module HTTP abort.
+These are source/host proofs, not backend durability, handset or live API proof.
+
+### Native frontier safeguards and final host gate
+
+Editors and destructive confirmations retain the authoritative target snapshot
+revision used to open them; photo drafts/ref removals and complete story order
+use their own source revisions. Incidental collection/access refresh does not
+promote those baselines. A first stale submission conflicts; only explicit
+latest-fact review/reapply creates a new revision/key. Identity-unlink review
+shows original and latest association ID, kind, user/child IDs, label and active
+state, not merely the person's biography.
+
+Normal saves, conflict reapply, chronology confirmation and advanced commits
+record the known mutation envelope before dependent reads. A collection/affected-record readback failure
+retains that receipt and exposes GET-only refresh; it never resubmits an already
+acknowledged mutation. Chronology confirmation changes facts and rotates the
+key. Network module discovery failure hides in-memory drafts/unknown receipts
+until successful authoritative discovery; affirmative denial, scope change or
+capability loss clears them and aborts owned work.
+
+Initial lane checkpoint on the pinned runtime passed whole-project TypeScript,
+235 Vitest tests / 26 files, 334 Jest tests / 40 files and the actual Expo
+alignment check. The coordinator then added ten regressions and independently
+passed the complete canonical mobile gate: **245 Vitest / 26 files**, **334
+Jest / 40 files**, TypeScript and **Dependencies are up to date**. Existing FT2
+characterization tests remain unchanged.
+
+The post-ACK module-discovery outage was reproduced and corrected: the receipt
+is retained but hidden until authoritative rediscovery, while affirmative denial,
+authentication invalidation and disposal still clear it. Media, merge, purge and
+import retire their immutable mutation intents immediately at ACK, before any
+readback; a discovery outage cannot leave an acknowledged POST retry pending.
+Conflict review also records its reviewed revision and is invalidated when a
+subsequent read advances the collection. Reapplication cannot silently adopt a
+later unreviewed revision. Focused fault tests use actual controllers and API
+method seams, not live backend or handset behavior.
+
+All scoped production files remain below the 500-line ceiling, without
+exceptions, minification or trailing whitespace. Exact current source bounds,
+hashes and gate evidence are retained in the private coordinator artifacts.
+These checks do not admit the canonical unsupported mobile platform or replace
+independent review, CI, signed binaries, authorized live journeys or handset
+proof. Global/household/support flags are unchanged.
+
+## Verified presentation evidence and limits (historical slice)
 
 Pinned Node 20.19.4 / npm 10.8.2, installed Expo 56 / RN 0.85.3,
 React 19.2.3, Jest Expo and React Native Testing Library. No production core or

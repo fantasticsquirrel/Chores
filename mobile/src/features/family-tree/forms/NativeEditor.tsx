@@ -228,6 +228,7 @@ export function NativeEditor({
   initial,
   patch = false,
   externallyDirty = false,
+  originRevision,
   disabled = false,
   onDirty,
   onSubmit,
@@ -238,9 +239,13 @@ export function NativeEditor({
   initial?: unknown;
   patch?: boolean;
   externallyDirty?: boolean;
+  originRevision?: number;
   disabled?: boolean;
   onDirty: (dirty: boolean) => void;
-  onSubmit: (data: Record<string, unknown>) => Promise<boolean>;
+  onSubmit: (
+    data: Record<string, unknown>,
+    revision?: number,
+  ) => Promise<boolean>;
   title: string;
   children?: React.ReactNode;
 }) {
@@ -251,6 +256,7 @@ export function NativeEditor({
     `${title}:touched`,
     () => new Set<string>(),
   );
+  const [revision] = useDraftState(`${title}:revision`, () => originRevision);
   const [error, setError] = useState<string | null>(null);
   function change(key: string, value: unknown, touchKey = key) {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -262,7 +268,7 @@ export function NativeEditor({
     try {
       const payload = formPayload(fields, draft, patch ? touched : undefined);
       setError(null);
-      if (await onSubmit(payload)) onDirty(false);
+      if (await onSubmit(payload, revision)) onDirty(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save.");
     }

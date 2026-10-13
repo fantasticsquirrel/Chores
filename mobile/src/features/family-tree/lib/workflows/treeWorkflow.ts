@@ -1,6 +1,8 @@
 import type * as FT from "@family-manager/family-api/models";
 import { executeCommand, type TreeAction, type TreeApi } from "./commands";
 import { TreeRequests, type RequestGroup } from "./requests";
+import { committedState, advancedCommittedState } from "./committedState";
+import { executeTool, type ToolPermission } from "../advanced/toolExecution";
 import { TreeGraphQueries } from "./graphQueries";
 import { TreeRecordQueries } from "./recordQueries";
 import type { TreeReadPort, TreeRequestMethod } from "./queryPort";
@@ -10,6 +12,15 @@ import {
   code,
   denied,
   operationKey,
+  commandEnvelope,
+  moduleAccessState,
+  readSettled,
+  discoveryFailure,
+  toolPendingState,
+  snapshotState,
+  reviewedCommand,
+  reviewedReapplication,
+  chronologyCommand,
   type TreeState,
   type TreeScope,
   type PendingCommand,
@@ -137,7 +148,9 @@ export class TreeWorkflow {
     }
     let discovered = false;
     try {
-      const response = await this.api.getMyModules();
+      const authority = this.requests?.begin("authority");
+      const response = await this.api.getMyModules(authority);
+      if (authority) this.requests?.finish("authority", authority);
       if (!valid()) return;
       discovered = true;
       this.publish(response.modules);
@@ -146,9 +159,7 @@ export class TreeWorkflow {
         this.clear("denied", "Family Tree is not enabled for your account.");
         return;
       }
-      this.update({ access: grant.can_manage === true ? "manage" : "view" });
-      if (grant.can_manage !== true && this.state.pending)
-        this.update({ pending: null, draftEpoch: this.state.draftEpoch + 1 });
+      this.update(moduleAccessState(this.state, grant.can_manage === true));
       const collection = await this.request(
         "snapshot",
         "getFamilyTreeCollection",
@@ -170,13 +181,7 @@ export class TreeWorkflow {
         throw new Error(
           "Family history changed while loading. Refresh to use one revision.",
         );
-      this.update({
-        collection,
-        people,
-        graph,
-        focusId: graph.focus_person_id,
-        compare: null,
-      });
+      this.update(snapshotState(this.state, collection, people, graph));
       if (
         collection.capabilities.can_manage !== true &&
         this.state.access === "manage"
@@ -191,7 +196,7 @@ export class TreeWorkflow {
     } catch (e) {
       if (valid()) await this.readError(e, !discovered);
     } finally {
-      if (valid()) this.update({ loading: false });
+      if (valid()) this.update(readSettled(this.state));
     }
   }
   private async readError(e: unknown, discovery = false) {
@@ -199,26 +204,15 @@ export class TreeWorkflow {
       this.clear("denied", "Family Tree access changed.");
       const epoch = this.epoch;
       try {
-        const r = await this.api.getMyModules();
+        const authority = this.requests?.begin("authority");
+        const r = await this.api.getMyModules(authority);
+        if (authority) this.requests?.finish("authority", authority);
         if (this.valid(epoch)) this.publish(r.modules);
       } catch {
         /* A failed authority refresh never restores content. */
       }
-    } else if (discovery) {
-      this.update({
-        access: "error",
-        collection: null,
-        people: null,
-        candidatePeople: null,
-        graph: null,
-        detail: null,
-        stories: null,
-        residences: null,
-        compare: null,
-        candidates: [],
-        error: message(e),
-      });
-    } else this.update({ error: message(e) });
+    } else if (discovery) this.update(discoveryFailure(message(e)));
+    else this.update({ error: message(e) });
   }
   async search(filters: FT.FamilyTreePeopleParams) {
     if (!this.readable()) return;
@@ -279,7 +273,7 @@ export class TreeWorkflow {
     } catch (e) {
       if (valid()) await this.readError(e);
     } finally {
-      if (valid()) this.update({ loading: false });
+      if (valid()) this.update(readSettled(this.state));
     }
   }
   closeDetail() {
@@ -331,10 +325,14 @@ export class TreeWorkflow {
   identities() {
     return this.recordQueries.identities();
   }
-  mutate(action: TreeAction): Promise<boolean> {
+  mutate(action: TreeAction, originRevision?: number): Promise<boolean> {
     if (this.mutationPromise) return this.mutationPromise;
     if (
       !this.readable() ||
+      this.state.busy ||
+      this.state.toolsPending ||
+      !!this.state.pending ||
+      !!this.state.error ||
       this.state.access !== "manage" ||
       this.state.collection?.capabilities.can_manage !== true
     )
@@ -353,11 +351,12 @@ export class TreeWorkflow {
     }
     const pending: PendingCommand = {
       action: JSON.parse(JSON.stringify(action)) as TreeAction,
-      revision: this.state.collection.graph_revision,
+      revision: originRevision ?? this.state.collection.graph_revision,
       key: operationKey(),
       code: null,
       reviewed: false,
       latestReviewed: false,
+      reviewedRevision: null,
     };
     this.update({ pending, mutationError: null });
     return this.submit(pending);
@@ -381,17 +380,7 @@ export class TreeWorkflow {
             executeCommand(
               this.api,
               pending.action,
-              {
-                expected_graph_revision: pending.revision,
-                idempotency_key: pending.key,
-                ...(pending.reviewed
-                  ? {
-                      reviewed_warnings: [
-                        "chronology_review",
-                      ] as FT.FamilyTreeReviewedWarning[],
-                    }
-                  : {}),
-              },
+              commandEnvelope(pending),
               options,
             ),
           () => this.valid(epoch),
@@ -399,23 +388,7 @@ export class TreeWorkflow {
         if (!this.valid(epoch)) return false;
         if (pending.action.type === "archive")
           this.graphQueries.archived(pending.action.personId);
-        const action = pending.action;
-        const newPerson =
-          action.type === "createPerson"
-            ? result.affected.person_ids[0]
-            : action.type === "createRelative"
-              ? (result.affected.person_ids.find(
-                  (id) => id !== action.personId,
-                ) ?? this.state.selectedId)
-              : this.state.selectedId;
-        this.update({
-          pending: null,
-          successCount: this.state.successCount + 1,
-          selectedId: newPerson ?? null,
-          ...(newPerson !== this.state.selectedId
-            ? { detail: null, stories: null, residences: null }
-            : {}),
-        });
+        this.update(committedState(this.state, pending, result));
         await this.refresh();
         return true;
       } catch (e) {
@@ -454,25 +427,64 @@ export class TreeWorkflow {
       this.state.collection &&
       !this.state.error
     )
-      this.update({ pending: { ...p, latestReviewed: true } });
+      this.update({
+        pending: reviewedCommand(p, this.state.collection.graph_revision),
+      });
   }
   reapply() {
-    const p = this.state.pending;
-    if (!p?.latestReviewed || !this.state.collection)
-      return Promise.resolve(false);
-    return this.submit({
-      ...p,
-      revision: this.state.collection.graph_revision,
-      key: operationKey(),
-      latestReviewed: false,
-      code: null,
-    });
+    const reviewed = reviewedReapplication(this.state);
+    return reviewed ? this.submit(reviewed) : Promise.resolve(false);
   }
   confirmChronology() {
     const p = this.state.pending;
     return p?.code === "chronology_review"
-      ? this.submit({ ...p, reviewed: true, code: null })
+      ? this.submit(chronologyCommand(p))
       : Promise.resolve(false);
+  }
+  markToolPending(toolsPending: boolean, invalidate = false) {
+    this.update(toolPendingState(this.state, toolsPending, invalidate));
+  }
+  runTool<T>(
+    call: () => Promise<T>,
+    permission: ToolPermission,
+    target?: number | null,
+    retryReceipt = false,
+  ) {
+    return executeTool(
+      {
+        state: this.state,
+        valid: () => this.valid(),
+        begin: () => {
+          this.requests?.cancelReads();
+          const epoch = ++this.epoch;
+          this.selection++;
+          this.graphQueries.invalidate();
+          this.update({ busy: true, loading: false });
+          return () => this.valid(epoch);
+        },
+        authenticate: (operation, current) =>
+          this.api.withAuthentication(this.authGeneration, operation, current),
+        complete: async (result, selectedId) => {
+          if (
+            selectedId !== this.state.selectedId &&
+            this.state.selectedId !== null
+          )
+            this.graphQueries.archived(this.state.selectedId);
+          this.update(advancedCommittedState(this.state, selectedId, result));
+          await this.refresh();
+        },
+        failure: async (e) => {
+          if (denied(e)) await this.readError(e);
+        },
+        release: () => {
+          if (this.valid()) this.update({ busy: false });
+        },
+      },
+      call,
+      permission,
+      target,
+      retryReceipt,
+    );
   }
   discardPending() {
     if (this.state.busy) return;

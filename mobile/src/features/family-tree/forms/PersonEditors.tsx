@@ -20,7 +20,7 @@ import {
 import { dateLabel, personName } from "../lib/workflows/view";
 import type { TreeAction } from "../lib/workflows/commands";
 import type { TreeState, TreeWorkflow } from "../lib/workflows/treeWorkflow";
-export type Editor =
+export type Editor = (
   | { type: "person" }
   | { type: "story"; record?: FT.FamilyTreeStory }
   | { type: "residence"; record?: FT.FamilyTreeResidence }
@@ -34,7 +34,8 @@ export type Editor =
         | FT.FamilyTreePartnerEpisode;
     }
   | { type: "identity" }
-  | { type: "compare" };
+  | { type: "compare" }
+) & { originRevision?: number };
 export function PersonEditors({
   editor,
   state,

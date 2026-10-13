@@ -27,6 +27,12 @@ export function TreeRecovery({
           </Text>
         </View>
       ) : null}
+      {state.lastCommit && state.readbackPending && state.error && allowed ? (
+        <InlineNotice
+          tone="warning"
+          message={`Save confirmed at revision ${state.lastCommit.committed_revision}. Only readback failed; refresh uses GETs, not another mutation.`}
+        />
+      ) : null}
       {state.error ? (
         <>
           <InlineNotice tone="error" message={state.error} />

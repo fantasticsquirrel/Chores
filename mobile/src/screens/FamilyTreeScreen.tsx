@@ -27,6 +27,9 @@ import {
 } from "../features/family-tree/forms/DraftMemory";
 import { TreeRecovery } from "../features/family-tree/forms/TreeRecovery";
 import { PersonWorkspace } from "../features/family-tree/forms/PersonWorkspace";
+import { PersonAdvanced } from "../features/family-tree/forms/PersonAdvanced";
+import { TransferTools } from "../features/family-tree/forms/TransferTools";
+import { useTreeTools } from "../features/family-tree/hooks/useTreeTools";
 import { personFields } from "../features/family-tree/forms/payload";
 import {
   initialLens,
@@ -53,6 +56,7 @@ export function FamilyTreeScreen(props: Props) {
 }
 function TreeScreen({ session, onModulesLoaded }: Props) {
   const { state, workflow } = useFamilyTree(session, onModulesLoaded);
+  const tools = useTreeTools(workflow, state);
   const drafts = useDraftMemory();
   const draftEpoch = useRef(state.draftEpoch);
   if (draftEpoch.current !== state.draftEpoch) {
@@ -169,6 +173,8 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
     state.access !== "manage" ||
     state.collection?.capabilities.can_manage !== true ||
     state.busy ||
+    state.toolsPending ||
+    !!state.error ||
     state.loading ||
     !!state.pending;
   return (
@@ -343,6 +349,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
             : ""}
         </Text>
       </SectionCard>
+      <TransferTools tools={tools} state={state} />
       <FamilyTreeDialog
         visible={modal}
         title={
@@ -399,24 +406,38 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
             <NativeEditor
               key={`create:${state.draftEpoch}`}
               title="New person"
+              originRevision={state.collection?.graph_revision}
               fields={personFields}
               disabled={mutationDisabled}
               onDirty={setDirty}
-              onSubmit={(person) =>
-                workflow.mutate({
-                  type: "createPerson",
-                  person: person as FamilyTreePersonInput,
-                })
+              onSubmit={(person, revision) =>
+                workflow.mutate(
+                  {
+                    type: "createPerson",
+                    person: person as FamilyTreePersonInput,
+                  },
+                  revision,
+                )
               }
             />
           ) : (
-            <PersonWorkspace
-              key={`${state.selectedId}:${state.draftEpoch}`}
-              state={state}
-              workflow={workflow}
-              onDirty={setDirty}
-              requestDiscard={requestDiscard}
-            />
+            <View>
+              <PersonWorkspace
+                key={`${state.selectedId}:${state.draftEpoch}`}
+                state={state}
+                workflow={workflow}
+                onDirty={setDirty}
+                requestDiscard={requestDiscard}
+              />
+              <PersonAdvanced
+                key={`advanced:${state.selectedId}:${state.draftEpoch}`}
+                tools={tools}
+                state={state}
+                core={workflow}
+                onDirty={setDirty}
+                requestDiscard={requestDiscard}
+              />
+            </View>
           )}
           {state.selectedId !== null && !state.detail && !state.loading ? (
             <ActionButton

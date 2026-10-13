@@ -26,9 +26,12 @@ export function useDraftState<T>(
   initial: () => T,
 ): [T, Dispatch<SetStateAction<T>>] {
   const memory = useContext(DraftContext);
-  const [value, setValue] = useState<T>(() =>
-    memory?.has(key) ? (memory.get(key) as T) : initial(),
-  );
+  const [value, setValue] = useState<T>(() => {
+    if (memory?.has(key)) return memory.get(key) as T;
+    const value = initial();
+    memory?.set(key, value);
+    return value;
+  });
   const update: Dispatch<SetStateAction<T>> = (next) =>
     setValue((previous) => {
       const value =

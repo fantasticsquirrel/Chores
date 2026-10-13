@@ -39,9 +39,10 @@ export function PersonWorkspace({
       `person:${state.selectedId}:reason`,
       () => "",
     ),
-    [confirmation, setConfirmation] = useState<{
+    [confirmation, setConfirmationState] = useState<{
       action: TreeAction;
       label: string;
+      revision: number;
     } | null>(null);
   const [lastDetail, setLastDetail] = useState(state.detail);
   useEffect(() => {
@@ -66,6 +67,7 @@ export function PersonWorkspace({
           : "Person unavailable. Retry the person or refresh Family Tree."}
       </Text>
     );
+  const snapshotRevision = detail.graph_revision;
   const p = detail.person,
     name = personName(p),
     alias = p.merged_into_person_id !== null;
@@ -74,6 +76,8 @@ export function PersonWorkspace({
       state.collection?.capabilities.can_manage === true,
     disabled =
       state.busy ||
+      state.toolsPending ||
+      !!state.error ||
       state.loading ||
       !!state.pending ||
       !manager ||
@@ -81,14 +85,27 @@ export function PersonWorkspace({
       alias ||
       !!p.archived_at;
   const lifecycleDisabled =
-    state.busy || state.loading || !!state.pending || !manager || alias;
+    state.busy ||
+    state.toolsPending ||
+    state.loading ||
+    !!state.pending ||
+    !manager ||
+    alias;
   function open(next: Editor) {
-    if (disabled) return;
-    setEditor(next);
+    if (disabled || snapshotRevision !== state.collection?.graph_revision)
+      return;
+    setEditor({ ...next, originRevision: snapshotRevision });
     onDirty(false);
   }
-  async function submit(action: TreeAction) {
-    return workflow.mutate(action);
+  function setConfirmation(
+    value: { action: TreeAction; label: string } | null,
+  ) {
+    setConfirmationState(
+      value ? { ...value, revision: snapshotRevision } : null,
+    );
+  }
+  async function submit(action: TreeAction, originRevision = snapshotRevision) {
+    return workflow.mutate(action, originRevision);
   }
   function editCancel() {
     requestDiscard(() => {
@@ -145,7 +162,7 @@ export function PersonWorkspace({
         people={people}
         more={more}
         search={search}
-        submit={submit}
+        submit={(action) => submit(action, editor.originRevision)}
         candidate={candidate}
         setCandidate={setCandidate}
         editCancel={editCancel}
@@ -382,7 +399,11 @@ export function PersonWorkspace({
           variant="danger"
           onPress={() =>
             setConfirmation({
-              action: { type: "unlinkIdentity", personId: p.id },
+              action: {
+                type: "unlinkIdentity",
+                personId: p.id,
+                originalLink: detail.identity_link,
+              },
               label: `Unlink identity from ${name}`,
             })
           }
@@ -436,9 +457,17 @@ export function PersonWorkspace({
           </Text>
           <ActionButton
             label={`Confirm ${confirmation.label}`}
-            disabled={state.busy || state.loading}
+            disabled={
+              state.busy ||
+              state.loading ||
+              !!state.pending ||
+              state.toolsPending ||
+              !!state.error
+            }
             variant="danger"
-            onPress={() => void submit(confirmation.action)}
+            onPress={() =>
+              void submit(confirmation.action, confirmation.revision)
+            }
           />
           <ActionButton
             label="Cancel history change"

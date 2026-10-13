@@ -5,7 +5,10 @@ import { shellStyles } from "../../../styles/shell";
 import type { TreeState } from "../lib/workflows/treeWorkflow";
 import { personFields, type Field } from "./payload";
 import { dateLabel } from "../lib/workflows/view";
-import type { FamilyTreePartialDate } from "@family-manager/family-api/models";
+import type {
+  FamilyTreePartialDate,
+  FamilyTreeIdentityLink,
+} from "@family-manager/family-api/models";
 function fact(f: Field, value: unknown) {
   if (f.kind === "date")
     return dateLabel(value as FamilyTreePartialDate | null);
@@ -17,6 +20,10 @@ function fact(f: Field, value: unknown) {
     );
   return String(value ?? "Unknown");
 }
+function association(link: FamilyTreeIdentityLink | null | undefined) {
+  if (!link) return "None";
+  return `id=${link.id} kind=${link.user_id !== null ? "user" : "child"} user_id=${link.user_id ?? "null"} child_id=${link.child_id ?? "null"} label=${link.label} active=${link.active}`;
+}
 export function RevisionReview({ state }: { state: TreeState }) {
   const p = state.detail?.person;
   return (
@@ -25,6 +32,21 @@ export function RevisionReview({ state }: { state: TreeState }) {
         Revision {state.collection?.graph_revision}. These are server facts;
         your unsaved form below has not been replaced.
       </Text>
+      {state.pending?.action.type === "unlinkIdentity" ? (
+        <View>
+          <Text selectable style={shellStyles.mutedText}>
+            Original association:{" "}
+            {association(state.pending.action.originalLink)}
+          </Text>
+          <Text selectable style={shellStyles.mutedText}>
+            Latest association: {association(state.detail?.identity_link)}
+          </Text>
+          <Text style={shellStyles.mutedText}>
+            Reapply unlinks the currently shown association only; it never
+            deletes a user or child account.
+          </Text>
+        </View>
+      ) : null}
       {p ? (
         personFields.map((f) => (
           <View key={f.key}>

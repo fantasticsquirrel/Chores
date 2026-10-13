@@ -53,7 +53,12 @@ export type TreeAction =
       person: FT.FamilyTreePersonInput;
       relationship: FT.FamilyTreeRelativeRelationship;
     }
-  | { type: "archive" | "restore" | "unlinkIdentity"; personId: number }
+  | { type: "archive" | "restore"; personId: number }
+  | {
+      type: "unlinkIdentity";
+      personId: number;
+      originalLink?: FT.FamilyTreeIdentityLink | null;
+    }
   | { type: "lock" | "unlock"; personId: number; reason: string }
   | { type: "createParent"; data: FT.FamilyTreeParentData }
   | { type: "patchParent"; id: number; changes: FT.FamilyTreeParentChanges }
