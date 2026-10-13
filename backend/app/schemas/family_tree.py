@@ -386,4 +386,3 @@ class CompareResult(Strict):
     path: list[GraphEdge]
     warnings: list[str]
     projection_limits: ProjectionLimits
-

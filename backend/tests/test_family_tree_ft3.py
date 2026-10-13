@@ -520,8 +520,3 @@ def test_cleanup_orphans_progress_and_corrupt_cursor_recovery(ft3):
     (storage.root()/'.cleanup-cursor').write_text('interrupted')
     for _ in range(8): cleanup.cleanup(factory,batch_size=1)
     assert all(not storage.path(key).exists() for key in orphans)
-
-
-
-
-
