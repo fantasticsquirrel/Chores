@@ -13,6 +13,7 @@ export type {
   ChangePasswordRequest,
   Child,
   ChildAccount,
+  ChildBalance,
   ChildLoginRequest,
   Chore,
   CompletionMode,
