@@ -40,6 +40,8 @@ import {
 import { FamilyTreeButton } from "../features/family-tree/components/FamilyTreeControls";
 import { FamilyTreeGraph } from "../features/family-tree/components/FamilyTreeGraph";
 import { FamilyTreeDialog } from "../features/family-tree/components/FamilyTreeDialog";
+import { BirthBandColorScope } from "../features/family-tree/components/BirthBandColorScope";
+import { useBirthBandColors } from "../features/family-tree/hooks/useBirthBandColors";
 type Props = {
   session: AuthSessionResponse;
   modules: FamilyModule[];
@@ -50,7 +52,9 @@ export function FamilyTreeScreen(props: Props) {
     <DraftMemory
       key={`${props.session.user.household_id}:${props.session.user.id}:${props.session.user.role}:${apiClient.authenticationGeneration}`}
     >
-      <TreeScreen {...props} />
+      <BirthBandColorScope>
+        <TreeScreen {...props} />
+      </BirthBandColorScope>
     </DraftMemory>
   );
 }
@@ -58,6 +62,11 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
   const { state, workflow } = useFamilyTree(session, onModulesLoaded);
   const tools = useTreeTools(workflow, state);
   const drafts = useDraftMemory();
+  const presentation = useBirthBandColors();
+  useEffect(() => {
+    if (state.access === "denied") presentation.reset();
+    // Access retirement, not draft/revision epochs or temporary read failures.
+  }, [state.access, presentation.reset]);
   const draftEpoch = useRef(state.draftEpoch);
   if (draftEpoch.current !== state.draftEpoch) {
     drafts.clear();

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import type { LayoutResult } from "@family-manager/family-tree-core";
+import { birthBandAccent, type LayoutResult } from "@family-manager/family-tree-core";
+import { useBirthBandColors } from "../hooks/useBirthBandColors";
+import { birthBandStyle } from "../lib/presentation/birthBandStyle";
 import { Button } from "../../../ui/Button";
 
 export interface PersonNavigationProps {
@@ -15,6 +17,7 @@ export function TreeRelationshipList({
   layout: LayoutResult;
   renderBranches?: (id: number, label: string) => ReactNode;
 }) {
+  const colors = useBirthBandColors();
   const names = new Map(
     layout.list.map((row) => [row.node.id, row.node.label]),
   );
@@ -27,7 +30,11 @@ export function TreeRelationshipList({
       </p>
       <ul className="family-tree-people">
         {layout.list.map((row) => (
-          <li key={row.node.id} className="family-tree-list-person">
+          <li
+            key={row.node.id}
+            className={`family-tree-list-person${row.birthYear.bucket.kind === "unknown" ? " family-tree-person-unknown" : ""}`}
+            style={birthBandStyle(row.birthYear.bucket, colors.custom)}
+          >
             <div className="family-tree-list-heading">
               <Button
                 className="family-tree-control"
@@ -37,6 +44,9 @@ export function TreeRelationshipList({
                 {row.node.label}
               </Button>
               <span>{row.birthYear.label}</span>
+              {row.birthYear.bucket.kind === "years" && (
+                <span>{birthBandAccent(row.birthYear.bucket).label}</span>
+              )}
               <Button
                 className="family-tree-control"
                 onClick={() => onFocusPerson(row.node.id)}

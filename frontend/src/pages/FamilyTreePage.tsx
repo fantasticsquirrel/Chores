@@ -50,22 +50,27 @@ import { useGraphContinuation } from "../features/family-tree/hooks/useGraphCont
 import { FamilyTreeAccessNotice } from "../features/family-tree/components/FamilyTreeAccessNotice";
 import { ProtectedTree } from "../features/family-tree/hooks/ProtectedTree";
 import { TreeGraphPanel } from "../features/family-tree/components/TreeGraphPanel";
+import { BirthBandColorScope } from "../features/family-tree/components/BirthBandColorScope";
 import "../features/family-tree/forms/workflows.css";
 
 export function FamilyTreePage(): ReactElement {
   const { access, refresh, revoke } = useFamilyTreeAccess();
-  if (access.state !== "allowed")
-    return <FamilyTreeAccessNotice access={access} refresh={refresh} />;
   return (
-    <ProtectedTree
-      key={access.owner}
-      owner={access.owner!}
-      manage={access.manage}
-      checking={!!access.checking}
-      revoke={revoke}
-    >
-      <TreeWorkspace />
-    </ProtectedTree>
+    <BirthBandColorScope key={access.owner} retired={access.state === "denied"}>
+      {access.state !== "allowed" ? (
+        <FamilyTreeAccessNotice access={access} refresh={refresh} />
+      ) : (
+        <ProtectedTree
+          key={access.owner}
+          owner={access.owner!}
+          manage={access.manage}
+          checking={!!access.checking}
+          revoke={revoke}
+        >
+          <TreeWorkspace />
+        </ProtectedTree>
+      )}
+    </BirthBandColorScope>
   );
 }
 function positiveId(token: string | undefined | null): number | null {

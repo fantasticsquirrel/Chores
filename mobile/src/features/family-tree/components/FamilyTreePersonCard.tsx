@@ -1,7 +1,12 @@
 import { useRef, type RefObject } from "react";
 import { Text, View } from "react-native";
-import type { GraphNode, ListRow } from "@family-manager/family-tree-core";
+import {
+  birthBandAccent,
+  type GraphNode,
+  type ListRow,
+} from "@family-manager/family-tree-core";
 import { useTheme } from "../../../theme/ThemeContext";
+import { useBirthBandColors } from "../hooks/useBirthBandColors";
 import { FamilyTreeButton } from "./FamilyTreeControls";
 
 interface BranchAction {
@@ -33,12 +38,15 @@ export function FamilyTreePersonCard({
   onFocusPerson,
 }: FamilyTreePersonCardProps) {
   const {
-    definition: { colors },
+    definition: { colors, dark },
   } = useTheme();
   const { node, birthYear, relationships } = row;
   const trigger = useRef<View>(null);
+  const preferences = useBirthBandColors();
+  const accent = birthBandAccent(birthYear.bucket, preferences.custom);
   return (
     <View
+      testID={`family-tree-person-${node.id}`}
       style={{
         borderRadius: 16,
         borderWidth: 1,
@@ -64,9 +72,24 @@ export function FamilyTreePersonCard({
         {focusPersonId === node.id ? "✓ " : ""}
         {node.label}
       </FamilyTreeButton>
-      <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
-        {birthYear.label}
-      </Text>
+      <View
+        testID={`family-tree-birth-accent-${node.id}`}
+        style={{
+          borderLeftWidth: 4,
+          borderLeftColor: dark ? accent.dark : accent.light,
+          borderStyle: accent.pattern,
+          paddingLeft: 8,
+        }}
+      >
+        <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
+          {birthYear.label}
+        </Text>
+        {birthYear.bucket.kind === "years" ? (
+          <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
+            {accent.label}
+          </Text>
+        ) : null}
+      </View>
       <FamilyTreeButton
         label={`Show ${node.label} in tree`}
         disabled={disabled}

@@ -6,6 +6,7 @@ export function FamilyTreeButton({
   label,
   onPress,
   selected,
+  expanded,
   disabled = false,
   children,
   buttonRef,
@@ -13,6 +14,7 @@ export function FamilyTreeButton({
   label: string;
   onPress: () => void;
   selected?: boolean;
+  expanded?: boolean;
   disabled?: boolean;
   children?: ReactNode;
   buttonRef?: Ref<View>;
@@ -27,6 +29,7 @@ export function FamilyTreeButton({
       accessibilityLabel={label}
       accessibilityState={{
         ...(selected === undefined ? {} : { selected }),
+        ...(expanded === undefined ? {} : { expanded }),
         disabled,
       }}
       disabled={disabled}

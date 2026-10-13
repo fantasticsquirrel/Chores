@@ -16,6 +16,8 @@ import {
   prepareNativeGraph,
 } from "../lib/presentation/graphPresentation";
 import { FamilyTreeButton, FamilyTreeToggle } from "./FamilyTreeControls";
+import { BirthBandColorBoundary } from "./BirthBandColorScope";
+import { BirthBandColorControls } from "./BirthBandColors";
 import { FamilyTreePersonCard } from "./FamilyTreePersonCard";
 import { FamilyTreeViewport } from "./FamilyTreeViewport";
 
@@ -70,7 +72,14 @@ function collapsed(
 }
 
 /** Native generation-row graph: no web embed, SVG, hidden network or persistence. */
-export function FamilyTreeGraph({
+export function FamilyTreeGraph(props: FamilyTreeGraphProps) {
+  return (
+    <BirthBandColorBoundary>
+      <TreeGraph {...props} />
+    </BirthBandColorBoundary>
+  );
+}
+function TreeGraph({
   graph,
   focusPersonId,
   graphRevision,
@@ -414,6 +423,7 @@ export function FamilyTreeGraph({
           }}
         />
       ) : null}
+      <BirthBandColorControls rows={layout.list} />
       <FamilyTreeButton
         label={`${legend ? "Hide" : "Show"} relationship legend`}
         onPress={() => setLegend((value) => !value)}

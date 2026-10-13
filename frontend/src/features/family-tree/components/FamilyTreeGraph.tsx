@@ -9,6 +9,7 @@ import {
   type PointerEvent,
 } from "react";
 import {
+  birthBandAccent,
   layoutGraph,
   prepareGraph,
   type GraphInput,
@@ -23,6 +24,10 @@ import {
   zoomViewport,
   type TreeViewport,
 } from "../lib/presentation/viewport";
+import { useBirthBandColors } from "../hooks/useBirthBandColors";
+import { BirthBandColorBoundary } from "./BirthBandColorScope";
+import { BirthBandColorControls } from "./BirthBandColors";
+import { birthBandStyle } from "../lib/presentation/birthBandStyle";
 import { TreeBranchControls } from "./TreeBranchControls";
 import { TreeEdges } from "./TreeEdges";
 import { TreeLegend } from "./TreeLegend";
@@ -49,7 +54,14 @@ export interface FamilyTreeGraphProps {
 const DEFAULT_OPTIONS: LayoutOptions = {};
 
 /** Authorized projected data in; presentation callbacks out. No fetching or storage. */
-export function FamilyTreeGraph({
+export function FamilyTreeGraph(props: FamilyTreeGraphProps) {
+  return (
+    <BirthBandColorBoundary>
+      <TreeGraph {...props} />
+    </BirthBandColorBoundary>
+  );
+}
+function TreeGraph({
   graph,
   focusPersonId,
   graphRevision,
@@ -63,6 +75,7 @@ export function FamilyTreeGraph({
   maxDepth = 32,
   recordedBranchCounts,
 }: FamilyTreeGraphProps) {
+  const colors = useBirthBandColors();
   const {
     lens,
     setCare,
@@ -358,6 +371,7 @@ export function FamilyTreeGraph({
                   key={person.node.id}
                   className={`family-tree-person${person.node.id === focusPersonId ? " family-tree-person-focused" : ""}${person.birthYear.bucket.kind === "unknown" ? " family-tree-person-unknown" : ""}`}
                   style={{
+                    ...birthBandStyle(person.birthYear.bucket, colors.custom),
                     left: person.x - CARD_WIDTH / 2,
                     top: person.y - CARD_HEIGHT / 2,
                   }}
@@ -371,6 +385,9 @@ export function FamilyTreeGraph({
                     {person.node.label}
                   </Button>
                   <p>{person.birthYear.label}</p>
+                  {person.birthYear.bucket.kind === "years" && (
+                    <p>{birthBandAccent(person.birthYear.bucket).label}</p>
+                  )}
                   <Button
                     className="family-tree-control"
                     aria-label={`Show ${person.node.label} in tree`}
@@ -385,6 +402,7 @@ export function FamilyTreeGraph({
           </div>
         </>
       )}
+      <BirthBandColorControls rows={layout.list} />
       <TreeLegend />
       <TreeRelationshipList
         layout={layout}
