@@ -659,14 +659,15 @@ Depends on FT-0 through FT-3.
 
 ## 18. Verification commands and deliverables
 
-These are grounded in current root scripts/CI; run from the actual implementation checkout with its supported Node/Python environment. Newly named Family Tree tests do not exist yet and must be created in their slices.
+These commands are grounded in the current root scripts/CI; run from the actual implementation checkout with its supported Node/Python environment. Family Tree tests and both client implementations now exist as a disabled, unreleased candidate. Passing source/host tests does not complete the independent review, exact-head CI, operator, live API or native-device gates above. Shared producer tests require the installed backend runtime; when using a separate verified interpreter, set `FAMILY_TREE_CONTRACT_PYTHON` to that interpreter explicitly.
 
 ```bash
 npm run modules:validate
 npm run lint --workspace frontend
 npm run test --workspace frontend
 npm run build --workspace frontend
-npx vitest run packages/family-api/src/*.test.ts --environment node
+npm run shared-api:gate
+npm run family-tree-core:gate
 npm run mobile:gate
 .venv/bin/pytest backend/tests -q
 .venv/bin/pytest backend/tests/test_module_contract.py -q
