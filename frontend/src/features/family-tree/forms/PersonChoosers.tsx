@@ -17,9 +17,11 @@ import {
 } from "../lib/workflows/editors";
 export function RelativeChooser({
   anchor,
+  originRevision,
   onChoose,
 }: {
   anchor: FamilyTreePerson;
+  originRevision: number;
   onChoose: (spec: EditorSpec) => void;
 }) {
   const [query, setQuery] = useState(""),
@@ -73,7 +75,15 @@ export function RelativeChooser({
         </select>
       </label>
       {mode === "new" ? (
-        <Button onClick={() => onChoose(relativeEditor(anchor, direction))}>
+        <Button
+          onClick={() =>
+            onChoose({
+              ...relativeEditor(anchor, direction),
+              originRevision,
+              reviewTarget: { entity: "person", id: anchor.id },
+            })
+          }
+        >
           Continue with new person
         </Button>
       ) : (
@@ -114,7 +124,14 @@ export function RelativeChooser({
                 <li key={person.id}>
                   <Button
                     onClick={() =>
-                      onChoose(relativeEditor(anchor, direction, person))
+                      onChoose({
+                        ...relativeEditor(anchor, direction, person),
+                        originRevision: Math.min(
+                          originRevision,
+                          people.revision ?? -1,
+                        ),
+                        reviewTarget: { entity: "person", id: anchor.id },
+                      })
                     }
                   >
                     Select {personName(person)} (person {person.id})
@@ -138,9 +155,11 @@ export function RelativeChooser({
 
 export function IdentityChooser({
   person,
+  originRevision,
   onChoose,
 }: {
   person: FamilyTreePerson;
+  originRevision: number;
   onChoose: (spec: EditorSpec) => void;
 }) {
   const runtime = useTreeRuntime();
@@ -168,7 +187,15 @@ export function IdentityChooser({
       <ul>
         {candidates.data?.items.map((candidate) => (
           <li key={`${candidate.kind}:${candidate.id}`}>
-            <Button onClick={() => onChoose(identityEditor(person, candidate))}>
+            <Button
+              onClick={() =>
+                onChoose({
+                  ...identityEditor(person, candidate),
+                  originRevision,
+                  reviewTarget: { entity: "person", id: person.id },
+                })
+              }
+            >
               {candidate.kind}: {candidate.label}
               {candidate.active ? "" : " (inactive)"}
             </Button>

@@ -21,10 +21,12 @@ import { SafeMarkdown } from "./SafeMarkdown";
 import { formatDate } from "../lib/workflows/personPresentation";
 export function PersonNarratives({
   person,
+  originRevision,
   editable,
-  onEdit,
+  onEdit: requestEdit,
 }: {
   person: FamilyTreePerson;
+  originRevision: number;
   editable: boolean;
   onEdit: (spec: EditorSpec) => void;
 }) {
@@ -52,12 +54,31 @@ export function PersonNarratives({
       ),
     !person.merged_into_person_id,
   );
+  function editStory(spec: EditorSpec) {
+    const revision = spec.create ? originRevision : stories.revision;
+    if (revision === undefined || !stories.consistent || stories.error) return;
+    requestEdit({
+      ...spec,
+      originRevision: revision,
+      reviewTarget: spec.reviewTarget ?? { entity: "person", id: person.id },
+    });
+  }
+  function editResidence(spec: EditorSpec) {
+    const revision = spec.create ? originRevision : residences.revision;
+    if (revision === undefined || !residences.consistent || residences.error)
+      return;
+    requestEdit({
+      ...spec,
+      originRevision: revision,
+      reviewTarget: spec.reviewTarget ?? { entity: "person", id: person.id },
+    });
+  }
   function reorder(from: number, to: number) {
     const ordered = [...stories.items]
       .sort((a, b) => a.position - b.position)
       .map((item) => item.id);
     [ordered[from], ordered[to]] = [ordered[to], ordered[from]];
-    onEdit(
+    editStory(
       confirmEditor(
         "Reorder stories",
         `Move this story in ${personName(person)}'s complete story order.`,
@@ -70,6 +91,8 @@ export function PersonNarratives({
             },
             requestOptions,
           ),
+        { entity: "storyOrder", id: person.id },
+        { story_ids: stories.items.map((story) => story.id) },
       ),
     );
   }
@@ -80,7 +103,7 @@ export function PersonNarratives({
         {runtime.manage ? (
           <Button
             disabled={!editable}
-            onClick={() => onEdit(storyEditor(person.id))}
+            onClick={() => editStory(storyEditor(person.id))}
           >
             Add story
           </Button>
@@ -124,14 +147,14 @@ export function PersonNarratives({
                 <div>
                   <Button
                     disabled={!editable}
-                    onClick={() => onEdit(storyEditor(person.id, story))}
+                    onClick={() => editStory(storyEditor(person.id, story))}
                   >
                     Edit story {story.title}
                   </Button>
                   <Button
                     disabled={!editable}
                     onClick={() =>
-                      onEdit(
+                      editStory(
                         confirmEditor(
                           "Delete story",
                           `Delete the full story “${story.title}” from ${personName(person)}.`,
@@ -141,6 +164,8 @@ export function PersonNarratives({
                               command,
                               requestOptions,
                             ),
+                          { entity: "story", id: story.id },
+                          { ...story },
                         ),
                       )
                     }
@@ -187,7 +212,7 @@ export function PersonNarratives({
         {runtime.manage ? (
           <Button
             disabled={!editable}
-            onClick={() => onEdit(residenceEditor(person.id))}
+            onClick={() => editResidence(residenceEditor(person.id))}
           >
             Add residence
           </Button>
@@ -235,7 +260,9 @@ export function PersonNarratives({
               <>
                 <Button
                   disabled={!editable}
-                  onClick={() => onEdit(residenceEditor(person.id, residence))}
+                  onClick={() =>
+                    editResidence(residenceEditor(person.id, residence))
+                  }
                 >
                   Edit residence {residence.place}
                 </Button>
@@ -243,7 +270,7 @@ export function PersonNarratives({
                   <Button
                     disabled={!editable}
                     onClick={() =>
-                      onEdit(
+                      editResidence(
                         confirmEditor(
                           "Set primary residence",
                           `Set ${residence.place} as the primary residence of ${personName(person)}.`,
@@ -256,6 +283,8 @@ export function PersonNarratives({
                               },
                               requestOptions,
                             ),
+                          { entity: "residence", id: residence.id },
+                          { ...residence },
                         ),
                       )
                     }
@@ -266,7 +295,7 @@ export function PersonNarratives({
                 <Button
                   disabled={!editable}
                   onClick={() =>
-                    onEdit(
+                    editResidence(
                       confirmEditor(
                         "Delete residence",
                         `Delete residence ${residence.place} from ${personName(person)}.`,
@@ -276,6 +305,8 @@ export function PersonNarratives({
                             command,
                             requestOptions,
                           ),
+                        { entity: "residence", id: residence.id },
+                        { ...residence },
                       ),
                     )
                   }

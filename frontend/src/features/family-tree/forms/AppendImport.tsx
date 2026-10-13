@@ -32,6 +32,7 @@ export function AppendImport({
   const now = useExpiry(job),
     summary = job ? readFamilyTreeImportSummary(job) : null;
   const blocked =
+    !!readback.saved ||
     refresh.pending ||
     !runtime.manage ||
     !runtime.online ||
@@ -185,17 +186,19 @@ export function AppendImport({
     }
     const result = reviewedChronology
       ? await command.reapply()
-      : await command.submit((intent, options) =>
-          apiClient.commitFamilyTreeImport(
-            job.id,
-            {
-              ...intent,
-              idempotency_key: intent.idempotency_key!,
-              confirmed: true,
-              acknowledge_duplicate_provenance: acknowledge,
-            },
-            options,
-          ),
+      : await command.submit(
+          (intent, options) =>
+            apiClient.commitFamilyTreeImport(
+              job.id,
+              {
+                ...intent,
+                idempotency_key: intent.idempotency_key!,
+                confirmed: true,
+                acknowledge_duplicate_provenance: acknowledge,
+              },
+              options,
+            ),
+          job.expected_graph_revision,
         );
     if (!result) return;
     await readback.confirm(
@@ -225,6 +228,7 @@ export function AppendImport({
           `Import committed and read back at revision ${result.current_revision}. Fresh local IDs and provenance were retained; no identities were automatically linked.`,
         );
       },
+      command,
     );
   }
   return (

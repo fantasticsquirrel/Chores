@@ -1,7 +1,7 @@
 import { useTreeRefresh } from "../hooks/useTreeRefresh";
 import { useTreeSavedReadback } from "../hooks/useTreeSavedReadback";
 import { useExpiry } from "../hooks/useExpiry";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { readFamilyTreeMergeSummary } from "@family-manager/family-api/models/family-tree-summary";
 import {
   apiClient,
@@ -18,11 +18,13 @@ import { personName } from "../lib/workflows/workflows";
 import { AdvancedFeedback, ConsequenceCounts } from "./AdvancedFeedback";
 export function MergeReview({
   source,
+  originRevision,
   people,
   onDirty,
   onSaved,
 }: {
   source: FamilyTreePerson;
+  originRevision: number;
   people: FamilyTreePerson[];
   onDirty: (value: boolean) => void;
   onSaved: () => void;
@@ -30,6 +32,7 @@ export function MergeReview({
   const runtime = useTreeRuntime(),
     task = useTreeTask(),
     command = useTreeCommand();
+  const baseline = useRef(originRevision);
   const refresh = useTreeRefresh();
   const readback = useTreeSavedReadback();
   const retryReceipt = command.hasAttempt && command.state.kind === "failure";
@@ -96,7 +99,7 @@ export function MergeReview({
     if (!selected || blocked) return;
     command.resetIntent();
     setConfirmed(false);
-    const expected = runtime.revision();
+    const expected = baseline.current;
     const result = await task.run((options) =>
       apiClient.previewFamilyTreeMerge(
         {
@@ -119,15 +122,17 @@ export function MergeReview({
     if (!ready || !confirmed || blocked || !preview || !summary) return;
     const result = reviewedChronology
       ? await command.reapply()
-      : await command.submit((intent, options) =>
-          apiClient.commitFamilyTreeMerge(
-            {
-              ...intent,
-              idempotency_key: intent.idempotency_key!,
-              preview_token: preview.preview_token,
-            },
-            options,
-          ),
+      : await command.submit(
+          (intent, options) =>
+            apiClient.commitFamilyTreeMerge(
+              {
+                ...intent,
+                idempotency_key: intent.idempotency_key!,
+                preview_token: preview.preview_token,
+              },
+              options,
+            ),
+          preview.expected_graph_revision,
         );
     if (!result) return;
     // The mutation envelope is not canonical-person data. Explicit exact readback.
@@ -155,6 +160,7 @@ export function MergeReview({
         onDirty(false);
         onSaved();
       },
+      command,
     );
   }
   return (
@@ -231,13 +237,14 @@ export function MergeReview({
               <p>
                 Source:{" "}
                 {JSON.stringify(
-                  Object.entries(source).find(([key]) => key === field)?.[1] ??
-                    null,
+                  Object.entries(summary.source).find(
+                    ([key]) => key === field,
+                  )?.[1] ?? null,
                 )}{" "}
                 · Target:{" "}
                 {JSON.stringify(
-                  (selected &&
-                    Object.entries(selected).find(
+                  (summary.target &&
+                    Object.entries(summary.target).find(
                       ([key]) => key === field,
                     )?.[1]) ??
                     null,
@@ -308,6 +315,7 @@ export function MergeReview({
               : await refresh.reload())
           )
             return;
+          baseline.current = runtime.revision();
           setPreview(null);
           setConfirmed(false);
           command.resetIntent();

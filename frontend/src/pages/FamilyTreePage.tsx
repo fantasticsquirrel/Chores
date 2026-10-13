@@ -31,14 +31,11 @@ import {
   useTreeRead,
   useTreePages,
 } from "../features/family-tree/hooks/useTreeReads";
-import {
-  graphParams,
-  personFacts,
-  type Facts,
-} from "../features/family-tree/lib/workflows/workflows";
+import { graphParams } from "../features/family-tree/lib/workflows/workflows";
 import {
   personEditor,
   type EditorSpec,
+  type EditorDraft,
 } from "../features/family-tree/lib/workflows/editors";
 import { FamilyTreeDirectory } from "../features/family-tree/forms/FamilyTreeDirectory";
 import { TreeAdvancedTools } from "../features/family-tree/forms/TreeAdvancedTools";
@@ -165,7 +162,7 @@ function TreeWorkspace() {
       apiClient.getFamilyTreePerson(selected!, requestOptions),
     selected !== null && !!collection.data && online,
   );
-  const [editor, setEditor] = useState<EditorSpec | null>(null),
+  const [editor, setEditor] = useState<EditorDraft | null>(null),
     [chooser, setChooser] = useState<"relative" | "identity" | null>(null),
     [discard, setDiscard] = useState(false),
     dirty = useRef(false),
@@ -201,12 +198,21 @@ function TreeWorkspace() {
       collection.isFetching
     )
       return;
+    if (
+      spec.originRevision === undefined ||
+      spec.originRevision < floor.current
+    ) {
+      setAnnouncement(
+        "This target snapshot is not current. Reload its records and review them before opening an editor.",
+      );
+      return;
+    }
     editorId.current++;
     dirty.current = false;
     saving.current = false;
     setDiscard(false);
     setChooser(null);
-    setEditor(spec);
+    setEditor({ ...spec, originRevision: spec.originRevision });
   }
   function close() {
     if (saving.current || busy) return;
@@ -253,15 +259,6 @@ function TreeWorkspace() {
         ) ?? result.affected.person_ids[0];
       showInTree(id);
     }
-  }
-  // Retain the original draft on a conflict while showing fresh server facts.
-  let latest: Facts | undefined;
-  if (editor && detail.data) {
-    if (
-      editor.title.startsWith("Edit ") &&
-      editor.fields.some((field) => field.key === "first_name")
-    )
-      latest = { ...personFacts(detail.data.person) };
   }
   return (
     <TreeRuntimeContext.Provider
@@ -323,7 +320,12 @@ function TreeWorkspace() {
             {authoritativeManage ? (
               <Button
                 disabled={!online || busy}
-                onClick={() => edit(personEditor())}
+                onClick={() =>
+                  edit({
+                    ...personEditor(),
+                    originRevision: collection.data!.graph_revision,
+                  })
+                }
               >
                 Add first person
               </Button>
@@ -347,7 +349,9 @@ function TreeWorkspace() {
             online={online}
             authoritativeManage={authoritativeManage}
             people={people}
-            edit={edit}
+            edit={(spec) =>
+              edit({ ...spec, originRevision: collection.data!.graph_revision })
+            }
             showInTree={showInTree}
           />
         ) : null}
@@ -377,6 +381,7 @@ function TreeWorkspace() {
           <TreeAdvancedTools
             collection={collection.data}
             person={detail.data?.person}
+            personRevision={detail.data?.graph_revision}
             people={people.items}
           />
         ) : null}
@@ -451,15 +456,23 @@ function TreeWorkspace() {
               <RecordEditor
                 key={editorId.current}
                 {...editor}
-                latest={latest}
+                originRevision={editor.originRevision}
                 onDirtyChange={onDirty}
                 onSaved={saved}
               />
             </div>
           ) : chooser === "relative" && detail.data ? (
-            <RelativeChooser anchor={detail.data.person} onChoose={edit} />
+            <RelativeChooser
+              anchor={detail.data.person}
+              originRevision={detail.data.graph_revision}
+              onChoose={edit}
+            />
           ) : chooser === "identity" && detail.data ? (
-            <IdentityChooser person={detail.data.person} onChoose={edit} />
+            <IdentityChooser
+              person={detail.data.person}
+              originRevision={detail.data.graph_revision}
+              onChoose={edit}
+            />
           ) : null}
         </FamilyTreeDialog>
       </section>

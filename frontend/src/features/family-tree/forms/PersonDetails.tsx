@@ -21,7 +21,7 @@ export { RelativeChooser, IdentityChooser } from "./PersonChoosers";
 export function PersonDetails({
   detail,
   people,
-  onEdit,
+  onEdit: requestEdit,
   onRelative,
   onIdentity,
   onSelect,
@@ -37,10 +37,18 @@ export function PersonDetails({
 }) {
   const runtime = useTreeRuntime(),
     person = detail.person;
+  const onEdit = (spec: EditorSpec) =>
+    requestEdit({
+      ...spec,
+      originRevision: detail.graph_revision,
+      reviewFacts: spec.reviewFacts ?? { ...person },
+      reviewTarget: spec.reviewTarget ?? { entity: "person", id: person.id },
+    });
   const editable =
     runtime.manage &&
     runtime.online &&
     !runtime.busy &&
+    detail.graph_revision >= runtime.floor.current &&
     !person.is_locked &&
     !person.archived_at &&
     !person.merged_into_person_id;
@@ -173,10 +181,16 @@ export function PersonDetails({
         <>
           <PersonNarratives
             person={person}
+            originRevision={detail.graph_revision}
             editable={editable}
-            onEdit={onEdit}
+            onEdit={requestEdit}
           />
-          <PersonMedia key={person.id} person={person} onEdit={onEdit} />
+          <PersonMedia
+            key={person.id}
+            person={person}
+            originRevision={detail.graph_revision}
+            onEdit={requestEdit}
+          />
         </>
       ) : null}
       <section aria-label="Identity association">

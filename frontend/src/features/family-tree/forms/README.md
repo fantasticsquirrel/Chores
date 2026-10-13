@@ -3,10 +3,8 @@
 The route is an adult-only, authoritative-discovery boundary. `ProtectedTree`
 owns an ephemeral, per-session QueryClient and busy lease. Content is not loaded
 on role fallback, failed discovery, logout, household/account switch or denial.
-All Family Tree requests pass the transport's real AbortSignal; staging tasks and
-commands abort on retirement. The existing `/modules/me` endpoint currently has
-no RequestOptions parameter: discovery publication is logically cancellable,
-but underlying discovery HTTP cancellation remains a shared-endpoint hold.
+All Family Tree requests, including `/modules/me` discovery, pass the transport's
+real AbortSignal; staging tasks and commands abort on retirement.
 
 ## Cohesive ownership
 

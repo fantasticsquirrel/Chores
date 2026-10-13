@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { RequestOptions } from "@family-manager/family-api/client-core";
 import type { FamilyTreeMutationResult } from "../../../api";
 import { useTreeTask } from "./useTreeTask";
+import type { useTreeCommand } from "./useTreeCommand";
 
 type SavedCheck = {
   result: FamilyTreeMutationResult;
@@ -10,6 +11,7 @@ type SavedCheck = {
     options: RequestOptions,
   ) => Promise<true>;
   onVerified: () => void;
+  command?: ReturnType<typeof useTreeCommand>;
 };
 /** A known saved command is never resubmitted just to repair its GET readback. */
 export function useTreeSavedReadback() {
@@ -19,6 +21,11 @@ export function useTreeSavedReadback() {
   async function retry() {
     const current = check.current;
     if (!current) return;
+    if (
+      current.command?.savedReadbackPending() &&
+      !(await current.command.retrySavedReadback())
+    )
+      return;
     const verified = await task.run((options) =>
       current.load(current.result, options),
     );
@@ -32,10 +39,11 @@ export function useTreeSavedReadback() {
     result: FamilyTreeMutationResult,
     load: SavedCheck["load"],
     onVerified: () => void,
+    command?: ReturnType<typeof useTreeCommand>,
   ) {
-    check.current = { result, load, onVerified };
+    check.current = { result, load, onVerified, command };
     setSaved(result);
-    await retry();
+    if (!command?.savedReadbackPending()) await retry();
   }
   return { saved, confirm, retry, pending: task.pending, error: task.error };
 }

@@ -12,16 +12,19 @@ import { DraftClose } from "./AdvancedFeedback";
 export function TreeAdvancedTools({
   collection,
   person,
+  personRevision,
   people,
 }: {
   collection: FamilyTreeCollectionState;
   person?: FamilyTreePerson;
+  personRevision?: number;
   people: FamilyTreePerson[];
 }) {
   const runtime = useTreeRuntime(),
     navigate = useNavigate();
   const [flow, setFlow] = useState<"transfer" | "merge" | "purge" | null>(null),
     [subject, setSubject] = useState<FamilyTreePerson | null>(null),
+    [subjectRevision, setSubjectRevision] = useState<number | null>(null),
     [discard, setDiscard] = useState(false),
     [message, setMessage] = useState("");
   const dirty = useRef(false),
@@ -62,11 +65,18 @@ export function TreeAdvancedTools({
     !runtime.manage || !runtime.online || runtime.busy || runtime.checking;
   if (!authorized) return null;
   function open(next: NonNullable<typeof flow>) {
-    if (blocked) return;
+    if (
+      blocked ||
+      (next !== "transfer" &&
+        (personRevision === undefined ||
+          personRevision < runtime.floor.current))
+    )
+      return;
     dirty.current = false;
     cancel.current = null;
     setDiscard(false);
     setSubject(person ?? null);
+    setSubjectRevision(personRevision ?? null);
     setFlow(next);
   }
   function close() {
@@ -136,9 +146,10 @@ export function TreeAdvancedTools({
           onDiscard={() => void abandon()}
         />
         <div hidden={discard}>
-          {flow === "merge" && selected ? (
+          {flow === "merge" && selected && subjectRevision !== null ? (
             <MergeReview
               source={selected}
+              originRevision={subjectRevision}
               people={people}
               onDirty={onDirty}
               onSaved={() => {
@@ -150,9 +161,10 @@ export function TreeAdvancedTools({
               }}
             />
           ) : null}
-          {flow === "purge" && selected ? (
+          {flow === "purge" && selected && subjectRevision !== null ? (
             <PurgeReview
               person={selected}
+              originRevision={subjectRevision}
               canPurge={collection.capabilities.can_purge}
               onDirty={onDirty}
               onSaved={(notice) => {

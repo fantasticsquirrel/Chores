@@ -1,7 +1,8 @@
 import { useTreeRefresh } from "../hooks/useTreeRefresh";
 import { useTreeSavedReadback } from "../hooks/useTreeSavedReadback";
 import { useExpiry } from "../hooks/useExpiry";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { purgeOperation } from "../lib/workflows/purgeOperation";
 import { readFamilyTreePurgeSummary } from "@family-manager/family-api/models/family-tree-summary";
 import {
   apiClient,
@@ -16,11 +17,13 @@ import { previewIssue } from "../lib/workflows/advanced";
 import { AdvancedFeedback, ConsequenceCounts } from "./AdvancedFeedback";
 export function PurgeReview({
   person,
+  originRevision,
   canPurge,
   onDirty,
   onSaved,
 }: {
   person: FamilyTreePerson;
+  originRevision: number;
   canPurge: boolean;
   onDirty: (dirty: boolean) => void;
   onSaved: (message: string) => void;
@@ -28,6 +31,7 @@ export function PurgeReview({
   const runtime = useTreeRuntime(),
     task = useTreeTask(),
     command = useTreeCommand();
+  const baseline = useRef(originRevision);
   const refresh = useTreeRefresh();
   const readback = useTreeSavedReadback();
   const retryReceipt = command.hasAttempt && command.state.kind === "failure";
@@ -62,7 +66,7 @@ export function PurgeReview({
       const result = await task.run((options) =>
         apiClient.previewFamilyTreePurge(
           person.id,
-          { expected_graph_revision: runtime.revision(), password },
+          { expected_graph_revision: baseline.current, password },
           options,
         ),
       );
@@ -75,22 +79,25 @@ export function PurgeReview({
     }
   }
   async function commit() {
-    if (blocked || !confirmed || !password || !preview || !summary || issue)
+    if (
+      blocked ||
+      !confirmed ||
+      !password ||
+      !preview ||
+      !summary ||
+      (!retryReceipt && issue)
+    )
       return;
-    const entered = password;
+    let authentication: string | undefined = password;
+    setPassword("");
     try {
-      const result = await command.submit((intent, options) =>
-        apiClient.commitFamilyTreePurge(
-          person.id,
-          {
-            ...intent,
-            idempotency_key: intent.idempotency_key!,
-            preview_token: preview.preview_token,
-            password: entered,
-          },
-          options,
-        ),
+      const pending = command.submit(
+        purgeOperation(person.id, preview.preview_token),
+        preview.expected_graph_revision,
+        authentication,
       );
+      authentication = undefined;
+      const result = await pending;
       if (!result) return;
       await readback.confirm(
         result,
@@ -126,6 +133,7 @@ export function PurgeReview({
             "Purge confirmed by an authorized not-found readback; other people and retained snapshots were not purged.",
           );
         },
+        command,
       );
     } finally {
       setPassword("");
@@ -198,6 +206,7 @@ export function PurgeReview({
               : await refresh.reload())
           )
             return;
+          baseline.current = runtime.revision();
           setPreview(null);
           setConfirmed(false);
           setPassword("");

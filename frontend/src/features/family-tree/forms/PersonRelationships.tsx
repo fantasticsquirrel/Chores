@@ -12,7 +12,7 @@ export function PersonRelationships({
   detail,
   choices,
   editable,
-  onEdit,
+  onEdit: requestEdit,
   onSelect,
 }: {
   detail: FamilyTreePersonDetail;
@@ -22,6 +22,15 @@ export function PersonRelationships({
   onSelect: (id: number) => void;
 }) {
   const runtime = useTreeRuntime();
+  const onEdit = (spec: EditorSpec) =>
+    requestEdit({
+      ...spec,
+      originRevision: detail.graph_revision,
+      reviewTarget: spec.reviewTarget ?? {
+        entity: "person",
+        id: detail.person.id,
+      },
+    });
   return (
     <section aria-label="Recorded relationships">
       <h3>Recorded relationships</h3>
@@ -72,6 +81,8 @@ export function PersonRelationships({
                           command,
                           requestOptions,
                         ),
+                      { entity: "parent", id: link.id },
+                      { ...link },
                     ),
                   )
                 }
@@ -124,6 +135,8 @@ export function PersonRelationships({
                           command,
                           requestOptions,
                         ),
+                      { entity: "care", id: link.id },
+                      { ...link },
                     ),
                   )
                 }
@@ -176,6 +189,8 @@ export function PersonRelationships({
                           command,
                           requestOptions,
                         ),
+                      { entity: "partner", id: link.id },
+                      { ...link },
                     ),
                   )
                 }

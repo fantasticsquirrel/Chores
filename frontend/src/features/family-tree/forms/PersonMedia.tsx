@@ -12,18 +12,41 @@ import { MediaUpload } from "./MediaUpload";
 import { DraftClose } from "./AdvancedFeedback";
 export function PersonMedia({
   person,
-  onEdit,
+  originRevision,
+  onEdit: requestEdit,
 }: {
   person: FamilyTreePerson;
+  originRevision: number;
   onEdit: (editor: EditorSpec) => void;
 }) {
   const runtime = useTreeRuntime(),
     task = useTreeTask(false);
   const references = useTreeRead(
     ["media", person.id],
-    (options) => apiClient.listFamilyTreeMediaReferences(person.id, options),
+    async (options) => {
+      const before = await apiClient.getFamilyTreeCollection(options);
+      const items = await apiClient.listFamilyTreeMediaReferences(
+        person.id,
+        options,
+      );
+      const after = await apiClient.getFamilyTreeCollection(options);
+      if (before.graph_revision !== after.graph_revision)
+        throw new Error(
+          "Photograph references changed while loading. Reload before editing.",
+        );
+      return { items, graph_revision: after.graph_revision };
+    },
     !person.merged_into_person_id,
   );
+  const onEdit = (spec: EditorSpec) => {
+    if (!references.data || references.isFetching || references.error) return;
+    requestEdit({
+      ...spec,
+      originRevision: Math.min(originRevision, references.data.graph_revision),
+      reviewTarget: { entity: "media", id: person.id },
+      reviewFacts: { references: references.data.items },
+    });
+  };
   const [upload, setUpload] = useState(false),
     [discard, setDiscard] = useState(false),
     [image, setImage] = useState<{ url: string; caption: string } | null>(null);
@@ -54,6 +77,7 @@ export function PersonMedia({
     runtime.online &&
     !runtime.busy &&
     !runtime.checking &&
+    originRevision >= runtime.floor.current &&
     !person.is_locked &&
     !person.archived_at &&
     !person.merged_into_person_id;
@@ -94,9 +118,11 @@ export function PersonMedia({
           </Button>
         </InlineNotice>
       ) : null}
-      {references.data?.length === 0 ? <p>No photographs attached.</p> : null}
+      {references.data?.items.length === 0 ? (
+        <p>No photographs attached.</p>
+      ) : null}
       <ul>
-        {references.data?.map((reference) => (
+        {references.data?.items.map((reference) => (
           <li key={reference.id}>
             <p>
               {reference.role} photograph {reference.asset_id}
@@ -206,6 +232,7 @@ export function PersonMedia({
           <div hidden={discard}>
             <MediaUpload
               person={person}
+              originRevision={originRevision}
               onDirty={(value) => {
                 dirty.current = value;
               }}

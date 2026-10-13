@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   parsePartialDate,
   type DateInput,
@@ -15,199 +15,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { latestFacts, type ReviewTarget } from "../lib/workflows/review";
 
 import type { Field } from "../lib/workflows/fields";
-
-function FactField({
-  field,
-  value,
-  onChange,
-  disabled,
-}: {
-  field: Field;
-  value: unknown;
-  onChange: (value: unknown) => void;
-  disabled: boolean;
-}) {
-  const id = useId();
-  if (field.type === "date") {
-    const date = value as
-      | { value: string; uncertain?: boolean }
-      | null
-      | undefined;
-    return (
-      <fieldset disabled={disabled}>
-        <legend>{field.label}</legend>
-        <label htmlFor={id}>{field.label} (YYYY, YYYY-MM, or YYYY-MM-DD)</label>
-        <input
-          id={id}
-          value={date?.value ?? ""}
-          pattern="[0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?"
-          onChange={(event) =>
-            onChange(
-              event.target.value
-                ? {
-                    value: event.target.value,
-                    uncertain: date?.uncertain ?? false,
-                  }
-                : null,
-            )
-          }
-        />
-        <label>
-          <input
-            type="checkbox"
-            checked={date?.uncertain ?? false}
-            disabled={!date?.value}
-            onChange={(event) =>
-              onChange({ ...date, uncertain: event.target.checked })
-            }
-          />{" "}
-          {field.label} uncertain
-        </label>
-        <small>Blank means unknown; no day is invented.</small>
-      </fieldset>
-    );
-  }
-  if (field.type === "aliases") {
-    const aliases = (value ?? []) as { name: string; label: string | null }[];
-    return (
-      <fieldset disabled={disabled}>
-        <legend>{field.label}</legend>
-        {aliases.map((alias, index) => (
-          <div key={index}>
-            <label>
-              Alias {index + 1} name
-              <input
-                value={alias.name}
-                required
-                onChange={(event) =>
-                  onChange(
-                    aliases.map((item, i) =>
-                      i === index
-                        ? { ...item, name: event.target.value }
-                        : item,
-                    ),
-                  )
-                }
-              />
-            </label>
-            <label>
-              Alias {index + 1} label
-              <input
-                value={alias.label ?? ""}
-                onChange={(event) =>
-                  onChange(
-                    aliases.map((item, i) =>
-                      i === index
-                        ? { ...item, label: event.target.value || null }
-                        : item,
-                    ),
-                  )
-                }
-              />
-            </label>
-            <Button
-              type="button"
-              onClick={() => onChange(aliases.filter((_, i) => i !== index))}
-            >
-              Remove alias {index + 1}
-            </Button>
-          </div>
-        ))}
-        <Button
-          type="button"
-          onClick={() => onChange([...aliases, { name: "", label: null }])}
-        >
-          Add alias
-        </Button>
-      </fieldset>
-    );
-  }
-  if (field.type === "boolean")
-    return (
-      <label>
-        <input
-          type="checkbox"
-          checked={value === true}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.checked)}
-        />{" "}
-        {field.label}
-      </label>
-    );
-  return (
-    <div className="form-field">
-      <label htmlFor={id}>
-        {field.label}
-        {field.required ? " (required)" : ""}
-      </label>
-      {field.type === "select" ? (
-        <select
-          id={id}
-          value={String(value ?? field.options?.[0] ?? "")}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.value)}
-        >
-          {field.options?.map((option) => (
-            <option key={option} value={option}>
-              {option.replace(/_/g, " ")}
-            </option>
-          ))}
-        </select>
-      ) : field.type === "person" ? (
-        <select
-          id={id}
-          required
-          value={String(value ?? "")}
-          disabled={disabled}
-          onChange={(event) => onChange(Number(event.target.value))}
-        >
-          <option value="">Choose a recorded person</option>
-          {field.choices?.map((choice) => (
-            <option key={choice.id} value={choice.id}>
-              {choice.label}
-            </option>
-          ))}
-        </select>
-      ) : field.type === "textarea" ? (
-        <textarea
-          id={id}
-          required={field.required}
-          rows={5}
-          value={String(value ?? "")}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.value || null)}
-        />
-      ) : (
-        <input
-          id={id}
-          required={field.required}
-          value={
-            field.type === "tags"
-              ? ((value as string[] | undefined)?.join(", ") ?? "")
-              : String(value ?? "")
-          }
-          disabled={disabled}
-          onChange={(event) =>
-            onChange(
-              field.type === "tags"
-                ? event.target.value
-                    .split(",")
-                    .map((tag) => tag.trim())
-                    .filter(Boolean)
-                : event.target.value || null,
-            )
-          }
-        />
-      )}
-    </div>
-  );
-}
+import { FactField } from "./RecordFactField";
 
 export function RecordEditor({
   fields,
   initial,
+  originRevision,
   latest,
   reviewTarget,
+  reviewFacts,
   create = false,
   operation,
   onSaved,
@@ -217,8 +33,10 @@ export function RecordEditor({
 }: {
   fields: Field[];
   initial: Facts;
+  originRevision: number;
   latest?: Facts;
   reviewTarget?: ReviewTarget;
+  reviewFacts?: Facts;
   create?: boolean;
   operation: (facts: Facts) => TreeOperation;
   onSaved: (result: FamilyTreeMutationResult) => void;
@@ -226,6 +44,7 @@ export function RecordEditor({
   confirmation?: ReactNode;
   saveLabel?: string;
 }) {
+  const baseline = useRef(originRevision);
   const original = useRef(initial),
     [draft, setDraft] = useState(initial),
     [touched, setTouched] = useState<Set<string>>(new Set()),
@@ -239,8 +58,9 @@ export function RecordEditor({
     latestFacts(
       reviewTarget,
       client.getQueriesData({ queryKey: ["family-tree", runtime.owner] }),
+      command.state.reviewedRevision,
     );
-  const frozen = command.hasAttempt;
+  const frozen = command.hasAttempt || command.state.kind === "saved_readback";
   useEffect(() => {
     onDirtyChange(touched.size > 0 || command.hasAttempt, command.state.busy);
   }, [touched, command.hasAttempt, command.state.busy, onDirtyChange]);
@@ -275,8 +95,8 @@ export function RecordEditor({
         return;
       }
 
-      const result = await command.submit(operation(facts));
-      if (result) onSaved(result);
+      const result = await command.submit(operation(facts), baseline.current);
+      if (result && !command.savedReadbackPending()) onSaved(result);
     } catch (error) {
       setValidation(
         error instanceof Error ? error.message : "Check the entered facts.",
@@ -347,6 +167,12 @@ export function RecordEditor({
           </Button>
           {command.state.reviewed && (
             <>
+              {reviewFacts && (
+                <p>
+                  Original confirmed target: {JSON.stringify(reviewFacts)};
+                  latest target: {JSON.stringify(currentFacts ?? null)}
+                </p>
+              )}
               <dl>
                 {[...touched].map((key) => (
                   <div key={key}>
@@ -363,14 +189,20 @@ export function RecordEditor({
               </dl>
               <Button
                 type="button"
-                disabled={!runtime.manage || !runtime.online || runtime.busy}
+                disabled={
+                  !runtime.manage ||
+                  !runtime.online ||
+                  runtime.busy ||
+                  (!!reviewTarget && !currentFacts)
+                }
                 onClick={() =>
                   void command.reapply().then((result) => {
                     if (result) onSaved(result);
                   })
                 }
               >
-                Reapply reviewed draft at revision {runtime.revision()}
+                Reapply reviewed draft at revision{" "}
+                {command.state.reviewedRevision}
               </Button>
             </>
           )}
@@ -407,6 +239,30 @@ export function RecordEditor({
             }
           >
             Save after chronology review
+          </Button>
+        </section>
+      )}
+      {command.state.kind === "saved_readback" && (
+        <section aria-label="Saved readback recovery">
+          <p>
+            The change was saved. Retry only loading the saved tree; do not
+            submit another change.
+          </p>
+          <Button
+            type="button"
+            disabled={
+              !runtime.manage ||
+              !runtime.online ||
+              runtime.busy ||
+              runtime.checking
+            }
+            onClick={() =>
+              void command.retrySavedReadback(true).then((result) => {
+                if (result) onSaved(result);
+              })
+            }
+          >
+            Retry saved readback
           </Button>
         </section>
       )}

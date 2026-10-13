@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useTreeSavedReadback } from "../hooks/useTreeSavedReadback";
 import {
   apiClient,
   type FamilyTreeMedia,
@@ -15,16 +16,20 @@ import { fileIssue } from "../lib/workflows/advanced";
 import { AdvancedFeedback } from "./AdvancedFeedback";
 export function MediaUpload({
   person,
+  originRevision,
   onDirty,
   onSaved,
 }: {
   person: FamilyTreePerson;
+  originRevision: number;
   onDirty: (dirty: boolean) => void;
   onSaved: () => void;
 }) {
   const runtime = useTreeRuntime(),
     task = useTreeTask(),
     command = useTreeCommand();
+  const baseline = useRef(originRevision);
+  const readback = useTreeSavedReadback();
   const [file, setFile] = useState<File | null>(null),
     [caption, setCaption] = useState(""),
     [asset, setAsset] = useState<FamilyTreeMedia | null>(null),
@@ -45,6 +50,7 @@ export function MediaUpload({
     !runtime.online ||
     runtime.busy ||
     runtime.checking ||
+    !!readback.saved ||
     person.is_locked ||
     !!person.merged_into_person_id ||
     !!person.archived_at;
@@ -77,24 +83,45 @@ export function MediaUpload({
     }
   }
   async function attach(reviewedChronology = false) {
-    if (!asset || blocked || (role === "story" && !storyId)) return;
+    if (
+      !asset ||
+      blocked ||
+      (role === "story" &&
+        (!storyId ||
+          !stories.consistent ||
+          stories.revision === undefined ||
+          stories.revision < runtime.floor.current))
+    )
+      return;
     const result = reviewedChronology
       ? await command.reapply()
-      : await command.submit((intent, options) =>
-          apiClient.attachFamilyTreeMedia(
-            asset.id,
-            {
-              ...intent,
-              person_id: person.id,
-              role,
-              story_id: role === "story" ? Number(storyId) : null,
-            },
-            options,
-          ),
+      : await command.submit(
+          (intent, options) =>
+            apiClient.attachFamilyTreeMedia(
+              asset.id,
+              {
+                ...intent,
+                person_id: person.id,
+                role,
+                story_id: role === "story" ? Number(storyId) : null,
+              },
+              options,
+            ),
+          baseline.current,
         );
     if (result) {
-      onDirty(false);
-      onSaved();
+      await readback.confirm(
+        result,
+        async (_receipt, options) => {
+          await apiClient.listFamilyTreeMediaReferences(person.id, options);
+          return true;
+        },
+        () => {
+          onDirty(false);
+          onSaved();
+        },
+        command,
+      );
     }
   }
   return (
@@ -159,7 +186,13 @@ export function MediaUpload({
             Recorded story
             <select
               value={storyId}
-              disabled={blocked || command.hasAttempt}
+              disabled={
+                blocked ||
+                command.hasAttempt ||
+                !stories.consistent ||
+                stories.revision === undefined ||
+                stories.revision < runtime.floor.current
+              }
               onChange={(e) => setStoryId(e.target.value)}
             >
               <option value="">Choose a recorded story</option>
@@ -187,7 +220,7 @@ export function MediaUpload({
         </>
       ) : null}
       <AdvancedFeedback
-        error={task.error}
+        error={readback.error || task.error}
         command={command}
         blocked={!!blocked}
         onChronology={() => attach(true)}
@@ -196,8 +229,28 @@ export function MediaUpload({
         }}
       />
       {command.state.kind === "conflict" && command.state.reviewed ? (
-        <Button onClick={() => command.resetIntent()}>
+        <Button
+          disabled={command.state.reviewedRevision === undefined}
+          onClick={() => {
+            if (command.state.reviewedRevision === undefined) return;
+            baseline.current = command.state.reviewedRevision;
+            command.resetIntent();
+          }}
+        >
           Use reviewed revision for attachment
+        </Button>
+      ) : null}
+      {readback.saved ? (
+        <Button
+          disabled={
+            !runtime.manage ||
+            !runtime.online ||
+            runtime.busy ||
+            runtime.checking
+          }
+          onClick={() => void readback.retry()}
+        >
+          Retry saved photograph readback
         </Button>
       ) : null}
       <p role="status">

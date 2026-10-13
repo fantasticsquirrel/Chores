@@ -30,9 +30,11 @@ import type { ReviewTarget } from "./review";
 
 export type EditorSpec = {
   title: string;
+  originRevision?: number;
   fields: Field[];
   initial: Facts;
   latest?: Facts;
+  reviewFacts?: Facts;
   reviewTarget?: ReviewTarget;
   create?: boolean;
   operation: (facts: Facts) => TreeOperation;
@@ -40,6 +42,7 @@ export type EditorSpec = {
   saveLabel?: string;
   focusCreated?: boolean;
 };
+export type EditorDraft = EditorSpec & { originRevision: number };
 const parentKinds = ["biological", "adoptive", "step", "unknown"] as const,
   careKinds = ["guardian", "caregiver"] as const,
   partnerKinds = ["married", "civil_union", "partners", "unknown"] as const;
@@ -374,9 +377,13 @@ export function confirmEditor(
   title: string,
   confirmation: string,
   operation: TreeOperation,
+  reviewTarget?: ReviewTarget,
+  reviewFacts?: Facts,
 ): EditorSpec {
   return {
     title,
+    reviewTarget,
+    reviewFacts,
     fields: [],
     initial: {},
     confirmation,
