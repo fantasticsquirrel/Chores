@@ -13,7 +13,7 @@ def state(session,actor):
     c=collection(session,actor.household_id)
     base=select(func.count()).select_from(FamilyTreePerson).where(FamilyTreePerson.household_id==actor.household_id)
     manage=ModuleService().can_access_module(session,actor,'family-tree',manage=True)
-    return {'state':'initialized' if c else 'uninitialized','collection_id':c.id if c else None,'title':c.title if c else 'Family Tree','graph_revision':c.revision if c else 0,'default_focus_person_id':c.default_focus_person_id if c else None,'active_people_count':session.scalar(base.where(FamilyTreePerson.archived_at.is_(None))) or 0,'archived_people_count':session.scalar(base.where(FamilyTreePerson.archived_at.is_not(None))) or 0,'capabilities':{'can_manage':manage,'can_export':False,'can_purge':False}}
+    return {'state':'initialized' if c else 'uninitialized','collection_id':c.id if c else None,'title':c.title if c else 'Family Tree','graph_revision':c.revision if c else 0,'default_focus_person_id':c.default_focus_person_id if c else None,'active_people_count':session.scalar(base.where(FamilyTreePerson.archived_at.is_(None))) or 0,'archived_people_count':session.scalar(base.where(FamilyTreePerson.archived_at.is_not(None))) or 0,'capabilities':{'can_manage':manage,'can_export':manage,'can_purge':bool(manage and session.scalar(select(Household.owner_user_id).where(Household.id==actor.household_id))==actor.id)}}
 
 
 def replace_tags(session,actor,c,p,tags):

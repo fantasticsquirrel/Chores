@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from typing import NoReturn
 from sqlalchemy import select
 from app.models import User
 from app.models.enums import UserRole
@@ -6,7 +7,7 @@ from app.models.family_tree import FamilyTreeCollection, FamilyTreePerson
 from app.services.modules import ModuleService
 from app.schemas.family_tree import DomainErrorDetail
 
-def error(code, message, status=409, **extra):
+def error(code, message, status=409, **extra) -> NoReturn:
     detail=DomainErrorDetail.model_validate({'code':code,'message':message,**extra})
     raise HTTPException(status_code=status, detail=detail.model_dump(mode='json',exclude_none=True,exclude_unset=True))
 

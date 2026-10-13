@@ -21,10 +21,11 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
 
 class DomainErrorDetail(Strict):
-    code: Literal['revision_conflict','person_locked','person_merged','relationship_cycle','identity_link_conflict','idempotency_conflict','integrity_conflict','resource_limit','validation_error','chronology_review','server_busy']
+    code: Literal['revision_conflict','person_locked','person_merged','relationship_cycle','identity_link_conflict','idempotency_conflict','integrity_conflict','resource_limit','validation_error','chronology_review','server_busy','merge_aliases_present','merge_conflict','transfer_expired','media_unavailable','storage_unavailable']
     message: str
     canonical_person_id: int | None = None
     warnings: list[str] = Field(default_factory=list)
+    blocking_alias_ids: list[int] = Field(default_factory=list)
 
 class DomainErrorResponse(Strict):
     detail: DomainErrorDetail | str
@@ -255,6 +256,8 @@ class Affected(Strict):
     story_ids: list[int] = Field(default_factory=list)
     residence_ids: list[int] = Field(default_factory=list)
     identity_link_ids: list[int] = Field(default_factory=list)
+    media_asset_ids: list[int] = Field(default_factory=list)
+    media_reference_ids: list[int] = Field(default_factory=list)
 class MutationResult(Strict):
     committed_revision: int
     current_revision: int

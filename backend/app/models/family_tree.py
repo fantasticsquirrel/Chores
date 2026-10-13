@@ -1,6 +1,6 @@
 """Household-scoped genealogy. Facts JSON is validated by strict domain DTOs.
 
-Media/transfer tables and destructive workflows belong to FT-3, not this core.
+Private media lifecycle, transfer staging and destructive previews extend the core.
 """
 from datetime import UTC, datetime
 
@@ -109,7 +109,7 @@ class FamilyTreePartnerEpisode(Scoped, Base):
 
 class FamilyTreeStory(Scoped, Base):
     __tablename__ = 'family_tree_stories'
-    __table_args__ = (collection_fk(), person_fk(), CheckConstraint('position >= 0', name='nonnegative_position'))
+    __table_args__ = (collection_fk(), person_fk(), UniqueConstraint('id','person_id','collection_id','household_id'), CheckConstraint('position >= 0', name='nonnegative_position'))
     person_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     facts: Mapped[dict] = mapped_column(JSON, nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -129,7 +129,7 @@ class FamilyTreeIdentityLink(Scoped, Base):
         collection_fk(), person_fk(),
         ForeignKeyConstraint(['user_id','household_id'], ['users.id','users.household_id'], ondelete='CASCADE'),
         ForeignKeyConstraint(['child_id','household_id'], ['children.id','children.household_id'], ondelete='CASCADE'),
-        UniqueConstraint('person_id'), UniqueConstraint('collection_id','user_id'), UniqueConstraint('collection_id','child_id'),
+        UniqueConstraint('person_id'), UniqueConstraint('collection_id','user_id',name='uq_family_tree_identity_links_collection_user'), UniqueConstraint('collection_id','child_id',name='uq_family_tree_identity_links_collection_child'),
         CheckConstraint('(user_id IS NULL) != (child_id IS NULL)', name='exactly_one_identity'),
     )
     person_id: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -176,3 +176,91 @@ for action in ['INSERT','UPDATE']:
     BEGIN SELECT RAISE(ABORT, 'identity target must be an adult'); END''')
 for statement in TRIGGERS:
     event.listen(Base.metadata, 'after_create', DDL(statement.replace('CREATE TRIGGER ', 'CREATE TRIGGER IF NOT EXISTS ')).execute_if(dialect='sqlite'))
+
+class FamilyTreeMediaAsset(Scoped, Base):
+    __tablename__ = 'family_tree_media_assets'
+    __table_args__ = (collection_fk(), UniqueConstraint('id', 'collection_id', 'household_id'),
+        CheckConstraint("state IN ('ready','deleting','deleted')", name='media_state'),
+        CheckConstraint('byte_size > 0 AND width > 0 AND height > 0', name='media_size'),)
+    object_key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    byte_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    checksum: Mapped[str] = mapped_column(String(64), nullable=False)
+    width: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    caption: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    state: Mapped[str] = mapped_column(String(20), nullable=False, default='ready', index=True)
+    claim_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    claim_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+def asset_fk():
+    return ForeignKeyConstraint(['asset_id', 'collection_id', 'household_id'],
+        ['family_tree_media_assets.id', 'family_tree_media_assets.collection_id', 'family_tree_media_assets.household_id'], ondelete='RESTRICT')
+
+
+class FamilyTreeMediaReference(Scoped, Base):
+    __tablename__ = 'family_tree_media_references'
+    __table_args__ = (collection_fk(), person_fk(), asset_fk(),
+        ForeignKeyConstraint(['story_id', 'person_id', 'collection_id', 'household_id'], ['family_tree_stories.id', 'family_tree_stories.person_id', 'family_tree_stories.collection_id', 'family_tree_stories.household_id'], ondelete='CASCADE'),
+        CheckConstraint("(role IN ('primary','gallery') AND story_id IS NULL) OR (role='story' AND story_id IS NOT NULL)", name='reference_target'),
+        UniqueConstraint('asset_id', 'person_id', 'role', 'story_id'),
+        Index('ux_ft_primary_image', 'person_id', unique=True, sqlite_where=text("role = 'primary'")),)
+    asset_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    person_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    story_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    role: Mapped[str] = mapped_column(String(20), nullable=False)
+
+
+class FamilyTreeMediaPin(Scoped, Base):
+    __tablename__ = 'family_tree_media_pins'
+    __table_args__ = (collection_fk(), asset_fk(), UniqueConstraint('asset_id', 'token'))
+    asset_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    token: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    purpose: Mapped[str] = mapped_column(String(20), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+
+class FamilyTreeTransferJob(TimestampMixin, Base):
+    __tablename__ = 'family_tree_transfer_jobs'
+    __table_args__ = (collection_fk(), CheckConstraint("kind IN ('import','export','merge','purge')", name='job_kind'),
+        CheckConstraint("state IN ('ready','committed','canceled','expired','failed')", name='job_state'),)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey('households.id', ondelete='CASCADE'), nullable=False, index=True)
+    collection_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    actor_user_id: Mapped[int] = mapped_column(ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    state: Mapped[str] = mapped_column(String(20), nullable=False, default='ready')
+    expected_revision: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    summary: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    artifact_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    artifact_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+
+class FamilyTreeImportSourceKey(Scoped, Base):
+    __tablename__ = 'family_tree_import_source_keys'
+    __table_args__ = (collection_fk(), person_fk(), UniqueConstraint('person_id'))
+    person_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    package_digest: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    source_key: Mapped[str] = mapped_column(String(200), nullable=False)
+    provenance: Mapped[dict] = mapped_column(JSON, nullable=False)
+
+
+FT3_MODELS = (FamilyTreeMediaAsset, FamilyTreeMediaReference, FamilyTreeMediaPin, FamilyTreeTransferJob, FamilyTreeImportSourceKey)
+FAMILY_TREE_MODELS += FT3_MODELS
+FT3_TRIGGERS = []
+for table in ['family_tree_media_references', 'family_tree_media_pins']:
+    for action in ['INSERT', 'UPDATE']:
+        FT3_TRIGGERS.append(f"""CREATE TRIGGER trg_ft_{table}_{action.lower()} BEFORE {action} ON {table}
+        WHEN NOT EXISTS (SELECT 1 FROM family_tree_media_assets WHERE id=NEW.asset_id AND collection_id=NEW.collection_id AND household_id=NEW.household_id AND state='ready')
+        BEGIN SELECT RAISE(ABORT, 'asset unavailable'); END""")
+FT3_TRIGGERS.append("""CREATE TRIGGER trg_ft_media_claim BEFORE UPDATE OF state ON family_tree_media_assets
+WHEN NEW.state='deleting' AND (EXISTS (SELECT 1 FROM family_tree_media_references WHERE asset_id=NEW.id)
+OR EXISTS (SELECT 1 FROM family_tree_media_pins WHERE asset_id=NEW.id AND expires_at>CURRENT_TIMESTAMP))
+BEGIN SELECT RAISE(ABORT, 'asset retained'); END""")
+for statement in FT3_TRIGGERS:
+    event.listen(Base.metadata, 'after_create', DDL(statement.replace('CREATE TRIGGER ', 'CREATE TRIGGER IF NOT EXISTS ')).execute_if(dialect='sqlite'))
+

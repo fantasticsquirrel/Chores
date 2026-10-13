@@ -19,6 +19,7 @@ from app.error_handling import (
 from app.health import build_readiness_payload
 from app.logging_config import configure_logging
 from app.startup import run_startup_checks
+from app.security.family_tree_limits import FamilyTreeBodyLimitMiddleware
 
 API_PREFIX = "/chore-api"
 FRONTEND_BASE_PATH = "/chore"
@@ -81,6 +82,7 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
         # transport state from client-controlled forwarding headers.
         return response
 
+    app.add_middleware(FamilyTreeBodyLimitMiddleware)
     app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     # Added last so it wraps logging/CSRF/security while remaining inside

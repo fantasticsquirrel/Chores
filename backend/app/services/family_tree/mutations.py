@@ -26,6 +26,7 @@ def execute(session,actor,operation,command,action):
     if separator and prefix.startswith(('person.','story.create','story.reorder','residence.create','identity.')):
         targets.append(int(address))
     if hasattr(command,'anchor_person_id'):targets.append(command.anchor_person_id)
+    if hasattr(command,'person_id'):targets.append(command.person_id)
     for field in ['parent_person_id','child_person_id','caregiver_person_id','recipient_person_id','person_a_id','person_b_id']:
         value=getattr(command,field,None)
         if value:targets.append(value)
@@ -35,7 +36,7 @@ def execute(session,actor,operation,command,action):
             error('person_merged','Open the canonical person before submitting a new command.',canonical_person_id=row.merged_into_person_id)
     now=datetime.now(UTC)
     key=getattr(command,'idempotency_key',None)
-    body=command.model_dump(mode='json')
+    body=command.model_dump(mode='json',exclude={'password'})
     digest=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     key_hash=hashlib.sha256(key.encode()).hexdigest() if key else None
     filters=(FamilyTreeMutationReceipt.household_id==actor.household_id,FamilyTreeMutationReceipt.actor_user_id==actor.id,FamilyTreeMutationReceipt.operation==operation,FamilyTreeMutationReceipt.key_hash==key_hash)

@@ -173,3 +173,6 @@ def link_identity(person_id:PositivePath,body:dto.LinkIdentity,user:Manage,sessi
 @router.delete('/people/{person_id}/identity-link',response_model=dto.MutationResult)
 def unlink_identity(person_id:PositivePath,body:dto.Command,user:Manage,session:DB):
     return commit(session,execute(session,user,f'identity.unlink:{person_id}',body,lambda c:identity.change(session,user,c,person_id,body,remove=True)))
+
+# Register real FT-3 endpoints before main includes this router.
+from app.api import family_tree_transfer  # noqa: E402,F401
