@@ -40,6 +40,11 @@ export interface FamilyTreeGraphProps {
   expansionToken?: string | null;
   onLoadMore?: () => void;
   loading?: boolean;
+  maxDepth?: number;
+  recordedBranchCounts?: ReadonlyMap<
+    number,
+    { ancestors: number; descendants: number }
+  >;
 }
 const DEFAULT_OPTIONS: LayoutOptions = {};
 
@@ -55,6 +60,8 @@ export function FamilyTreeGraph({
   expansionToken,
   onLoadMore,
   loading = false,
+  maxDepth = 32,
+  recordedBranchCounts,
 }: FamilyTreeGraphProps) {
   const {
     lens,
@@ -64,7 +71,7 @@ export function FamilyTreeGraph({
     moreAncestors,
     moreDescendants,
     toggleBranch,
-  } = useTreeLens(options, focusPersonId, onOptionsChange);
+  } = useTreeLens(options, focusPersonId, onOptionsChange, maxDepth);
   const prepared = useMemo(
     () => prepareGraph(graph, options.limits),
     [graph, options.limits],
@@ -174,6 +181,9 @@ export function FamilyTreeGraph({
         lens={lens}
         expansions={expansions}
         visibleBranches={visibleBranches}
+        maxDepth={maxDepth}
+        recordedCounts={recordedBranchCounts?.get(id)}
+        disabled={loading}
         onToggle={toggleBranch}
         onMore={(direction) =>
           direction === "ancestors" ? moreAncestors() : moreDescendants()

@@ -30,6 +30,7 @@ function useDepth(
   base: number | undefined,
   focus: number | null,
   controlled: boolean,
+  maxDepth: number,
 ) {
   const [local, setLocal] = useState<{
     base: number | undefined;
@@ -42,7 +43,7 @@ function useDepth(
       : (base ?? 2);
   return [
     value,
-    () => setLocal({ base, focus, value: Math.min(32, value + 1) }),
+    () => setLocal({ base, focus, value: Math.min(maxDepth, value + 1) }),
   ] as const;
 }
 function collapseSignature(ids: readonly number[] | undefined) {
@@ -55,6 +56,7 @@ export function useTreeLens(
   options: LayoutOptions,
   focus: number | null,
   onOptionsChange?: (options: LayoutOptions) => void,
+  maxDepth = 32,
 ) {
   const controlled = !!onOptionsChange;
   const [includeCare, localCare] = useFlag(
@@ -76,11 +78,13 @@ export function useTreeLens(
     options.ancestorDepth,
     focus,
     controlled,
+    maxDepth,
   );
   const [descendantDepth, localMoreDescendants] = useDepth(
     options.descendantDepth,
     focus,
     controlled,
+    maxDepth,
   );
   const collapseKey = `${focus}:${collapseSignature(options.collapsedAncestors)}:${collapseSignature(options.collapsedDescendants)}`;
   const [collapse, setCollapse] = useState<{
@@ -164,14 +168,14 @@ export function useTreeLens(
       onOptionsChange
         ? onOptionsChange({
             ...lens,
-            ancestorDepth: Math.min(32, ancestorDepth + 1),
+            ancestorDepth: Math.min(maxDepth, ancestorDepth + 1),
           })
         : localMoreAncestors(),
     moreDescendants: () =>
       onOptionsChange
         ? onOptionsChange({
             ...lens,
-            descendantDepth: Math.min(32, descendantDepth + 1),
+            descendantDepth: Math.min(maxDepth, descendantDepth + 1),
           })
         : localMoreDescendants(),
   };

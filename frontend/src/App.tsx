@@ -9,6 +9,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import { FamilyTreePage } from "./pages/FamilyTreePage";
 import { ParentDashboardPage } from "./pages/ParentDashboardPage";
 import { ParentChildrenPage } from "./pages/ParentChildrenPage";
 import { ParentChoresPage } from "./pages/ParentChoresPage";
@@ -407,6 +408,11 @@ function HouseholdApp(): ReactElement {
                 <Route
                   path="/parent/dashboard"
                   element={<ParentDashboardPage />}
+                />
+                <Route path="/family-tree" element={<FamilyTreePage />} />
+                <Route
+                  path="/family-tree/people/:personId"
+                  element={<FamilyTreePage />}
                 />
                 <Route element={<ModuleProtectedRoute moduleKey="chores" />}>
                   <Route

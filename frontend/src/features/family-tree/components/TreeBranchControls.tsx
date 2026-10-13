@@ -14,6 +14,9 @@ export interface TreeBranchControlsProps {
   visibleBranches: ReadonlySet<string>;
   onToggle: (id: number, direction: "ancestors" | "descendants") => void;
   onMore: (direction: "ancestors" | "descendants") => void;
+  maxDepth?: number;
+  recordedCounts?: { ancestors: number; descendants: number };
+  disabled?: boolean;
 }
 export function TreeBranchControls({
   personId,
@@ -24,6 +27,9 @@ export function TreeBranchControls({
   visibleBranches,
   onToggle,
   onMore,
+  maxDepth = 32,
+  recordedCounts,
+  disabled = false,
 }: TreeBranchControlsProps) {
   return (
     <div className="family-tree-branches">
@@ -31,7 +37,11 @@ export function TreeBranchControls({
         const links = (
           direction === "ancestors" ? graph.parents : graph.children
         ).get(personId);
-        if (!links?.length) return null;
+        const missing = Math.max(
+          0,
+          (recordedCounts?.[direction] ?? 0) - (links?.length ?? 0),
+        );
+        if (!links?.length && !missing) return null;
         const collapsed = (
           direction === "ancestors"
             ? lens.collapsedAncestors
@@ -45,7 +55,9 @@ export function TreeBranchControls({
         const hasVisibleBranch = visibleBranches.has(
           `${personId}:${direction}`,
         );
-        const canShowMore = expansion?.reason === "depth" && depth < 32;
+        const canShowMore =
+          !collapsed && (expansion?.reason === "depth" || missing > 0);
+        const count = Math.max(expansion?.count ?? 0, missing);
         if (!hasVisibleBranch && !collapsed && !canShowMore) return null;
         const verb = collapsed ? "Expand" : "Collapse";
         return (
@@ -55,19 +67,27 @@ export function TreeBranchControls({
                 className="family-tree-control family-tree-branch"
                 aria-label={`${verb} ${direction} of ${label}`}
                 aria-expanded={!collapsed}
+                disabled={disabled}
                 onClick={() => onToggle(personId, direction)}
               >
                 {verb} {direction}
               </Button>
             )}
-            {canShowMore && expansion && (
+            {canShowMore && (
               <Button
                 className="family-tree-control family-tree-branch"
-                aria-label={`Show more ${direction} of ${label} (${expansion.count})`}
+                aria-label={`Show more ${direction} of ${label} (${count})`}
+                disabled={disabled || depth >= maxDepth}
                 onClick={() => onMore(direction)}
               >
-                Show more {direction} ({expansion.count})
+                Show more {direction} ({count})
               </Button>
+            )}
+            {canShowMore && depth >= maxDepth && (
+              <small>
+                Depth limit reached. Focus on this person to explore another
+                bounded branch.
+              </small>
             )}
           </div>
         );

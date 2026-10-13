@@ -1,3 +1,4 @@
+import { FamilyTreeHomeShortcut } from "../features/family-tree/forms/FamilyTreeHomeShortcut";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -124,6 +125,11 @@ export function ParentDashboardPage(): ReactElement {
 
   return (
     <section className="dashboard-grid" aria-label="Parent dashboard">
+      {(user?.role === "PARENT" || user?.role === "PARENT_ADMIN") &&
+      moduleKeys.includes("family-tree") &&
+      hasWebDashboardCard("family-tree") ? (
+        <FamilyTreeHomeShortcut />
+      ) : null}
       {choresDashboardEnabled ? (
         <Card className="metric-card">
           <p className="metric-label">Pending Submissions</p>
