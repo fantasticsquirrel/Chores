@@ -6,6 +6,9 @@ on:
       - master
   pull_request:
 
+env:
+  TMPDIR: ${{ runner.temp }}
+
 jobs:
   web-mobile-quality:
     runs-on: ubuntu-latest

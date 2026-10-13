@@ -6,7 +6,8 @@ set -euo pipefail
 umask 077
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-TMP_DIR="$(mktemp -d /tmp/family-manager-playwright-XXXXXX)"
+source "$ROOT_DIR/frontend/scripts/playwright-smoke-runtime.sh"
+TMP_DIR="$(create_playwright_smoke_directory)"
 chmod 700 "$TMP_DIR"
 : > "$TMP_DIR/.family-manager-smoke"
 FIXTURE_PATH="$TMP_DIR/playwright-smoke-fixture.json"

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./playwright-smoke-runtime.sh
 source "$SCRIPT_DIR/playwright-smoke-runtime.sh"
 
-TEST_DIR="$(mktemp -d /tmp/family-manager-playwright-runtime-test-XXXXXX)"
+TEST_DIR="$(mktemp -d "${TMPDIR:?Set TMPDIR to a disposable workspace}/family-manager-playwright-runtime-test-XXXXXX")"
 cleanup() {
   rm -rf "$TEST_DIR"
 }
