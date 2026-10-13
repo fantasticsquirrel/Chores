@@ -171,7 +171,7 @@ def verify(directory, start):
                 repaired += 1
     assert repaired == (2 if info['evidence'] == 'intact' else 4)
     with sqlite3.connect(os.environ['DATABASE_URL'].removeprefix('sqlite:///')) as c:
-        assert c.execute('SELECT version_num FROM alembic_version').fetchone()[0] == '20261013_0027'
+        assert c.execute('SELECT version_num FROM alembic_version').fetchone()[0] == '20261013_0028'
     command.check(cfg())  # Real UNFILTERED schema check, on both upgrade paths.
     factory = get_session_factory(get_settings().database_url)
     with TestClient(create_app()) as c:
