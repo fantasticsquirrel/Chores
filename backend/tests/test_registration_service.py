@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from household_fixtures import household_with_owner
+
 from pathlib import Path
 
 from alembic import command
@@ -109,7 +111,7 @@ def test_existing_email_is_uniform_noop(tmp_path, monkeypatch) -> None:
     configure(tmp_path, monkeypatch)
     factory = get_session_factory(get_settings().database_url)
     with factory() as session:
-        household = Household(name="Existing", timezone="UTC")
+        household = household_with_owner(session, name="Existing", timezone="UTC")
         session.add(household); session.flush()
         session.add(User(household_id=household.id, email="owner@example.com", password_hash="hash", role=UserRole.PARENT_ADMIN))
         session.commit()

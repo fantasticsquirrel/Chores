@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import date
 from pathlib import Path
 
@@ -36,7 +38,7 @@ def _create_parent_fixture(password: str = "password123") -> tuple[User, Child, 
     initialize_database(settings)
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        household = Household(name="Home", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
         session.add(household)
         session.flush()
         child = Child(household_id=household.id, name="Avery", active=True)
@@ -605,7 +607,7 @@ def test_parent_cannot_list_homeschool_records_for_another_households_child(tmp_
     settings = get_settings()
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        other_household = Household(name="Other home", timezone="UTC")
+        other_household = household_with_owner(session, name="Other home", timezone="UTC")
         session.add(other_household)
         session.flush()
         other_child = Child(household_id=other_household.id, name="Jordan", active=True)
@@ -636,7 +638,7 @@ def test_parent_cannot_mutate_another_households_homeschool_resources(tmp_path: 
     settings = get_settings()
     session_factory = get_session_factory(settings.database_url)
     with session_factory() as session:
-        other_household = Household(name="Other home", timezone="UTC")
+        other_household = household_with_owner(session, name="Other home", timezone="UTC")
         session.add(other_household)
         session.flush()
         other_child = Child(household_id=other_household.id, name="Jordan", active=True)

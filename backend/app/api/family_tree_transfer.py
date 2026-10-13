@@ -127,8 +127,17 @@ def import_job(job_id:PositivePath,user:Manage,session:DB):
 @guard_db
 def import_commit(job_id:PositivePath,body:transfer_dto.ImportCommit,user:Manage,session:DB):
     with storage.lock():
-        prepared=transfer.prepare_import(session,user,job_id)
-        return commit(session,execute(session,user,f'import:{job_id}',body,lambda c:transfer.commit_import(session,user,c,job_id,body,prepared)))
+        prepared={}
+        try:
+            # execute authorizes replay/body/revision and owns the write claim
+            # before this attempt can publish any immutable media objects.
+            return commit(session,execute(session,user,f'import:{job_id}',body,lambda c:transfer.commit_import(session,user,c,job_id,body,prepared)))
+        except BaseException:
+            session.rollback()
+            # Only this attempt's random, never-committed keys are reclaimed.
+            # A process crash still leaves bounded worker-recoverable orphans.
+            for item in prepared.values(): storage.unlink(item['object_key'])
+            raise
 
 @router.delete('/imports/{job_id}',response_model=transfer_dto.JobDTO)
 @guard_db

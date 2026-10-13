@@ -11,10 +11,11 @@ from app.models.enums import EntitlementStatus
 
 class BillingAccount(TimestampMixin, Base):
     __tablename__ = "billing_accounts"
+    __table_args__ = (UniqueConstraint("household_id"), UniqueConstraint("public_id"))
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
-    public_id: Mapped[str] = mapped_column(String(36), nullable=False, unique=True, index=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id", ondelete="CASCADE"), nullable=False, index=True)
+    public_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
 
 
 class Subscription(TimestampMixin, Base):

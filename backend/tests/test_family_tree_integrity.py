@@ -165,15 +165,13 @@ def test_fresh_and_previous_head_migration_disables_catalog(tmp_path,monkeypatch
                 assert s.get(UserModuleAccess,{'user_id':601,'module_key':'recipes'}).can_manage is False
         with pytest.raises(RuntimeError,match='disable-only'):command.downgrade(cfg,'20261005_0021')
         with get_session_factory(url)() as s:
-            assert s.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='20261013_0023'
-        # The repository's existing non-genealogy metadata has baseline drift.
-        # Prove this migration's exact tables/indexes without hiding the full
-        # alembic-check blocker reported separately to the integrator.
+            assert s.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='20261013_0024'
+        # Whole-schema parity is required; historical DDL remains unchanged.
         from alembic.autogenerate import compare_metadata
         from alembic.migration import MigrationContext
         from app.db import Base
         with get_engine(url).connect() as connection:
-            context=MigrationContext.configure(connection,opts={'include_object':lambda obj,name,typ,reflected,compare_to: (name.startswith('family_tree_') if typ=='table' else (getattr(getattr(obj,'table',None),'name','').startswith('family_tree_') or name in {'ux_users_id_household','ux_children_id_household'}))})
+            context=MigrationContext.configure(connection)
             assert compare_metadata(context,Base.metadata)==[]
 
 

@@ -46,6 +46,8 @@ def validate(manifest):
     if manifest.default_focus_key is not None and manifest.default_focus_key not in people: error('validation_error','Invalid focus reference.',422)
     for p in people.values():
         if p.merged_into_key:
+            if p.is_locked:
+                error('validation_error','Merged aliases cannot carry an edit lock; their alias status already prevents ordinary editing.',422)
             target=people.get(p.merged_into_key)
             if not p.archived or target is None or target.merged_into_key or target.key==p.key:
                 error('validation_error','Merged aliases must be archived and flat.',422)

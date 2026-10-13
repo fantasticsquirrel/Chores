@@ -42,7 +42,9 @@ class PreviewCommit(Command):
 
 class PurgePreview(Command):
     password: Annotated[str, Field(min_length=1,max_length=1024), StringConstraints(strip_whitespace=False)]
-class PurgeCommit(PurgePreview, PreviewCommit): pass
+class PurgeCommit(PurgePreview, PreviewCommit):
+    # Multiple inheritance must not restore Command's optional key default.
+    idempotency_key: Key
 class ExportRequest(Strict):
     format: Literal['json','zip'] = 'zip'
 class ImportCommit(Command):

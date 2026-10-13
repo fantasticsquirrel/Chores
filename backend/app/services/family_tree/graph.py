@@ -22,7 +22,7 @@ def load(session,actor,history=True):
     # 20,000 relationship narratives just to traverse IDs and dates.
     from types import SimpleNamespace
     columns=[FamilyTreePerson.id,FamilyTreePerson.is_locked]
-    names=['display_name','first_name','middle_name','last_name','living_status']
+    names=['display_name','first_name','middle_name','last_name','maiden_name','suffix','living_status']
     columns.extend(FamilyTreePerson.facts[key].as_string().label(key) for key in names)
     columns.extend(FamilyTreePerson.facts[key].label(key) for key in ['birth_date','death_date'])
     columns.append(FamilyTreePerson.facts['aliases'][0]['name'].as_string().label('alias_name'))
@@ -36,7 +36,7 @@ def load(session,actor,history=True):
             source=row['source'];target=row['target']
             if source not in people or target not in people:continue
             status=row['status'] if kind=='partner' else None
-            if kind=='partner' and not history and status!='current':continue
+            if kind=='partner' and not history and status in {'ended','separated'}:continue
             edges.append({'id':f"{kind}:{row['id']}",'record_id':row['id'],'source_person_id':source,'target_person_id':target,'type':kind,'kind':row['kind'],'status':status,'start_date':row['start_date'],'end_date':row['end_date']})
         if len(facts)>20000 or len(edges)>20000:error('resource_limit','Graph fact limit exceeded.',413)
     return people,sorted(edges,key=lambda e:(e['type'],e['record_id']))
@@ -83,15 +83,15 @@ def project(session,actor,focus=None,up=2,down=2,partners=True,history=False,car
             counts[a]['children']+=1;counts[b]['parents']+=1
         else:
             k='partners' if e['type']=='partner' else 'care';counts[a][k]+=1;counts[b][k]+=1
-    visible={focus};hidden=set()
+    visible={focus}
+    # Collapse is an edge filter, independent of how/depth endpoints are reached.
+    hidden={e['id'] for e in edges if e['type']=='parent' and (e['source_person_id'] in collapsed_down or e['target_person_id'] in collapsed_up)}
     for index,depth,collapsed,direction in [(parents,up,set(collapsed_up),'up'),(children,down,set(collapsed_down),'down')]:
         frontier=[focus];seen={focus}
         for _ in range(depth):
             following=[]
             for pid in frontier:
                 if pid in collapsed:
-                    for e in edges:
-                        if e['type']=='parent' and e['target_person_id' if direction=='up' else 'source_person_id']==pid:hidden.add(e['id'])
                     continue
                 for target in sorted(index.get(pid,[])):
                     visible.add(target)
@@ -127,7 +127,7 @@ def project(session,actor,focus=None,up=2,down=2,partners=True,history=False,car
     result=[]
     for pid in sorted(page_ids):
         p=nodes[pid];facts=p.facts
-        label=facts.get('display_name') or ' '.join(facts.get(k) or '' for k in ['first_name','middle_name','last_name']).strip() or (facts.get('aliases') or [{'name':'Unnamed person'}])[0]['name']
+        label=facts.get('display_name') or ' '.join(facts.get(k) or '' for k in ['first_name','middle_name','last_name','maiden_name','suffix']).strip() or (facts.get('aliases') or [{'name':'Unnamed person'}])[0]['name']
         result.append({'id':pid,'display_name':label,'living_status':facts['living_status'],'birth_date':facts.get('birth_date'),'death_date':facts.get('death_date'),'is_locked':p.is_locked,'expansion_counts':counts[pid]})
     return {'graph_revision':revision,'focus_person_id':focus,'nodes':result,'edges':page_edges,'truncated':truncated,'expansion_token':next_token,'warnings':warnings,'projection_limits':limits}
 

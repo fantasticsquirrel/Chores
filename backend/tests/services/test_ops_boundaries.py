@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock
@@ -36,8 +38,8 @@ def _configure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 def _seed_ops_data(session_factory) -> dict[str, object]:
     secret = generate_totp_secret()
     with session_factory() as session:
-        household = Household(name="Smith Family", timezone="UTC")
-        other_household = Household(name="Other Family", timezone="UTC")
+        household = household_with_owner(session, name="Smith Family", timezone="UTC")
+        other_household = household_with_owner(session, name="Other Family", timezone="UTC")
         session.add_all([household, other_household])
         session.flush()
         owner = User(

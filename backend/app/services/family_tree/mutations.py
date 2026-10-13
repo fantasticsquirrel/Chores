@@ -37,6 +37,10 @@ def execute(session,actor,operation,command,action):
     now=datetime.now(UTC)
     key=getattr(command,'idempotency_key',None)
     body=command.model_dump(mode='json',exclude={'password'})
+    # Password is current authorization, not immutable mutation content. Purge
+    # verifies owner/password before execute (including replay); hashing the
+    # password here would create a fast offline credential verifier in the DB.
+    # A newly valid password may replay the same facts after credential rotation.
     digest=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     key_hash=hashlib.sha256(key.encode()).hexdigest() if key else None
     filters=(FamilyTreeMutationReceipt.household_id==actor.household_id,FamilyTreeMutationReceipt.actor_user_id==actor.id,FamilyTreeMutationReceipt.operation==operation,FamilyTreeMutationReceipt.key_hash==key_hash)

@@ -1,4 +1,6 @@
 """Durable native push tests use real SQLite and explicit offline providers."""
+from household_fixtures import household_with_owner
+
 from datetime import UTC, datetime, timedelta
 import json
 
@@ -141,7 +143,7 @@ def test_worker_rechecks_authorization_and_policy_before_send(queue, reason):
         elif reason == "expired_session": auth.expires_at = NOW
         elif reason == "inactive": user.active = False
         elif reason == "household":
-            other = Household(name="Other", timezone="UTC")
+            other = household_with_owner(db, name="Other", timezone="UTC")
             db.add(other)
             db.flush()
             sub.household_id = other.id

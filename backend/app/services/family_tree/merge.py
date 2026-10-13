@@ -40,7 +40,12 @@ def plan(session, actor, body):
     for k in scalar:
         if body.scalar_choices.get(k)=='source' or (k not in body.scalar_choices and target.facts.get(k) is None):
             combined[k]=source.facts.get(k)
-    # Decisions validate the complete scalar state before the preview is usable.
+    # Validate the complete eventual canonical record, not just scalar facts.
+    # Tags deduplicate exactly as commit does; entered names retain attribution
+    # and are not silently truncated or destructively deduplicated.
+    combined['tags'] = sorted(set(session.scalars(select(Tag.tag).where(Tag.household_id==actor.household_id, Tag.person_id.in_([source.id,target.id])))))
+    names = list(session.scalars(select(Name).where(Name.household_id==actor.household_id, Name.person_id.in_([source.id,target.id])).order_by(Name.position,Name.id)))
+    combined['aliases'] = [{'name':row.name,'label':row.label} for row in names]
     data = PersonCreate.model_validate(combined)
     identities = list(session.scalars(select(Identity).where(Identity.household_id==actor.household_id, Identity.person_id.in_([source.id,target.id]))))
     if len(identities)>1:

@@ -1,8 +1,8 @@
 """Owner/manage/fresh-password purge; aliases are individually removable."""
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from fastapi import HTTPException
 from app.models import Household
-from app.models.family_tree import FamilyTreePerson as Person, FamilyTreeStory, FamilyTreeResidence, FamilyTreeMediaReference
+from app.models.family_tree import FamilyTreePerson as Person, FamilyTreeStory, FamilyTreeResidence, FamilyTreeMediaReference, FamilyTreeParentLink, FamilyTreeCareLink, FamilyTreePartnerEpisode
 from app.security.passwords import verify_password
 from .access import authorize, person, error
 from . import jobs
@@ -23,6 +23,15 @@ def check(session,actor,pid):
     if p.is_locked: error('person_locked','Unlock this person before purging.')
     aliases=list(session.scalars(select(Person.id).where(Person.household_id==actor.household_id,Person.merged_into_person_id==p.id).order_by(Person.id)))
     if aliases: error('merge_aliases_present','Purge the referring aliases individually before obtaining a new target preview.',blocking_alias_ids=aliases)
+    # Cascaded association deletion is a relationship mutation. Ownership and
+    # password confirmation cannot override a neighbour's durable edit lock.
+    for model,fields in [(FamilyTreeParentLink,('parent_person_id','child_person_id')), (FamilyTreeCareLink,('caregiver_person_id','recipient_person_id')), (FamilyTreePartnerEpisode,('person_a_id','person_b_id'))]:
+        rows=list(session.scalars(select(model).where(model.household_id==actor.household_id,or_(*(getattr(model,field)==pid for field in fields))).limit(20001)))
+        if len(rows)>20000: error('resource_limit','Purge relationship inventory exceeds the permitted bound.',413)
+        for row in rows:
+            for field in fields:
+                endpoint=person(session,actor.household_id,getattr(row,field))
+                if endpoint.is_locked: error('person_locked','Unlock all affected people before purging relationship facts.')
     return p
 
 

@@ -44,7 +44,7 @@ class FamilyTreeBodyLimitMiddleware:
                     await reject()
                 return
             await send(event)
-        heavy=path in {'/chore-api/family-tree/media','/chore-api/family-tree/imports'} or path.startswith('/chore-api/family-tree/exports')
+        heavy=path in {'/chore-api/family-tree/media','/chore-api/family-tree/imports'} or path.startswith('/chore-api/family-tree/exports') or (path.startswith('/chore-api/family-tree/imports/') and path.endswith('/commit'))
         acquired=False
         if heavy:
             acquired=_TRANSFER_WORKERS.acquire(blocking=False)

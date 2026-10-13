@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -30,7 +32,7 @@ def _setup(tmp_path: Path, monkeypatch, *, max_age: int = 120, attempts: int = 3
     initialize_database(settings)
     factory = get_session_factory(settings.database_url)
     with factory() as session:
-        household = Household(name="Home", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
         session.add(household)
         session.flush()
         user = User(household_id=household.id, email="admin@example.com", password_hash=hash_password("password123"), role=UserRole.PARENT_ADMIN, child_id=None)

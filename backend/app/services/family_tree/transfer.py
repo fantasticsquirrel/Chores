@@ -7,6 +7,7 @@ outside the graph write transaction. Retained ready jobs are actor-quota limited
 """
 from datetime import UTC, datetime, timedelta
 import io
+from copy import deepcopy
 import json
 import os
 import secrets
@@ -199,9 +200,9 @@ def capacity(session,actor,manifest):
         if current+incoming>ceiling: error('resource_limit','Append would exceed collection capacity.',413)
 
 
-def prepare_import(session,actor,job_id):
+def prepare_import(session,actor,job_id,prepared=None):
     row=jobs.get(session,actor,'import',job_id=job_id,allow_committed=True)
-    prepared={}
+    if prepared is None: prepared={}
     if row.state=='committed': return prepared
     for source_key,staged in row.payload.get('media',{}).items():
         data=storage.read(staged['key'],'artifacts')
@@ -217,7 +218,14 @@ def commit_import(session,actor,c,job_id,body,prepared):
         error('merge_conflict','Explicitly acknowledge prior package provenance before appending again.')
     manifest=Manifest.model_validate(row.payload['manifest'])
     warnings=portable.validate(manifest); capacity(session,actor,manifest)
-    media.check_capacity(session,actor.household_id,sum(m['byte_size'] for m in prepared.values()))
+    if 'chronology_review' in warnings and 'chronology_review' not in body.reviewed_warnings:
+        error('chronology_review','Review the uncertain or overlapping chronology before committing.',422,warnings=['chronology_review'])
+    # Reserve capacity under the same claimed write transaction before copying.
+    # Staging already decoded/sanitized these bounded immutable artifacts.
+    incoming=sum(storage.path(item['key'],'artifacts').stat().st_size for item in row.payload.get('media',{}).values())
+    media.check_capacity(session,actor.household_id,incoming)
+    prepare_import(session,actor,job_id,prepared)
+
     person_map={}; story_map={}; asset_map={}; provenance={}; relationship_ids=[]; residence_ids=[]
     for source in manifest.people:
         p,_=people.add(session,actor,c,source.person)
@@ -232,7 +240,7 @@ def commit_import(session,actor,c,job_id,body,prepared):
     for source in manifest.people:
         if source.merged_into_key: person_map[source.key].merged_into_person_id=person_map[source.merged_into_key].id
     def remember(person_key,group,local,original):
-        mapping=provenance[person_key].provenance
+        mapping=deepcopy(provenance[person_key].provenance)
         groups=mapping['records']; groups.setdefault(group,{})[str(local.id)]=original.model_dump(mode='json')
         provenance[person_key].provenance={**mapping,'records':groups}
     for group,model,fields in [('parent_links',Parent,{'parent_key':'parent_person_id','child_key':'child_person_id'}),('care_links',Care,{'caregiver_key':'caregiver_person_id','recipient_key':'recipient_person_id'}),('partner_episodes',Partner,{'person_a_key':'person_a_id','person_b_key':'person_b_id'})]:

@@ -135,7 +135,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         start = time.perf_counter()
         try:
             response = await call_next(request)
-        except Exception:
+        except Exception as exc:
             # Catch ordinary public reset failures here; if this acknowledgement
             # path itself fails, the outer reset-only containment middleware
             # returns the last-resort response before ServerErrorMiddleware.
@@ -156,6 +156,11 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     request.url.path,
                 )
                 response = await _password_reset_confirmation_acknowledgement()
+            elif request.url.path.startswith('/chore-api/family-tree'):
+                # Contain private exceptions before ServerErrorMiddleware can
+                # re-raise them to the ASGI server's traceback logger.
+                logger.error('family_tree.request_failed request_id=%s method=%s path=%s exception_type=%s', request_id, request.method, request.url.path, type(exc).__name__)
+                response = JSONResponse(status_code=500, content=_error_payload('Internal server error.'), headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'})
             else:
                 raise
         duration_ms = (time.perf_counter() - start) * 1000
@@ -251,13 +256,18 @@ def register_exception_handlers(app: FastAPI) -> None:
             if request.url.path == _PASSWORD_RESET_REQUEST_PATH:
                 return await _password_reset_request_acknowledgement(request_id=request_id)
             return await _password_reset_confirmation_acknowledgement(request_id=request_id)
-        logger.exception(
-            "request.failed request_id=%s method=%s path=%s",
-            request_id,
-            request.method,
-            request.url.path,
-            exc_info=exc,
-        )
+        if request.url.path.startswith('/chore-api/family-tree'):
+            # Response validation and storage exceptions may contain private
+            # facts in their messages/inputs/tracebacks. Log metadata only.
+            logger.error('family_tree.request_failed request_id=%s method=%s path=%s exception_type=%s', request_id, request.method, request.url.path, type(exc).__name__)
+        else:
+            logger.exception(
+                "request.failed request_id=%s method=%s path=%s",
+                request_id,
+                request.method,
+                request.url.path,
+                exc_info=exc,
+            )
         return JSONResponse(
             status_code=500,
             content=_error_payload("Internal server error."),

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from email import policy
@@ -66,7 +68,7 @@ def _seed_delivery(
     factory = get_session_factory(get_settings().database_url)
     settings = _MailSettings()
     with factory() as session:
-        household = Household(name="Mail Home", timezone="UTC")
+        household = household_with_owner(session, name="Mail Home", timezone="UTC")
         session.add(household)
         session.flush()
         user = User(

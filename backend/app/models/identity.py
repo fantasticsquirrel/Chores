@@ -21,15 +21,16 @@ from app.models.enums import (
 class Household(TimestampMixin, Base):
     __tablename__ = "households"
 
+    __table_args__ = (UniqueConstraint("owner_user_id"),)
+
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     timezone: Mapped[str] = mapped_column(String(64), nullable=False, default="UTC")
     # Production requires this value on INSERT. Registration preallocates the
     # owner user ID and relies on the deferred FK to create both rows atomically.
-    # This remains nullable in metadata for legacy create_all-based test/setup
-    # helpers; Alembic is the production schema authority and enforces NOT NULL.
-    owner_user_id: Mapped[int | None] = mapped_column(
-        ForeignKey("users.id", ondelete="RESTRICT", use_alter=True, deferrable=True, initially="DEFERRED"), nullable=True, unique=True, index=True
+    # Metadata and create_all enforce the same NOT NULL production contract.
+    owner_user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT", use_alter=True, deferrable=True, initially="DEFERRED"), nullable=False, index=True
     )
 
 
@@ -48,6 +49,7 @@ class User(TimestampMixin, Base):
     __table_args__ = (
         UniqueConstraint("household_id", "email"),
         UniqueConstraint("email", name="uq_users_email"),
+        Index("ux_users_email", "email", unique=True),
         Index("ux_users_id_household", "id", "household_id", unique=True),
         CheckConstraint(
             "(role = 'CHILD' AND child_id IS NOT NULL) OR (role IN ('PARENT_ADMIN', 'PARENT') AND child_id IS NULL)",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from household_fixtures import household_with_owner
+
 from datetime import date
 from pathlib import Path
 from unittest.mock import Mock
@@ -34,8 +36,8 @@ def _settings(database_url: str) -> Settings:
 
 def _seed_family(session_factory) -> dict[str, int]:
     with session_factory() as session:
-        household = Household(name="Home", timezone="UTC")
-        other_household = Household(name="Other", timezone="UTC")
+        household = household_with_owner(session, name="Home", timezone="UTC")
+        other_household = household_with_owner(session, name="Other", timezone="UTC")
         session.add_all([household, other_household])
         session.flush()
         parent = User(

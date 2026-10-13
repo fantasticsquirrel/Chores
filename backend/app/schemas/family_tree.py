@@ -74,7 +74,7 @@ def chronology(start, end):
     lo, hi = start.bounds(); endlo,endhi=end.bounds()
     if lo>endhi and not (start.uncertain or end.uncertain):
         raise ValueError('End cannot be definitely before start.')
-    return ['chronology_review'] if lo>endlo or start.uncertain or end.uncertain else []
+    return ['chronology_review'] if hi>endlo or start.uncertain or end.uncertain else []
 
 class Alias(Strict):
     name: Annotated[str, Field(min_length=1,max_length=255)]

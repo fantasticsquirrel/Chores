@@ -157,7 +157,7 @@ FAMILY_TREE_MODELS = (FamilyTreeCollection, FamilyTreePerson, FamilyTreePersonTa
 # identity lifecycle writes, not just a particular API/service entry point.
 TRIGGERS = []
 for table, target in [('users','user_id'), ('children','child_id')]:
-    for action in ['UPDATE', 'DELETE']:
+    for action in (['UPDATE'] if table == 'users' else ['UPDATE', 'DELETE']):
         fields = ' OF active, household_id, role' if table == 'users' else ' OF active, household_id, name'
         if action == 'DELETE':
             fields = ''
@@ -263,3 +263,17 @@ OR EXISTS (SELECT 1 FROM family_tree_media_pins WHERE asset_id=NEW.id AND expire
 BEGIN SELECT RAISE(ABORT, 'asset retained'); END""")
 for statement in FT3_TRIGGERS:
     event.listen(Base.metadata, 'after_create', DDL(statement.replace('CREATE TRIGGER ', 'CREATE TRIGGER IF NOT EXISTS ')).execute_if(dialect='sqlite'))
+
+# Before FK nulling/cascades, invalidate each affected projection exactly once.
+# Include attribution on FT3 assets, references, pins and import provenance, plus
+# actor-owned receipts/jobs. A deleting household is already outside this set.
+_user_deletion_sources = []
+for _model in FAMILY_TREE_MODELS:
+    _table = _model.__table__
+    _collection = 'id' if _model is FamilyTreeCollection else 'collection_id'
+    _columns = [name for name in ('created_by_user_id', 'locked_by_user_id', 'actor_user_id', 'user_id') if name in _table.c]
+    if _columns:
+        _where = ' OR '.join(f'{name}=OLD.id' for name in _columns)
+        _user_deletion_sources.append(f'SELECT {_collection} FROM {_table.name} WHERE {_where}')
+USER_DELETE_TRIGGER = 'CREATE TRIGGER trg_ft_users_delete BEFORE DELETE ON users BEGIN UPDATE family_tree_collections SET revision=revision+1, updated_at=CURRENT_TIMESTAMP WHERE id IN (' + ' UNION '.join(_user_deletion_sources) + '); END'
+event.listen(Base.metadata, 'after_create', DDL(USER_DELETE_TRIGGER.replace('CREATE TRIGGER ', 'CREATE TRIGGER IF NOT EXISTS ')).execute_if(dialect='sqlite'))
