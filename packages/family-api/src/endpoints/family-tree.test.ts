@@ -13,10 +13,70 @@ type Case = {
   schema?: string;
   response?: string;
   query?: Record<string, unknown>;
+  binary?: boolean;
+  responseArray?: boolean;
+  multipart?: readonly string[];
   body?: unknown;
 };
 const cases: Case[] = familyTreeCases;
 const negativeCases = [
+  {
+    schema: "AttachMedia",
+    body: { expected_graph_revision: 4, person_id: 7, role: "story" },
+  },
+  {
+    schema: "PreviewCommit",
+    body: { expected_graph_revision: 4, preview_token: "a".repeat(64) },
+  },
+  {
+    schema: "PurgeCommit",
+    body: {
+      expected_graph_revision: 4,
+      password: "fresh",
+      preview_token: "a".repeat(64),
+    },
+  },
+  {
+    schema: "ImportCommit",
+    body: {
+      expected_graph_revision: 4,
+      idempotency_key: "import",
+      confirmed: false,
+    },
+  },
+  {
+    schema: "ImportCommit",
+    body: { expected_graph_revision: 4, confirmed: true },
+  },
+  { schema: "ExportRequest", body: { format: "sqlite" } },
+  {
+    schema: "PurgePreview",
+    body: { expected_graph_revision: 4, password: "" },
+  },
+  {
+    schema: "Manifest",
+    body: {
+      schema_version: 2,
+      producer: "test",
+      exported_at: "today",
+      collection_title: "Tree",
+      snapshot_revision: 0,
+    },
+  },
+  {
+    schema: "PortablePerson",
+    body: { key: "p:1", person: { display_name: "Ada" }, user_id: 1 },
+  },
+  {
+    schema: "PortableMedia",
+    body: {
+      key: "m:1",
+      path: "../../secret",
+      mime_type: "image/png",
+      checksum: "a".repeat(64),
+      byte_size: 1,
+    },
+  },
   {
     schema: "CreatePerson",
     body: { expected_graph_revision: 0, person: { display_name: "Ada" } },
@@ -77,11 +137,20 @@ export const backendContract = JSON.parse(
         string,
         {
           requestBody?: {
-            content: { "application/json": { schema: { $ref: string } } };
+            content: Record<string, { schema: { $ref: string } }>;
           };
           responses: {
             "200": {
-              content: { "application/json": { schema: { $ref: string } } };
+              content?: Record<
+                string,
+                {
+                  schema: {
+                    $ref?: string;
+                    type?: string;
+                    items?: { $ref: string };
+                  };
+                }
+              >;
             };
           };
           parameters?: { name: string; in: string }[];
@@ -109,14 +178,43 @@ describe("real Family Tree backend contract", () => {
     ).toEqual(cases.map((c) => c.name).sort());
     for (const c of cases) {
       const operation = backendContract.openapi.paths[c.path][c.method];
-      expect(
-        operation.responses["200"].content["application/json"].schema.$ref,
-      ).toBe(`#/components/schemas/${c.response ?? "MutationResult"}`);
+      const schema =
+        operation.responses["200"].content?.["application/json"].schema;
+      if (c.binary) {
+        // FastAPI's unmodelled Response default is NOT a JSON DTO contract.
+        expect(schema?.$ref).toBeUndefined();
+        expect(schema ? Object.keys(schema) : []).toEqual([]);
+      } else {
+        if (c.responseArray) expect(schema?.type).toBe("array");
+        expect(c.responseArray ? schema?.items?.$ref : schema?.$ref).toBe(
+          `#/components/schemas/${c.response ?? "MutationResult"}`,
+        );
+      }
       if (c.schema)
         expect(
           operation.requestBody?.content["application/json"].schema.$ref,
         ).toBe(`#/components/schemas/${c.schema}`);
-      else expect(operation.requestBody).toBeUndefined();
+      else if (c.multipart) {
+        const ref =
+          operation.requestBody?.content["multipart/form-data"].schema.$ref;
+        expect(ref).toBeDefined();
+        const bodySchema = (
+          backendContract.openapi as unknown as {
+            components: {
+              schemas: Record<
+                string,
+                { properties: object; required: string[] }
+              >;
+            };
+          }
+        ).components.schemas[ref!.split("/").at(-1)!];
+        expect(Object.keys(bodySchema.properties).sort()).toEqual(
+          [...c.multipart].sort(),
+        );
+        expect(bodySchema.required).toContain("file");
+        if (c.name === "stageFamilyTreeImport")
+          expect(bodySchema.required).toContain("expected_graph_revision");
+      } else expect(operation.requestBody).toBeUndefined();
       if (c.query)
         expect(Object.keys(c.query).sort()).toEqual(
           operation.parameters
@@ -155,19 +253,26 @@ for (const [platform, Client] of [
   describe(`${platform} callable Family Tree operation map`, () => {
     it.each(familyTreeCases)("$name", async (c) => {
       const response = { marker: c.name };
-      const fetchMock = vi
-        .fn<typeof fetch>()
-        .mockResolvedValue(
-          new Response(JSON.stringify(response), {
-            headers: { "Content-Type": "application/json" },
-          }),
-        );
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify(response), {
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
       const api = new Client({
         baseUrl: "https://example.test/chore-api",
         fetchImpl: fetchMock,
       });
       expect(api).toBeInstanceOf(FamilyTreeApiEndpoints);
-      await expect(c.invoke(api)).resolves.toEqual(response);
+      const received = await c.invoke(api);
+      if (c.binary) {
+        expect(received).toMatchObject({
+          content_type: "application/json",
+          filename: null,
+        });
+        expect(
+          new TextDecoder().decode((received as { bytes: ArrayBuffer }).bytes),
+        ).toBe(JSON.stringify(response));
+      } else expect(received).toEqual(response);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [urlValue, init] = fetchMock.mock.calls[0]!;
       const url = new URL(String(urlValue));
@@ -177,9 +282,16 @@ for (const [platform, Client] of [
       expect(init?.method).toBe(c.method.toUpperCase());
       expect(init?.credentials).toBe("include");
       const contractCase: Case = c;
-      expect(init?.body ? JSON.parse(init.body as string) : undefined).toEqual(
-        contractCase.body,
-      );
+      if (c.multipart) {
+        expect(init?.body).toBe(c.body);
+        expect(new Headers(init?.headers).has("Content-Type")).toBe(false);
+        expect(init?.cache).toBe("no-store");
+      } else
+        expect(
+          init?.body ? JSON.parse(init.body as string) : undefined,
+        ).toEqual(contractCase.body);
+      if (c.binary || c.name === "cancelFamilyTreeImport")
+        expect(init?.cache).toBe("no-store");
       if (contractCase.query) {
         for (const [key, value] of Object.entries(contractCase.query)) {
           expect(url.searchParams.getAll(key)).toEqual(

@@ -12,6 +12,8 @@ from fastapi import FastAPI
 from pydantic import BaseModel, ValidationError
 from app.api.family_tree import router
 from app.schemas import family_tree as dto
+from app.schemas import family_tree_transfer as transfer_dto
+import app.api.family_tree_transfer  # mount actual FT3 routes before OpenAPI
 from app.services.family_tree.access import error
 from fastapi import HTTPException
 
@@ -19,14 +21,15 @@ app = FastAPI()
 app.include_router(router)
 schemas = {
     name: model.model_json_schema()
-    for name, model in vars(dto).items()
+    for module in (dto, transfer_dto)
+    for name, model in vars(module).items()
     if isinstance(model, type) and issubclass(model, BaseModel)
-    and model.__module__ == dto.__name__ and name != "Strict"
+    and model.__module__ == module.__name__ and name != "Strict"
 }
 validations = []
 for case in json.load(sys.stdin):
     try:
-        model = getattr(dto, case["schema"]).model_validate(case["body"])
+        model = getattr(transfer_dto if hasattr(transfer_dto, case["schema"]) else dto, case["schema"]).model_validate(case["body"])
         validations.append({"valid": True, "body": model.model_dump(mode="json", exclude_unset=True)})
     except ValidationError as exc:
         validations.append({"valid": False, "errors": json.loads(exc.json(include_url=False))})

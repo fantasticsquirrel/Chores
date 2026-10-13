@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 import { familyTreeCases } from "../../test-support/family-tree-cases";
+import { familyTreeProducer } from "../../test-support/family-tree-producer";
 
 // This is a schema-to-type translator ONLY for contract tests, not shipped DTOs.
 // Read the current producer each run: no manually maintained schema snapshot.
@@ -67,6 +68,23 @@ const inputModels: Record<string, string> = {
   CreateResidence: "FamilyTreeCreateResidenceRequest",
   PatchResidence: "FamilyTreePatchResidenceRequest",
   LinkIdentity: "FamilyTreeLinkIdentityRequest",
+  AttachMedia: "FamilyTreeAttachMediaRequest",
+  MergePreview: "FamilyTreeMergePreviewRequest",
+  PreviewCommit: "FamilyTreePreviewCommitRequest",
+  PurgePreview: "FamilyTreePurgePreviewRequest",
+  PurgeCommit: "FamilyTreePurgeCommitRequest",
+  ExportRequest: "FamilyTreeExportRequest",
+  ImportCommit: "FamilyTreeImportCommitRequest",
+  Provenance: "FamilyTreePortableProvenanceInput",
+  PortablePerson: "FamilyTreePortablePersonInput",
+  PortableParent: "FamilyTreePortableParentInput",
+  PortableCare: "FamilyTreePortableCareInput",
+  PortablePartner: "FamilyTreePortablePartnerInput",
+  PortableStory: "FamilyTreePortableStoryInput",
+  PortableResidence: "FamilyTreePortableResidenceInput",
+  PortableMedia: "FamilyTreePortableMediaInput",
+  PortableReference: "FamilyTreePortableReferenceInput",
+  Manifest: "FamilyTreeManifestInput",
 };
 const outputModels: Record<string, string> = {
   PartialDate: "FamilyTreePartialDate",
@@ -95,6 +113,23 @@ const outputModels: Record<string, string> = {
   ProjectionLimits: "FamilyTreeProjectionLimits",
   GraphProjection: "FamilyTreeGraphProjection",
   CompareResult: "FamilyTreeCompareResult",
+  MediaDTO: "FamilyTreeMedia",
+  MediaReferenceDTO: "FamilyTreeMediaReference",
+  JobDTO: "FamilyTreeJob",
+  PreviewDTO: "FamilyTreePreview",
+  Provenance: "FamilyTreePortableProvenance",
+  PersonCreate: "FamilyTreePortablePersonData",
+  PortablePerson: "FamilyTreePortablePerson",
+  PortableParent: "FamilyTreePortableParent",
+  PortableCare: "FamilyTreePortableCare",
+  PortablePartner: "FamilyTreePortablePartner",
+  StoryData: "FamilyTreePortableStoryData",
+  PortableStory: "FamilyTreePortableStory",
+  ResidenceData: "FamilyTreePortableResidenceData",
+  PortableResidence: "FamilyTreePortableResidence",
+  PortableMedia: "FamilyTreePortableMedia",
+  PortableReference: "FamilyTreePortableReference",
+  Manifest: "FamilyTreeManifest",
 };
 function schemaType(schema: Schema, output: boolean): string {
   const prefix = output ? "Output" : "Input";
@@ -119,6 +154,7 @@ function schemaType(schema: Schema, output: boolean): string {
         "string";
       return `Record<${keys}, ${schemaType(schema.additionalProperties, output)}>`;
     }
+    if (schema.additionalProperties === true) return "Record<string, unknown>";
     throw new Error("Unhandled object contract");
   }
   if (schema.type === "integer" || schema.type === "number") return "number";
@@ -201,12 +237,15 @@ describe("Family Tree DTO parity with executable Pydantic schemas", () => {
   it("exposes exact typed responses through both real clients and platform/public model exports", () => {
     const checks = familyTreeCases
       .map((c) => {
-        const response = "response" in c ? c.response : "MutationResult";
-        const dto = outputModels[response!];
+        const response = c.response ?? "MutationResult";
+        const dto = c.binary ? "BinaryDownload" : outputModels[response];
+        const expected = c.binary
+          ? "BinaryDownload"
+          : `DTO.${dto}${c.responseArray ? "[]" : ""}`;
         return ["Shared", "Web", "Native"]
           .map(
             (owner) =>
-              `type ${owner}_${c.name} = Assert<Equal<Normalize<Awaited<ReturnType<${owner}["${c.name}"]>>>, Normalize<DTO.${dto}>>>;`,
+              `type ${owner}_${c.name} = Assert<Equal<Normalize<Awaited<ReturnType<${owner}["${c.name}"]>>>, Normalize<${expected}>>>;`,
           )
           .join("\n");
       })
@@ -214,6 +253,7 @@ describe("Family Tree DTO parity with executable Pydantic schemas", () => {
     const source =
       contractSource(producer.schemas) +
       `
+      import type { BinaryDownload } from "../client-core";
       import type { FamilyTreeApiEndpoints as Shared } from "../endpoints/family-tree";
       import type { ApiClient as Web } from "../../../../frontend/src/api/client";
       import type { ApiClient as Native } from "../../../../mobile/src/api/client";
@@ -226,6 +266,22 @@ describe("Family Tree DTO parity with executable Pydantic schemas", () => {
       ${checks}
     `;
     expect(compile(source)).toEqual([]);
+  }, 30000);
+  it("compiles real producer HTTP examples and the normalized portable manifest, not fabricated summaries", () => {
+    const examples = familyTreeProducer.records
+      .filter((r) => r.status === 200 && r.response_model)
+      .map((r, i) => {
+        const array = r.response_model!.endsWith("[]");
+        const model = r.response_model!.replace(/\[\]$/, "");
+        return `const actual_response_${i}: DTO.${outputModels[model]}${array ? "[]" : ""} = ${JSON.stringify(r.response)};`;
+      })
+      .join("\n");
+    const manifest = `const actual_manifest: DTO.FamilyTreeManifest = ${JSON.stringify(familyTreeProducer.manifest)};`;
+    expect(
+      compile(
+        contractSource(producer.schemas) + "\n" + examples + "\n" + manifest,
+      ),
+    ).toEqual([]);
   }, 30000);
   it("detects a real field-type drift rather than accepting unchecked fixtures", () => {
     const changed = structuredClone(producer.schemas);
@@ -262,6 +318,18 @@ describe("Family Tree DTO parity with executable Pydantic schemas", () => {
       // @ts-expect-error comparison must identify both people
       const compare: DTO.FamilyTreeCompareParams = { person_a_id: 1 };
       const graph: DTO.FamilyTreeGraphParams = { collapsed_up_ids: [1, 2] as const, include_history: false, down_depth: 0 };
+      // @ts-expect-error merge commits require idempotency
+      const merge: DTO.FamilyTreePreviewCommitRequest = { expected_graph_revision: 0, preview_token: "a" };
+      // @ts-expect-error purge commits require idempotency
+      const purge: DTO.FamilyTreePurgeCommitRequest = { expected_graph_revision: 0, preview_token: "a", password: "fresh" };
+      // @ts-expect-error imports require explicit literal confirmation
+      const imported: DTO.FamilyTreeImportCommitRequest = { expected_graph_revision: 0, idempotency_key: "import", confirmed: false };
+      // @ts-expect-error unsupported export format is not exposed
+      const exported: DTO.FamilyTreeExportRequest = { format: "sqlite" };
+      // @ts-expect-error only portable v1 is supported
+      const version: DTO.FamilyTreeManifestInput = { schema_version: 2, producer: "test", exported_at: "today", collection_title: "Tree", snapshot_revision: 0 };
+      // @ts-expect-error portable people cannot link local accounts
+      const portable: DTO.FamilyTreePortablePersonInput = { key: "p:1", person: {}, user_id: 1 };
     `;
     expect(compile(source)).toEqual([]);
   }, 30000);

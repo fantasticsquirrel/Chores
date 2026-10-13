@@ -1,5 +1,7 @@
 import type { AuthSessionResponse } from "./models/auth";
 
+export type RequestOptions = { signal?: AbortSignal };
+
 export type RequestQueryScalar = string | number | boolean;
 export type RequestQueryValue =
   | RequestQueryScalar
@@ -25,28 +27,46 @@ export abstract class FamilyApiClientCore {
   protected abstract get<TResponse>(
     path: string,
     query?: RequestQuery,
+    options?: RequestOptions,
   ): Promise<TResponse>;
   protected abstract post<TResponse, TBody>(
     path: string,
     body: TBody,
     query?: RequestQuery,
+    options?: RequestOptions,
   ): Promise<TResponse>;
   protected abstract put<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse>;
   protected abstract patch<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse>;
-  protected abstract delete(path: string, query?: RequestQuery): Promise<void>;
+  protected abstract delete(
+    path: string,
+    query?: RequestQuery,
+    options?: RequestOptions,
+  ): Promise<void>;
 
   // JSON-only subclasses remain compatible, but cannot silently drop a body.
   protected deleteWithBody<TResponse, TBody>(
     _path: string,
     _body: TBody,
+    _options?: RequestOptions,
   ): Promise<TResponse> {
     return Promise.reject(new Error("JSON DELETE transport is not supported."));
+  }
+  // A no-body staging cancellation is distinct from revisioned JSON commands.
+  protected deleteWithResponse<TResponse>(
+    _path: string,
+    _options?: RequestOptions,
+  ): Promise<TResponse> {
+    return Promise.reject(
+      new Error("Response DELETE transport is not supported."),
+    );
   }
   protected abstract postNoContent(path: string): Promise<void>;
   protected abstract postNoContentWithBody<TBody>(
@@ -58,11 +78,15 @@ export abstract class FamilyApiClientCore {
   protected postMultipart<TResponse>(
     _path: string,
     _body: FormData,
+    _options?: RequestOptions,
   ): Promise<TResponse> {
     return Promise.reject(new Error("Multipart transport is not supported."));
   }
 
-  protected getBinary(_path: string): Promise<BinaryDownload> {
+  protected getBinary(
+    _path: string,
+    _options?: RequestOptions,
+  ): Promise<BinaryDownload> {
     return Promise.reject(new Error("Binary transport is not supported."));
   }
 

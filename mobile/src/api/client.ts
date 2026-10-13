@@ -8,6 +8,7 @@ import {
   requiresCsrfToken,
   type BinaryDownload,
   type RequestQuery,
+  type RequestOptions,
 } from "@family-manager/family-api/client-core";
 
 export const DEFAULT_API_BASE_URL = "http://10.0.2.2:8000/chore-api";
@@ -152,19 +153,22 @@ export class ApiClient extends FamilyTreeApiEndpoints {
   protected async get<TResponse>(
     path: string,
     query?: RequestQuery,
+    options?: RequestOptions,
   ): Promise<TResponse> {
-    return this.request<TResponse>(path, { method: "GET" }, query);
+    return this.request<TResponse>(path, { method: "GET", signal: options?.signal }, query);
   }
 
   protected async post<TResponse, TBody>(
     path: string,
     body: TBody,
     query?: RequestQuery,
+    options?: RequestOptions,
   ): Promise<TResponse> {
     return this.request<TResponse>(
       path,
       {
         method: "POST",
+        signal: options?.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       },
@@ -175,21 +179,23 @@ export class ApiClient extends FamilyTreeApiEndpoints {
   protected override postMultipart<TResponse>(
     path: string,
     body: FormData,
+    options?: RequestOptions,
   ): Promise<TResponse> {
     // Browser/native fetch owns the multipart boundary and file representation.
     return this.request<TResponse>(
       path,
-      { method: "POST", body, cache: "no-store" },
+      { method: "POST", body, cache: "no-store", signal: options?.signal },
       undefined,
       "safe-json",
     );
   }
 
-  protected override getBinary(path: string): Promise<BinaryDownload> {
+  protected override getBinary(path: string, options?: RequestOptions): Promise<BinaryDownload> {
     return this.request<BinaryDownload>(
       path,
       {
         method: "GET",
+        signal: options?.signal,
         headers: { Accept: "*/*" },
         cache: "no-store",
       },
@@ -216,9 +222,11 @@ export class ApiClient extends FamilyTreeApiEndpoints {
   protected async put<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PUT",
+      signal: options?.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -227,9 +235,11 @@ export class ApiClient extends FamilyTreeApiEndpoints {
   protected async patch<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "PATCH",
+      signal: options?.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -238,16 +248,22 @@ export class ApiClient extends FamilyTreeApiEndpoints {
   protected override deleteWithBody<TResponse, TBody>(
     path: string,
     body: TBody,
+    options?: RequestOptions,
   ): Promise<TResponse> {
     return this.request<TResponse>(path, {
       method: "DELETE",
+      signal: options?.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
   }
 
-  protected async delete(path: string, query?: RequestQuery): Promise<void> {
-    await this.request<void>(path, { method: "DELETE" }, query);
+  protected override deleteWithResponse<TResponse>(path: string, options?: RequestOptions): Promise<TResponse> {
+    return this.request<TResponse>(path, { method: "DELETE", cache: "no-store", signal: options?.signal }, undefined, "safe-json");
+  }
+
+  protected async delete(path: string, query?: RequestQuery, options?: RequestOptions): Promise<void> {
+    await this.request<void>(path, { method: "DELETE", signal: options?.signal }, query);
   }
 
   private async request<TResponse>(
@@ -278,6 +294,8 @@ export class ApiClient extends FamilyTreeApiEndpoints {
       try {
         data = await response.json();
       } catch (error) {
+        // Cancellation during body consumption is not malformed server JSON.
+        if (typeof error === "object" && error !== null && "name" in error && error.name === "AbortError") throw error;
         // Failed file responses can be HTML/truncated JSON with private paths.
         // Never surface a decoder exception (which may embed the raw body).
         if (response.ok) {
@@ -296,6 +314,10 @@ export class ApiClient extends FamilyTreeApiEndpoints {
     if (!response.ok) {
       const detail = extractErrorDetail(data, response.statusText);
       throw new ApiClientError(response.status, detail, data);
+    }
+
+    if (responseType === "safe-json" && !hasJsonBody) {
+      throw new ApiClientError(response.status, "Invalid server response.", undefined);
     }
 
     if (responseType === "binary") {

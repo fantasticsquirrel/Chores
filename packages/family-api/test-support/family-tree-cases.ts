@@ -31,7 +31,54 @@ const partner = {
   kind: "civil_union" as const,
   status: "ended" as const,
 };
-export const familyTreeCases = [
+export interface FamilyTreeCase {
+  name: string;
+  method: string;
+  path: string;
+  schema?: string;
+  response?: string;
+  responseArray?: boolean;
+  binary?: boolean;
+  multipart?: readonly string[];
+  query?: Record<string, unknown>;
+  body?: unknown;
+  invoke: (api: FamilyTreeApiEndpoints) => Promise<unknown>;
+}
+const mediaForm = new FormData();
+mediaForm.append(
+  "file",
+  new Blob(["image"], { type: "image/png" }),
+  "photo.png",
+);
+mediaForm.append("caption", "Original caption");
+const importForm = new FormData();
+importForm.append(
+  "file",
+  new Blob(["{}"], { type: "application/json" }),
+  "tree.json",
+);
+importForm.append("expected_graph_revision", "4");
+const mergePreview = {
+  ...command,
+  source_person_id: 2,
+  target_person_id: 7,
+  scalar_choices: { display_name: "target" as const },
+  retain_similar_partner_episodes: true,
+};
+const previewCommit = {
+  ...command,
+  idempotency_key: "commit-key",
+  preview_token: "a".repeat(64),
+};
+const purgePreview = { ...command, password: " fresh password " };
+const purgeCommit = { ...previewCommit, password: " fresh password " };
+const importCommit = {
+  ...command,
+  idempotency_key: "import-key",
+  confirmed: true as const,
+  acknowledge_duplicate_provenance: true,
+};
+export const familyTreeCases: FamilyTreeCase[] = [
   {
     name: "getFamilyTreeCollection",
     method: "get",
@@ -410,5 +457,140 @@ export const familyTreeCases = [
     body: command,
     invoke: (api: FamilyTreeApiEndpoints) =>
       api.unlinkFamilyTreeIdentity(7, command),
+  },
+  {
+    name: "uploadFamilyTreeMedia",
+    method: "post",
+    path: "/family-tree/media",
+    response: "MediaDTO",
+    multipart: ["file", "caption"],
+    body: mediaForm,
+    invoke: (api) => api.uploadFamilyTreeMedia(mediaForm),
+  },
+  {
+    name: "getFamilyTreeMediaContent",
+    method: "get",
+    path: "/family-tree/media/{asset_id}/content",
+    response: "BinaryDownload",
+    binary: true,
+    invoke: (api) => api.getFamilyTreeMediaContent(7),
+  },
+  {
+    name: "listFamilyTreeMediaReferences",
+    method: "get",
+    path: "/family-tree/people/{person_id}/media",
+    response: "MediaReferenceDTO",
+    responseArray: true,
+    invoke: (api) => api.listFamilyTreeMediaReferences(7),
+  },
+  {
+    name: "attachFamilyTreeMedia",
+    method: "post",
+    path: "/family-tree/media/{asset_id}/attach",
+    schema: "AttachMedia",
+    body: { ...command, person_id: 7, role: "gallery" },
+    invoke: (api) =>
+      api.attachFamilyTreeMedia(7, {
+        ...command,
+        person_id: 7,
+        role: "gallery",
+      }),
+  },
+  {
+    name: "removeFamilyTreeMediaReference",
+    method: "delete",
+    path: "/family-tree/media/{asset_id}/references/{reference_id}",
+    schema: "Command",
+    body: command,
+    invoke: (api) => api.removeFamilyTreeMediaReference(7, 7, command),
+  },
+  {
+    name: "previewFamilyTreeMerge",
+    method: "post",
+    path: "/family-tree/merge-preview",
+    schema: "MergePreview",
+    response: "PreviewDTO",
+    body: mergePreview,
+    invoke: (api) => api.previewFamilyTreeMerge(mergePreview),
+  },
+  {
+    name: "commitFamilyTreeMerge",
+    method: "post",
+    path: "/family-tree/merge",
+    schema: "PreviewCommit",
+    body: previewCommit,
+    invoke: (api) => api.commitFamilyTreeMerge(previewCommit),
+  },
+  {
+    name: "previewFamilyTreePurge",
+    method: "post",
+    path: "/family-tree/people/{person_id}/purge-preview",
+    schema: "PurgePreview",
+    response: "PreviewDTO",
+    body: purgePreview,
+    invoke: (api) => api.previewFamilyTreePurge(7, purgePreview),
+  },
+  {
+    name: "commitFamilyTreePurge",
+    method: "post",
+    path: "/family-tree/people/{person_id}/purge",
+    schema: "PurgeCommit",
+    body: purgeCommit,
+    invoke: (api) => api.commitFamilyTreePurge(7, purgeCommit),
+  },
+  {
+    name: "createFamilyTreeExport",
+    method: "post",
+    path: "/family-tree/exports",
+    schema: "ExportRequest",
+    response: "JobDTO",
+    body: { format: "json" },
+    invoke: (api) => api.createFamilyTreeExport({ format: "json" }),
+  },
+  {
+    name: "getFamilyTreeExportJob",
+    method: "get",
+    path: "/family-tree/exports/{job_id}",
+    response: "JobDTO",
+    invoke: (api) => api.getFamilyTreeExportJob(7),
+  },
+  {
+    name: "downloadFamilyTreeExport",
+    method: "get",
+    path: "/family-tree/exports/{job_id}/download",
+    response: "BinaryDownload",
+    binary: true,
+    invoke: (api) => api.downloadFamilyTreeExport(7),
+  },
+  {
+    name: "stageFamilyTreeImport",
+    method: "post",
+    path: "/family-tree/imports",
+    response: "JobDTO",
+    multipart: ["file", "expected_graph_revision"],
+    body: importForm,
+    invoke: (api) => api.stageFamilyTreeImport(importForm),
+  },
+  {
+    name: "getFamilyTreeImportJob",
+    method: "get",
+    path: "/family-tree/imports/{job_id}",
+    response: "JobDTO",
+    invoke: (api) => api.getFamilyTreeImportJob(7),
+  },
+  {
+    name: "commitFamilyTreeImport",
+    method: "post",
+    path: "/family-tree/imports/{job_id}/commit",
+    schema: "ImportCommit",
+    body: importCommit,
+    invoke: (api) => api.commitFamilyTreeImport(7, importCommit),
+  },
+  {
+    name: "cancelFamilyTreeImport",
+    method: "delete",
+    path: "/family-tree/imports/{job_id}",
+    response: "JobDTO",
+    invoke: (api) => api.cancelFamilyTreeImport(7),
   },
 ];

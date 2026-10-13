@@ -13,10 +13,33 @@ describe("shared family module metadata", () => {
       "homeschool",
       "recipes",
       "admin",
+      "family-tree",
     ]);
-    expect(
-      FAMILY_MODULE_DEFINITIONS.every((module) => module.platforms.length > 0),
-    ).toBe(true);
+    for (const module of FAMILY_MODULE_DEFINITIONS) {
+      expect(Object.keys(module.platformDefinitions).sort()).toEqual([
+        "mobile",
+        "web",
+      ]);
+    }
+    const familyTree = FAMILY_MODULE_DEFINITIONS.find(
+      (module) => module.key === "family-tree",
+    );
+    expect(familyTree?.platformDefinitions).toEqual({
+      web: {
+        supported: false,
+        destination: null,
+        roles: [],
+        navigation: false,
+        dashboard: false,
+      },
+      mobile: {
+        supported: false,
+        destination: null,
+        roles: [],
+        navigation: false,
+        dashboard: false,
+      },
+    });
   });
 
   it("supports the implemented cookbook on both web and mobile", () => {

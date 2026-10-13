@@ -39,6 +39,9 @@ class JsonOnlyClient extends FamilyApiClientCore {
   download() {
     return this.getBinary("/test/download");
   }
+  cancel() {
+    return this.deleteWithResponse<unknown>("/test/cancel");
+  }
   remove() {
     return this.deleteWithBody<unknown, { expected_graph_revision: number }>(
       "/test/delete",
@@ -125,6 +128,9 @@ describe("shared API client mechanics", () => {
     );
     await expect(client.download()).rejects.toThrow(
       "Binary transport is not supported.",
+    );
+    await expect(client.cancel()).rejects.toThrow(
+      "Response DELETE transport is not supported.",
     );
     await expect(client.remove()).rejects.toThrow(
       "JSON DELETE transport is not supported.",

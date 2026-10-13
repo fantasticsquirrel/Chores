@@ -19,8 +19,8 @@ describe("backend/shared module contract", () => {
 
   it("documents default backend module grants by role", () => {
     expect(BACKEND_DEFAULT_ROLE_MODULES).toEqual({
-      PARENT_ADMIN: ["chores", "homeschool", "recipes", "admin"],
-      PARENT: ["chores", "homeschool", "recipes"],
+      PARENT_ADMIN: ["chores", "homeschool", "recipes", "admin", "family-tree"],
+      PARENT: ["chores", "homeschool", "recipes", "family-tree"],
       CHILD: ["chores"],
     });
   });
