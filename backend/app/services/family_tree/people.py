@@ -6,6 +6,7 @@ from app.schemas.family_tree import PersonCreate,chronology
 from app.services.modules import ModuleService
 from .access import authorize,collection,person,error
 from .serialization import person_dto,record_dto,identity_dto
+from .alias_provenance import local_marker
 
 
 def state(session,actor):
@@ -29,7 +30,7 @@ def replace_aliases(session,actor,c,p,aliases):
         row=next((r for r in remaining if r.name==alias.name and r.label==alias.label),None)
         if row is not None: remaining.remove(row)
         else:
-            row=FamilyTreeOtherName(household_id=actor.household_id,collection_id=c.id,person_id=p.id,name=alias.name,label=alias.label,created_by_user_id=actor.id)
+            row=FamilyTreeOtherName(household_id=actor.household_id,collection_id=c.id,person_id=p.id,name=alias.name,label=alias.label,created_by_user_id=actor.id,portable_provenance=local_marker())
             session.add(row)
         row.position=position
     for row in remaining:session.delete(row)

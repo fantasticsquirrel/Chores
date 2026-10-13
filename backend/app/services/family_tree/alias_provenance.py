@@ -6,6 +6,11 @@ from app.schemas.family_tree import PersonCreate
 from app.schemas.family_tree_transfer import AliasProvenance
 
 
+def local_marker():
+    """Private durable origin evidence; never accepted in ordinary Alias DTOs."""
+    return {'origin': 'local'}
+
+
 def entries(session, person):
     return list(session.scalars(select(Name).where(
         Name.household_id == person.household_id,
@@ -16,9 +21,11 @@ def entries(session, person):
 def export_aliases(session, person, contributors):
     result = []
     for row in entries(session, person):
-        if row.portable_provenance is not None:
+        if row.portable_provenance is not None and row.portable_provenance != local_marker():
             history = AliasProvenance.model_validate(row.portable_provenance)
         else:
+            # NULL legacy local entries and explicit new local markers derive
+            # attribution from immutable operational fields, not quoted history.
             # A fresh opaque snapshot label identifies distinct contributors;
             # it contains no account ID, account name, email, or reconnect key.
             contributor = row.created_by_user_id

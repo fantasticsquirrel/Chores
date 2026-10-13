@@ -1,4 +1,4 @@
-"""Forward-only alias history migration: populated 25→26 and fresh parity."""
+"""Forward-only alias history migrations: populated 25→27 and fresh parity."""
 from pathlib import Path
 import json
 
@@ -47,7 +47,7 @@ def test_alias_history_migration_preserves_existing_rows_and_unfiltered_schema(t
             before = snapshot(c)
     command.upgrade(cfg, 'head')
     with engine.connect() as c:
-        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261013_0026'
+        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261013_0027'
         assert not c.execute(text('PRAGMA foreign_key_check')).all()
         if before is not None:
             after = snapshot(c)
@@ -63,5 +63,5 @@ def test_alias_history_migration_preserves_existing_rows_and_unfiltered_schema(t
     with pytest.raises(RuntimeError, match='disable-only'):
         command.downgrade(cfg, '20261013_0025')
     with engine.connect() as c:
-        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261013_0026'
+        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261013_0027'
     engine.dispose()

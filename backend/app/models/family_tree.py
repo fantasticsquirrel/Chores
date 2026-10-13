@@ -79,7 +79,8 @@ class FamilyTreeOtherName(Scoped, Base):
     label: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     # Quoted portable history, never local operational/account attribution.
-    # NULL means locally entered; a legacy import stores explicit unknown.
+    # New local rows carry a private origin marker; imports carry quoted history.
+    # Legacy NULL is repaired conservatively at 0027 where import evidence exists.
     portable_provenance: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
 
 
