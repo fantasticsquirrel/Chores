@@ -37,6 +37,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "check:dependencies": "expo install --check",
     "test:unit": "vitest run --environment node --exclude 'src/**/*.test.tsx'",
     "test:ui": "jest --runInBand",
     "test": "npm run test:unit && npm run test:ui",
