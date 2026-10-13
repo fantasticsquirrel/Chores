@@ -1,4 +1,4 @@
-import { FamilyApiClientCore } from "../client-core";
+import { FamilyApiClientCore, type RequestOptions } from "../client-core";
 import type {
   BillingStatusResponse,
   HouseholdOwnershipResponse,
@@ -133,8 +133,8 @@ export abstract class FamilySupportApiEndpoints extends FamilyApiClientCore {
     return this.get<BillingStatusResponse>(familyApiRoutes.billing);
   }
 
-  async getMyModules(): Promise<MyModulesResponse> {
-    return this.get<MyModulesResponse>("/modules/me");
+  async getMyModules(options?: RequestOptions): Promise<MyModulesResponse> {
+    return this.get<MyModulesResponse>("/modules/me", undefined, options);
   }
 
   async listHouseholdModules(): Promise<HouseholdModuleAccess[]> {
