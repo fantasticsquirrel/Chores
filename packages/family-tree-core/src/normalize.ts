@@ -44,7 +44,7 @@ export function prepareGraph<N, E>(input: GraphInput<N, E>, request?: Partial<Gr
   }
   const validEdges: NormalizedEdge<E>[] = [], seen = new Set<string>();
   for (const edge of inputEdges.slice(0, HARD_LIMITS.maxEdges)) {
-    if (!edge || !positiveId(edge.id) || !Object.hasOwn(kinds, edge.type) || !kinds[edge.type].includes(edge.kind) || (edge.type === 'partner' && !['current', 'separated', 'ended', 'unknown'].includes(edge.status))) {
+    if (!edge || !positiveId(edge.id) || !Object.prototype.hasOwnProperty.call(kinds, edge.type) || !kinds[edge.type].includes(edge.kind) || (edge.type === 'partner' && !['current', 'separated', 'ended', 'unknown'].includes(edge.status))) {
       diagnostics.push({ code: 'invalid_edge', severity: 'error', message: 'Invalid typed relationship; list fallback used.' }); continue;
     }
     const pair = endpoints(edge);

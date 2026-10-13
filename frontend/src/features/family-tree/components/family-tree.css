@@ -1,0 +1,327 @@
+.family-tree {
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.family-tree *,
+.family-tree-dialog-overlay * {
+  box-sizing: border-box;
+}
+.family-tree-view-controls,
+.family-tree-toolbar,
+.family-tree-list-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.family-tree .family-tree-control,
+.family-tree-dialog .family-tree-control {
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-main);
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-button);
+  box-shadow: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  text-shadow: none;
+  transform: none;
+}
+.family-tree-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.family-tree-control[aria-pressed="true"] {
+  border: 2px solid var(--text-main);
+  font-weight: 700;
+}
+.family-tree button:focus-visible,
+.family-tree input:focus-visible,
+.family-tree summary:focus-visible,
+.family-tree-viewport:focus-visible,
+.family-tree-dialog :focus-visible {
+  outline: 3px solid var(--ring-focus);
+  outline-offset: 3px;
+}
+.family-tree-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-card);
+  padding: 0.5rem 0.75rem;
+  min-width: 0;
+}
+.family-tree-filters label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+.family-tree-filters input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--text-main);
+  flex: 0 0 auto;
+}
+.family-tree-notice {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-left: 4px solid var(--accent-cyan);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+  margin-block: 0.75rem;
+}
+.family-tree-notice ul {
+  padding-inline-start: 1.25rem;
+}
+.family-tree-toolbar {
+  margin-block: 0.75rem;
+}
+.family-tree-instructions {
+  font-size: 0.9rem;
+}
+.family-tree-viewport {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: clamp(24rem, 60vh, 40rem);
+  overflow: hidden;
+  isolation: isolate;
+  touch-action: none;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-card);
+  background: var(--surface-soft);
+  cursor: grab;
+}
+.family-tree-viewport:active {
+  cursor: grabbing;
+}
+.family-tree-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.family-tree-edges {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+.family-tree-edge {
+  fill: none;
+  stroke: var(--text-main);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.family-tree-edge-inner {
+  fill: none;
+  stroke: var(--surface-soft);
+}
+.family-tree-edge-label {
+  fill: var(--text-main);
+  stroke: var(--surface-soft);
+  stroke-width: 4px;
+  paint-order: stroke;
+  font-size: 12px;
+  font-family: var(--font-ui);
+}
+.family-tree-junction {
+  fill: var(--text-main);
+}
+.family-tree-person {
+  position: absolute;
+  width: 216px;
+  height: 260px;
+  padding: 0.5rem;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  background: var(--surface-solid);
+  border: 2px solid var(--surface-border);
+  border-inline-start: 4px solid var(--accent-cyan);
+  border-radius: var(--radius-card);
+  box-shadow: var(--surface-shadow);
+  cursor: auto;
+}
+.family-tree-person-focused {
+  border-color: var(--text-main);
+}
+.family-tree-person-unknown {
+  border-inline-start-style: dashed;
+}
+.family-tree-person-name {
+  width: 100%;
+  text-align: start;
+  font-weight: 700;
+}
+.family-tree-person p {
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.family-tree-branches {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+.family-tree-branch {
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.8rem !important;
+}
+.family-tree-legend {
+  margin-block: 0.75rem;
+}
+.family-tree-legend summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: list-item;
+  padding: 0.5rem;
+}
+.family-tree-legend ul {
+  padding-inline-start: 1.25rem;
+}
+.family-tree-legend li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block: 0.25rem;
+}
+.family-tree-legend svg {
+  flex-shrink: 0;
+}
+.family-tree-list {
+  max-width: 100%;
+  min-width: 0;
+}
+.family-tree-people {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.family-tree-list-person {
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-card);
+  padding: 0.75rem;
+  min-width: 0;
+}
+.family-tree-list-person ul {
+  padding-inline-start: 1.25rem;
+}
+.family-tree-text-action {
+  min-height: 44px;
+  min-width: 44px;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem;
+  color: var(--text-main);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.family-tree-pattern-name {
+  font-size: 0.85rem;
+}
+.family-tree-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  background: rgb(0 0 0 / 0.5);
+  overflow: auto;
+  color: var(--text-main);
+  font-family: var(--font-ui);
+}
+.family-tree-dialog {
+  width: min(42rem, 100%);
+  max-height: 100%;
+  max-height: calc(100dvh - 2rem);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--surface-shadow-strong);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.family-tree-dialog-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  flex: 0 0 auto;
+}
+.family-tree-dialog-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  min-width: 0;
+}
+.family-tree-dialog-header button {
+  flex-shrink: 0;
+}
+.family-tree-dialog-description {
+  padding-inline: 1rem;
+  margin-top: 0;
+}
+.family-tree-dialog-content {
+  padding: 0 1rem 1rem;
+  overflow: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.family-tree-dialog-content input,
+.family-tree-dialog-content textarea,
+.family-tree-dialog-content select {
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  .family-tree-view-controls {
+    align-items: stretch;
+  }
+  .family-tree-filters {
+    width: 100%;
+  }
+  .family-tree-list-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .family-tree-dialog-overlay {
+    padding: 0.75rem;
+  }
+  .family-tree-dialog {
+    max-height: calc(100dvh - 1.5rem);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .family-tree *,
+  .family-tree-dialog-overlay * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

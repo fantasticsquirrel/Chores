@@ -6,7 +6,7 @@
   "exports": { ".": "./src/index.ts" },
   "scripts": {
     "test": "vitest run --config vitest.config.ts",
-    "typecheck": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json && tsc --project tsconfig.es2020.json",
     "benchmark": "vitest run --config vitest.benchmark.config.ts"
   }
 }
