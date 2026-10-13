@@ -8,6 +8,10 @@
 
 **Tech stack:** FastAPI, SQLAlchemy, Alembic, SQLite/WAL, React/Vite, Expo/React Native, Pytest, Vitest, Playwright, systemd, nginx, GitHub Actions.
 
+## Related planned module specifications
+
+- [Family Tree module specification](../specifications/family-tree-module.md) defines the proposed household family-history module and owns its FT-0 through FT-4 delivery checklist. It is a separate, unimplemented feature scope; its specification does not complete or expand the existing hardening/release gates below. Follow the standing architecture and standard-module guides before implementation.
+
 ## Current verified strengths
 
 - [x] Auth, role, module, household, child, and CSRF boundaries exist.

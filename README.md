@@ -11,6 +11,10 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 - SQLite persistence with Alembic migrations, startup checks, and WAL mode
 - Frontend and backend automated test coverage for implemented flows
 
+## Planned Modules
+
+- [Family Tree — full product and technical specification](docs/specifications/family-tree-module.md): a proposed household-native family-history module with adult permissions, web/mobile integration, durable genealogy data, safe media/import/export, and a dependency-ordered delivery checklist. Specification only; not implemented, enabled, or deployed.
+
 ## Prerequisites
 
 - Node.js 20+
