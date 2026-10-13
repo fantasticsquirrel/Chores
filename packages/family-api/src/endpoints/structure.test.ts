@@ -53,16 +53,10 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "upsertHomeschoolDayComment",
     "upsertHomeschoolGrade",
   ],
-  "family-tree.ts": [
+  "family-tree-core.ts": [
     "archiveFamilyTreePerson",
-    "attachFamilyTreeMedia",
-    "cancelFamilyTreeImport",
-    "commitFamilyTreeImport",
-    "commitFamilyTreeMerge",
-    "commitFamilyTreePurge",
     "compareFamilyTreePeople",
     "createFamilyTreeCareLink",
-    "createFamilyTreeExport",
     "createFamilyTreeParentLink",
     "createFamilyTreePartnerEpisode",
     "createFamilyTreePerson",
@@ -74,16 +68,11 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "deleteFamilyTreePartnerEpisode",
     "deleteFamilyTreeResidence",
     "deleteFamilyTreeStory",
-    "downloadFamilyTreeExport",
     "getFamilyTreeCollection",
-    "getFamilyTreeExportJob",
     "getFamilyTreeGraph",
-    "getFamilyTreeImportJob",
-    "getFamilyTreeMediaContent",
     "getFamilyTreePerson",
     "linkFamilyTreeIdentity",
     "listFamilyTreeIdentityCandidates",
-    "listFamilyTreeMediaReferences",
     "listFamilyTreePeople",
     "listFamilyTreeResidences",
     "listFamilyTreeStories",
@@ -94,14 +83,29 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "patchFamilyTreePerson",
     "patchFamilyTreeResidence",
     "patchFamilyTreeStory",
+    "reorderFamilyTreeStories",
+    "restoreFamilyTreePerson",
+    "unlinkFamilyTreeIdentity",
+    "unlockFamilyTreePerson",
+  ],
+  "family-tree-transfer.ts": [
+    "cancelFamilyTreeImport",
+    "commitFamilyTreeImport",
+    "createFamilyTreeExport",
+    "downloadFamilyTreeExport",
+    "getFamilyTreeExportJob",
+    "getFamilyTreeImportJob",
+    "stageFamilyTreeImport",
+  ],
+  "family-tree.ts": [
+    "attachFamilyTreeMedia",
+    "commitFamilyTreeMerge",
+    "commitFamilyTreePurge",
+    "getFamilyTreeMediaContent",
+    "listFamilyTreeMediaReferences",
     "previewFamilyTreeMerge",
     "previewFamilyTreePurge",
     "removeFamilyTreeMediaReference",
-    "reorderFamilyTreeStories",
-    "restoreFamilyTreePerson",
-    "stageFamilyTreeImport",
-    "unlinkFamilyTreeIdentity",
-    "unlockFamilyTreePerson",
     "uploadFamilyTreeMedia",
   ],
   "notifications.ts": [
@@ -189,9 +193,24 @@ function productionTypeScriptFiles(directory: string): string[] {
 }
 
 describe("endpoint group structure", () => {
+  it("keeps every shared production TypeScript file at or below 500 lines", () => {
+    const hotspots = productionTypeScriptFiles(sourceDirectory)
+      .map((file) => {
+        const source = readSource(file);
+        return {
+          file,
+          lines: source.split("\n").length - Number(source.endsWith("\n")),
+        };
+      })
+      .filter(({ lines }) => lines > 500);
+    expect(hotspots).toEqual([]);
+  });
+
   it("owns each endpoint exactly once in the intended domain file", () => {
     expect(endpointFiles).toEqual([
       "core.ts",
+      "family-tree-core.ts",
+      "family-tree-transfer.ts",
       "family-tree.ts",
       "notifications.ts",
       "recipes.ts",

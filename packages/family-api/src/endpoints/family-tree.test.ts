@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { ApiClient as WebClient } from "../../../../frontend/src/api/client";
 import { ApiClient as NativeClient } from "../../../../mobile/src/api/client";
 import { FamilyTreeApiEndpoints } from "./family-tree";
+import { FamilyTreeCoreApiEndpoints } from "./family-tree-core";
+import { FamilyTreeTransferApiEndpoints } from "./family-tree-transfer";
+import { FamilyRecipeApiEndpoints } from "./recipes";
 import { familyTreeCases } from "../../test-support/family-tree-cases";
 
 type Case = {
@@ -171,11 +174,24 @@ describe("real Family Tree backend contract", () => {
       .sort();
     expect(cases.map((c) => `${c.method} ${c.path}`).sort()).toEqual(actual);
     expect(new Set(cases.map((c) => c.name)).size).toBe(actual.length);
-    expect(
-      Object.getOwnPropertyNames(FamilyTreeApiEndpoints.prototype)
-        .filter((name) => name !== "constructor")
-        .sort(),
-    ).toEqual(cases.map((c) => c.name).sort());
+    const prototypes = [
+      FamilyTreeApiEndpoints.prototype,
+      FamilyTreeTransferApiEndpoints.prototype,
+      FamilyTreeCoreApiEndpoints.prototype,
+    ];
+    expect(Object.getPrototypeOf(prototypes[0])).toBe(prototypes[1]);
+    expect(Object.getPrototypeOf(prototypes[1])).toBe(prototypes[2]);
+    expect(Object.getPrototypeOf(prototypes[2])).toBe(
+      FamilyRecipeApiEndpoints.prototype,
+    );
+    const methods = prototypes.flatMap((prototype) =>
+      Object.getOwnPropertyNames(prototype).filter(
+        (name) => name !== "constructor",
+      ),
+    );
+    expect(methods).toHaveLength(49);
+    expect(new Set(methods).size).toBe(methods.length);
+    expect(methods.sort()).toEqual(cases.map((c) => c.name).sort());
     for (const c of cases) {
       const operation = backendContract.openapi.paths[c.path][c.method];
       const schema =
@@ -263,6 +279,20 @@ for (const [platform, Client] of [
         fetchImpl: fetchMock,
       });
       expect(api).toBeInstanceOf(FamilyTreeApiEndpoints);
+      expect(api).toBeInstanceOf(FamilyTreeTransferApiEndpoints);
+      expect(api).toBeInstanceOf(FamilyTreeCoreApiEndpoints);
+      expect(api).toBeInstanceOf(FamilyRecipeApiEndpoints);
+      const owner = [
+        FamilyTreeApiEndpoints,
+        FamilyTreeTransferApiEndpoints,
+        FamilyTreeCoreApiEndpoints,
+      ].find((Endpoints) =>
+        Object.prototype.hasOwnProperty.call(Endpoints.prototype, c.name),
+      );
+      expect(owner).toBeDefined();
+      expect(api[c.name as keyof typeof api]).toBe(
+        Object.getOwnPropertyDescriptor(owner!.prototype, c.name)?.value,
+      );
       const received = await c.invoke(api);
       if (c.binary) {
         expect(received).toMatchObject({

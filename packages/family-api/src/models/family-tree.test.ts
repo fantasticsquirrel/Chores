@@ -267,6 +267,49 @@ describe("Family Tree DTO parity with executable Pydantic schemas", () => {
     `;
     expect(compile(source)).toEqual([]);
   }, 30000);
+  it("compiles every domain DTO through actual package exports and preserves complete client method signatures", () => {
+    const filename = fileURLToPath(
+      new URL("./family-tree.ts", import.meta.url),
+    );
+    const program = ts.createProgram([filename], {
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+      module: ts.ModuleKind.ESNext,
+    });
+    const checker = program.getTypeChecker();
+    const symbol = checker.getSymbolAtLocation(
+      program.getSourceFile(filename)!,
+    );
+    const names = checker.getExportsOfModule(symbol!).map((item) => item.name);
+    expect(names.length).toBeGreaterThan(100);
+    const exports = names.flatMap((name) =>
+      ["Domain", "Models", "Root", "WebModels", "NativeModels"].map(
+        (owner) =>
+          `type Export_${owner}_${name} = Assert<Equal<DTO.${name}, ${owner}.${name}>>;`,
+      ),
+    );
+    const methods = familyTreeCases.flatMap((c) =>
+      ["Web", "Native"].map(
+        (owner) =>
+          `type Signature_${owner}_${c.name} = Assert<Equal<Shared["${c.name}"], ${owner}["${c.name}"]>>;`,
+      ),
+    );
+    expect(
+      compile(`
+      import type * as DTO from "./family-tree";
+      import type * as Domain from "@family-manager/family-api/models/family-tree";
+      import type * as Models from "@family-manager/family-api/models";
+      import type * as Root from "@family-manager/family-api";
+      import type * as WebModels from "../../../../frontend/src/api/models";
+      import type * as NativeModels from "../../../../mobile/src/api/models";
+      import type { FamilyTreeApiEndpoints as Shared } from "@family-manager/family-api/endpoints/family-tree";
+      import type { ApiClient as Web } from "../../../../frontend/src/api/client";
+      import type { ApiClient as Native } from "../../../../mobile/src/api/client";
+      type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+      type Assert<T extends true> = T;
+      ${[...exports, ...methods].join("\n")}
+    `),
+    ).toEqual([]);
+  }, 30000);
   it("compiles real producer HTTP examples and the normalized portable manifest, not fabricated summaries", () => {
     const examples = familyTreeProducer.records
       .filter((r) => r.status === 200 && r.response_model)

@@ -265,7 +265,27 @@ describe("domain model structure", () => {
       .map((match) => `${match[1]}.ts`)
       .sort();
 
-    expect(reexportedDomains).toEqual(domainFiles);
+    const featureModules = [
+      "family-tree-core.ts",
+      "family-tree-media.ts",
+      "family-tree-portable.ts",
+      "family-tree-transfer.ts",
+    ];
+    expect(reexportedDomains).toEqual(
+      domainFiles.filter((file) => !featureModules.includes(file)),
+    );
+    const featureBarrel = readSource(join(modelsDirectory, "family-tree.ts"));
+    expect(
+      [...featureBarrel.matchAll(/export type \* from "\.\/([\w-]+)"/g)]
+        .map((match) => `${match[1]}.ts`)
+        .sort(),
+    ).toEqual(featureModules);
+    // Feature parts import their actual owners, never their own public barrel.
+    for (const file of featureModules) {
+      expect(readSource(join(modelsDirectory, file))).not.toContain(
+        'from "./family-tree"',
+      );
+    }
     const packageManifest = JSON.parse(
       readSource(join(sourceDirectory, "../package.json")),
     ) as { exports: Record<string, string> };
