@@ -14,6 +14,7 @@ from sqlalchemy import select
 from app.config import get_settings
 from app.models.family_tree import FamilyTreePerson,FamilyTreeParentLink,FamilyTreeCareLink,FamilyTreePartnerEpisode
 from .access import authorize,collection,person,error
+from .observability import emit, warning_events
 
 
 def load(session,actor,history=True):
@@ -129,6 +130,9 @@ def project(session,actor,focus=None,up=2,down=2,partners=True,history=False,car
         p=nodes[pid];facts=p.facts
         label=facts.get('display_name') or ' '.join(facts.get(k) or '' for k in ['first_name','middle_name','last_name','maiden_name','suffix']).strip() or (facts.get('aliases') or [{'name':'Unnamed person'}])[0]['name']
         result.append({'id':pid,'display_name':label,'living_status':facts['living_status'],'birth_date':facts.get('birth_date'),'death_date':facts.get('death_date'),'is_locked':p.is_locked,'expansion_counts':counts[pid]})
+    fields={'operation':'graph','household_id':actor.household_id,'revision':revision,'node_count':len(result),'edge_count':len(page_edges)}
+    if truncated: emit('graph_truncated', **fields)
+    warning_events(warnings, **fields)
     return {'graph_revision':revision,'focus_person_id':focus,'nodes':result,'edges':page_edges,'truncated':truncated,'expansion_token':next_token,'warnings':warnings,'projection_limits':limits}
 
 
@@ -160,4 +164,8 @@ def compare(session,actor,a,b,history=True,max_nodes=500,max_edges=1000):
             cursor,edge=previous[cursor];path.append(edge);ids.append(cursor)
         path.reverse();ids.reverse()
     c=collection(session,actor.household_id)
+    if truncated:
+        fields={'operation':'compare','household_id':actor.household_id,'revision':c.revision,'visited_count':len(previous),'edge_count':len(scanned)}
+        emit('graph_truncated', **fields)
+        warning_events(['bounded_search'], **fields)
     return {'graph_revision':c.revision,'person_a_id':a,'person_b_id':b,'state':'connected' if connected else 'truncated' if truncated else 'disconnected','distance':len(path) if connected else None,'person_ids':ids,'path':path,'warnings':['bounded_search'] if truncated else [],'projection_limits':{'max_nodes':max_nodes,'max_edges':max_edges}}

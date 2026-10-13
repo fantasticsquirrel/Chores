@@ -6,9 +6,15 @@ from app.models.enums import UserRole
 from app.models.family_tree import FamilyTreeCollection, FamilyTreePerson
 from app.services.modules import ModuleService
 from app.schemas.family_tree import DomainErrorDetail
+from .observability import emit, warning_events
 
-def error(code, message, status=409, **extra) -> NoReturn:
+def error(code, message, status=409, *, event_fields=None, **extra) -> NoReturn:
     detail=DomainErrorDetail.model_validate({'code':code,'message':message,**extra})
+    # Internal telemetry is separately allowlisted, never included in the DTO.
+    fields={**(event_fields or {}), 'code':detail.code, 'status':status}
+    emit('domain_rejected', **fields)
+    if detail.code == 'resource_limit': emit('quota_rejected', **fields)
+    warning_events(detail.warnings)
     raise HTTPException(status_code=status, detail=detail.model_dump(mode='json',exclude_none=True,exclude_unset=True))
 
 def authorize(session, actor, manage=False):

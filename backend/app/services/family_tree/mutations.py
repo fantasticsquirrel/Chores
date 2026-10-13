@@ -16,6 +16,7 @@ from app.config import get_settings
 from app.models.family_tree import FamilyTreeCollection,FamilyTreeMutationReceipt
 from app.security.audit import audit
 from .access import authorize,collection,person,error
+from .observability import warning_events
 
 def execute(session,actor,operation,command,action):
     actor=authorize(session,actor,manage=True)
@@ -80,6 +81,7 @@ def execute(session,actor,operation,command,action):
         result={'committed_revision':c.revision,'current_revision':c.revision,'replayed':False,'affected':affected,'warnings':warnings}
         if key_hash:
             session.add(FamilyTreeMutationReceipt(household_id=actor.household_id,collection_id=c.id,actor_user_id=actor.id,operation=operation,key_hash=key_hash,body_digest=digest,result=result,expires_at=now+timedelta(seconds=get_settings().family_tree_receipt_ttl_seconds)))
+        warning_events(warnings, operation='mutation', household_id=actor.household_id, revision=c.revision)
         audit(session,'family_tree.'+operation.split(':',1)[0],actor=actor,details={'revision':c.revision,'affected':affected,'outcome':'committed'})
         session.flush()
         return result

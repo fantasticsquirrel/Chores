@@ -7,8 +7,10 @@ import heapq
 from sqlalchemy import select, delete, exists, text
 from app.models.family_tree import FamilyTreeMediaAsset as Asset, FamilyTreeMediaPin as Pin, FamilyTreeTransferJob as Job, FamilyTreeMutationReceipt as Receipt, FamilyTreeMediaReference as Reference
 from . import storage, media
+from .observability import emit, operation_events
 
 
+@operation_events('cleanup')
 def cleanup(factory, batch_size=100, now=None):
     if not 1<=batch_size<=1000: raise ValueError('Invalid cleanup batch size')
     now=now or datetime.now(UTC)
@@ -72,4 +74,6 @@ def cleanup(factory, batch_size=100, now=None):
         directory_fd=os.open(storage.root(),os.O_RDONLY|os.O_DIRECTORY)
         try: os.fsync(directory_fd)
         finally: os.close(directory_fd)
+    if result['expired_jobs']: emit('staging_expired', code='transfer_expired', count=result['expired_jobs'])
+    emit('cleanup_completed', **result)
     return result

@@ -18,6 +18,7 @@ import time
 from sqlalchemy import select
 from app.models.family_tree import FamilyTreeMediaAsset as Asset
 from . import storage, media
+from .observability import operation_events
 
 
 def file_hash(path):
@@ -66,6 +67,7 @@ def online_copy(source,destination):
     os.chmod(destination,0o600)
 
 
+@operation_events('backup')
 def backup(database_path,destination,factory,retention_days=30):
     database_path=Path(database_path)
     if not database_path.is_absolute() or not database_path.is_file() or database_path.is_symlink(): raise ValueError('Explicit existing SQLite database required')
@@ -140,6 +142,7 @@ def verify_package(directory):
     return manifest
 
 
+@operation_events('rehearse')
 def rehearse(directory,destination,scratch_root=None):
     directory=Path(directory).resolve()
     scratch=Path(scratch_root or os.getenv('TMPDIR','/root/.hermes/cache/scratch')).resolve()
