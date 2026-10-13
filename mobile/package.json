@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~56.0.21",
     "@family-manager/family-api": "file:../packages/family-api",
+    "@family-manager/family-tree-core": "file:../packages/family-tree-core",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~56.0.23",
     "expo-constants": "~56.0.27",
