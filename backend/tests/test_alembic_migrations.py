@@ -348,7 +348,10 @@ def test_forward_migration_quarantines_legacy_unsent_delivery_attempts(
         )
     engine.dispose()
 
-    command.upgrade(alembic_config, "head")
+    # This historical fixture intentionally contains orphan notification
+    # references. Keep its original 0028 boundary; 0029 separately rejects
+    # inconsistent FK graphs before reconstruction.
+    command.upgrade(alembic_config, "20261013_0028")
 
     engine = create_engine(database_url)
     with engine.connect() as connection:

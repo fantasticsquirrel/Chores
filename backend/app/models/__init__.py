@@ -18,6 +18,7 @@ from app.models.homeschool import (
     HomeschoolSemester,
     HomeschoolSubject,
 )
+from app.models.legacy_homeschool import RETAINED_HOMESCHOOL_TABLES
 from app.models.identity import AuthSession, Child, Household, LoginAttempt, SecurityAuditEvent, User
 from app.models.modules import HouseholdModuleAccess, Module, UserModuleAccess
 from app.models.native_push import NativePushSubscription

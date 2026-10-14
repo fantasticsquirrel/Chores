@@ -147,7 +147,7 @@ def verify(directory, start):
             revision = c.get(BASE + '/').json()['graph_revision']
             fresh_imported = append(c, fresh, revision, 'fresh-26-import')
     before = snapshot()
-    command.upgrade(cfg(), 'head')
+    command.upgrade(cfg(), '20261013_0028')
     with sqlite3.connect(os.environ['DATABASE_URL'].removeprefix('sqlite:///')) as c:
         assert not c.execute('PRAGMA foreign_key_check').fetchall()
     after = snapshot()
@@ -172,6 +172,15 @@ def verify(directory, start):
     assert repaired == (2 if info['evidence'] == 'intact' else 4)
     with sqlite3.connect(os.environ['DATABASE_URL'].removeprefix('sqlite:///')) as c:
         assert c.execute('SELECT version_num FROM alembic_version').fetchone()[0] == '20261013_0028'
+    # Keep the original repair boundary exact, then check the additive new head.
+    command.upgrade(cfg(), 'head')
+    newest = snapshot()
+    retained = {'homeschool_courses', 'homeschool_lessons', 'homeschool_course_assignments', 'homeschool_lesson_progress'}
+    assert set(newest) == set(after) | retained
+    for table, old in after.items():
+        assert newest[table] == old, table
+    for table in retained:
+        assert newest[table]['rows'] == []
     command.check(cfg())  # Real UNFILTERED schema check, on both upgrade paths.
     factory = get_session_factory(get_settings().database_url)
     with TestClient(create_app()) as c:

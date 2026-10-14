@@ -131,15 +131,27 @@ def verify(directory, start):
     if start == '27':
         command.upgrade(cfg(), '20261013_0027')
     before = snapshot()
-    command.upgrade(cfg(), 'head')
+    command.upgrade(cfg(), '20261013_0028')
     after = snapshot()
-    assert len(before) == 71 and before.keys() == after.keys()
+    # The current test API creates all registered metadata at its 0026 setup,
+    # including the four retained tables. Preserve that complete 75-table
+    # snapshot at the historical 0028 repair boundary, not a stale 71 count.
+    assert len(before) == 75 and before.keys() == after.keys()
     for table, old in before.items():
         if table != 'family_tree_other_names':
             assert old == after[table], table
         else:
             assert old['ddl'] == after[table]['ddl'] and old['columns'] == after[table]['columns']
             assert [r[:-1] for r in old['rows']] == [r[:-1] for r in after[table]['rows']]
+    # Preserve the original 0028 equality above, then require exact additive head.
+    command.upgrade(cfg(), 'head')
+    newest = snapshot()
+    retained = {'homeschool_courses', 'homeschool_lessons', 'homeschool_course_assignments', 'homeschool_lesson_progress'}
+    assert set(newest) == set(after) | retained
+    for table, old in after.items():
+        assert newest[table] == old, table
+    for table in retained:
+        assert newest[table]['rows'] == []
     command.check(cfg())
     with sqlite3.connect(os.environ['DATABASE_URL'].removeprefix('sqlite:///')) as db:
         assert not db.execute('PRAGMA foreign_key_check').fetchall()

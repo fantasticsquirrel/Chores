@@ -153,7 +153,7 @@ def test_fresh_and_previous_head_migration_disables_catalog(tmp_path,monkeypatch
                 if s.get(Module,'recipes') is None:s.add(Module(key='recipes',name='Recipes',description='Existing module',enabled=True));s.flush()
                 s.add(HouseholdModuleAccess(household_id=501,module_key='recipes',enabled=False))
                 s.add(UserModuleAccess(user_id=601,module_key='recipes',can_view=True,can_manage=False));s.commit()
-        command.upgrade(cfg,'head')
+        command.upgrade(cfg,'20261013_0028')
         with get_session_factory(url)() as s:
             module=s.get(Module,'family-tree')
             assert module is not None and module.enabled is False
@@ -166,6 +166,9 @@ def test_fresh_and_previous_head_migration_disables_catalog(tmp_path,monkeypatch
         with pytest.raises(RuntimeError,match='disable-only'):command.downgrade(cfg,'20261005_0021')
         with get_session_factory(url)() as s:
             assert s.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='20261013_0028'
+        command.upgrade(cfg,'head')
+        with get_session_factory(url)() as s:
+            assert s.execute(text('SELECT version_num FROM alembic_version')).scalar_one()=='20261014_0029'
         # Whole-schema parity is required; historical DDL remains unchanged.
         from alembic.autogenerate import compare_metadata
         from alembic.migration import MigrationContext
