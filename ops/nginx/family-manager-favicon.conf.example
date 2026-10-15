@@ -1,0 +1,6 @@
+# Include inside the existing Family Manager HTTPS server block.
+# Browsers using the explicit HTML icon links request /chore/favicon.ico;
+# this same-origin fallback also fixes legacy/default /favicon.ico probes.
+location = /favicon.ico {
+    return 302 /chore/favicon.ico;
+}
