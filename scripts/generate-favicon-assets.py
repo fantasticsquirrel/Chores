@@ -5,7 +5,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'docs/design/family-manager-favicon-source.png'
-EXPECTED = '8b19c6882d5f9ba18e6112b403e2eb9b95284bd1c4cbdb9a04c38cc671732c25'
+EXPECTED = '4728c853cc71fbbc299b993231d5c5b1b1ab455796ed753815af2d908a02eda6'
 
 
 def main():

@@ -4,21 +4,21 @@
 
 Five distinct raster concepts were created with Codex CLI's native `image_gen__imagegen` tool: house/checkmark, house/door, roof/heart, roof/family dots, and clipboard/checkmark. Native generation and native edit outputs were retained; Codex then flattened the palette and cleaned alpha speckles without redrawing the generated silhouettes.
 
-**Selected: option 2, the cream house with an emerald doorway on a navy rounded tile.** It has the clearest silhouette at 16 pixels and fits the whole household-management app rather than only chores or genealogy. Options 1 and 5 are more task-specific; option 3 emphasizes care; option 4's smaller dots are less distinct at tiny sizes.
+**Selected by the user: option 4, the navy roof over three emerald circles on a cream rounded tile.** This replaces the previously assistant-selected option 2. The uploaded screenshot identifies the artwork; the original lossless candidate is reused rather than cropping/resizing the screenshot's black margins or generating a replacement.
 
 `family-manager-favicon-options.png` shows all five final candidates at presentation size and at 16/32/48 pixels on light and dark backgrounds. `family-manager-favicon-source.png` is the exact selected final Codex-generated/cleaned asset, not a hand-drawn replacement.
 
 Selected final source SHA-256:
-`8b19c6882d5f9ba18e6112b403e2eb9b95284bd1c4cbdb9a04c38cc671732c25`
+`4728c853cc71fbbc299b993231d5c5b1b1ab455796ed753815af2d908a02eda6`
 
-Codex native generation identity: `exec-f9f7f041-e1ff-4802-b58b-2913238f85f3`; native edit identity: `exec-c7332f67-fd89-4b9d-aecc-42d405e97cbd`. Final palette/alpha cleanup is included in the source hash above. Full original generations and run evidence are retained privately outside the repository.
+Codex native generation identity: `exec-8b95122b-0d2c-4bdc-b186-7338d1732d06`; native edit identity: `exec-8b03c739-5489-479b-99a7-cec5c3dda6ed`. Final palette/alpha cleanup is included in the source hash above. Full original generations and run evidence are retained privately outside the repository.
 
 ## Runtime assets
 
 - `frontend/public/favicon.ico`: actual 16/32/48-pixel ICO frames.
 - `frontend/public/favicon-32.png`: 32-pixel browser icon.
 - `frontend/public/apple-touch-icon.png`: 180-pixel touch icon.
-- `frontend/index.html`: explicit links use Vite `%BASE_URL%`, so `/chore/` production and other configured bases resolve correctly.
+- `frontend/index.html`: explicit links use Vite `%BASE_URL%`, so `/chore/` production and other configured bases resolve correctly. A source-hash query version (`?v=4728c853cc71`) invalidates the previous icon URLs in browser favicon caches when the selected artwork changes.
 
 Regenerate the runtime assets from the committed selected source with `python scripts/generate-favicon-assets.py` in the backend's existing Pillow-capable environment. It does not regenerate AI artwork or change the selected image.
 
