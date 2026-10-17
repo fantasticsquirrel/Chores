@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response,
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_db_session
+from app.api.ops_owner import router as owner_router
 from app.api.ops_dependencies import PlatformPrincipal, get_platform_principal, require_platform_roles
 from app.config import get_settings
 from app.models.enums import PlatformRole
@@ -13,6 +14,7 @@ from app.security.platform_sessions import OPS_CSRF_COOKIE_NAME, OPS_SESSION_COO
 from app.services.ops import audit, billing_reconciliation, platform_users, support_cases
 
 router = APIRouter(tags=["platform-operations"])
+router.include_router(owner_router)
 
 
 @router.post("/auth/login")

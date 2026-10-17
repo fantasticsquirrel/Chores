@@ -41,6 +41,21 @@ const detail: OpsHouseholdDetail = {
 };
 
 function mockOps(role: PlatformOpsRole) {
+  vi.spyOn(opsApi, "getOwnerOverview").mockResolvedValue({
+    household_count: 1,
+    account_count: 1,
+    active_account_count: 1,
+    enabled_module_count: 1,
+    module_count: 1,
+  });
+  vi.spyOn(opsApi, "listOwnerHouseholdModules").mockResolvedValue([]);
+  vi.spyOn(opsApi, "listOwnerHouseholdAccounts").mockResolvedValue({
+    household_id: 42,
+    items: [],
+    total: 0,
+    offset: 0,
+    limit: 25,
+  });
   vi.spyOn(opsApi, "getCurrentOpsSession").mockResolvedValue({
     user: {
       id: 1,
