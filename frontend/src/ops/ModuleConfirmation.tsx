@@ -15,12 +15,16 @@ export function ModuleConfirmation({
   module,
   scope,
   pending,
+  returnFocusTo,
+  fallbackFocusTo,
   onConfirm,
   onClose,
 }: {
   module: ModuleAccessSummary;
   scope: string;
   pending: boolean;
+  returnFocusTo: HTMLElement | null;
+  fallbackFocusTo: HTMLElement | null;
   onConfirm: (reason: string, credentials: OpsReauthRequest) => void;
   onClose: () => void;
 }) {
@@ -28,11 +32,22 @@ export function ModuleConfirmation({
   const [password, setPassword] = useState("");
   const [mfa, setMfa] = useState("");
   const form = useRef<HTMLFormElement>(null);
+  const restoreFrame = useRef<number | null>(null);
   useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
+    if (restoreFrame.current !== null) cancelAnimationFrame(restoreFrame.current);
+    restoreFrame.current = null;
     form.current?.querySelector<HTMLInputElement>("input")?.focus();
-    return () => previous?.focus();
-  }, []);
+    return () => {
+      // Wait for the parent to re-enable the trigger or finish readback layout.
+      restoreFrame.current = requestAnimationFrame(() => {
+        const target =
+          returnFocusTo?.isConnected && !returnFocusTo.hasAttribute("disabled")
+            ? returnFocusTo
+            : fallbackFocusTo;
+        if (target?.isConnected) target.focus();
+      });
+    };
+  }, [returnFocusTo, fallbackFocusTo]);
   useEffect(() => {
     if (pending) form.current?.focus();
   }, [pending]);

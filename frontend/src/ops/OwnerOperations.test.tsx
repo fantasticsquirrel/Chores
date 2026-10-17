@@ -320,6 +320,9 @@ describe("owner operations", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Saved. Readback failed",
     );
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Global modules" })).toHaveFocus(),
+    );
     expect(
       screen.queryByLabelText("Current operator password"),
     ).not.toBeInTheDocument();
@@ -341,6 +344,41 @@ describe("owner operations", () => {
     expect(read).toHaveBeenCalledTimes(3);
     expect(write).toHaveBeenCalledTimes(1);
     expect(auth).toHaveBeenCalledTimes(1);
+  });
+  it("restores the exact invoker after cancel when the browser blurs disabled buttons", async () => {
+    session();
+    vi.spyOn(opsApi, "listGlobalModules").mockResolvedValue([chores]);
+    // Chromium blurs the trigger as the pending-intent render disables it.
+    // JSDOM needs this DOM-semantics adapter; the live browser regression also
+    // exercises the actual behavior without this adapter.
+    const setAttribute = Element.prototype.setAttribute;
+    const disabled = vi
+      .spyOn(Element.prototype, "setAttribute")
+      .mockImplementation(function (this: Element, name: string, value: string) {
+        if (
+          name === "disabled" &&
+          this instanceof HTMLButtonElement &&
+          document.activeElement === this
+        ) this.blur();
+        setAttribute.call(this, name, value);
+      });
+    try {
+      page("/ops/modules");
+      const trigger = await screen.findByRole("button", {
+        name: "Disable Chores",
+      });
+      trigger.focus();
+      fireEvent.click(trigger);
+      const dialog = await screen.findByRole("dialog", {
+        name: "Confirm module change",
+      });
+      expect(within(dialog).getByLabelText("Change reason")).toHaveFocus();
+      fireEvent.keyDown(dialog, { key: "Escape" });
+      await waitFor(() => expect(trigger).toHaveFocus());
+      expect(trigger).toBeEnabled();
+    } finally {
+      disabled.mockRestore();
+    }
   });
   it("blocks stale intent until reload and requires fresh credentials on each attempt", async () => {
     session();

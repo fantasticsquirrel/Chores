@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type {
   GlobalModule,
   HouseholdModule,
@@ -31,6 +31,8 @@ export function OwnerModules({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [stale, setStale] = useState(false);
+  const trigger = useRef<HTMLButtonElement | null>(null);
+  const heading = useRef<HTMLHeadingElement | null>(null);
   const scope =
     householdId === undefined
       ? "All households (global)"
@@ -76,7 +78,7 @@ export function OwnerModules({
   }
   return (
     <Card as="section" className="ops-panel">
-      <h2>
+      <h2 ref={heading} tabIndex={-1}>
         {householdId === undefined ? "Global modules" : "Household modules"}
       </h2>
       <p>
@@ -168,7 +170,8 @@ export function OwnerModules({
                     stale ||
                     (module.enabled ? !module.can_disable : !module.can_enable)
                   }
-                  onClick={() => {
+                  onClick={(event) => {
+                    trigger.current = event.currentTarget;
                     setError(null);
                     setSaved(false);
                     setIntent(module);
@@ -186,6 +189,8 @@ export function OwnerModules({
           module={intent}
           scope={scope}
           pending={pending}
+          returnFocusTo={trigger.current}
+          fallbackFocusTo={heading.current}
           onConfirm={(reason, credentials) => void confirm(reason, credentials)}
           onClose={() => setIntent(null)}
         />
