@@ -1,0 +1,288 @@
+.ops-root {
+  min-height: 100vh;
+  color: var(--text-main);
+  background: var(--page-bg);
+}
+.ops-root .ops-shell {
+  color: var(--text-main);
+  background: var(--page-bg);
+  padding: clamp(1rem, 3vw, 2rem);
+}
+.ops-root .ops-header {
+  max-width: 76rem;
+  margin: auto;
+  background: var(--surface-bg);
+  border-color: var(--surface-border);
+}
+.ops-root .ops-identity,
+.ops-root .ops-content {
+  width: min(100%, 76rem);
+  margin-inline: auto;
+}
+.ops-root .ops-identity {
+  padding: 1rem 0;
+}
+.ops-root .ops-content {
+  margin-top: 0;
+}
+.ops-root .glass-card {
+  min-width: 0;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  color: var(--text-main);
+  box-shadow: var(--surface-shadow);
+  backdrop-filter: none;
+  max-width: none;
+}
+.ops-root .lift-tilt:hover {
+  transform: none;
+}
+.ops-root h1,
+.ops-root h2,
+.ops-root h3 {
+  font-family: var(--font-display);
+  margin-top: 0;
+  overflow-wrap: anywhere;
+}
+.ops-root p,
+.ops-root dd,
+.ops-root small {
+  overflow-wrap: anywhere;
+}
+.ops-root p {
+  line-height: 1.6;
+}
+.ops-root .ops-stack,
+.ops-root .ops-detail {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+.ops-root label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--text-main);
+  font-weight: 650;
+  min-width: 0;
+  margin-block: 0.6rem;
+}
+.ops-root input,
+.ops-root select,
+.ops-root textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text-main);
+  background: var(--surface-solid);
+  border: 1px solid var(--surface-border);
+  border-radius: 0.65rem;
+  box-shadow: none;
+}
+.ops-root input::placeholder {
+  color: var(--text-muted);
+}
+.ops-root input:focus-visible,
+.ops-root button:focus-visible,
+.ops-root a:focus-visible,
+.ops-root select:focus-visible {
+  outline: 3px solid var(--ring-focus);
+  outline-offset: 3px;
+}
+.ops-root button,
+.ops-root .nav-chip,
+.ops-root .ops-result {
+  min-height: 44px;
+}
+.ops-root button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ops-root button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.ops-root .jewel-button {
+  background: var(--accent-cyan);
+  color: var(--nav-bg);
+  box-shadow: none;
+}
+.ops-root .nav-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-solid);
+  color: var(--text-main);
+  padding: 0.65rem 0.9rem;
+  box-shadow: none;
+}
+.ops-root .nav-chip.active {
+  background: var(--accent-cyan);
+  color: var(--nav-bg);
+}
+.ops-root .ops-search {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+.ops-root .ops-search label {
+  margin: 0;
+}
+.ops-root .ops-result {
+  border-color: var(--surface-border);
+  align-items: center;
+  background: var(--surface-soft);
+}
+.ops-root small {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+.ops-root .ops-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+.ops-root .ops-metrics a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.ops-root .ops-metrics dt {
+  color: var(--text-muted);
+}
+.ops-root .ops-metrics dd {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 750;
+  margin: 0.75rem 0;
+}
+.ops-root .ops-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.ops-root .ops-pagination span {
+  margin-right: auto;
+}
+.ops-root .ops-module-list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.ops-root .ops-module {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1.25rem;
+  padding: 1.2rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 0.8rem;
+  background: var(--surface-soft);
+}
+.ops-root .ops-module h3 {
+  margin-bottom: 0.4rem;
+}
+.ops-root .ops-module p {
+  margin-block: 0.5rem;
+}
+.ops-root .ops-restriction {
+  font-weight: 650;
+}
+.ops-root .ops-module-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 0;
+}
+.ops-root .ops-module-states dt {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.ops-root .ops-module-states dd {
+  margin: 0.3rem 0;
+  font-weight: 650;
+}
+.ops-root .ops-table-scroll {
+  overflow-x: auto;
+}
+.ops-root table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.95rem;
+}
+.ops-root th,
+.ops-root td {
+  padding: 0.85rem;
+  border-bottom: 1px solid var(--surface-border);
+  overflow-wrap: anywhere;
+}
+.ops-root caption {
+  text-align: left;
+  margin-bottom: 0.7rem;
+  color: var(--text-muted);
+}
+.ops-root .ops-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 1rem;
+  background: #0009;
+  overflow-y: auto;
+}
+.ops-root .ops-dialog {
+  width: min(100%, 36rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  background: var(--surface-solid);
+  box-shadow: var(--surface-shadow-strong);
+}
+.ops-root fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ops-root .ops-login {
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+}
+.ops-root .ops-login > .glass-card {
+  width: min(100%, 32rem);
+}
+@media (max-width: 700px) {
+  .ops-root .ops-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ops-root .ops-header nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ops-root .ops-metrics,
+  .ops-root .ops-search,
+  .ops-root .ops-result,
+  .ops-root .ops-module {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ops-root .ops-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ops-root .ops-dialog {
+    padding: 1rem;
+  }
+}
