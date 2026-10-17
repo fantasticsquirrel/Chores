@@ -13,7 +13,7 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 
 ## Planned Modules
 
-- [Family Tree — full product and technical specification](docs/specifications/family-tree-module.md): a proposed household-native family-history module with adult permissions, web/mobile integration, durable genealogy data, safe media/import/export, and a dependency-ordered delivery checklist. Specification only; not implemented, enabled, or deployed.
+- [Family Tree — product and technical specification](docs/specifications/family-tree-module.md): the household family-history implementation is included in source, with adult permissions, web/mobile integration, genealogy data, private media/import/export, and disabled-by-default rollout. Inclusion in an APK does not activate the module or complete its operator/device admission gates; see the [operator runbook](docs/operations/family-tree.md).
 
 ## Prerequisites
 
