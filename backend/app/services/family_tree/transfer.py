@@ -50,6 +50,8 @@ def export(session,actor,body):
         if len(encoded)>storage.manifest_limit(): error('resource_limit','Logical manifest exceeds the permitted size.',413)
         total=sum(a.byte_size for a in assets)+len(encoded)
         if total>storage.limit('IMPORT_MAX_EXPANDED_BYTES',storage.MAX_EXPANDED): error('resource_limit','Snapshot exceeds the expanded archive limit.',413)
+        if body.format=='zip' and any(a.byte_size>storage.limit('IMAGE_MAX_BYTES',storage.MAX_IMAGE) for a in assets):
+            error('resource_limit','Stored image exceeds the current portable input policy. Use an operator recovery backup.',413)
         job=jobs.create(session,actor,'export',manifest.snapshot_revision,{'format':body.format},
             {'format':body.format,'people':len(manifest.people),'media':len(assets),'media_omitted':manifest.media_omitted})
         for a in assets:

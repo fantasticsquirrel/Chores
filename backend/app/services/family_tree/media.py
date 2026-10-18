@@ -38,7 +38,8 @@ def sanitize(data, declared_mime=None):
                 output = io.BytesIO()
                 clean.save(output, format=magic)
                 result = output.getvalue()
-                if len(result) > storage.MAX_IMAGE: error('resource_limit', 'Sanitized image exceeds the limit.', 413)
+                if len(result) > storage.limit('IMAGE_MAX_BYTES', storage.MAX_IMAGE):
+                    error('resource_limit', 'Sanitized image exceeds the permitted size.', 413)
                 return result, FORMATS[magic], clean.width, clean.height
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning):
         error('validation_error', 'The image cannot be safely decoded.', 422)
