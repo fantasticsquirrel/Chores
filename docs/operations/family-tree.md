@@ -146,6 +146,107 @@ and alert thresholds together. If a maximum case cannot be safely exercised,
 reduce source/deployment limits through review or retain the hold. Nothing here
 sets production memory, schedules jobs, installs monitoring or approves release.
 
+## Reduced production-policy candidate and executed ASGI evidence
+
+This section supersedes the earlier **capacity measurement gap** for the exact
+reduced synthetic case below; it does **not** approve deployment, full source
+ceilings, production data distribution, or arbitrary concurrent application load.
+The existing defaults/hard ceilings above remain unchanged. Install the reviewed
+`ops/family-tree/app-capacity.env.example` values explicitly, rather than assuming
+that a memory cgroup silently reduces logical collection limits:
+
+| Setting suffix (`FAMILY_TREE_`) | Candidate value |
+|---|---:|
+| `MAX_PEOPLE` | 500 |
+| `MAX_FACTS` (combined parent/care/partner) | 2,000 |
+| `MAX_RECORDS` (combined story/residence) | 4,000 |
+| `MAX_MEDIA` (distinct referenced portable assets) | 100 |
+| `MAX_REFERENCES` | 4,000 |
+| `MANIFEST_MAX_BYTES` | 2,097,152 (2 MiB) |
+| `IMAGE_MAX_BYTES` | 8,388,608 (8 MiB) |
+| `IMAGE_MAX_PIXELS` | 16,000,000 (allows ordinary 12 MP photos) |
+| `IMPORT_MAX_BYTES` | 16,777,216 (16 MiB) |
+| `IMPORT_MAX_EXPANDED_BYTES` | 33,554,432 (32 MiB) |
+| `HOUSEHOLD_MEDIA_MAX_BYTES` | 268,435,456 (256 MiB) |
+| `TRANSFER_WORKERS` | 1 per ASGI process |
+
+All settings reject zero, negative, malformed or above-source-ceiling values.
+The new count/manifest overrides default to the original 5,000 / 20,000 /
+40,000 / 1,000 / 40,000 / 16 MiB ceilings; transfer admission defaults to two
+and cannot be increased. Configure before starting the application. Ordinary
+person/relative, combined relationship and combined record insertions share
+these count caps with append import and snapshot export, inside the existing
+serialized graph transaction. Attachment additions also enforce reference and
+distinct referenced-asset caps; unattached uploads remain retained-byte-quota
+bounded. Existing over-cap data is not deleted; lower policy can reject new
+appends or logical export. Inventory before lowering a live household's policy.
+Count bounds do not promise that arbitrary maximum-length text fits the manifest
+byte bound: a large logical snapshot can still require operator recovery backup.
+
+Reproduce serially, with no other heavy probes/suites on the shared host:
+
+```bash
+PYTHONPATH=backend "$PYTHON_BIN" backend/scripts/family_tree_rollout_probe.py --profile asgi
+```
+
+The default ASGI mode starts one guarded child and creates only a marked,
+private disposable SQLite DB/object store under the Hermes scratch root. It
+imports the **real application**, logs into a synthetic household with CSRF,
+stages ZIP multipart bytes, commits the import through ASGI, reads the actual
+SQL counts and every stored object's checksum, exports/downloads a ZIP and
+verifies every exported byte inventory/checksum. No production configuration or
+provider secrets are inherited. The fixture store is removed on normal exit.
+Guard-killed fixtures may remain under the marked scratch directory for owned
+cleanup; never sweep production roots.
+
+Final executed candidate case on October 19, 2026:
+
+- 500 people, **2,000 care facts**, 4,000 stories, 100 real media files and 4,000
+  references; 2,014,595 normalized manifest bytes; 14,752,639 ZIP input bytes;
+  33,471,795 actual expanded bytes (near the 32 MiB configured bound).
+- **Each of the 100 PNGs decoded 4,000 × 4,000 RGBA pixels (16 MP)** during real
+  import staging, sequentially with the parsed graph retained. Each input has a
+  valid solid-color PNG plus random/zero trailing padding, exercising actual
+  compressed/expanded archive accounting, not only declared lengths. Additional
+  JPEG/RGB and WebP/RGBA 16 MP uploads went through the real media API and
+  authorized content/checksum readback. This is synthetic compressible pixel
+  content, **not worst-entropy codec or actual production workload distribution**.
+- Actual initialized application baseline RSS **133,750,784 bytes**; child peak
+  RSS **599,212,032 bytes**; sampled parent+child peak **613,556,224 bytes**;
+  complete workload **159.470 seconds**, including DB/app/fixture initialization,
+  archive staging, commit, export/readbacks and extra codec uploads. The reported
+  `staging_seconds=119.957` includes setup/generation before staging, not only
+  the import request. The application kept its existing cooperative 120-second
+  import processing budget; the probe guard is not a request latency promise.
+- Child RLIMIT_AS **1,536 MiB**, parent+child sampled RSS guard **1,280 MiB**, CPU
+  guard 170 seconds, parent wall guard **180 seconds**, host available-memory
+  preflight at least **2 GiB**. Child exit zero. Raw evidence is
+  `asgi-capacity-final.json` in the rollout artifact directory, not a deployment
+  approval. A previous source-ceiling 25 MP MemoryError under a 1 GiB guard was
+  controlled failure; it is neither production OOM proof nor full-source approval.
+
+Candidate application budget: **MemoryHigh=1280M, MemoryMax=1536M,
+MemorySwapMax=0**, one uvicorn worker, one replica and admission one. Example
+`app-memory.conf.example` is not installed. The measured case has headroom below
+these budgets but does not prove total live service baseline/unrelated request
+load or backup overlap fits. Parent must review final source, verify production
+baseline and fresh production-clone schema/data preservation, install reviewed
+private roots/config, run manual backup/restore and sandbox units, then decide
+activation. Keep full-default-maximum capacity HOLD; do not rerun the prior
+unbounded full-source workload on this shared host.
+
+Maintenance candidates now require **both backup and cleanup success within
+36 hours**, reject future timestamps/failure markers, and check the actual DB
+parent, configured private storage, backup root and state filesystems. Health
+returns nonzero below **256 MiB free or 10% free**, whichever reserve is larger,
+or when a configured path cannot be checked. `FAMILY_TREE_OPS_BACKUP_ROOT` may
+select an explicitly provisioned private backup root; default is
+`/var/backups/chore-tracker/family-tree`. The unit sandbox's writable DB directory
+is the discovered `/var/ralph-projects/chore_tracking/data`, not `backend`.
+Health remains local journald/exit status only: no external alert transport is
+configured, and timers must not be called monitored until the operator observes
+failure and missing-heartbeat signals through an approved monitoring path.
+
 ## Two different backup products
 
 **Household logical export** is a versioned Family Tree JSON or ZIP. It excludes

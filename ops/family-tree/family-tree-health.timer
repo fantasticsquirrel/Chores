@@ -1,0 +1,9 @@
+[Unit]
+Description=Family Tree health schedule (candidate)
+[Timer]
+OnCalendar=*-*-* *:00/15:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=family-tree-health.service
+[Install]
+WantedBy=timers.target

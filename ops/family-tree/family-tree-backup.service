@@ -1,0 +1,31 @@
+# Candidate only. Review paths and budgets before installation.
+[Unit]
+Description=Family Tree backup (private local journal)
+After=local-fs.target
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/ralph-projects/chore_tracking
+EnvironmentFile=/etc/chore-tracker/chore-tracker.env
+EnvironmentFile=/etc/chore-tracker/family-tree-ops.env
+Environment=PYTHONPATH=/var/ralph-projects/chore_tracking/backend
+UMask=0077
+ExecStart=/var/ralph-projects/chore_tracking/.venv/bin/python /var/ralph-projects/chore_tracking/ops/family-tree/maintenance.py backup
+TimeoutStartSec=180
+TimeoutStopSec=10
+KillMode=control-group
+MemoryHigh=512M
+MemoryMax=512M
+MemorySwapMax=0
+CPUQuota=50%
+TasksMax=8
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/chore-tracker /var/backups/chore-tracker/family-tree /var/ralph-projects/chore_tracking/data
+RestrictAddressFamilies=AF_UNIX
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=family-tree-backup

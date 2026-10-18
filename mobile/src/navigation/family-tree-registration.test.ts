@@ -1,32 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-vi.mock("@family-manager/family-api/modules", async (importOriginal) => {
-  const real =
-    await importOriginal<typeof import("@family-manager/family-api/modules")>();
-  const tree = real.FAMILY_MODULE_DEFINITIONS.find(
-    (m) => m.key === "family-tree",
-  )!;
-  return {
-    ...real,
-    getFamilyModulesForPlatform: (platform: "mobile" | "web") => [
-      ...real
-        .getFamilyModulesForPlatform(platform)
-        .filter((m) => m.key !== "family-tree"),
-      {
-        ...tree,
-        platformDefinitions: {
-          ...tree.platformDefinitions,
-          mobile: {
-            supported: true,
-            destination: "family-tree",
-            roles: ["PARENT", "PARENT_ADMIN"],
-            navigation: true,
-            dashboard: true,
-          },
-        },
-      },
-    ],
-  };
-});
+import { describe, it, expect } from "vitest";
 import {
   MOBILE_MODULE_REGISTRATION,
   canAccessMobileModule,

@@ -1,13 +1,17 @@
 """Family Tree-only ASGI byte caps before multipart disk spooling/JSON parse."""
 import json
 from threading import BoundedSemaphore
+from app.services.family_tree import storage
 _TRANSFER_WORKERS=BoundedSemaphore(2)
 from starlette.formparsers import MultiPartException
 from app.services.family_tree.observability import correlation, emit, operation_context, classify
 
 
 class FamilyTreeBodyLimitMiddleware:
-    def __init__(self,app): self.app=app
+    def __init__(self,app):
+        self.app=app
+        self.worker_limit=storage.limit('TRANSFER_WORKERS',2)
+        self.workers=_TRANSFER_WORKERS if self.worker_limit==2 else BoundedSemaphore(1)
 
     async def __call__(self,scope,receive,send):
         path=scope.get('path','')
@@ -33,7 +37,7 @@ class FamilyTreeBodyLimitMiddleware:
                 raise
 
     async def _bounded(self,scope,receive,send,path):
-        limit=100*1024*1024+64*1024 if path=='/chore-api/family-tree/imports' else 10*1024*1024+64*1024 if path=='/chore-api/family-tree/media' else 16*1024*1024
+        limit=storage.limit('IMPORT_MAX_BYTES',storage.MAX_INPUT)+64*1024 if path=='/chore-api/family-tree/imports' else storage.limit('IMAGE_MAX_BYTES',storage.MAX_IMAGE)+64*1024 if path=='/chore-api/family-tree/media' else storage.manifest_limit()
         payload=json.dumps({'detail':{'code':'resource_limit','message':'Request exceeds the permitted size.'}}).encode()
         async def reject():
             emit('quota_rejected', operation='request', code='resource_limit', limit=limit, status=413)
@@ -69,9 +73,9 @@ class FamilyTreeBodyLimitMiddleware:
         heavy=path in {'/chore-api/family-tree/media','/chore-api/family-tree/imports'} or path.startswith('/chore-api/family-tree/exports') or (path.startswith('/chore-api/family-tree/imports/') and path.endswith('/commit'))
         acquired=False
         if heavy:
-            acquired=_TRANSFER_WORKERS.acquire(blocking=False)
+            acquired=self.workers.acquire(blocking=False)
             if not acquired:
-                emit('admission_rejected', operation='request', code='server_busy', limit=2, status=503)
+                emit('admission_rejected', operation='request', code='server_busy', limit=self.worker_limit, status=503)
                 busy=json.dumps({'detail':{'code':'server_busy','message':'Transfer workers are busy. Retry later.'}}).encode()
                 await send({'type':'http.response.start','status':503,'headers':[(b'content-type',b'application/json'),(b'cache-control',b'private, no-store')]})
                 return await send({'type':'http.response.body','body':busy})
@@ -80,4 +84,4 @@ class FamilyTreeBodyLimitMiddleware:
         except MultiPartException:
             if not sent_rejection: await reject()
         finally:
-            if acquired: _TRANSFER_WORKERS.release()
+            if acquired: self.workers.release()

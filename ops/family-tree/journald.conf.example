@@ -1,0 +1,6 @@
+# Candidate /etc/systemd/journald.conf.d/family-tree.conf (global impact: REVIEW)
+[Journal]
+Storage=persistent
+SystemMaxUse=256M
+MaxRetentionSec=14day
+ForwardToSyslog=no

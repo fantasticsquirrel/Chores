@@ -102,6 +102,12 @@ def attach(session, actor, c, asset_id, command):
         if story.person_id != p.id: error('validation_error', 'Story and person must match.', 422)
     existing = session.scalar(select(Reference).where(Reference.asset_id==asset.id, Reference.person_id==p.id, Reference.role==command.role, Reference.story_id==command.story_id))
     if existing: error('validation_error', 'This attachment already exists.', 422)
+    bounds=storage.collection_limits()
+    retained=select(Reference).where(Reference.household_id==actor.household_id)
+    if command.role=='primary': retained=retained.where(~((Reference.person_id==p.id)&(Reference.role=='primary')))
+    current=list(session.scalars(retained.limit(bounds['references']+1)))
+    if len(current)>=bounds['references'] or len({r.asset_id for r in current}|{asset_id})>bounds['media']:
+        error('resource_limit','Collection attachment limit exceeded.',413)
     if command.role == 'primary':
         session.execute(delete(Reference).where(Reference.household_id==actor.household_id, Reference.person_id==p.id, Reference.role=='primary'))
     row = Reference(household_id=actor.household_id, collection_id=c.id, created_by_user_id=actor.id,

@@ -3,6 +3,7 @@ from app.models.family_tree import FamilyTreeStory,FamilyTreeResidence
 from app.schemas.family_tree import StoryData,ResidenceData,chronology
 from .access import authorize,collection,person,scoped,error
 from .serialization import record_dto
+from . import storage
 
 RECORDS={'stories':(FamilyTreeStory,StoryData,'story_ids'),'residences':(FamilyTreeResidence,ResidenceData,'residence_ids')}
 
@@ -27,7 +28,7 @@ def change(session,actor,c,kind,pid=None,data=None,rid=None,changes=None,remove=
     old=scoped(session,model,actor.household_id,rid) if rid else None
     if old is None:
         count=sum(session.scalar(select(func.count()).select_from(m).where(m.household_id==actor.household_id)) or 0 for m in [FamilyTreeStory,FamilyTreeResidence])
-        if count>=40000:error('resource_limit','Collection record limit exceeded.',413)
+        if count>=storage.collection_limits()['records']:error('resource_limit','Collection record limit exceeded.',413)
     pid=old.person_id if old else pid
     person(session,actor.household_id,pid,editable=True)
     if remove:

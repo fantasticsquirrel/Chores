@@ -54,8 +54,8 @@ def test_owner_reads_are_private_read_only_and_authoritative(owner_env):
         "timezone": "Europe/Berlin", "account_count": 4, "active_account_count": 3,
     }
     global_tree = module_by_key(results["/modules"], "family-tree")
-    assert global_tree["platforms"] == {"web": False, "mobile": False}
-    assert not global_tree["enabled"] and not global_tree["can_enable"] and global_tree["restriction"]
+    assert global_tree["platforms"] == {"web": True, "mobile": True}
+    assert not global_tree["enabled"] and global_tree["can_enable"] and global_tree["restriction"] is None
     tree = module_by_key(results["/households/101/modules"], "family-tree")
     assert not tree["enabled"] and not tree["effective_enabled"] and not tree["can_enable"]
     admin = module_by_key(results["/modules"], "admin")
@@ -137,10 +137,25 @@ def test_csrf_reauth_validation_and_unknown_reject_without_writes(owner_env, tar
 
 
 @pytest.mark.parametrize("target", ["/modules/admin", "/households/101/modules/admin", "/modules/family-tree", "/households/101/modules/family-tree"])
-def test_protected_admin_and_unreleased_cannot_be_bypassed(owner_env, target):
+def test_protected_admin_and_unreleased_cannot_be_bypassed(owner_env, target, monkeypatch):
     env = owner_env
     headers = login(env)
     tree = target.endswith("family-tree")
+    if tree:
+        # Exercise the unchanged release safeguard with an unreleased fixture,
+        # not a stale assertion that the now-released Family Tree is unavailable.
+        from dataclasses import replace
+        from app.services.ops import owner_management
+
+        modules = tuple(
+            replace(module, platforms={
+                key: replace(platform, supported=False, destination=None,
+                             roles=(), navigation=False, dashboard=False)
+                for key, platform in module.platforms.items()
+            }) if module.key == "family-tree" else module
+            for module in AVAILABLE_MODULES
+        )
+        monkeypatch.setattr(owner_management, "AVAILABLE_MODULES", modules)
     before = snapshot(env)
     assert env["client"].post(BASE + target, headers=headers, json=payload(tree, not tree)).status_code == 400
     assert snapshot(env) == before
@@ -249,3 +264,32 @@ def test_effective_household_api_follows_owner_controls(owner_env):
         assert env["client"].get("/chore-api/children?household_id=101").status_code == 401
         assert env["client"].post(BASE + "/modules/recipes", headers=headers, json=payload(True, False)).status_code == 200
         assert "recipes" in {item["key"] for item in household_client.get("/chore-api/modules/me").json()["modules"]}
+
+
+def test_released_family_tree_keeps_explicit_household_opt_in_and_adult_boundary(owner_env):
+    env = owner_env
+    headers = login(env)
+    before = snapshot(env)
+    tree = module_by_key(env["client"].get(BASE + "/modules"), "family-tree")
+    assert tree["can_enable"] and not tree["enabled"]
+    response = env["client"].post(BASE + "/modules/family-tree", headers=headers,
+                                  json=payload(True, False))
+    assert response.status_code == 200, response.text
+    assert response.json()["enabled"] and response.json()["restriction"] is None
+    state = module_by_key(env["client"].get(BASE + "/households/101/modules"), "family-tree")
+    assert state["can_enable"] and state["globally_enabled"]
+    assert not state["enabled"] and not state["effective_enabled"]
+    with env["sf"]() as db:
+        assert not ModuleService().can_access_module(db, db.get(User, 201), "family-tree")
+    response = env["client"].post(BASE + "/households/101/modules/family-tree",
+                                  headers=headers, json=payload(True, False))
+    assert response.status_code == 200 and response.json()["effective_enabled"]
+    with env["sf"]() as db:
+        service = ModuleService()
+        assert service.can_access_module(db, db.get(User, 201), "family-tree")
+        assert not service.can_access_module(db, db.get(User, 205), "family-tree")
+        other = db.get(HouseholdModuleAccess, (102, "family-tree"))
+        assert other is None or not other.enabled
+    after = snapshot(env)
+    for table in ("users", "households", "user_module_access"):
+        assert after[table] == before[table]

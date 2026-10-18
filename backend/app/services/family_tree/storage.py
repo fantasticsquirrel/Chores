@@ -32,6 +32,15 @@ def limit(name, default):
         error('storage_unavailable', 'Invalid private storage configuration.', 503)
 
 
+def collection_limits():
+    return {key: limit('MAX_' + key.upper(), ceiling) for key, ceiling in
+            [('people',5000),('facts',20000),('records',40000),('media',1000),('references',40000)]}
+
+
+def manifest_limit():
+    return limit('MANIFEST_MAX_BYTES', MAX_MANIFEST)
+
+
 def root():
     value = os.getenv('FAMILY_TREE_STORAGE_ROOT')
     if not value or not Path(value).is_absolute():
