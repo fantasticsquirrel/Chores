@@ -1,0 +1,9 @@
+[Unit]
+Description=Family Tree backup schedule (candidate)
+[Timer]
+OnCalendar=*-*-* 03:10:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=family-tree-backup.service
+[Install]
+WantedBy=timers.target

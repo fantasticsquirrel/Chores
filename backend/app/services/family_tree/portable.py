@@ -8,11 +8,25 @@ from app.schemas.family_tree_transfer import Manifest
 from app.schemas.family_tree import chronology, PersonCreate
 from .access import error, collection
 from .serialization import person_dto
-from . import alias_provenance
+from . import alias_provenance, storage
 from .merge import acyclic
 
 
+def check_counts(value):
+    if not isinstance(value,(dict,Manifest)): return
+    limits = storage.collection_limits()
+    def count(key):
+        rows = value.get(key, []) if isinstance(value, dict) else getattr(value, key)
+        return len(rows) if isinstance(rows, list) else 0
+    sizes = {'people':count('people'), 'facts':sum(count(k) for k in ('parent_links','care_links','partner_episodes')),
+             'records':count('stories')+count('residences'), 'media':count('media'), 'references':count('media_references')}
+    if any(sizes[k] > limits[k] for k in limits):
+        error('resource_limit','Logical package exceeds collection limits.',413)
+
+
 def decode(data):
+    if len(data) > storage.manifest_limit():
+        error('resource_limit','Manifest exceeds the permitted size.',413)
     def unique(pairs):
         result={}
         for k,v in pairs:
@@ -21,10 +35,7 @@ def decode(data):
         return result
     try:
         value=json.loads(data,object_pairs_hook=unique,parse_constant=lambda _: (_ for _ in ()).throw(ValueError('Non-finite JSON')))
-        if isinstance(value,dict):
-            counts={key:len(value[key]) if isinstance(value.get(key),list) else 0 for key in ['people','parent_links','care_links','partner_episodes','stories','residences','media','media_references']}
-            if counts['people']>5000 or sum(counts[k] for k in ['parent_links','care_links','partner_episodes'])>20000 or counts['stories']+counts['residences']>40000 or counts['media']>1000 or counts['media_references']>40000:
-                error('resource_limit','Logical package exceeds collection limits.',413)
+        check_counts(value)
         return Manifest.model_validate(value,strict=True)
     except (ValidationError, ValueError, UnicodeError, RecursionError):
         error('validation_error','Invalid or unsupported logical Family Tree manifest.',422)
@@ -35,6 +46,7 @@ def encode(manifest):
 
 
 def validate(manifest):
+    check_counts(manifest)
     groups=['people','parent_links','care_links','partner_episodes','stories','residences','media','media_references']
     keys=set()
     for group in groups:
@@ -95,6 +107,11 @@ def validate(manifest):
 
 def snapshot(session,actor,metadata_only=False):
     c=collection(session,actor.household_id)
+    bounds=storage.collection_limits()
+    from sqlalchemy import func
+    for models, key in [([Person],'people'),([Parent,Care,Partner],'facts'),([Story,Residence],'records'),([Reference],'references')]:
+        total=sum(session.scalar(select(func.count()).select_from(model).where(model.household_id==actor.household_id)) or 0 for model in models)
+        if total>bounds[key]: error('resource_limit','Snapshot exceeds its logical bound.',413)
     def rows(model, ceiling):
         values=list(session.scalars(select(model).where(model.household_id==actor.household_id).order_by(model.id).limit(ceiling+1)))
         if len(values)>ceiling: error('resource_limit','Snapshot exceeds its logical bound.',413)
@@ -123,12 +140,13 @@ def snapshot(session,actor,metadata_only=False):
     result['residences']=[{'key':f'r:{r.id}','person_key':f'p:{r.person_id}','residence':{**r.facts,'is_primary':r.is_primary},'provenance':prov('residences',r)} for r in rows(Residence,40000)]
     references=rows(Reference,40000)
     asset_ids=sorted({r.asset_id for r in references})
-    if len(asset_ids)>1000: error('resource_limit','Snapshot media limit exceeded.',413)
+    if len(asset_ids)>bounds['media']: error('resource_limit','Snapshot media limit exceeded.',413)
     assets=list(session.scalars(select(Asset).where(Asset.household_id==actor.household_id,Asset.id.in_(asset_ids)).order_by(Asset.id))) if asset_ids else []
     if any(a.state!='ready' for a in assets): error('media_unavailable','Snapshot includes unavailable media.')
     extensions={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}
     result['media']=[{'key':f'm:{a.id}','path':f'media/{a.object_key}.{extensions[a.mime_type]}','mime_type':a.mime_type,'checksum':a.checksum,'byte_size':a.byte_size,'caption':a.caption} for a in assets]
     result['media_references']=[{'key':f'mr:{r.id}','asset_key':f'm:{r.asset_id}','person_key':f'p:{r.person_id}','story_key':f's:{r.story_id}' if r.story_id else None,'role':r.role} for r in references]
+    check_counts(result)
     manifest=Manifest.model_validate(result)
     validate(manifest)
     return manifest, assets

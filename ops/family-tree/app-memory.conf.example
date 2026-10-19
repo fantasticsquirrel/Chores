@@ -1,0 +1,6 @@
+# Candidate drop-in for the existing application service, NOT maintenance units.
+# Install only after independent review, production baseline and clone checks.
+[Service]
+MemoryHigh=1280M
+MemoryMax=1536M
+MemorySwapMax=0

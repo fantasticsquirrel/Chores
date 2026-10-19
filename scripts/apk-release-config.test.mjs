@@ -5,9 +5,9 @@ const root = new URL('../', import.meta.url);
 const json = p => JSON.parse(readFileSync(new URL(p, root), 'utf8'));
 test('APK release has coherent version and immutable upgrade code', () => {
  const app=json('mobile/app.json').expo, pkg=json('mobile/package.json'), lock=json('package-lock.json');
- assert.equal(app.version,'1.0.12'); assert.equal(pkg.version,app.version);
+ assert.equal(app.version,'1.0.13'); assert.equal(pkg.version,app.version);
  assert.equal(lock.packages.mobile.version,app.version);
- assert.equal(app.android.versionCode,13);
+ assert.equal(app.android.versionCode,14);
  assert.equal(app.android.package,'com.fantasticsquirrel.familymanager');
 });
 test('APK profile explicitly embeds production API and pins CI-compatible Node', () => {

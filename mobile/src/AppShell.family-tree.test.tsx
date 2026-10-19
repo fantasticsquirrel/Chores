@@ -25,35 +25,6 @@ jest.mock("./hooks/useSessionBootstrap");
 jest.mock("./features/notifications/lib/useNativePush", () => ({
   useNativePush: () => null,
 }));
-jest.mock("@family-manager/family-api/modules", () => {
-  const real = jest.requireActual<
-    typeof import("@family-manager/family-api/modules")
-  >("@family-manager/family-api/modules");
-  const tree = real.FAMILY_MODULE_DEFINITIONS.find(
-    (m) => m.key === "family-tree",
-  )!;
-  return {
-    ...real,
-    getFamilyModulesForPlatform: (platform: "mobile" | "web") => [
-      ...real
-        .getFamilyModulesForPlatform(platform)
-        .filter((m) => m.key !== "family-tree"),
-      {
-        ...tree,
-        platformDefinitions: {
-          ...tree.platformDefinitions,
-          mobile: {
-            supported: true,
-            destination: "family-tree",
-            roles: ["PARENT", "PARENT_ADMIN"],
-            navigation: true,
-            dashboard: true,
-          },
-        },
-      },
-    ],
-  };
-});
 const grant = {
   key: "family-tree" as const,
   name: "Family Tree",

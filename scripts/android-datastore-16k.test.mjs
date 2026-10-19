@@ -60,6 +60,6 @@ test('CRLF generation remains idempotent and preserves line endings', async () =
 test('managed config registers the correction exactly once and keeps upgrade metadata coherent', () => {
   const app = JSON.parse(readFileSync(new URL('mobile/app.json', root))).expo;
   assert.equal(app.plugins.filter(p => p === './plugins/with-datastore-16k').length, 1);
-  assert.equal(app.version, '1.0.12');
-  assert.equal(app.android.versionCode, 13);
+  assert.equal(app.version, '1.0.13');
+  assert.equal(app.android.versionCode, 14);
 });

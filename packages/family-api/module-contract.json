@@ -158,18 +158,18 @@
       },
       "platforms": {
         "web": {
-          "supported": false,
-          "destination": null,
-          "roles": [],
-          "navigation": false,
-          "dashboard": false
+          "supported": true,
+          "destination": "/family-tree",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
         },
         "mobile": {
-          "supported": false,
-          "destination": null,
-          "roles": [],
-          "navigation": false,
-          "dashboard": false
+          "supported": true,
+          "destination": "family-tree",
+          "roles": ["PARENT_ADMIN", "PARENT"],
+          "navigation": true,
+          "dashboard": true
         }
       }
     }

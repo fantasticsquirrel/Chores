@@ -7,6 +7,7 @@ from app.services.modules import ModuleService
 from .access import authorize,collection,person,error
 from .serialization import person_dto,record_dto,identity_dto
 from .alias_provenance import local_marker
+from . import storage
 
 
 def state(session,actor):
@@ -45,7 +46,7 @@ def save_facts(p,data):
 
 
 def add(session,actor,c,data):
-    if (session.scalar(select(func.count()).select_from(FamilyTreePerson).where(FamilyTreePerson.household_id==actor.household_id)) or 0)>=5000:
+    if (session.scalar(select(func.count()).select_from(FamilyTreePerson).where(FamilyTreePerson.household_id==actor.household_id)) or 0)>=storage.collection_limits()['people']:
         error('resource_limit','Collection person limit exceeded.',413)
     data=PersonCreate.model_validate(data.model_dump(mode='json'))
     p=FamilyTreePerson(household_id=actor.household_id,collection_id=c.id,created_by_user_id=actor.id)

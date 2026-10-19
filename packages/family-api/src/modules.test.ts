@@ -7,7 +7,7 @@ import {
 } from "./modules";
 
 describe("shared family module metadata", () => {
-  it("defines every backend module once with explicit platform support", () => {
+  it("defines every backend module once with explicit released platform support", () => {
     expect(FAMILY_MODULE_DEFINITIONS.map((module) => module.key)).toEqual([
       "chores",
       "homeschool",
@@ -26,36 +26,33 @@ describe("shared family module metadata", () => {
     );
     expect(familyTree?.platformDefinitions).toEqual({
       web: {
-        supported: false,
-        destination: null,
-        roles: [],
-        navigation: false,
-        dashboard: false,
+        supported: true,
+        destination: "/family-tree",
+        roles: ["PARENT_ADMIN", "PARENT"],
+        navigation: true,
+        dashboard: true,
       },
       mobile: {
-        supported: false,
-        destination: null,
-        roles: [],
-        navigation: false,
-        dashboard: false,
+        supported: true,
+        destination: "family-tree",
+        roles: ["PARENT_ADMIN", "PARENT"],
+        navigation: true,
+        dashboard: true,
       },
     });
   });
 
-  it("supports the implemented cookbook on both web and mobile", () => {
-    expect(getFamilyModulesForPlatform("web").map((module) => module.key)).toEqual([
-      "chores",
-      "homeschool",
-      "recipes",
-      "admin",
-    ]);
-    expect(getFamilyModulesForPlatform("mobile").map((module) => module.key)).toEqual([
-      "chores",
-      "homeschool",
-      "recipes",
-      "admin",
-    ]);
-    expect(isFamilyModuleSupportedOnPlatform("recipes", "web")).toBe(true);
-    expect(isFamilyModuleSupportedOnPlatform("recipes", "mobile")).toBe(true);
+  it("supports the cookbook and adult-only Family Tree on both platforms", () => {
+    for (const platform of ["web", "mobile"] as const) {
+      expect(getFamilyModulesForPlatform(platform).map((module) => module.key)).toEqual([
+        "chores",
+        "homeschool",
+        "recipes",
+        "admin",
+        "family-tree",
+      ]);
+      expect(isFamilyModuleSupportedOnPlatform("recipes", platform)).toBe(true);
+      expect(isFamilyModuleSupportedOnPlatform("family-tree", platform)).toBe(true);
+    }
   });
 });

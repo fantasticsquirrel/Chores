@@ -3,7 +3,7 @@ from app.models.family_tree import FamilyTreeParentLink,FamilyTreeCareLink,Famil
 from app.schemas.family_tree import ParentData,CareData,PartnerData,chronology
 from .access import person,scoped,error
 from .serialization import record_dto
-from . import people
+from . import people, storage
 
 RELATIONS={'parent-links':(FamilyTreeParentLink,ParentData,['parent_person_id','child_person_id']),'care-links':(FamilyTreeCareLink,CareData,['caregiver_person_id','recipient_person_id']),'partner-episodes':(FamilyTreePartnerEpisode,PartnerData,['person_a_id','person_b_id'])}
 
@@ -26,7 +26,7 @@ def change(session,actor,c,kind,data=None,rid=None,changes=None,remove=False):
     old=scoped(session,model,actor.household_id,rid) if rid else None
     if old is None:
         count=sum(session.scalar(select(func.count()).select_from(m).where(m.household_id==actor.household_id)) or 0 for m in [FamilyTreeParentLink,FamilyTreeCareLink,FamilyTreePartnerEpisode])
-        if count>=20000:error('resource_limit','Collection relationship limit exceeded.',413)
+        if count>=storage.collection_limits()['facts']:error('resource_limit','Collection relationship limit exceeded.',413)
     old_ids=[getattr(old,f) for f in endpoints] if old else []
     for pid in old_ids: person(session,actor.household_id,pid,editable=True)
     if remove:

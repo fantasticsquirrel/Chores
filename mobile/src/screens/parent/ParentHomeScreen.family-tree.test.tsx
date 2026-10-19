@@ -9,35 +9,6 @@ import { apiClient } from "../../api/client";
 import type { AuthSessionResponse, FamilyModule } from "../../api/models";
 import { ParentHomeScreen } from "./ParentHomeScreen";
 import type { TreeRequestOptions } from "../../features/family-tree/lib/workflows/requests";
-jest.mock("@family-manager/family-api/modules", () => {
-  const real = jest.requireActual<
-    typeof import("@family-manager/family-api/modules")
-  >("@family-manager/family-api/modules");
-  const tree = real.FAMILY_MODULE_DEFINITIONS.find(
-    (m) => m.key === "family-tree",
-  )!;
-  return {
-    ...real,
-    getFamilyModulesForPlatform: (platform: "mobile" | "web") => [
-      ...real
-        .getFamilyModulesForPlatform(platform)
-        .filter((m) => m.key !== "family-tree"),
-      {
-        ...tree,
-        platformDefinitions: {
-          ...tree.platformDefinitions,
-          mobile: {
-            supported: true,
-            destination: "family-tree",
-            roles: ["PARENT", "PARENT_ADMIN"],
-            navigation: true,
-            dashboard: true,
-          },
-        },
-      },
-    ],
-  };
-});
 const session: AuthSessionResponse = {
   user: {
     id: 1,

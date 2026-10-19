@@ -47,9 +47,11 @@ def export(session,actor,body):
         try: manifest,assets=portable.snapshot(session,actor,metadata_only=body.format=='json')
         except (ValidationError,ValueError): error('validation_error','Stored facts cannot form a valid portable snapshot.',422)
         encoded=portable.encode(manifest)
-        if len(encoded)>storage.MAX_MANIFEST: error('resource_limit','Logical manifest exceeds the permitted size.',413)
+        if len(encoded)>storage.manifest_limit(): error('resource_limit','Logical manifest exceeds the permitted size.',413)
         total=sum(a.byte_size for a in assets)+len(encoded)
-        if total>storage.MAX_EXPANDED: error('resource_limit','Snapshot exceeds the expanded archive limit.',413)
+        if total>storage.limit('IMPORT_MAX_EXPANDED_BYTES',storage.MAX_EXPANDED): error('resource_limit','Snapshot exceeds the expanded archive limit.',413)
+        if body.format=='zip' and any(a.byte_size>storage.limit('IMAGE_MAX_BYTES',storage.MAX_IMAGE) for a in assets):
+            error('resource_limit','Stored image exceeds the current portable input policy. Use an operator recovery backup.',413)
         job=jobs.create(session,actor,'export',manifest.snapshot_revision,{'format':body.format},
             {'format':body.format,'people':len(manifest.people),'media':len(assets),'media_omitted':manifest.media_omitted})
         for a in assets:
@@ -71,7 +73,7 @@ def export(session,actor,body):
                                 error('media_unavailable','Snapshot media failed checksum verification.')
                             archive.writestr(descriptor.path,data)
                     output.flush(); os.fsync(output.fileno())
-            artifact_limit=storage.limit('IMPORT_MAX_BYTES',storage.MAX_INPUT) if body.format=='zip' else storage.MAX_MANIFEST
+            artifact_limit=storage.limit('IMPORT_MAX_BYTES',storage.MAX_INPUT) if body.format=='zip' else storage.manifest_limit()
             if storage.path(artifact_key,'artifacts').stat().st_size>artifact_limit:
                 error('resource_limit','Complete export exceeds the portable input bound. Use an operator recovery backup.',413)
             with storage.open_read(artifact_key,'artifacts') as artifact:
@@ -111,7 +113,7 @@ def _zip_manifest(path):
     archive=zipfile.ZipFile(path,'r')
     try:
         entries=archive.infolist()
-        if len(entries)>1001: error('resource_limit','Archive entry limit exceeded.',413)
+        if len(entries)>storage.collection_limits()['media']+1: error('resource_limit','Archive entry limit exceeded.',413)
         names=set(); expanded=0
         for entry in entries:
             name=entry.filename
@@ -125,8 +127,8 @@ def _zip_manifest(path):
             if expanded>storage.limit('IMPORT_MAX_EXPANDED_BYTES',storage.MAX_EXPANDED): error('resource_limit','Expanded archive size exceeded.',413)
         if 'manifest.json' not in names: error('validation_error','Archive manifest is missing.',422)
         info=archive.getinfo('manifest.json')
-        if info.file_size>storage.MAX_MANIFEST: error('resource_limit','Manifest exceeds the permitted size.',413)
-        with archive.open(info) as stream: data=stream.read(storage.MAX_MANIFEST+1)
+        if info.file_size>storage.manifest_limit(): error('resource_limit','Manifest exceeds the permitted size.',413)
+        with archive.open(info) as stream: data=stream.read(storage.manifest_limit()+1)
         manifest=portable.decode(data)
         expected={'manifest.json',*(m.path for m in manifest.media)}
         if names!=expected: error('validation_error','Archive inventory differs from the logical manifest.',422)
@@ -146,7 +148,7 @@ def stage_import(session,actor,stage_key,expected):
         if signature.startswith(b'PK'):
             archive,manifest=_zip_manifest(path)
         else:
-            manifest=portable.decode(storage.read(stage_key,'staging',storage.MAX_MANIFEST))
+            manifest=portable.decode(storage.read(stage_key,'staging',storage.manifest_limit()))
             if manifest.media and not manifest.media_omitted:
                 error('validation_error','Self-contained media requires a ZIP bundle.',422)
         warnings=portable.validate(manifest)
@@ -166,7 +168,7 @@ def stage_import(session,actor,stage_key,expected):
                 media_map[descriptor.key]={'key':key,'mime':mime,'width':width,'height':height,'checksum':storage.checksum(clean)}
         if time.monotonic()>deadline: error('resource_limit','Import validation exceeded its processing budget.',413)
         encoded=portable.encode(manifest)
-        if len(encoded)>storage.MAX_MANIFEST: error('resource_limit','Normalized logical manifest exceeds the permitted size.',413)
+        if len(encoded)>storage.manifest_limit(): error('resource_limit','Normalized logical manifest exceeds the permitted size.',413)
         digest=storage.checksum(encoded)
         duplicate=bool(session.scalar(select(Source.id).where(Source.household_id==actor.household_id,Source.package_digest==digest).limit(1)))
         local_names=list(session.execute(select(Person.id,Person.search_text).where(Person.household_id==actor.household_id).limit(5001)))
@@ -195,7 +197,10 @@ def stage_import(session,actor,stage_key,expected):
 
 
 def capacity(session,actor,manifest):
-    for models,incoming,ceiling in [([Person],len(manifest.people),5000),([Parent,Care,Partner],len(manifest.parent_links)+len(manifest.care_links)+len(manifest.partner_episodes),20000),([Story,Residence],len(manifest.stories)+len(manifest.residences),40000)]:
+    bounds=storage.collection_limits()
+    referenced=session.scalar(select(func.count(func.distinct(Reference.asset_id))).where(Reference.household_id==actor.household_id)) or 0
+    if referenced+len(manifest.media)>bounds['media']: error('resource_limit','Append would exceed media capacity.',413)
+    for models,incoming,ceiling in [([Person],len(manifest.people),bounds['people']),([Parent,Care,Partner],len(manifest.parent_links)+len(manifest.care_links)+len(manifest.partner_episodes),bounds['facts']),([Story,Residence],len(manifest.stories)+len(manifest.residences),bounds['records']),([Reference],len(manifest.media_references),bounds['references'])]:
         current=sum(session.scalar(select(func.count()).select_from(model).where(model.household_id==actor.household_id)) or 0 for model in models)
         if current+incoming>ceiling: error('resource_limit','Append would exceed collection capacity.',413)
 
@@ -216,6 +221,7 @@ def commit_import(session,actor,c,job_id,body,prepared):
     if row.expected_revision!=body.expected_graph_revision: error('revision_conflict','Preview revision does not match.')
     if row.summary['duplicate_provenance'] and not body.acknowledge_duplicate_provenance:
         error('merge_conflict','Explicitly acknowledge prior package provenance before appending again.')
+    portable.check_counts(row.payload['manifest'])
     manifest=Manifest.model_validate(row.payload['manifest'])
     warnings=portable.validate(manifest); capacity(session,actor,manifest)
     if 'chronology_review' in warnings and 'chronology_review' not in body.reviewed_warnings:

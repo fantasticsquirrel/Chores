@@ -1,0 +1,9 @@
+[Unit]
+Description=Family Tree cleanup schedule (candidate)
+[Timer]
+OnCalendar=*-*-* 04:10:00
+RandomizedDelaySec=120
+Persistent=true
+Unit=family-tree-cleanup.service
+[Install]
+WantedBy=timers.target
