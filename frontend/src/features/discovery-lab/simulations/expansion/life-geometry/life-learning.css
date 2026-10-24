@@ -1,0 +1,74 @@
+.life-investigation {
+  padding: 22px 26px;
+  background: #182c31;
+}
+.life-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.life-investigation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1.2fr;
+  gap: 24px;
+}
+.life-investigation small {
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #d7c399;
+  font-size: 11px;
+  font-weight: 700;
+}
+.life-investigation h3 {
+  margin: 10px 0 14px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+.life-investigation p {
+  line-height: 1.6;
+  font-size: 14px;
+  color: #cad5d2;
+}
+.life-investigation .life-hint {
+  font-size: 12px;
+}
+.life-snapshot {
+  padding: 11px;
+  background: #263f40;
+  border-left: 2px solid #b5c6a3;
+}
+.life-snapshot strong {
+  color: #ead7af;
+}
+.life-model-note {
+  padding: 18px 26px;
+  margin: 0;
+  border-top: 1px solid #42585d;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #b9c6c7;
+}
+
+/* Keep dark lesson panels readable inside the app's light content-grid theme. */
+.discovery-lab .life-lesson p {
+  color: #cad7d3;
+}
+.discovery-lab .life-lesson h2,
+.discovery-lab .life-lesson h3 {
+  color: #f0e8d8;
+}
+.discovery-lab .life-lesson .life-evidence p {
+  color: #e0ece6;
+}
+.discovery-lab .life-lesson .life-model-note,
+.discovery-lab .life-lesson .life-caption,
+.discovery-lab .life-lesson .life-hint,
+.discovery-lab .life-lesson .expansion-view-help {
+  color: #bdcfcb;
+}
+.discovery-lab .life-lesson .life-part-note h3 {
+  color: #eedcb4;
+}
+.discovery-lab .life-lesson .life-snapshot strong {
+  color: #ead7af;
+}

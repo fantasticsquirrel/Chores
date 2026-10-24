@@ -5,3 +5,4 @@ export * from "./family-tree-transfer";
 export * from "./notifications";
 export * from "./recipes";
 export * from "./support";
+export * from "./discovery-lab";

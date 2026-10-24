@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactElement } from "react";
 import {
   Navigate,
   NavLink,
@@ -42,6 +42,23 @@ import {
 import { Button, Card, InlineNotice } from "./ui";
 import { OpsApp } from "./ops/OpsApp";
 import { ThemePicker, ThemeProvider } from "./theme";
+
+// Learning graphics are loaded only after entering the module, not on chore routes.
+const DiscoveryLabPage = lazy(() =>
+  import("./pages/DiscoveryLabPage").then((module) => ({
+    default: module.DiscoveryLabPage,
+  })),
+);
+const DiscoveryExplorationPage = lazy(() =>
+  import("./pages/DiscoveryLabPage").then((module) => ({
+    default: module.DiscoveryExplorationPage,
+  })),
+);
+const DiscoveryAccessPage = lazy(() =>
+  import("./pages/DiscoveryLabPage").then((module) => ({
+    default: module.DiscoveryAccessPage,
+  })),
+);
 
 type RouteCardProps = {
   title: string;
@@ -190,10 +207,12 @@ function RoleProtectedRoute({
 
 type ModuleProtectedRouteProps = {
   moduleKey: FamilyModuleKey;
+  interactiveView?: boolean;
 };
 
 function ModuleProtectedRoute({
   moduleKey,
+  interactiveView = false,
 }: ModuleProtectedRouteProps): ReactElement {
   const { status, moduleKeys, manageableModuleKeys } = useAuth();
 
@@ -216,7 +235,8 @@ function ModuleProtectedRoute({
     );
   }
 
-  if (!manageableModuleKeys.includes(moduleKey)) {
+  // Interactive learning controls change only local simulation state, not household data.
+  if (!manageableModuleKeys.includes(moduleKey) && !interactiveView) {
     return (
       <>
         <InlineNotice variant="info">
@@ -391,6 +411,47 @@ function HouseholdApp(): ReactElement {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route element={<ProtectedRoute />}>
+              <Route
+                element={
+                  <ModuleProtectedRoute
+                    moduleKey="discovery-lab"
+                    interactiveView
+                  />
+                }
+              >
+                <Route
+                  path="/discovery-lab"
+                  element={
+                    <Suspense fallback={<p>Opening Discovery Lab…</p>}>
+                      <DiscoveryLabPage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/discovery-lab/:explorationId"
+                  element={
+                    <Suspense fallback={<p>Opening Exploration…</p>}>
+                      <DiscoveryExplorationPage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  element={
+                    <RoleProtectedRoute
+                      allowedRoles={["PARENT_ADMIN", "PARENT"]}
+                    />
+                  }
+                >
+                  <Route
+                    path="/discovery-lab/manage"
+                    element={
+                      <Suspense fallback={<p>Opening family settings…</p>}>
+                        <DiscoveryAccessPage />
+                      </Suspense>
+                    }
+                  />
+                </Route>
+              </Route>
               <Route path="/account" element={<AccountPage />} />
               <Route path="/account/security" element={<AccountPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />

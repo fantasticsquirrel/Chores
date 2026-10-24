@@ -1,0 +1,264 @@
+@import "./castleLearning.css";
+.castle-exhibit {
+  overflow: hidden;
+  border: 1px solid #b8c0ad;
+  border-radius: 18px;
+  background: #e9e8df;
+  color: #25372e;
+}
+.castle-visual {
+  position: relative;
+  height: 650px;
+  background: radial-gradient(
+    ellipse at 49% 47%,
+    #e7e8db 0,
+    #d5d9c9 52%,
+    #b7c0ad 100%
+  );
+  isolation: isolate;
+}
+.castle-heading {
+  position: absolute;
+  top: 27px;
+  left: 30px;
+  z-index: 2;
+  pointer-events: none;
+}
+.discovery-lab .castle-heading h2,
+.castle-heading h2 {
+  font-family: Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: #25372e;
+}
+.discovery-lab .castle-heading p,
+.castle-heading p {
+  font-size: 12px;
+  margin: 9px 0 0;
+  color: #54614f;
+}
+.castle-canvas {
+  position: absolute;
+  inset: 72px 0 34px;
+  cursor: grab;
+  touch-action: none;
+  outline-offset: -5px;
+}
+.castle-canvas:active {
+  cursor: grabbing;
+}
+.castle-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.castle-annotation {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  color: #2d3e33;
+  padding: 5px 9px;
+  background: #f4f3e8e8;
+  border: 1px solid #9ba78c99;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px #243b2922;
+  pointer-events: none;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.castle-annotation::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 15px;
+  background: #586c4f;
+  position: absolute;
+  left: 50%;
+  top: 100%;
+}
+.castle-camera {
+  position: absolute;
+  bottom: 24px;
+  left: 25px;
+  right: 25px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.castle-camera > div {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #8e9c8599;
+  background: #e9eddfd9;
+  border-radius: 8px;
+}
+.castle-camera button {
+  border: 0;
+  background: transparent;
+  color: #465641;
+  border-radius: 5px;
+  padding: 9px 12px;
+  font-size: 12px;
+  min-width: 35px;
+  min-height: 35px;
+}
+.castle-camera button[aria-pressed="true"] {
+  background: #344d3d;
+  color: #f4f3e6;
+}
+.castle-camera button:hover {
+  background: #cbd3be;
+  color: #263d2c;
+}
+.castle-camera-hint {
+  position: absolute;
+  bottom: 4px;
+  left: 25px;
+  right: 25px;
+  font-size: 10px;
+  text-align: center;
+  color: #4b5d45;
+  pointer-events: none;
+  margin: 0;
+}
+.castle-route-key {
+  position: absolute;
+  left: 30px;
+  top: 90px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: #4b5946;
+  pointer-events: none;
+}
+.castle-route-key i {
+  width: 17px;
+  border-top: 3px dashed #9b7131;
+}
+.castle-route-key span {
+  font-weight: 600;
+}
+.castle-console {
+  display: grid;
+  grid-template-columns: 1.05fr 1.5fr auto;
+  gap: 24px;
+  align-items: center;
+  background: #f0efe6;
+  padding: 24px 30px;
+  border-top: 1px solid #b5bea9;
+}
+.castle-route-controls > label {
+  display: block;
+  font-size: 12px;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+.castle-route-controls select {
+  width: 100%;
+  background: #faf9f2;
+  color: #324733;
+  border: 1px solid #a5b19c;
+  padding: 10px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 17px;
+}
+.castle-exhibit .dl-slider-heading {
+  color: #344b38;
+  font-size: 12px;
+}
+.castle-exhibit .dl-value {
+  color: #314f3d;
+  background: #dce3d3;
+}
+.castle-exhibit .dl-range-labels {
+  color: #60715b;
+  font-size: 10px;
+}
+.castle-exhibit input[type="range"] {
+  accent-color: #496c50;
+  width: 100%;
+}
+.castle-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 23px 19px;
+}
+.castle-features label {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.castle-features input {
+  accent-color: #466149;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  margin: 1px 0 0;
+}
+.castle-features strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 650;
+}
+.castle-features small {
+  display: block;
+  font-size: 11px;
+  color: #63705c;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+.castle-reset {
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid #9aa990;
+  border-radius: 6px;
+  color: #465a40;
+  font-size: 11px;
+}
+.castle-observation {
+  padding: 14px 30px;
+  background: #dce3d3;
+  font-size: 12px;
+  color: #3b513b;
+  line-height: 1.65;
+  border-top: 1px solid #b5c1aa;
+}
+.castle-exhibit button:focus-visible,
+.castle-canvas:focus-visible {
+  outline: 3px solid #9c642e;
+  outline-offset: 3px;
+}
+.castle-fallback {
+  padding: 25px;
+  margin-top: 30px;
+  font-size: 12px;
+}
+.castle-fallback svg {
+  max-height: 450px;
+}
+.castle-loading {
+  padding: 180px 30px;
+  text-align: center;
+}
+
+.castle-exhibit .dl-slider-heading,
+.castle-exhibit .dl-range-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.castle-exhibit .dl-value {
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.castle-exhibit .dl-range-labels {
+  margin-top: 3px;
+}
+.castle-exhibit .dl-slider input[type="range"] {
+  margin: 9px 0 3px;
+}

@@ -103,6 +103,14 @@ def test_admin_manager_can_list_household_module_toggles(tmp_path: Path, monkeyp
             "enabled": False,
             "can_disable": True,
         },
+        {
+            "key": "discovery-lab",
+            "name": "Discovery Lab",
+            "description": "Interactive explorations with parent-controlled learning access.",
+            "can_manage": True,
+            "enabled": False,
+            "can_disable": True,
+        },
     ]
 
 
@@ -282,3 +290,15 @@ def test_unknown_household_module_key_is_rejected(tmp_path: Path, monkeypatch) -
 
     assert response.status_code == 400
     assert response.json()["detail"] == "Unknown module key."
+
+
+def test_missing_opt_in_grant_is_audited_as_disabled(tmp_path: Path, monkeypatch) -> None:
+    admin, _, password = _configure(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        headers = _login(client, admin, password)
+        result = client.put('/chore-api/modules/household/discovery-lab', json={'enabled': True}, headers=headers)
+        assert result.status_code == 200
+    factory = get_session_factory(get_settings().database_url)
+    with factory() as session:
+        event = session.scalar(select(SecurityAuditEvent).where(SecurityAuditEvent.event_type == 'module.household_access_changed'))
+        assert json.loads(event.details_json) == {'module_key': 'discovery-lab', 'previous_enabled': False, 'enabled': True}

@@ -53,6 +53,13 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "upsertHomeschoolDayComment",
     "upsertHomeschoolGrade",
   ],
+  "discovery-lab.ts": [
+    "getDiscoveryChildAccess",
+    "getDiscoveryExploration",
+    "listDiscoveryChildren",
+    "listDiscoveryExplorations",
+    "updateDiscoveryChildAccess",
+  ],
   "family-tree-core.ts": [
     "archiveFamilyTreePerson",
     "compareFamilyTreePeople",
@@ -209,6 +216,7 @@ describe("endpoint group structure", () => {
   it("owns each endpoint exactly once in the intended domain file", () => {
     expect(endpointFiles).toEqual([
       "core.ts",
+      "discovery-lab.ts",
       "family-tree-core.ts",
       "family-tree-transfer.ts",
       "family-tree.ts",

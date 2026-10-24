@@ -134,9 +134,9 @@ def verify(directory, start):
     command.upgrade(cfg(), '20261013_0028')
     after = snapshot()
     # The current test API creates all registered metadata at its 0026 setup,
-    # including the four retained tables. Preserve that complete 75-table
+    # including the four retained tables and Discovery Lab. Preserve the 76-table
     # snapshot at the historical 0028 repair boundary, not a stale 71 count.
-    assert len(before) == 75 and before.keys() == after.keys()
+    assert len(before) == 76 and before.keys() == after.keys()
     for table, old in before.items():
         if table != 'family_tree_other_names':
             assert old == after[table], table
@@ -147,9 +147,25 @@ def verify(directory, start):
     command.upgrade(cfg(), 'head')
     newest = snapshot()
     retained = {'homeschool_courses', 'homeschool_lessons', 'homeschool_course_assignments', 'homeschool_lesson_progress'}
-    assert set(newest) == set(after) | retained
+    assert set(newest) == set(after) | retained | {"discovery_exploration_access"}
     for table, old in after.items():
-        assert newest[table] == old, table
+        if table in {"modules", "household_module_access"}:
+            assert newest[table]['ddl'] == old['ddl'], table
+            assert newest[table]['columns'] == old['columns'], table
+            assert all(row in newest[table]['rows'] for row in old['rows']), table
+            added = [row for row in newest[table]['rows'] if row not in old['rows']]
+            records = [dict(zip(old['columns'], row)) for row in added]
+            if table == 'household_module_access':
+                household_ids = {dict(zip(after['households']['columns'], row))['id'] for row in after['households']['rows']}
+                existing_ids = {dict(zip(old['columns'], row))['household_id'] for row in old['rows'] if dict(zip(old['columns'], row))['module_key'] == 'discovery-lab'}
+                assert {row['household_id'] for row in records} == household_ids - existing_ids
+                assert all(row['module_key'] == 'discovery-lab' and row['enabled'] == 0 for row in records)
+            else:
+                assert len(records) <= 1
+                assert all(row['key'] == 'discovery-lab' and row['enabled'] == 1 for row in records)
+        else:
+            assert newest[table] == old, table
+    assert newest['discovery_exploration_access']['rows'] == []
     for table in retained:
         assert newest[table]['rows'] == []
     command.check(cfg())

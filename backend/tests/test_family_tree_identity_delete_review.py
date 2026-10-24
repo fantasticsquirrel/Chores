@@ -142,7 +142,15 @@ def test_previous_head_forward_trigger_repair_preserves_rows_and_schema(tmp_path
     command.check(cfg())
     with engine.connect() as connection:
         for name, expected in rows.items():
-            assert connection.execute(text(f'SELECT * FROM "{name}"')).all() == expected, name
+            current = connection.execute(text(f'SELECT * FROM "{name}"')).all()
+            if name == "modules":
+                assert [row for row in current if row[0] != "discovery-lab"] == expected
+                assert [row for row in current if row[0] == "discovery-lab"] == [("discovery-lab", "Discovery Lab", "Interactive explorations with parent-controlled learning access.", 1)]
+            elif name == "household_module_access":
+                assert [row for row in current if row[1] != "discovery-lab"] == expected
+                assert [(row[0], row[1], row[2]) for row in current if row[1] == "discovery-lab"] == [(901, "discovery-lab", 0)]
+            else:
+                assert current == expected, name
         guard = connection.scalar(text("SELECT sql FROM sqlite_master WHERE name='trg_ft_identity_update'"))
         assert 'UPDATE OF user_id, household_id' in guard
     with engine.begin() as connection:

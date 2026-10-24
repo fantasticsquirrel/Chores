@@ -1,0 +1,1001 @@
+[
+  {
+    "id": "orbital-mechanics",
+    "title": "Orbit Workshop",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8",
+      "9-12"
+    ],
+    "tags": [
+      "space",
+      "gravity",
+      "motion",
+      "orbits"
+    ],
+    "summary": "Launch a satellite and discover how speed and gravity shape its path.",
+    "question": "How can something keep falling without reaching the ground?",
+    "explanation": "An orbit is a continuing fall around a world. Sideways motion carries a satellite forward while gravity curves its path inward. Gravity weakens with the square of distance from the center. This scaled, two-dimensional model leaves out air resistance, other worlds and the satellite’s pull on the planet.",
+    "experiments": [
+      {
+        "title": "Find an orbit",
+        "instruction": "Keep central mass at 1. Predict the paths at launch speeds 0.2, 1 and 1.5, then compare the traces.",
+        "observe": "Identify a collision, a bound orbit and an escape path. Explain how sideways speed changes the effect of gravity on the path."
+      },
+      {
+        "title": "Change the pull",
+        "instruction": "Keep launch speed at 1. Predict how the path will change when you increase central mass, then compare the traces.",
+        "observe": "Look for a stronger inward curve. Explain why the same launch speed no longer makes the same circular orbit."
+      }
+    ],
+    "misconception": "Orbiting spacecraft have not escaped gravity. Gravity is what keeps their paths curving.",
+    "sources": [
+      {
+        "title": "NASA: Gravity and mechanics",
+        "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/"
+      },
+      {
+        "title": "NASA: Orbital motion",
+        "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-4/"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "reflection-refraction",
+    "title": "Light Bending Studio",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8",
+      "9-12"
+    ],
+    "tags": [
+      "light",
+      "optics",
+      "reflection",
+      "refraction"
+    ],
+    "summary": "Aim a beam, swap materials and discover when light bends or reflects.",
+    "question": "What happens when light reaches a different material?",
+    "explanation": "Reflection sends light back into its first material. Refraction can bend light as it crosses into a material where it travels at a different speed. Measure angles from the normal: the line at right angles to the surface. From air into water, a slanting ray bends toward the normal. This single-color ray model leaves out changes in brightness and the separation of colors.",
+    "experiments": [
+      {
+        "title": "Air meets water",
+        "instruction": "Predict whether the ray bends toward or away from the normal. Select air to water and change the angle.",
+        "observe": "Compare the incident and refracted angles. Explain why the ray bends toward the normal from air into water, but stays straight at an incident angle of 0°."
+      },
+      {
+        "title": "Trap the light",
+        "instruction": "Switch to water to air. Predict what happens as the incident angle grows.",
+        "observe": "Find the angle where the refracted ray disappears. Explain why this happens from water into air, but not from air into water."
+      }
+    ],
+    "misconception": "Total internal reflection is possible only from a higher to a lower refractive index, above the critical angle. It does not happen at every boundary.",
+    "sources": [
+      {
+        "title": "OpenStax: Refraction",
+        "url": "https://openstax.org/books/university-physics-volume-3/pages/1-3-refraction"
+      },
+      {
+        "title": "OpenStax: Total internal reflection",
+        "url": "https://openstax.org/books/university-physics-volume-3/pages/1-4-total-internal-reflection"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "gravity",
+    "title": "Gravity Drop Lab",
+    "subject": "Physics",
+    "grade_bands": [
+      "K-2",
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "gravity",
+      "forces",
+      "mass",
+      "measurement"
+    ],
+    "summary": "Drop two objects on different worlds and compare their motion.",
+    "question": "Does a heavier object always reach the ground first?",
+    "explanation": "Without air resistance, objects released together from the same height fall with the same acceleration, regardless of their mass. Mass stays the same on another world, but weight changes with local gravity. This near-surface model uses constant, rounded gravity values and leaves out air and wind.",
+    "experiments": [
+      {
+        "title": "Heavy or light?",
+        "instruction": "Use Earth gravity for both objects and change one object’s mass. Predict which lands first, then advance time from the same release.",
+        "observe": "Compare their positions and landing times. Explain why changing mass alone does not change the fall in a vacuum."
+      },
+      {
+        "title": "Visit another world",
+        "instruction": "Keep the height and masses fixed. Predict the difference, then compare Earth gravity with Moon gravity and advance time.",
+        "observe": "Compare the fall times. Explain why weaker gravity gives a longer fall even though the objects keep the same masses."
+      }
+    ],
+    "misconception": "A heavy object does not necessarily fall faster. Air resistance can change real-world results; this lab models a vacuum.",
+    "sources": [
+      {
+        "title": "NASA: What is microgravity?",
+        "url": "https://www.nasa.gov/centers-and-facilities/glenn/what-is-microgravity/"
+      },
+      {
+        "title": "NASA: Planetary fact sheet",
+        "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+      }
+    ],
+    "duration_minutes": 10
+  },
+  {
+    "id": "solar-system",
+    "title": "Solar System Explorer",
+    "subject": "Space science",
+    "grade_bands": [
+      "K-2",
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "planets",
+      "space",
+      "scale",
+      "orbits"
+    ],
+    "summary": "Tour the eight planets and compare their distances from the Sun and the lengths of their years.",
+    "question": "How different are the worlds that share our Sun?",
+    "explanation": "The eight planets orbit the Sun, which is a star. Their sizes, distances and orbital periods vary greatly. An astronomical unit, or AU, is about the average Earth–Sun distance. This is a schematic: planet sizes and orbit distances use different scales, paths are simplified circles and positions are illustrative, not today’s sky.",
+    "experiments": [
+      {
+        "title": "Near and far",
+        "instruction": "Predict how many Earth–Sun distances fit between the Sun and Neptune. Select both planets and compare AU values.",
+        "observe": "Neptune is about 30 AU from the Sun. Use the numbers to explain why the gaps in a convenient diagram are not equal real distances."
+      },
+      {
+        "title": "Whose year?",
+        "instruction": "Predict which completes an orbit first: Earth or Jupiter. Advance time and compare their orbital periods.",
+        "observe": "A Jupiter year lasts nearly 12 Earth years. Explain why a year means one orbit, not the same number of days on every planet."
+      }
+    ],
+    "misconception": "Planets are not evenly spaced, and a convenient orbit diagram cannot show both true planet sizes and true gaps at the same scale.",
+    "sources": [
+      {
+        "title": "NASA/JPL: Solar system sizes and distances",
+        "url": "https://www.jpl.nasa.gov/edu/pdfs/scaless_reference.pdf"
+      },
+      {
+        "title": "NASA: Planetary fact sheet",
+        "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+      },
+      {
+        "title": "NASA: Cosmic distances",
+        "url": "https://science.nasa.gov/solar-system/cosmic-distances/"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "moon-phases",
+    "title": "Moon Phase Observatory",
+    "subject": "Space science",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "moon",
+      "patterns",
+      "sunlight",
+      "perspective"
+    ],
+    "summary": "Move the Moon around Earth and connect its position to the phase we see.",
+    "question": "Why does the Moon seem to change shape?",
+    "explanation": "Sunlight illuminates half the Moon. As the Moon travels around Earth, we see different amounts of that sunlit half. A phase cycle takes about 29.5 days. The model links orbital position to the illuminated fraction seen from Earth. Objects are enlarged, geometry is simplified, and the fixed viewing direction does not predict your local sky. Eclipses are not included.",
+    "experiments": [
+      {
+        "title": "Find a full Moon",
+        "instruction": "Predict the phase when the Moon is on the opposite side of Earth from the Sun. Move it there.",
+        "observe": "The visible illuminated fraction reaches 100%. Explain why the sunlit half faces Earth at full Moon."
+      },
+      {
+        "title": "A quarter turn",
+        "instruction": "Predict how much of the visible disk will be illuminated a quarter of a cycle after full Moon. Then move the Moon there and compare.",
+        "observe": "Half the visible disk is lit. Explain how that differs from half of the whole Moon always receiving sunlight."
+      }
+    ],
+    "misconception": "The usual Moon phases are not Earth’s shadow. Earth’s shadow causes a lunar eclipse, a separate event that does not happen every month.",
+    "sources": [
+      {
+        "title": "NASA: Phases of the Moon",
+        "url": "https://science.nasa.gov/resource/phases-of-the-moon-2/"
+      },
+      {
+        "title": "NASA: Moon phases and shadows lesson",
+        "url": "https://assets.science.nasa.gov/content/dam/science/cds/eclips/assets/documents/nasa-spotlite-interactive-lesson-moon-phases-and-shadows-student.pdf"
+      },
+      {
+        "title": "Lunar surface imagery: NASA’s Scientific Visualization Studio (LRO CGI Moon Kit)",
+        "url": "https://svs.gsfc.nasa.gov/4720/"
+      }
+    ],
+    "duration_minutes": 10
+  },
+  {
+    "id": "photosynthesis",
+    "title": "Leaf Energy Lab",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "plants",
+      "energy",
+      "photosynthesis",
+      "systems"
+    ],
+    "summary": "Adjust light and water to investigate what limits a leaf’s sugar-making process.",
+    "question": "Can more sunlight help when a plant has too little water?",
+    "explanation": "Photosynthesis uses light energy to convert water and carbon dioxide into sugars, releasing oxygen. A shortage of a needed resource can limit the process; more light does not guarantee proportionally more activity. This qualitative resource model is not a growth forecast and leaves out temperature, species differences and many other processes. Plants also respire, by day and night.",
+    "experiments": [
+      {
+        "title": "Find the bottleneck",
+        "instruction": "Predict whether adding light will help when available water is zero. Try it, then restore water.",
+        "observe": "Compare the activity readout. Explain why one resource cannot replace another."
+      },
+      {
+        "title": "More is not endless",
+        "instruction": "Keep water at a low, nonzero level. Predict what happens as you raise light from low to high, then compare the activity values.",
+        "observe": "Look for activity to level off when water becomes the limit. Explain why extra light cannot replace missing water."
+      }
+    ],
+    "misconception": "Plants make sugars; they do not absorb their sugar food from soil. Soil supplies water and mineral nutrients, and sunlight supplies energy rather than matter.",
+    "sources": [
+      {
+        "title": "Oregon State University: Plant growth and development",
+        "url": "https://extension.oregonstate.edu/catalog/em-9901-plant-growth-development"
+      },
+      {
+        "title": "Royal Horticultural Society: How plants use light",
+        "url": "https://www.rhs.org.uk/advice/understanding-plants/how-plants-use-light-to-grow"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "castle-defenses",
+    "title": "Castle Design Lab",
+    "subject": "History",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "history",
+      "castles",
+      "engineering",
+      "design"
+    ],
+    "summary": "Explore how gates, ditches, towers and walls worked together in a medieval castle.",
+    "question": "Why protect an entrance with more than one barrier?",
+    "explanation": "This simplified model is inspired by English castles of the 13th century, not a reconstruction of one site. Gatehouses protected entrances, projecting towers improved visibility along walls, and additional walls created further barriers. Castles also served as homes and centres of power. Designs varied by time, terrain and resources; this model explores routes and sight lines, not the outcome of a siege.",
+    "experiments": [
+      {
+        "title": "Guard the gate",
+        "instruction": "Predict what happens to the entrance when the gate closes. Open and close it, then inspect the entrance and its result.",
+        "observe": "The closed gate blocks the direct entrance. Explain why a castle needs both barriers and a way for people and supplies to enter."
+      },
+      {
+        "title": "See along the walls",
+        "instruction": "Predict what defenders could see from a projecting tower. Show the tower’s sight lines or coverage and inspect the adjoining walls.",
+        "observe": "Trace the views beside the walls. Explain how projecting towers help visibility and why that alone cannot make a castle invincible."
+      }
+    ],
+    "misconception": "Not every castle had stone walls or a water-filled moat. Ditches could be dry, and castle designs changed over centuries.",
+    "sources": [
+      {
+        "title": "English Heritage: Castles through time",
+        "url": "https://www.english-heritage.org.uk/castles/castles-through-time/"
+      },
+      {
+        "title": "English Heritage: Carisbrooke Castle teachers’ kit",
+        "url": "https://www.english-heritage.org.uk/siteassets/home/visit/places-to-visit/carisbrooke-castle/school-visits/carisbrooke-castle_teachers-kit_2023.pdf"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "sound-playground",
+    "title": "Sound Playground",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "sound",
+      "vibrations",
+      "waves",
+      "measurement"
+    ],
+    "summary": "Change a string’s length, tension and vibration size to investigate pitch and energy.",
+    "question": "Why can two plucks sound equally high but have different strengths?",
+    "explanation": "A vibrating string can make the air vibrate, producing sound. Frequency counts vibrations per second and helps determine pitch. A shorter string or greater tension produces a higher frequency when the string’s mass per length stays fixed. Amplitude is the size of a vibration; increasing it adds energy without changing this model’s pitch. The model shows an ideal string’s lowest vibration pattern, not every vibration in a real instrument. The drawing slows or stops the motion so you can inspect the string’s shape.",
+    "experiments": [
+      {
+        "title": "Shorten the string",
+        "instruction": "Keep tension and amplitude fixed. Predict what happens to frequency when you halve the string length, then compare the readings at each length.",
+        "observe": "Compare the frequency readings: halving the length doubles the frequency here. Explain how that changes pitch."
+      },
+      {
+        "title": "Change the pluck, not the pitch",
+        "instruction": "Keep length and tension fixed. Predict whether a larger amplitude changes frequency, then compare two amplitude settings.",
+        "observe": "The vibration gets larger and its energy increases while frequency stays the same. Explain the difference between vibration size and vibration rate."
+      }
+    ],
+    "misconception": "A larger vibration is not the same as a higher pitch. Pitch depends mainly on frequency, not amplitude.",
+    "sources": [
+      {
+        "title": "OpenStax: Standing waves on strings",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/16-6-standing-waves-and-resonance"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "bridge-builder",
+    "title": "Bridge Builder",
+    "subject": "Engineering",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "bridges",
+      "forces",
+      "structures",
+      "design"
+    ],
+    "summary": "Add braces, move a load and compare how a bridge carries weight to its supports.",
+    "question": "Why can the same load be harder to support in the middle of a bridge?",
+    "explanation": "A bridge transfers a load to its supports. The load can bend the span; diagonal braces form triangles that help a frame resist changing shape. Materials and reinforcement affect what a structure can carry and how much it costs. This model calculates a simple beam’s bending and uses invented brace strengths and costs for comparison. Its capacity-use display is not a real bridge safety rating, and it does not calculate every force in a truss.",
+    "experiments": [
+      {
+        "title": "Move the load",
+        "instruction": "Keep material, load size and braces fixed. Predict whether the middle or near an end will bend the span more, then move the load across.",
+        "observe": "Compare the capacity-use readings and force on each support. Explain why moving weight changes how the load is carried."
+      },
+      {
+        "title": "Place a brace where it helps",
+        "instruction": "Keep the load in the middle. Predict which brace will reduce the highest capacity-use reading, then add braces one at a time.",
+        "observe": "Compare each section’s capacity use and the material cost. Explain which brace helped at this load position, then test whether it still helps when the load moves."
+      }
+    ],
+    "misconception": "A triangular shape is not a guarantee of safety. Connections, materials, loads and many other conditions matter in a real bridge.",
+    "sources": [
+      {
+        "title": "Science Buddies: How triangular trusses resist changing shape",
+        "url": "https://www.sciencebuddies.org/stem-activities/popsicle-stick-trusses-what-shape-is-strongest"
+      },
+      {
+        "title": "Federal Highway Administration: Bridge force and stress analysis",
+        "url": "https://www.fhwa.dot.gov/publications/research/infrastructure/structures/04098/12.cfm"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "river-sculptor",
+    "title": "River Sculptor",
+    "subject": "Earth science",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "rivers",
+      "erosion",
+      "water",
+      "landforms"
+    ],
+    "summary": "Send rain down a slope and trace soil as it erodes, settles or travels downstream.",
+    "question": "Where does soil go when rain washes it away?",
+    "explanation": "Flowing water can remove soil, carry it as sediment and deposit it where the flow slows. Steeper slopes and heavier rainfall can increase runoff and erosion. Plant cover helps protect soil and slows runoff. This model follows soil through a one-hour storm on a small plot: some stays on the slope, some settles nearby and some leaves downstream. Its amounts use teaching assumptions, not measurements from a real river or a flood forecast.",
+    "experiments": [
+      {
+        "title": "Follow the sediment",
+        "instruction": "Predict where the soil will go. Set rainfall above zero, run one storm and compare soil remaining, deposited sediment and sediment leaving downstream.",
+        "observe": "Check that eroded soil is divided between deposition and downstream export. Explain why erosion moves material rather than making it disappear."
+      },
+      {
+        "title": "Protect the slope",
+        "instruction": "Record your slope and rainfall settings. Reset the landscape, restore those settings and run a storm with little vegetation. Reset again and restore the same slope and rainfall. Predict the effect of more vegetation before repeating.",
+        "observe": "Compare erosion and runoff from the two storms. Explain why a fair comparison needs the same starting soil, slope and rain."
+      }
+    ],
+    "misconception": "Clearer water does not mean sediment has vanished. It may have settled on the bed or moved farther downstream.",
+    "sources": [
+      {
+        "title": "USGS: Sediment and suspended sediment",
+        "url": "https://www.usgs.gov/water-science-school/science/sediment-and-suspended-sediment"
+      },
+      {
+        "title": "USDA NRCS: Water erosion and vegetation",
+        "url": "https://www.nrcs.usda.gov/sites/default/files/2024-05/NRCS_Rangeland%20Soil_Water%20Erosion_Factsheet_04092024.pdf"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "circuit-city",
+    "title": "Circuit City",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "electricity",
+      "circuits",
+      "energy",
+      "systems"
+    ],
+    "summary": "Connect three model houses in series or parallel and investigate what happens when a switch opens.",
+    "question": "Can one house switch off while the others keep their lights on?",
+    "explanation": "Electric current needs a complete path. In a series circuit, the same current passes through every house, so one open switch breaks the whole path. Parallel branches provide separate paths across the battery; opening one branch leaves the others connected. The battery supplies energy, while charge keeps moving around complete paths. These houses are identical, fixed resistances with ideal wires and a battery that never runs down, not a model of household mains wiring.",
+    "experiments": [
+      {
+        "title": "Break one path",
+        "instruction": "Close all three switches in series. Predict which houses lose power when one switch opens, then try it. Repeat in parallel.",
+        "observe": "Compare the lit houses and current readings. Explain why one open switch affects every house in series but only its branch in parallel."
+      },
+      {
+        "title": "Raise the voltage",
+        "instruction": "Close all switches and keep the circuit arrangement fixed. Predict the change in current when battery voltage increases, then compare two settings.",
+        "observe": "Higher voltage produces more current through the same resistance. Explain why this comparison would change if the resistance also changed."
+      }
+    ],
+    "misconception": "A house uses electrical energy, not a supply of charge that disappears. Current is the rate at which charge passes a point.",
+    "sources": [
+      {
+        "title": "OpenStax: Resistors in series and parallel",
+        "url": "https://openstax.org/books/university-physics-volume-2/pages/10-2-resistors-in-series-and-parallel"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "food-web-rescue",
+    "title": "Food Web Rescue",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "ecology",
+      "food-webs",
+      "ponds",
+      "systems"
+    ],
+    "summary": "Change a pond’s food supply and organisms, then follow populations and oxygen over time.",
+    "question": "Can adding more nutrients make conditions worse for fish?",
+    "explanation": "Algae capture light energy. Tiny animals called zooplankton eat algae, and some fish eat zooplankton. This chain is one part of a larger food web. Extra nutrients can encourage algal growth, but respiration and decomposition can use up dissolved oxygen that animals need. The model tracks relative population and oxygen indices, not animal counts or measured oxygen. Each step represents an illustrative week; many species, daily oxygen changes and real pond conditions are left out.",
+    "experiments": [
+      {
+        "title": "Remove a link",
+        "instruction": "Record your nutrients and drought settings. Predict how removing zooplankton changes algae and fish. Run several weeks with all groups present, then reset the pond, restore the recorded settings and remove zooplankton. Compare the same number of weeks.",
+        "observe": "Compare the algae and fish trends. Explain how removing one group changes both the food it eats and the animals that eat it."
+      },
+      {
+        "title": "More nutrients, less oxygen?",
+        "instruction": "Reset the pond and leave drought at zero. Predict what happens with high nutrients, then step through several weeks. Reset again, keep drought at zero and use lower nutrients. Compare the same number of weeks.",
+        "observe": "Compare algae, fish and oxygen rather than algae alone. Explain why more of one food source does not always mean better conditions for the whole pond."
+      }
+    ],
+    "misconception": "A food web is not a ladder where only the top animal matters. Changes can spread through feeding links and through shared conditions such as oxygen.",
+    "sources": [
+      {
+        "title": "US EPA: Nutrients, algal growth and dissolved oxygen",
+        "url": "https://www.epa.gov/system/files/documents/2021-07/parameter-factsheet_nutrients.pdf"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "fraction-feast",
+    "title": "Fraction Feast",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5"
+    ],
+    "tags": [
+      "fractions",
+      "equivalence",
+      "addition",
+      "number-sense"
+    ],
+    "summary": "Divide equal-sized plates into equal parts, compare portions and combine fractions.",
+    "question": "How can two different fractions describe the same amount?",
+    "explanation": "A fraction describes equal parts of a whole. The denominator tells how many equal parts make the whole; the numerator counts the parts selected. One half and two quarters cover the same amount of an equal-sized plate. To add fractions with different denominators, describe them using equal-sized pieces first. Every plate here represents the same whole, and every cut makes equal portions. The total can be greater than one plate.",
+    "experiments": [
+      {
+        "title": "Different pieces, same portion",
+        "instruction": "Show 1/2 on plate A and 2/4 on plate B. Predict whether they cover the same amount, then split every slice on one plate.",
+        "observe": "The pieces get smaller and more numerous, but the selected amount stays the same. Explain why doubling both numerator and denominator preserves the fraction."
+      },
+      {
+        "title": "Combine unlike pieces",
+        "instruction": "Select 2/3 on one plate and 3/4 on the other. Predict whether the total is below, equal to or above one whole, then compare the combined total.",
+        "observe": "Compare the total, 17/12, with one whole. Explain how 8/12 plus 9/12 represents the same portions using equal-sized twelfths."
+      }
+    ],
+    "misconception": "A larger denominator does not automatically mean more food. With the same whole and numerator, more equal parts make each selected part smaller.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Fraction equivalence and comparison",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/3/NF/A/3"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "pattern-palace",
+    "title": "Pattern Palace",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "geometry",
+      "symmetry",
+      "patterns",
+      "angles"
+    ],
+    "summary": "Rotate and reflect a motif, then test how regular polygons fit around a point.",
+    "question": "Why do some repeated shapes leave a gap while others fit exactly?",
+    "explanation": "A rotation turns a shape around a point. A reflection flips it across a line; both preserve lengths and angles. A full turn is 360°. Equal regular polygons can meet without a gap or overlap only when their corner angles fill that turn. Six equilateral triangles, four squares or three regular hexagons do so. This model checks one meeting point; a successful corner test alone is not a proof that any proposed pattern tiles an entire floor.",
+    "experiments": [
+      {
+        "title": "Turn or flip?",
+        "instruction": "Inspect the uneven motif. Predict where its marked point will move after a quarter-turn, then rotate it 90°. Compare with reflecting the motif.",
+        "observe": "Compare the position of the marked point. Explain why turning and making a mirror image are different transformations even though lengths stay the same."
+      },
+      {
+        "title": "Fill a full turn",
+        "instruction": "Predict how many squares meet at a point without gaps. Test four, then try three regular pentagons and four regular pentagons.",
+        "observe": "Four square corners fill 360°. Three pentagon corners leave 36°, while four overlap by 72°. Explain why adding another pentagon does not solve the gap."
+      }
+    ],
+    "misconception": "A regular shape does not necessarily tile a flat surface by itself. Its corner angles must fit with neighboring tiles without gaps or overlaps.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Rotations and reflections",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/8/G/A/3"
+      },
+      {
+        "title": "University of Cambridge NRICH: How polygons fit around a point",
+        "url": "https://nrich.maths.org/problems/semi-regular-tessellations?tab=help"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "caravan-crossroads",
+    "title": "Caravan Crossroads",
+    "subject": "History",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "history",
+      "trade",
+      "geography",
+      "resources"
+    ],
+    "summary": "Plan a caravan’s route and supplies, then compare how terrain and seasons change a journey.",
+    "question": "Why might travelers choose a longer route instead of the shortest one?",
+    "explanation": "Trading routes connected communities and carried ideas and skills as well as goods. The Silk Roads were a changing network of land and sea routes, not a single road or one journey made by every merchant. Travelers had to consider terrain, water, seasons and supplies. This fictional journey borrows those general trade-offs. Its routes, prices, cargo losses and travel times are invented for comparison, not a reconstruction of a particular culture, place or century.",
+    "experiments": [
+      {
+        "title": "Choose a seasonal route",
+        "instruction": "Pack 14 supply days and keep the cargo fixed. Predict how changing from dry to wet season affects the river route, then compare travel time and cargo delivered.",
+        "observe": "Use the journey results to explain why the fastest route can depend on conditions, not just distance. Identify which numbers are model assumptions rather than historical evidence."
+      },
+      {
+        "title": "Pack for the journey",
+        "instruction": "Choose a route and predict the supplies needed for its travel time. Add supply days until the shortage is zero, then increase the cargo load.",
+        "observe": "Compare total load with carrying capacity. Explain the trade-off between carrying more goods and leaving room for the supplies needed to complete the journey."
+      }
+    ],
+    "misconception": "Trade was not simply one-way travel between two distant empires. Networks involved many communities, local exchanges and changing routes.",
+    "sources": [
+      {
+        "title": "UNESCO: About the Silk Roads",
+        "url": "https://www.unesco.org/en/silk-roads/about-silk-roads?hub=196704"
+      },
+      {
+        "title": "UNESCO: The Chang’an–Tianshan routes network",
+        "url": "https://whc.unesco.org/en/list/1442"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "pollinator-express",
+    "title": "Pollinator Express",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "plants",
+      "pollination",
+      "habitats",
+      "ecology"
+    ],
+    "summary": "Guide a bee between flowers and test when a visit transfers compatible pollen.",
+    "question": "Is visiting any flower enough to pollinate it?",
+    "explanation": "Pollination moves pollen to the receptive part of a flower and can allow seeds to develop. Animals may carry pollen while gathering food. In this model, a bee transfers pollen only between different flowers of the same species. Added habitat flowers can help it cross a gap. The bee carries pollen from only its last visit; flight limits and flower types are invented. Real pollination can involve mixed pollen, self-pollination, wind and other animals, and does not always result in seeds.",
+    "experiments": [
+      {
+        "title": "A visit or a transfer?",
+        "instruction": "Predict which visit will transfer compatible pollen. Visit Gold 1, then Gold 2. Reset and compare Gold 1 followed by Violet 1.",
+        "observe": "Compare visits with compatible transfers. Explain why two visits do not necessarily mean two pollinated flowers."
+      },
+      {
+        "title": "Bridge a habitat gap",
+        "instruction": "Set flight reach to 170 and leave habitat patches off. Visit Gold 1 and Gold 2, then predict whether Gold 3 is reachable. Reset, add habitat patches and repeat the route via Gold bridge.",
+        "observe": "Compare the possible paths before and after adding flowers. Explain how an extra feeding stop can connect otherwise separated patches in this model."
+      }
+    ],
+    "misconception": "Bees are not the only pollinators, and a flower visit is not a guarantee of fertilization or seed production.",
+    "sources": [
+      {
+        "title": "USDA Forest Service: What pollination is and who does it",
+        "url": "https://www.fs.usda.gov/wildflowers/pollinators/documents/simpletruthbrochure.pdf"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "chance-carnival",
+    "title": "Chance Carnival",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "probability",
+      "data",
+      "fractions",
+      "sampling"
+    ],
+    "summary": "Set the chances on a spinner or die, run trials and compare predictions with results.",
+    "question": "Does an outcome with a one-in-four chance have to appear once every four tries?",
+    "explanation": "Probability describes how likely an outcome is. Each outcome’s weight divided by the total weight gives its chance in this model. Equal weights mean equal chances; a weight of zero makes an outcome impossible. Trial results vary, especially in small samples. More trials often bring the observed proportions closer to the predicted probabilities, but exact agreement is not guaranteed. Trials are independent computer-generated samples; a streak does not change the next trial’s chances.",
+    "experiments": [
+      {
+        "title": "Small sample, large sample",
+        "instruction": "Reset to give all four spinner outcomes equal weights. Predict the fraction for each, run 10 trials, then add a larger batch without changing the weights.",
+        "observe": "Compare each observed percentage with 25%. Explain why uneven counts in a small sample are not by themselves evidence of unequal chances."
+      },
+      {
+        "title": "Change the chances",
+        "instruction": "Reset the spinner, then double the first outcome’s weight while leaving the others at 1. Predict its chance before running a fresh set of trials.",
+        "observe": "The doubled outcome has weight 2 out of a total of 5, or a 40% chance. Compare that prediction with the sample and explain why twice the weight does not mean a 50% chance."
+      }
+    ],
+    "misconception": "An outcome is not “due” because it has been absent. With unchanged weights, each independent trial has the same probabilities as before.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Probability models and observed frequencies",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/7/SP/C/7"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "machine-workshop",
+    "title": "Machine Workshop",
+    "subject": "Engineering",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["machines", "forces", "energy", "ratios"],
+    "summary": "Change a lever, pulley system or geared hoist and compare the effort with the distance moved.",
+    "question": "When a machine reduces the force you need, what changes about how far you must move?",
+    "explanation": "A lever turns around a pivot; supporting rope sections share a pulley load; gears transfer turning motion. Mechanical advantage compares the load force with the input force. In an ideal machine, reducing the input force requires more input travel for the same lift. The geared hoist has an equal-radius crank handle and lifting drum, so its force and distance readings describe the hand and load. This model assumes slow lifting with no friction, rope stretch or machine weight.",
+    "experiments": [
+      {
+        "title": "Less force, more travel",
+        "instruction": "Choose the pulley with a 40 kg load and a 0.5 m lift. Predict what happens to the input force and travel when mechanical advantage changes from 1 to 2, then compare both settings.",
+        "observe": "The input force halves while the input distance doubles. Compare input and output work, then explain why needing less force did not create energy."
+      },
+      {
+        "title": "Compare the geared hoist",
+        "instruction": "Choose the geared hoist and keep the 40 kg load and 0.5 m lift fixed. Predict the difference between mechanical advantages 1 and 4, then compare the hand force, hand travel and work.",
+        "observe": "The higher ratio needs less hand force but more hand travel for the same load movement. Explain how this is the same trade-off you observed with pulleys, even though the crank turns."
+      }
+    ],
+    "misconception": "A machine can reduce the force needed without reducing the ideal work needed. Force and distance must be considered together.",
+    "sources": [
+      {
+        "title": "OpenStax: Mechanical advantage and work in simple machines",
+        "url": "https://openstax.org/books/physics/pages/9-3-simple-machines"
+      },
+      {
+        "title": "NYU: Gear ratios and torque",
+        "url": "https://mechatronics.engineering.nyu.edu/pdf/gear-ratio-and-torque.pdf"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "heat-house",
+    "title": "Heat House",
+    "subject": "Physics",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["heat", "insulation", "energy", "engineering"],
+    "summary": "Change wall insulation, material and window area while comparing heat loss at matched temperatures.",
+    "question": "Why does adding wall insulation not stop heat loss through the windows?",
+    "explanation": "Thermal energy transfers from warmer places to cooler places. Insulation slows that transfer; it does not produce heat. This model holds the indoor and outdoor temperatures steady and calculates transfer through a fixed area of walls and windows. Adding windows replaces some opaque wall rather than enlarging the house. It omits the roof, floor, drafts, sunlight and stored heat. Material values describe a teaching example, not a real home or an energy-bill estimate.",
+    "experiments": [
+      {
+        "title": "Change only insulation",
+        "instruction": "Use brick walls, 8 m² of windows, 20°C inside and 0°C outside. Predict how changing insulation from 0 to 10 cm affects wall and window heat transfer, then compare both settings.",
+        "observe": "Wall heat transfer decreases while window heat transfer stays the same. Compare each contribution with the total and explain why insulating the walls does not remove every heat-transfer path."
+      },
+      {
+        "title": "Replace wall with windows",
+        "instruction": "Keep brick walls, 10 cm of insulation, 20°C inside and 0°C outside. Predict how changing window area from 2 to 18 m² changes wall-and-window heat loss, then compare the readings.",
+        "observe": "More window area replaces insulated wall in this model and increases the combined wall-and-window heat loss. Explain why this result depends on the two surfaces’ thermal properties as well as their areas."
+      }
+    ],
+    "misconception": "Insulation does not generate warmth or stop all heat transfer. It slows transfer through the part of the building where it is installed.",
+    "sources": [
+      {
+        "title": "OpenStax: Conduction and thermal resistance",
+        "url": "https://openstax.org/books/college-physics-2e/pages/14-5-conduction"
+      },
+      {
+        "title": "US Department of Energy: Window heat transfer and U-factor",
+        "url": "https://bsesc.energy.gov/energy-basics/energy-star-windows"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "pressure-tank",
+    "title": "Pressure Tank",
+    "subject": "Physics",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["water", "pressure", "fluids", "measurement"],
+    "summary": "Compare water pressure and outlet speed in differently shaped tanks at the same water level.",
+    "question": "Does a wider tank make water leave faster when the depth above the outlet stays the same?",
+    "explanation": "In still water, pressure increases with depth below the surface. For an open tank with a small outlet, the depth above that outlet also determines the ideal initial exit speed. A wider tank can hold more water without increasing either quantity at the same depth. The pressure reading is the static gauge pressure at outlet depth, above atmospheric pressure; the emerging free jet itself is approximately at atmospheric pressure. The model shows an instant and omits flow losses, air drag and the falling water level during draining.",
+    "experiments": [
+      {
+        "title": "Change shape, keep depth",
+        "instruction": "Set water depth to 2 m and outlet height to 0.5 m. Predict how changing from a narrow to a wide tank affects static pressure and jet speed, then compare both shapes without changing the heights.",
+        "observe": "The wide tank holds more water, but the depth above the outlet, static pressure and ideal speed stay the same. Explain why total volume is not enough to determine pressure at the outlet depth."
+      },
+      {
+        "title": "Raise the water surface",
+        "instruction": "Keep the outlet at 0.5 m and the tank shape fixed. Predict what happens when water depth rises from 1 to 2 m, then compare the depth above the outlet, pressure and speed.",
+        "observe": "The depth above the outlet rises from 0.5 to 1.5 m. Static pressure triples, but speed increases by about 1.73 times. Explain why doubling the displayed water depth did not simply double either reading."
+      }
+    ],
+    "misconception": "More water volume does not automatically mean greater pressure at a chosen depth. Tank shape can affect how the level falls during draining, which this instantaneous comparison does not calculate.",
+    "sources": [
+      {
+        "title": "OpenStax: Pressure variation with fluid depth",
+        "url": "https://openstax.org/books/college-physics-ap-courses/pages/11-4-variation-of-pressure-with-depth-in-a-fluid"
+      },
+      {
+        "title": "OpenStax: Torricelli’s theorem and ideal outlet speed",
+        "url": "https://openstax.org/books/college-physics/pages/12-3-the-most-general-applications-of-bernoullis-equation"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "moving-plates",
+    "title": "Moving Plates",
+    "subject": "Earth science",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["earth", "plate-tectonics", "earthquakes", "landforms"],
+    "summary": "Move model plates apart, together or past one another and compare landforms and fault slips.",
+    "question": "How does the direction plates move change what happens at their boundary?",
+    "explanation": "Earth’s outer rocky shell is divided into moving plates. Separating oceanic plates can form new crust; converging oceanic and continental plates can form a subduction zone; plates sliding past one another offset the crust. The convergent example is not a continental collision. A separate transform-fault illustration builds stored strain and releases some in sudden slips. Other boundary types can also have earthquakes. Movement, stress and slip thresholds are schematic; a step is not a number of years or an earthquake prediction.",
+    "experiments": [
+      {
+        "title": "Same steps, different boundaries",
+        "instruction": "Predict how moving apart differs from moving together. Choose Apart and advance five steps. Then choose Together, which restarts the diagram, and advance five steps.",
+        "observe": "Compare new crust at the divergent boundary with a plate descending at the convergent boundary. Explain why the direction and type of interaction matter, not just the number of steps."
+      },
+      {
+        "title": "Slow loading, sudden slip",
+        "instruction": "Choose Sideways to restart the fault illustration. Predict whether stored stress will keep rising after four steps. Advance four single steps, record the stress and slip count, then advance one more.",
+        "observe": "The stored-stress index drops when a modeled slip occurs. Explain how gradual loading can lead to sudden movement, and why the invented repeating threshold cannot tell us when a real earthquake will happen."
+      }
+    ],
+    "misconception": "Plates do not move only during earthquakes, and earthquakes are not limited to transform boundaries. A schematic slip sequence is not a real earthquake clock.",
+    "sources": [
+      {
+        "title": "NOAA: Plate boundaries, faults and earthquakes",
+        "url": "https://www.noaa.gov/jetstream/tsunamis/tsunami-generation-earthquakes/jetstream-max-plate-tectonics-and-earthquakes"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "cloud-rain-lab",
+    "title": "Cloud and Rain Lab",
+    "subject": "Earth science",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["weather", "clouds", "water", "temperature"],
+    "summary": "Change air temperature, water vapor and uplift, then test why a cloud need not produce rain.",
+    "question": "Why can rising air make a cloud without making rain?",
+    "explanation": "Rising air expands as pressure decreases and usually cools. Near saturation, water vapor can condense into tiny visible droplets. Those droplets need additional growth before they can become rain. This warm-cloud model estimates a condensation height from starting temperature and moisture, with fixed cooling rates before and after saturation. Its droplet-growth index and rain threshold are invented teaching values. It omits mixing, detailed droplet growth and ice processes, so it cannot forecast rainfall.",
+    "experiments": [
+      {
+        "title": "Lift the same air",
+        "instruction": "Set starting temperature to 22°C, water vapor to 10 g/kg and droplet growth to 30. Predict whether lifting the air 600 m or 1800 m produces the same cloud state, then compare those heights.",
+        "observe": "Compare parcel temperature, estimated condensation height and the presence of cloud droplets. Explain how lifting can cause condensation without adding more water vapor."
+      },
+      {
+        "title": "A cloud without rain",
+        "instruction": "Keep starting temperature at 22°C, water vapor at 10 g/kg and uplift at 1400 m. Predict whether cloud droplets alone mean rain, then compare droplet-growth indices 30 and 90.",
+        "observe": "The model shows a cloud in both cases but represents rain only with greater growth. Explain what must happen after cloud formation, and why an invented growth index is not a measured rain forecast."
+      }
+    ],
+    "misconception": "A visible cloud consists of tiny liquid droplets or ice particles, not invisible water vapor. Cloud formation does not guarantee rain at the ground.",
+    "sources": [
+      {
+        "title": "NOAA: How clouds form",
+        "url": "https://www.noaa.gov/jetstream/clouds/how-clouds-form"
+      },
+      {
+        "title": "NOAA: How cloud particles grow into precipitation",
+        "url": "https://www.noaa.gov/jetstream/atmosphere/precipitation"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "magnetic-fields",
+    "title": "Magnetic Fields",
+    "subject": "Physics",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["magnets", "fields", "forces", "direction"],
+    "summary": "Flip a magnet and move a compass to investigate the direction of the combined magnetic field.",
+    "question": "What happens to a compass where two magnetic fields cancel?",
+    "explanation": "A compass is a small magnet whose north-seeking end aligns with the local magnetic field. Outside a bar magnet, field direction runs away from its north pole and toward its south pole. Fields from several magnets combine; a compass does not simply choose the nearest one. This model approximates exterior directions with paired sources, excludes meaningful readings inside the bars and omits Earth’s field. Strength and spacing are relative diagram quantities, not measured force or tesla.",
+    "experiments": [
+      {
+        "title": "Flip the facing poles",
+        "instruction": "Set the gap to 2 and place the probe at horizontal position 0 and depth position 2. Predict how flipping only the right magnet changes the facing-pole interaction and compass direction, then compare both orientations.",
+        "observe": "Opposite facing poles attract and like facing poles repel. Compare the compass direction in both cases and explain why it follows the combined field at its location, not simply the nearest pole."
+      },
+      {
+        "title": "Move away from cancellation",
+        "instruction": "Keep like poles facing at gap 2. Predict whether the field remains zero when the probe moves from (0, 0) to (0, 2), then change only its depth position.",
+        "observe": "The field is nonzero away from the exact midpoint. Compare its direction and strength and explain why cancellation at one location does not mean the magnets have no field anywhere."
+      }
+    ],
+    "misconception": "Field lines are not material strings or streams of magnetic substance. They represent directions and continue through real magnets in closed loops.",
+    "sources": [
+      {
+        "title": "OpenStax: Magnetic field direction, compasses and combined fields",
+        "url": "https://openstax.org/books/physics/pages/20-1-magnetic-fields-field-lines-and-force"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  {
+    "id": "cell-explorer",
+    "title": "Cell Explorer",
+    "subject": "Biology",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["cells", "organelles", "transport", "biology"],
+    "summary": "Inspect plant and animal cell structures, then compare how oxygen and glucose cross a model membrane.",
+    "question": "Why can a concentration difference move one substance across a membrane but not another?",
+    "explanation": "Plant and animal cells share structures such as a cell membrane, nucleus and mitochondria. This green plant-cell example also has chloroplasts, a cell wall and a large central vacuole; many non-green plant cells lack chloroplasts. A selectively permeable membrane allows some substances through more easily than others. Oxygen diffuses through the model’s lipid layer, while glucose needs a carrier protein. Equal-sized compartments, relative concentration units and fixed transfer steps simplify the comparison; active transport and metabolism are omitted.",
+    "experiments": [
+      {
+        "title": "Same gradient, different molecules",
+        "instruction": "Start with outside concentration 12, inside concentration 4 and no glucose carrier. Predict the difference between oxygen and glucose. Transfer oxygen for one step, restore both starting concentrations, then choose glucose and transfer one step.",
+        "observe": "Oxygen moves down its concentration gradient, while glucose does not cross this model membrane without a carrier. Explain why a concentration difference alone does not ensure passage."
+      },
+      {
+        "title": "Provide a selective pathway",
+        "instruction": "Choose glucose, restore outside concentration 12 and inside concentration 4, and leave the carrier absent. Predict the effect of adding the glucose carrier, then compare one transfer step without it and one with it, restoring the starting concentrations between trials.",
+        "observe": "With the carrier, glucose moves from higher to lower concentration while the total amount stays the same. Explain why this is passive transport rather than a pump moving material against its gradient."
+      }
+    ],
+    "misconception": "Plant cells have mitochondria as well as any chloroplasts they contain. A cell wall is outside the membrane, not a replacement for its selective control of transport.",
+    "sources": [
+      {
+        "title": "OpenStax: Eukaryotic cell structures and functions",
+        "url": "https://openstax.org/books/concepts-biology/pages/3-3-eukaryotic-cells"
+      },
+      {
+        "title": "OpenStax: Selective permeability and passive transport",
+        "url": "https://openstax.org/books/biology-2e/pages/5-2-passive-transport"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "shape-slicer",
+    "title": "Shape Slicer",
+    "subject": "Mathematics",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["geometry", "solids", "cross-sections", "spatial-reasoning"],
+    "summary": "Rotate a cube, tetrahedron or sphere, move a slicing plane and compare the resulting cross sections.",
+    "question": "Can the same solid make different cross-section shapes?",
+    "explanation": "A cross section is where a solid meets a flat plane. Rotating a solid relative to the plane or moving the plane can change the section. Changing only the viewing angle does not change the actual section. A tetrahedron has four triangular faces. A cube can make several section polygons; a sphere’s non-tangent plane sections are circles of different sizes. This model uses ideal solids and reports area and boundary length in model units. A flat section has no thickness, unlike a physical slice.",
+    "experiments": [
+      {
+        "title": "A cube is not always square inside",
+        "instruction": "Choose the cube with tilt 0°, turn 0° and slice offset 0. Predict the section made by the Diagonal cube slice preset, then compare it with the starting section.",
+        "observe": "The face-parallel center slice is a square, while the diagonal center slice is a hexagon. Compare the number of intersected faces and explain why a cube’s square faces do not force every section to be square."
+      },
+      {
+        "title": "Move a plane through a sphere",
+        "instruction": "Choose the sphere and keep its orientation fixed. Predict how the section changes when slice offset moves from 0 to 0.6, then compare the radius and area.",
+        "observe": "The radius decreases from 1 to 0.8 units and the area falls to 64% of the central section’s area. Explain why both sections remain circles even though their sizes differ."
+      }
+    ],
+    "misconception": "A cross section is not a solid’s shadow or outer silhouette. A plane that misses the solid makes no section; a tangent plane can meet a sphere at just one point.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Different plane sections of a cube",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/7/G/A/3/tasks/1532"
+      },
+      {
+        "title": "Illustrative Mathematics: Slicing solids and comparing sections",
+        "url": "https://im.kendallhunt.com/HS/students/2/5/2/index.html"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  {
+    "id": "adaptation-island",
+    "title": "Adaptation Island",
+    "subject": "Biology",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["evolution", "inheritance", "variation", "populations"],
+    "summary": "Change a habitat and follow inherited shell colors through generations of a model population.",
+    "question": "How can a population change over generations without individuals choosing new traits?",
+    "explanation": "Individuals can differ in inherited traits. In this fictional population, predators are less likely to find shells that blend with the ground. Surviving individuals contribute offspring with the same shell-color type, so the proportions can change across generations. Individuals do not change their own shell color. The model shows deterministic expected percentages using invented survival weights, not sampled animal counts. It holds population size constant and omits mutation, migration, chance and other traits.",
+    "experiments": [
+      {
+        "title": "Compare two habitats",
+        "instruction": "Start with 50% dark shells and predators present. Predict the five-generation trend on dark ground and on light ground. Run each habitat for five generations, using Reset population before the second run to restore the same starting mix.",
+        "observe": "Different shell colors become more common in the two habitats. Explain the change through inherited variation and different survival, rather than individuals choosing the color they need."
+      },
+      {
+        "title": "Remove this selection pressure",
+        "instruction": "Use dark ground and a starting dark-shell share of 50%. Predict how removing predators changes the trend. Compare five generations with predators and five without, restarting to the same initial mix before each run.",
+        "observe": "Without predators, both colors have equal survival weights and their expected proportions stay fixed in this model. Explain why inherited variation alone did not produce the same trend as variation with unequal survival."
+      }
+    ],
+    "misconception": "Natural selection does not plan ahead, create a needed trait on demand or guarantee progress. It changes the frequency of existing inherited variants under particular conditions.",
+    "sources": [
+      {
+        "title": "UC Berkeley: Variation, heredity and natural selection",
+        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/natural-selection/"
+      },
+      {
+        "title": "UC Berkeley: Misconceptions about natural selection",
+        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/misconceptions-about-natural-selection/"
+      }
+    ],
+    "duration_minutes": 15
+  }
+]

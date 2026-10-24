@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.responses import JSONResponse
 
 from app.api import auth_router, billing_router, children_router, chores_router, finance_router, homeschool_router, households_router, modules_router, notifications_router, ops_router, recipes_router, workflow_router
+from app.api.discovery import router as discovery_router
 from app.api.native_push import router as native_push_router
 from app.api.family_tree import router as family_tree_router
 from app.config import get_settings
@@ -19,6 +20,7 @@ from app.error_handling import (
 from app.health import build_readiness_payload
 from app.logging_config import configure_logging
 from app.startup import run_startup_checks
+from app.services.discovery import catalog as discovery_catalog
 from app.security.family_tree_limits import FamilyTreeBodyLimitMiddleware
 
 API_PREFIX = "/chore-api"
@@ -54,6 +56,7 @@ async def lifespan(_: FastAPI):
     configure_logging(settings.log_level)
     run_startup_checks(settings)
     initialize_database(settings)
+    discovery_catalog()
     yield
 
 
@@ -101,6 +104,7 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
     app.include_router(native_push_router, prefix=API_PREFIX)
     app.include_router(recipes_router, prefix=API_PREFIX)
     app.include_router(family_tree_router, prefix=API_PREFIX)
+    app.include_router(discovery_router, prefix=API_PREFIX)
     app.include_router(workflow_router, prefix=API_PREFIX)
     app.include_router(ops_router, prefix="/ops-api")
 

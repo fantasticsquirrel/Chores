@@ -1,0 +1,22 @@
+{
+  "name": "@family-manager/discovery-scenes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./moon": "./src/moon.ts",
+    "./protocol": "./src/protocol.ts",
+    "./landscape/*": "./src/landscape/*.ts",
+    "./expansion/*": "./src/expansion/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "typescript": "^5.7.3"
+  }
+}

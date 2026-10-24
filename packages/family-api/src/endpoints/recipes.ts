@@ -16,9 +16,9 @@ import type {
   UpdateRecipeRequest,
   UpsertRecipeFeedbackRequest,
 } from "../models/recipes";
-import { FamilyCoreApiEndpoints } from "./core";
+import { FamilyDiscoveryApiEndpoints } from "./discovery-lab";
 
-export abstract class FamilyRecipeApiEndpoints extends FamilyCoreApiEndpoints {
+export abstract class FamilyRecipeApiEndpoints extends FamilyDiscoveryApiEndpoints {
   async listRecipeCategories(): Promise<RecipeCategory[]> {
     return this.get<RecipeCategory[]>("/recipes/categories");
   }

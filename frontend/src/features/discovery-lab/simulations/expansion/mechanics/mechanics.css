@@ -1,0 +1,305 @@
+.mechanics-exhibit {
+  --mechanics-accent: #f2c47c;
+  color: #e7eef2;
+  background: #10212d;
+  padding: clamp(1rem, 2.4vw, 1.6rem);
+  border-radius: 14px;
+  display: grid;
+  gap: 1.1rem;
+}
+.mechanics-heat {
+  --mechanics-accent: #f2c181;
+}
+.mechanics-pressure {
+  --mechanics-accent: #8bdde3;
+}
+.mechanics-heading {
+  padding: 0.2rem 0.2rem 0;
+}
+.mechanics-heading h2 {
+  margin: 0 0 0.4rem;
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  letter-spacing: -0.025em;
+}
+.mechanics-heading p {
+  margin: 0;
+  color: #b9cbd6;
+  line-height: 1.6;
+  max-width: 75ch;
+}
+.mechanics-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+  gap: 1rem;
+}
+.mechanics-inputs,
+.mechanics-results {
+  min-width: 0;
+  padding: 1.3rem;
+  border: 1px solid #42617180;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #1d303e, #172431);
+}
+.mechanics-inputs {
+  display: grid;
+  gap: 1rem;
+}
+.mechanics-exhibit button {
+  color: #e9f0f1;
+  background: #2a4150;
+  border: 1px solid #69808c80;
+  border-radius: 9px;
+  padding: 0.65rem 0.8rem;
+  min-height: 44px;
+  line-height: 1.3;
+  font: inherit;
+  cursor: pointer;
+}
+.mechanics-exhibit button[aria-pressed="true"] {
+  color: #182b35;
+  border-color: var(--mechanics-accent);
+  background: var(--mechanics-accent);
+}
+.mechanics-exhibit button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mechanics-exhibit button:focus-visible,
+.mechanics-exhibit select:focus-visible,
+.mechanics-exhibit summary:focus-visible {
+  outline: 3px solid #bceef3;
+  outline-offset: 3px;
+}
+.mechanics-tabs,
+.mechanics-choices,
+.mechanics-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.mechanics-tabs button {
+  flex: 1 1 0;
+}
+.mechanics-exhibit .mechanics-reset {
+  justify-self: start;
+  color: #c6dae4;
+  background: transparent;
+}
+.mechanics-measures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.mechanics-measures span {
+  display: block;
+  min-height: 2.5em;
+  font-size: 0.82rem;
+  color: #bed0d9;
+}
+.mechanics-measures strong {
+  display: block;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  color: var(--mechanics-accent);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.mechanics-measures small {
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.mechanics-results p,
+.mechanics-steps p {
+  color: #c4d2d9;
+  line-height: 1.65;
+  margin: 0.7rem 0;
+  font-size: 0.92rem;
+}
+.mechanics-results strong {
+  color: #edf5f5;
+}
+.mechanics-results .mechanics-measures strong {
+  color: var(--mechanics-accent);
+}
+.mechanics-work {
+  padding: 1rem;
+  margin: 1rem 0;
+  background: #111d29;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+.mechanics-work-line {
+  width: 100%;
+  height: 9px;
+  border-radius: 10px;
+  background: var(--mechanics-accent);
+}
+.mechanics-select {
+  display: grid;
+  gap: 0.5rem;
+  color: #d1dfe5;
+  font-size: 0.92rem;
+}
+.mechanics-select select {
+  color: #ecf1f3;
+  background: #122430;
+  border: 1px solid #647d89;
+  padding: 0.7rem;
+  border-radius: 8px;
+  font: inherit;
+  min-width: 0;
+}
+.mechanics-temperature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.mechanics-heatbar {
+  display: flex;
+  height: 14px;
+  background: #111f2a;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 0.7rem 0 1.2rem;
+}
+.mechanics-heatbar span {
+  background: #ebb270;
+  transition: width 0.2s;
+}
+.mechanics-heatbar i {
+  background: #7ad6df;
+  transition: width 0.2s;
+}
+.mechanics-comparison {
+  border: 1px solid #52697b70;
+  border-radius: 16px;
+  padding: 1.2rem;
+  background: #152432;
+}
+.mechanics-comparison > .mechanics-tabs {
+  max-width: 36rem;
+  margin-bottom: 1.3rem;
+}
+.mechanics-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.mechanics-step {
+  color: var(--mechanics-accent);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.mechanics-steps h3 {
+  margin: 0.65rem 0 1rem;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+.mechanics-choices {
+  flex-direction: column;
+  align-items: stretch;
+}
+.mechanics-choices button {
+  font-size: 0.88rem;
+  text-align: left;
+}
+.mechanics-actions button {
+  font-size: 0.88rem;
+  flex: 1 1 9rem;
+}
+.mechanics-steps small {
+  display: block;
+  margin-top: 0.7rem;
+  color: #9fb4c1;
+  line-height: 1.5;
+}
+.mechanics-steps .mechanics-evidence {
+  padding: 0.8rem;
+  background: #293d48;
+  border-radius: 8px;
+  color: #e4f0ef;
+}
+.mechanics-details {
+  border: 1px solid #49606c70;
+  padding: 0.9rem 1.1rem;
+  border-radius: 10px;
+  color: #c3d3dc;
+  line-height: 1.65;
+  font-size: 0.9rem;
+}
+.mechanics-details summary {
+  cursor: pointer;
+  color: #e2e9eb;
+}
+.mechanics-note,
+.mechanics-control-note {
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #a9bdc8;
+  margin: 0.1rem 0;
+}
+.mechanics-note {
+  border-left: 3px solid #617d89;
+  padding-left: 1rem;
+}
+@media (max-width: 850px) {
+  .mechanics-console {
+    grid-template-columns: 1fr;
+  }
+  .mechanics-steps {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .mechanics-choices {
+    flex-direction: row;
+  }
+  .mechanics-choices button {
+    flex: 1 1 9rem;
+  }
+}
+@media (max-width: 460px) {
+  .mechanics-inputs,
+  .mechanics-results,
+  .mechanics-comparison {
+    padding: 1rem;
+  }
+  .mechanics-temperature {
+    grid-template-columns: 1fr;
+  }
+  .mechanics-measures {
+    gap: 0.5rem;
+  }
+  .mechanics-tabs button {
+    padding: 0.65rem 0.45rem;
+    font-size: 0.86rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mechanics-heatbar span,
+  .mechanics-heatbar i {
+    transition: none;
+  }
+}
+
+.discovery-lab .mechanics-exhibit h2,
+.discovery-lab .mechanics-exhibit h3 {
+  color: #e7eef2;
+}
+.discovery-lab .mechanics-exhibit p {
+  color: #c4d2d9;
+}
+.discovery-lab .mechanics-exhibit .mechanics-note,
+.discovery-lab .mechanics-exhibit .mechanics-control-note {
+  color: #b4c9d5;
+}
+
+.mechanics-exhibit .dl-range-labels {
+  color: #b2c7d2;
+}

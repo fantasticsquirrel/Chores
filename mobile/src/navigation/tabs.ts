@@ -21,9 +21,17 @@ export function buildNavigationLayout(
   modules: FamilyModule[],
 ): NavigationLayout {
   if (!isParentRole(role)) {
+    const discovery: NavigationItem[] = hasModule(modules, "discovery-lab")
+      ? [
+          {
+            key: "discovery-lab",
+            label: getMobileModule("discovery-lab").label,
+          },
+        ]
+      : [];
     if (!hasModule(modules, "chores")) {
       return {
-        primary: [{ key: "account", label: "Account" }],
+        primary: [...discovery, { key: "account", label: "Account" }],
         overflow: [],
       };
     }
@@ -34,7 +42,10 @@ export function buildNavigationLayout(
         { key: "account", label: "Account" },
         { key: "more", label: "More" },
       ],
-      overflow: [{ key: "notifications", label: "Notifications" }],
+      overflow: [
+        ...discovery,
+        { key: "notifications", label: "Notifications" },
+      ],
     };
   }
 
@@ -65,6 +76,13 @@ export function buildNavigationLayout(
 
   if (hasModule(modules, "recipes")) {
     overflow.push({ key: "recipes", label: getMobileModule("recipes").label });
+  }
+
+  if (hasModule(modules, "discovery-lab")) {
+    overflow.push({
+      key: "discovery-lab",
+      label: getMobileModule("discovery-lab").label,
+    });
   }
 
   const tree = familyModules.find((module) => module.key === "family-tree");

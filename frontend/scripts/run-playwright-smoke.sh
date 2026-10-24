@@ -216,7 +216,7 @@ if ! (
   PLAYWRIGHT_SMOKE_FIXTURE_PATH="$FIXTURE_PATH" \
   PLAYWRIGHT_PASSWORD_RESET_FIXTURE_PATH="$PASSWORD_RESET_FIXTURE_PATH" \
   PLAYWRIGHT_CHROMIUM_EXECUTABLE="$PLAYWRIGHT_BROWSER_EXECUTABLE" \
-    npx playwright test -c playwright.smoke.config.ts e2e/smoke.spec.ts
+    npx playwright test -c playwright.smoke.config.ts "${@:-e2e/smoke.spec.ts}"
 ); then
   cat "$TMP_DIR/server.log" >&2
   exit 1

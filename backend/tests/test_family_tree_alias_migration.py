@@ -68,11 +68,17 @@ def test_alias_history_migration_preserves_existing_rows_and_unfiltered_schema(t
     with engine.connect() as c:
         from app.models import RETAINED_HOMESCHOOL_TABLES
         after_head = snapshot(c)
-        assert set(after_head) == set(previous_head) | {table.name for table in RETAINED_HOMESCHOOL_TABLES}
+        assert set(after_head) == set(previous_head) | {table.name for table in RETAINED_HOMESCHOOL_TABLES} | {"discovery_exploration_access"}
         for name, old in previous_head.items():
-            assert after_head[name] == old, name
+            if name in {"modules", "household_module_access"}:
+                assert after_head[name][0] == old[0], name
+                assert all(row in after_head[name][1] for row in old[1]), name
+                added = [row for row in after_head[name][1] if row not in old[1]]
+                assert all("discovery-lab" in row for row in added), name
+            else:
+                assert after_head[name] == old, name
         for table in RETAINED_HOMESCHOOL_TABLES:
             assert after_head[table.name][1] == []
-        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261014_0029'
+        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261024_0030'
     command.check(cfg)
     engine.dispose()

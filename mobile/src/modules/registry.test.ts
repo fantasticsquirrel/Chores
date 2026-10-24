@@ -20,6 +20,7 @@ describe("mobile family module registry", () => {
       "recipes",
       "admin",
       ...(treeSupported ? ["family-tree"] : []),
+      "discovery-lab",
     ]);
   });
 

@@ -1,0 +1,222 @@
+.earth-exhibit {
+  color: #edf4e8;
+  background: #14272d;
+  border: 1px solid #476266;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.earth-exhibit > header {
+  padding: 1.4rem 1.6rem 0.4rem;
+}
+.earth-exhibit h2 {
+  font-family: Georgia, serif;
+  font-size: clamp(1.4rem, 2.3vw, 2rem);
+  line-height: 1.15;
+  margin: 0 0 0.55rem;
+  font-weight: 500;
+}
+.earth-exhibit p {
+  line-height: 1.6;
+}
+.earth-exhibit > header p {
+  max-width: 78ch;
+  color: #c4d8d6;
+  font-size: 0.94rem;
+}
+.earth-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 265px;
+  align-items: start;
+}
+.earth-visual {
+  min-width: 0;
+}
+.earth-visual .expansion-scene {
+  border: none;
+  border-radius: 0;
+  min-height: 420px;
+}
+.earth-camera-help {
+  font-size: 0.76rem;
+  color: #b4cfcd;
+  margin: 0.1rem 1.3rem 1rem;
+}
+.earth-controls {
+  padding: 1rem 1.15rem;
+  background: #1d343b;
+  border-left: 1px solid #3b555c;
+  min-width: 0;
+}
+.earth-controls .dl-slider {
+  margin: 0 0 1.1rem;
+}
+.earth-controls input[type="range"] {
+  width: 100%;
+  accent-color: #e4bd81;
+}
+.earth-controls .dl-value {
+  color: #f3d39a;
+}
+.earth-controls label {
+  color: #eef5eb;
+  font-size: 0.82rem;
+}
+.earth-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+}
+.earth-exhibit button {
+  background: #2b4951;
+  border: 1px solid #5d7f83;
+  color: #f3f2de;
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.earth-exhibit button:hover {
+  background: #3a5d63;
+}
+.earth-exhibit button[aria-pressed="true"] {
+  color: #192b30;
+  background: #e8c591;
+  border-color: #f3d7aa;
+}
+.earth-exhibit button:focus-visible,
+.earth-exhibit input:focus-visible {
+  outline: 3px solid #ffe3a1;
+  outline-offset: 3px;
+}
+.earth-control-note {
+  font-size: 0.78rem;
+  color: #c0d2cd;
+  margin: 0.55rem 0;
+}
+.earth-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  padding: 1rem 1.5rem;
+  background: #233e44;
+  border-block: 1px solid #527071;
+}
+.earth-evidence > p {
+  width: 100%;
+  margin: 0.1rem 0;
+  font-size: 0.9rem;
+}
+.earth-metric {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 130px;
+}
+.earth-metric span {
+  font-size: 0.73rem;
+  color: #c1d3ca;
+}
+.earth-metric strong {
+  font-size: 1.2rem;
+  color: #f5d49c;
+}
+.earth-model-note {
+  font-size: 0.79rem;
+  color: #bdcecb;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: #172c32;
+}
+.earth-exhibit .landscape-investigation {
+  background: #1e343b;
+  border: 0;
+  border-radius: 0;
+}
+.earth-exhibit .landscape-steps {
+  color: #d6e2d9;
+}
+@media (max-width: 900px) {
+  .earth-workbench {
+    grid-template-columns: 1fr;
+  }
+  .earth-controls {
+    border-left: 0;
+    border-top: 1px solid #3b555c;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .earth-controls > .earth-buttons,
+  .earth-controls > p {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 520px) {
+  .earth-exhibit > header {
+    padding: 1rem;
+  }
+  .earth-visual .expansion-scene {
+    min-height: 340px;
+  }
+  .earth-controls {
+    padding: 1rem;
+    gap: 0.7rem;
+  }
+  .earth-evidence {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  .earth-metric {
+    min-width: 110px;
+  }
+  .earth-exhibit .landscape-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+.earth-exhibit .landscape-tabs > button {
+  color: #c3d5cd !important;
+}
+.earth-exhibit .landscape-tabs > button[aria-selected="true"] {
+  color: #f3d29a !important;
+  border-bottom-color: #e4bc7c !important;
+}
+.earth-exhibit .landscape-steps small,
+.earth-exhibit .landscape-prediction {
+  color: #d5c697;
+}
+.discovery-lab .earth-exhibit .expansion-view-help,
+.earth-exhibit .expansion-view-help {
+  color: #b4cfcd;
+  font-size: 0.76rem;
+  padding: 0.4rem 1.2rem;
+  margin: 0.2rem 0 0.6rem;
+}
+
+/* The app shell styles .content-grid p; dark exhibit text must not inherit it. */
+.discovery-lab .earth-exhibit p {
+  color: #d6e2d9;
+}
+.discovery-lab .earth-exhibit > header p {
+  color: #c4d8d6;
+}
+.discovery-lab .earth-exhibit .earth-control-note {
+  color: #c0d2cd;
+}
+.discovery-lab .earth-exhibit .earth-model-note {
+  color: #bdcecb;
+}
+.discovery-lab .earth-exhibit .earth-evidence > p {
+  color: #edf4e8;
+}
+.discovery-lab .earth-exhibit .landscape-prediction,
+.discovery-lab .earth-exhibit .landscape-steps small {
+  color: #d5c697;
+}
+.discovery-lab .earth-exhibit .expansion-view-help {
+  color: #b4cfcd;
+}
+.discovery-lab .earth-exhibit .dl-range-labels {
+  color: #c1d3ca;
+}
