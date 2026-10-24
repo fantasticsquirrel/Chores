@@ -54,6 +54,8 @@ class ModuleService:
         # Genealogy is deliberately opt-in, including missing-row and corrupt child grants.
         if not household_overrides.get("family-tree", False) or user.role == UserRole.CHILD:
             allowed_keys.discard("family-tree")
+        if not household_overrides.get("discovery-lab", False):
+            allowed_keys.discard("discovery-lab")
         return [module for module in AVAILABLE_MODULES if module.key in allowed_keys and module.key in catalog]
 
     def can_access_module(self, session: Session, user: User, module_key: str, *, manage: bool = False) -> bool:
@@ -80,7 +82,7 @@ class ModuleService:
             ).all()
         }
         return [
-            (module, module.key in globally_enabled and overrides.get(module.key, module.key != "family-tree"))
+            (module, module.key in globally_enabled and overrides.get(module.key, module.key not in {"family-tree", "discovery-lab"}))
             for module in AVAILABLE_MODULES
         ]
 

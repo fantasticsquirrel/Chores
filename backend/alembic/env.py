@@ -66,7 +66,7 @@ def _run_connection(connection) -> None:
         # Historical sparse fixtures intentionally stop before current head.
         # Verify the compatibility chain after version advancement as well as
         # inside 0029, without retroactively changing those older boundaries.
-        if context.get_context().get_current_revision() == "20261014_0029":
+        if context.get_context().get_current_revision() in {"20261014_0029", "20261024_0030"}:
             if connection.exec_driver_sql("PRAGMA foreign_key_check").first() is not None:
                 raise RuntimeError("SQLite migration foreign key verification failed")
             if connection.exec_driver_sql("PRAGMA integrity_check").scalars().all() != ["ok"]:

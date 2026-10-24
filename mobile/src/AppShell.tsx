@@ -22,6 +22,7 @@ import { ChoresScreen } from "./screens/parent/ChoresScreen";
 import { ParentHomeScreen } from "./screens/parent/ParentHomeScreen";
 import { ParentReviewScreen } from "./screens/parent/ReviewScreen";
 import { MoneyScreen } from "./screens/parent/MoneyScreen";
+import { DiscoveryLabScreen } from "./screens/DiscoveryLabScreen";
 import { FamilyTreeScreen } from "./screens/FamilyTreeScreen";
 import { RecipesScreen } from "./screens/recipes/RecipesScreen";
 import { NotificationsScreen } from "./screens/notifications/NotificationsScreen";
@@ -102,6 +103,10 @@ export function AppShell() {
 
   const renderedTab = isParentRole(session.user.role) ? (
     <>
+      {activeTab === "discovery-lab" &&
+      canAccessMobileModule(modules, "discovery-lab") ? (
+        <DiscoveryLabScreen session={session} modules={modules} />
+      ) : null}
       {activeTab === "home" ? (
         <ParentHomeScreen
           modules={modules}
@@ -175,6 +180,9 @@ export function AppShell() {
       onPasswordChanged={() => clearSession("Password changed. Sign in again.")}
       session={session}
     />
+  ) : activeTab === "discovery-lab" &&
+    canAccessMobileModule(modules, "discovery-lab") ? (
+    <DiscoveryLabScreen session={session} modules={modules} />
   ) : activeTab === "money" && canAccessMobileModule(modules, "chores") ? (
     <MoneyScreen readOnly />
   ) : activeTab === "notifications" ? (
@@ -200,6 +208,7 @@ export function AppShell() {
     : activeTab === "homeschool" ||
         activeTab === "admin" ||
         activeTab === "recipes" ||
+        activeTab === "discovery-lab" ||
         activeTab === "family-tree"
       ? activeTab
       : null;

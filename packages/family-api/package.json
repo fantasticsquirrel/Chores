@@ -14,6 +14,7 @@
     "./models/*": "./src/models/*.ts",
     "./modules": "./src/modules.ts",
     "./ops-endpoints": "./src/ops-endpoints.ts",
-    "./ops-models": "./src/ops-models.ts"
+    "./ops-models": "./src/ops-models.ts",
+    "./discovery-models/*": "./src/discovery-models/*.ts"
   }
 }

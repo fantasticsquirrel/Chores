@@ -1,0 +1,79 @@
+.expansion-scene {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  background: #10212b;
+  border-radius: 20px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.expansion-scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.expansion-scene:focus-visible {
+  outline: 3px solid #d36c42;
+  outline-offset: 3px;
+}
+.expansion-label {
+  width: max-content;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: #f4f5e9;
+  background: #173f3cdd;
+  border: 1px solid #9cbeae;
+  border-radius: 5px;
+  padding: 4px 7px;
+  font:
+    600 12px/1.25 system-ui,
+    sans-serif;
+  max-width: 145px;
+  text-align: center;
+  pointer-events: none;
+}
+.expansion-fallback {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  padding: 24px;
+  color: #e9f0e8;
+}
+@media (max-width: 600px) {
+  .expansion-scene {
+    height: 420px;
+  }
+  .expansion-label {
+    width: max-content;
+    font-size: 11px;
+    padding: 3px 5px;
+    max-width: 105px;
+  }
+}
+
+.discovery-lab .expansion-view-help {
+  margin: 8px 4px 12px;
+  color: #c3d5cd;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.expansion-leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+.expansion-leaders line {
+  stroke: #c6d8c8;
+  stroke-width: 1;
+  opacity: 0.85;
+}
+.expansion-leaders circle {
+  fill: #e1ead5;
+}

@@ -409,3 +409,9 @@ Priority reset: follow the rewritten IMPLEMENTATION_PLAN.md focused on auth + co
 - Recovery task `5.3` expanded deployed Playwright auth checks in `frontend/e2e/smoke.spec.ts` to assert anonymous protected-route redirects, anonymous API `401 Not authenticated.` responses, and child-role `403 Forbidden.` responses on parent-only APIs.
 - Recovery task `5.4` updated `README.md` with explicit auth setup (`/chore-api/auth/*` + CSRF header usage), a one-time first parent bootstrap flow via backend models, and a production deploy verification checklist including health/auth assertions plus Playwright smoke execution.
 - Recovery task `5.5` completion-only updates must still run root quality gates (`npm run lint`, `npm test`) before checking the final plan box and appending `STATUS: COMPLETE` in `IMPLEMENTATION_PLAN.md`.
+
+## Discovery Lab educational content
+
+Education is the primary purpose of every Exploration. Follow `docs/discovery-content-standard.md` for all new and edited learning content. Do not add unnecessary AI-related, self-referential, promotional, or generic filler text. Each lesson must teach a specific concept through a prediction, an observable manipulation, and an explanation tied to the result. Keep scientifically necessary assumptions, historical context, safety information, and accessible instructions. Editorial review is required; keyword bans are not a substitute.
+
+Rendered learning screens are part of the editorial review, not just registry text. Remove decorative labels such as “Earth Observatory,” mood taglines such as “One Moon. A changing view…,” redundant “experiment bench” labels, and other text that adds no instruction or concept. Keep the current phase/state, control instructions, evidence-based explanations, feedback, and necessary accuracy caveats. Put asset credits in an accessible Sources/footer area rather than over the teaching visual.

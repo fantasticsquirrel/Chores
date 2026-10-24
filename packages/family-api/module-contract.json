@@ -18,20 +18,14 @@
         "web": {
           "supported": true,
           "destination": "/parent/chores",
-          "roles": [
-            "PARENT_ADMIN",
-            "PARENT"
-          ],
+          "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
         },
         "mobile": {
           "supported": true,
           "destination": "chores",
-          "roles": [
-            "PARENT_ADMIN",
-            "PARENT"
-          ],
+          "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
         }
@@ -54,20 +48,14 @@
         "web": {
           "supported": true,
           "destination": "/homeschool",
-          "roles": [
-            "PARENT_ADMIN",
-            "PARENT"
-          ],
+          "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
         },
         "mobile": {
           "supported": true,
           "destination": "homeschool",
-          "roles": [
-            "PARENT_ADMIN",
-            "PARENT"
-          ],
+          "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
         }
@@ -90,20 +78,14 @@
         "web": {
           "supported": true,
           "destination": "/recipes",
-          "roles": [
-            "PARENT_ADMIN",
-            "PARENT"
-          ],
+          "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
         },
         "mobile": {
           "supported": true,
           "destination": "recipes",
-          "roles": [
-            "PARENT_ADMIN",
-            "PARENT"
-          ],
+          "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
         }
@@ -126,18 +108,14 @@
         "web": {
           "supported": true,
           "destination": "/admin/dashboard",
-          "roles": [
-            "PARENT_ADMIN"
-          ],
+          "roles": ["PARENT_ADMIN"],
           "navigation": true,
           "dashboard": false
         },
         "mobile": {
           "supported": true,
           "destination": "admin",
-          "roles": [
-            "PARENT_ADMIN"
-          ],
+          "roles": ["PARENT_ADMIN"],
           "navigation": true,
           "dashboard": false
         }
@@ -170,6 +148,36 @@
           "roles": ["PARENT_ADMIN", "PARENT"],
           "navigation": true,
           "dashboard": true
+        }
+      }
+    },
+    "discovery-lab": {
+      "key": "discovery-lab",
+      "name": "Discovery Lab",
+      "description": "Interactive explorations with parent-controlled learning access.",
+      "labels": {
+        "web": "Discovery Lab",
+        "mobile": "Discovery Lab"
+      },
+      "default_grants": {
+        "PARENT_ADMIN": true,
+        "PARENT": true,
+        "CHILD": true
+      },
+      "platforms": {
+        "web": {
+          "supported": true,
+          "destination": "/discovery-lab",
+          "roles": ["PARENT_ADMIN", "PARENT", "CHILD"],
+          "navigation": true,
+          "dashboard": false
+        },
+        "mobile": {
+          "supported": true,
+          "destination": "discovery-lab",
+          "roles": ["PARENT_ADMIN", "PARENT", "CHILD"],
+          "navigation": true,
+          "dashboard": false
         }
       }
     }

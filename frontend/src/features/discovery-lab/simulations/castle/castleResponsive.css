@@ -1,0 +1,106 @@
+@media (max-width: 760px) {
+  .castle-visual {
+    height: 510px;
+  }
+  .castle-heading {
+    left: 19px;
+    top: 20px;
+    right: 19px;
+  }
+  .discovery-lab .castle-heading h2,
+  .castle-heading h2 {
+    font-size: 24px;
+  }
+  .discovery-lab .castle-heading p,
+  .castle-heading p {
+    font-size: 11px;
+    max-width: 255px;
+  }
+  .castle-route-key {
+    left: 19px;
+    top: 91px;
+    font-size: 9px;
+    max-width: calc(100% - 36px);
+    gap: 5px;
+  }
+  .castle-route-key span {
+    max-width: 150px;
+  }
+  .castle-canvas {
+    inset: 94px -4% 60px;
+  }
+  .castle-annotation {
+    font-size: 9px;
+    padding: 4px 5px;
+  }
+  .castle-camera {
+    left: 10px;
+    right: 10px;
+    bottom: 29px;
+    gap: 4px;
+  }
+  .castle-camera > div {
+    padding: 3px;
+    gap: 1px;
+  }
+  .castle-camera button {
+    padding: 9px 7px;
+    min-width: 29px;
+    font-size: 9px;
+  }
+  .castle-camera-hint {
+    font-size: 9px;
+    bottom: 9px;
+    left: 14px;
+    right: 14px;
+  }
+  .castle-console {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 22px;
+  }
+  .castle-features {
+    gap: 20px 13px;
+  }
+  .castle-reset {
+    justify-self: start;
+  }
+  .castle-observation {
+    padding: 15px 22px;
+  }
+  .castle-investigation {
+    padding: 22px;
+  }
+  .castle-investigation-grid {
+    grid-template-columns: 1fr;
+    gap: 23px;
+  }
+  .castle-investigation-grid > div + div {
+    border-top: 1px solid #d6dccb;
+    padding-top: 18px;
+  }
+  .discovery-lab .castle-model-note,
+  .castle-model-note {
+    padding: 15px 22px;
+  }
+}
+@media (max-width: 760px) {
+  .castle-camera > div:first-child {
+    flex: 1;
+  }
+  .castle-camera > div:first-child button {
+    flex: 1;
+  }
+  .castle-camera button {
+    min-height: 44px;
+    min-width: 28px;
+    padding: 8px 4px;
+  }
+  .castle-camera > div:last-child button {
+    min-width: 34px;
+    font-size: 17px;
+  }
+  .castle-camera-hint {
+    font-size: 9px;
+  }
+}

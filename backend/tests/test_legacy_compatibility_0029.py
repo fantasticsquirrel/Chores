@@ -12,7 +12,7 @@ from app.db import Base
 from app.models import ALL_MODELS
 
 ROOT = Path(__file__).resolve().parents[1]
-HEAD = "20261014_0029"
+HEAD = "20261024_0030"
 LEGACY = {"homeschool_courses", "homeschool_lessons",
           "homeschool_course_assignments", "homeschool_lesson_progress"}
 
@@ -29,9 +29,9 @@ def configuration(monkeypatch, path):
 def test_fresh_exact_retained_inventory_and_unfiltered_parity(monkeypatch, tmp_path):
     config = configuration(monkeypatch, tmp_path / "fresh.sqlite")
     command.upgrade(config, "head")
-    assert len(Base.metadata.tables) == 75
+    assert len(Base.metadata.tables) == 76
     assert LEGACY <= set(Base.metadata.tables)
-    assert len(ALL_MODELS) == 71  # Retention is Table-only, not a revived API.
+    assert len(ALL_MODELS) == 72  # Retention is Table-only, not a revived API.
     engine = create_engine(f"sqlite:///{tmp_path / 'fresh.sqlite'}")
     with engine.connect() as connection:
         assert set(inspect(connection).get_table_names()) == set(Base.metadata.tables) | {"alembic_version"}
@@ -91,7 +91,7 @@ def test_populated_full_chain_preserves_every_row_and_schema(monkeypatch, tmp_pa
             added = sum((after_rows[table] - old).values())
             if added:
                 additions[table] = added
-        assert additions == ({"modules": 1, "household_module_access": 1} if revision == PREVIOUS[0] else {})
+        assert additions == ({"modules": 2, "household_module_access": 2} if revision == PREVIOUS[0] else {"modules": 1, "household_module_access": 1})
         changed = {"users", "recipes", "recipe_categories", "recipe_tags"}
         after = {(kind, name): (attached, sql) for kind, name, attached, sql in after_schema}
         for kind, name, attached, sql in before_schema:
@@ -215,7 +215,7 @@ def test_normalized_predecessor_does_not_rebuild(monkeypatch, tmp_path):
     command.upgrade(config, PREVIOUS[1])
     with sqlite3.connect(path) as raw:
         before = snapshot(raw)
-    command.upgrade(config, "head")
+    command.upgrade(config, "20261014_0029")
     with sqlite3.connect(path) as raw:
         after = snapshot(raw)
         expected_schema = sorted(before[0] + [("table", name, name, ddl) for name, ddl in LEGACY_DDL.items()]
@@ -224,4 +224,5 @@ def test_normalized_predecessor_does_not_rebuild(monkeypatch, tmp_path):
         for table, rows in before[1].items():
             if table != "alembic_version":
                 assert after[1][table] == rows
+    command.upgrade(config, "head")
     command.check(config)

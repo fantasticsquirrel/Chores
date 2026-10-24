@@ -29,6 +29,7 @@ const MOBILE_NAVIGATION_MODULE_KEYS = [
   "homeschool",
   "recipes",
   "family-tree",
+  "discovery-lab",
   "admin",
 ] as const satisfies ReadonlyArray<FamilyModuleKey>;
 
@@ -44,6 +45,7 @@ const treeSupported = familyModules.some(
 
 export const MOBILE_MODULE_REGISTRATION: ModulePlatformRegistration = {
   routes: [
+    { moduleKey: "discovery-lab", destination: "discovery-lab" },
     { moduleKey: "chores", destination: "chores" },
     { moduleKey: "chores", destination: "review" },
     { moduleKey: "chores", destination: "money" },
@@ -62,6 +64,7 @@ export const MOBILE_MODULE_REGISTRATION: ModulePlatformRegistration = {
     destination,
   })),
   guards: [
+    "discovery-lab",
     "chores",
     "homeschool",
     "recipes",

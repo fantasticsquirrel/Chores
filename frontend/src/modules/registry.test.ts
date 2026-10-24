@@ -18,7 +18,20 @@ describe("frontend family module registry", () => {
       ...(supported.some((module) => module.key === "family-tree")
         ? ["family-tree"]
         : []),
+      "discovery-lab",
     ]);
+  });
+
+  it("registers Discovery Lab for children and parents without claiming a dashboard card", () => {
+    const discovery = familyModules.find(
+      (module) => module.key === "discovery-lab",
+    );
+    expect(discovery?.roles).toEqual(["PARENT_ADMIN", "PARENT", "CHILD"]);
+    expect(getWebModuleDestination("discovery-lab")).toBe("/discovery-lab");
+    expect(WEB_MODULE_REGISTRATION.guards).toContain("discovery-lab");
+    expect(WEB_MODULE_REGISTRATION.dashboardCards).not.toContain(
+      "discovery-lab",
+    );
   });
 
   it("keeps admin web navigation limited to parent admins", () => {

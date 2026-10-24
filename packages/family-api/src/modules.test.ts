@@ -14,6 +14,7 @@ describe("shared family module metadata", () => {
       "recipes",
       "admin",
       "family-tree",
+      "discovery-lab",
     ]);
     for (const module of FAMILY_MODULE_DEFINITIONS) {
       expect(Object.keys(module.platformDefinitions).sort()).toEqual([
@@ -44,15 +45,20 @@ describe("shared family module metadata", () => {
 
   it("supports the cookbook and adult-only Family Tree on both platforms", () => {
     for (const platform of ["web", "mobile"] as const) {
-      expect(getFamilyModulesForPlatform(platform).map((module) => module.key)).toEqual([
+      expect(
+        getFamilyModulesForPlatform(platform).map((module) => module.key),
+      ).toEqual([
         "chores",
         "homeschool",
         "recipes",
         "admin",
         "family-tree",
+        "discovery-lab",
       ]);
       expect(isFamilyModuleSupportedOnPlatform("recipes", platform)).toBe(true);
-      expect(isFamilyModuleSupportedOnPlatform("family-tree", platform)).toBe(true);
+      expect(isFamilyModuleSupportedOnPlatform("family-tree", platform)).toBe(
+        true,
+      );
     }
   });
 });

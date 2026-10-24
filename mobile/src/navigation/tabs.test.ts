@@ -17,6 +17,26 @@ const modules = (...keys: FamilyModuleKey[]): FamilyModule[] =>
   }));
 
 describe("buildNavigationLayout", () => {
+  it("makes Discovery Lab reachable for a child without Chores and hides it after revocation", () => {
+    expect(
+      navigationDestinations(
+        buildNavigationLayout("CHILD", modules("discovery-lab")),
+      ),
+    ).toEqual(["discovery-lab", "account"]);
+    expect(
+      navigationDestinations(
+        buildNavigationLayout("CHILD", modules("chores", "discovery-lab")),
+      ),
+    ).toContain("discovery-lab");
+    expect(
+      navigationDestinations(
+        buildNavigationLayout("PARENT", modules("discovery-lab")),
+      ),
+    ).toContain("discovery-lab");
+    expect(
+      navigationDestinations(buildNavigationLayout("CHILD", [])),
+    ).not.toContain("discovery-lab");
+  });
   it("gives children Today, allowance history, and Account", () => {
     const layout = buildNavigationLayout(
       "CHILD",

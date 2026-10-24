@@ -21,7 +21,11 @@ export default defineConfig({
     trace: "off",
     screenshot: "off",
     video: "off",
-    launchOptions:
-      executablePath === undefined ? undefined : { executablePath },
+    launchOptions: {
+      ...(executablePath === undefined ? {} : { executablePath }),
+      ...(process.env.PLAYWRIGHT_CHROMIUM_SANDBOX === "1"
+        ? { chromiumSandbox: true, args: ["--disable-dev-shm-usage"] }
+        : {}),
+    },
   },
 });

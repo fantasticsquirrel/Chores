@@ -7,6 +7,7 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 - Shared household, parent, and child accounts with role-aware route protection
 - Chores module for chore management, child eligible chores, submissions, and parent review/approval
 - Homeschool module for semesters, subjects, attendance calendar entries, day comments, and grades
+- [Discovery Lab](docs/discovery-lab.md): 26 interactive learning Explorations, with per-child and filtered bulk parent controls on web and native; household opt-in rollout
 - Admin module for per-user module access management, with last-admin protection
 - SQLite persistence with Alembic migrations, startup checks, and WAL mode
 - Frontend and backend automated test coverage for implemented flows

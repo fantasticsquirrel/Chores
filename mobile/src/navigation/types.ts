@@ -6,6 +6,7 @@ export type AppTab =
   | "money"
   | "homeschool"
   | "recipes"
+  | "discovery-lab"
   | "family-tree"
   | "notifications"
   | "admin"

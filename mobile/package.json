@@ -22,14 +22,18 @@
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "react-native-webview": "13.16.1",
+    "@family-manager/discovery-scenes": "file:../packages/discovery-scenes"
   },
   "devDependencies": {
     "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.2.2",
     "jest-expo": "~56.0.5",
     "react-test-renderer": "^19.2.3",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "esbuild": "0.25.12",
+    "@playwright/test": "^1.58.2"
   },
   "scripts": {
     "start": "expo start",
@@ -45,7 +49,11 @@
     "apk:local": "bash ./scripts/build-apk.sh --local",
     "eas:init": "npx --yes eas-cli@20.0.0 project:init",
     "eas:set-api": "bash ./scripts/set-eas-api-url.sh",
-    "eas:whoami": "npx --yes eas-cli@20.0.0 whoami"
+    "eas:whoami": "npx --yes eas-cli@20.0.0 whoami",
+    "scenes:build": "node scripts/build-discovery-scenes.mjs",
+    "scenes:check": "node scripts/build-discovery-scenes.mjs --check",
+    "scenes:test:browser": "node --test scripts/discovery-scenes/*.browser-check.mjs",
+    "pretypecheck": "npm run scenes:check"
   },
   "private": true
 }

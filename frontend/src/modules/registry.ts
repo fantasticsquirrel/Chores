@@ -41,6 +41,12 @@ export const webModuleNavigationItems = familyModules
 
 export const WEB_MODULE_REGISTRATION: ModulePlatformRegistration = {
   routes: [
+    { moduleKey: "discovery-lab", destination: "/discovery-lab" },
+    {
+      moduleKey: "discovery-lab",
+      destination: "/discovery-lab/:explorationId",
+    },
+    { moduleKey: "discovery-lab", destination: "/discovery-lab/manage" },
     { moduleKey: "family-tree", destination: "/family-tree" },
     { moduleKey: "family-tree", destination: "/family-tree/people/:personId" },
     { moduleKey: "chores", destination: "/parent/chores" },
@@ -58,7 +64,14 @@ export const WEB_MODULE_REGISTRATION: ModulePlatformRegistration = {
     moduleKey,
     destination: to,
   })),
-  guards: ["chores", "homeschool", "recipes", "admin", "family-tree"],
+  guards: [
+    "discovery-lab",
+    "chores",
+    "homeschool",
+    "recipes",
+    "admin",
+    "family-tree",
+  ],
   dashboardCards: ["chores", "homeschool", "recipes", "family-tree"],
 };
 

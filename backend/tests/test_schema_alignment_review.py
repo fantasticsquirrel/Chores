@@ -46,5 +46,13 @@ def test_unfiltered_migration_parity_and_existing_rows(tmp_path,monkeypatch,prev
         assert inspect(c).get_columns('households')[3]['nullable'] is False
         assert c.execute(text('PRAGMA foreign_key_check')).all()==[]
         if previous:
-            for t,expected in rows.items(): assert list(c.execute(text(f'SELECT * FROM "{t}"')).tuples())==expected, t
-            c.execute(text('DELETE FROM users WHERE id=902')) if False else None
+            for table, expected in rows.items():
+                current = list(c.execute(text(f'SELECT * FROM "{table}"')).tuples())
+                if table == "modules":
+                    assert [row for row in current if row[0] != "discovery-lab"] == expected
+                    assert [row for row in current if row[0] == "discovery-lab"] == [("discovery-lab", "Discovery Lab", "Interactive explorations with parent-controlled learning access.", 1)]
+                elif table == "household_module_access":
+                    assert [row for row in current if row[1] != "discovery-lab"] == expected
+                    assert [(row[0], row[1], row[2]) for row in current if row[1] == "discovery-lab"] == [(901, "discovery-lab", 0)]
+                else:
+                    assert current == expected, table

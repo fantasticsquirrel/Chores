@@ -1,0 +1,236 @@
+.landscape-exhibit {
+  --land-ink: #2f4438;
+  --land-muted: #63735f;
+  --land-line: #bcc5af;
+  --land-accent: #48694f;
+  border: 1px solid var(--land-line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f5f2e7;
+  color: var(--land-ink);
+  font-family: Arial, sans-serif;
+}
+.landscape-visual {
+  position: relative;
+  background: radial-gradient(ellipse at 50% 35%, #e0e2d1, #bec8b4);
+}
+.landscape-visual header {
+  padding: 26px 30px 0;
+  position: relative;
+  z-index: 2;
+}
+.landscape-visual h2 {
+  font-family: Georgia, serif;
+  font-size: clamp(24px, 2.7vw, 34px);
+  line-height: 1.15;
+  margin: 0 0 9px;
+  font-weight: 400;
+  color: #2c4036;
+}
+.landscape-visual header p {
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 72ch;
+  color: #52654e;
+}
+.landscape-canvas {
+  height: clamp(360px, 43vw, 580px);
+  width: 100%;
+  position: relative;
+  touch-action: pan-y;
+  outline-offset: -4px;
+  cursor: grab;
+}
+.landscape-canvas:active {
+  cursor: grabbing;
+}
+.landscape-canvas canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.landscape-label {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  background: rgba(248, 247, 232, 0.9);
+  border: 1px solid #a6b1978a;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  line-height: 1.25;
+  color: #354936;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px #34492a10;
+}
+.landscape-camera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 20px;
+  background: #b6c1ac77;
+  border-top: 1px solid #9cae96;
+}
+.landscape-camera > div {
+  display: flex;
+  gap: 4px;
+}
+.landscape-camera span {
+  font-size: 11px;
+  color: #506149;
+}
+.landscape-exhibit button {
+  font: inherit;
+  color: inherit;
+  min-height: 38px;
+  background: #f6f5eb;
+  border: 1px solid #a3b296;
+  border-radius: 5px;
+  padding: 8px 13px;
+  cursor: pointer;
+}
+.landscape-exhibit button:hover {
+  background: #e2e9d8;
+}
+.landscape-exhibit button[aria-pressed="true"],
+.landscape-exhibit button[aria-selected="true"] {
+  background: #3c5a43;
+  color: #fff;
+  border-color: #3c5a43;
+}
+.landscape-exhibit button:focus-visible,
+.landscape-exhibit input:focus-visible,
+.landscape-exhibit select:focus-visible,
+.landscape-canvas:focus-visible {
+  outline: 3px solid #8a602c;
+  outline-offset: 3px;
+}
+.landscape-camera button {
+  font-size: 12px;
+  min-height: 36px;
+  padding: 7px 12px;
+}
+.landscape-controls {
+  padding: 24px 30px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 26px;
+  border-bottom: 1px solid var(--land-line);
+  background: #eeeee3;
+  align-items: start;
+}
+.landscape-controls label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.landscape-controls select {
+  display: block;
+  width: 100%;
+  margin-top: 9px;
+  padding: 9px 10px;
+  min-height: 40px;
+  border: 1px solid #a5b397;
+  border-radius: 5px;
+  background: #faf9f1;
+  color: #344d39;
+  font: inherit;
+  font-size: 13px;
+}
+.landscape-exhibit .dl-slider {
+  gap: 9px;
+  margin: 0;
+}
+.landscape-exhibit .dl-slider-heading {
+  color: #334c38;
+}
+.landscape-exhibit .dl-value {
+  background: #dce4d3;
+  color: #36573d;
+}
+.landscape-exhibit .dl-range-labels {
+  color: #68765f;
+}
+.landscape-exhibit input[type="range"] {
+  accent-color: #4a6c4e;
+}
+.landscape-exhibit input[type="checkbox"] {
+  accent-color: #48694f;
+  width: 17px;
+  height: 17px;
+}
+.landscape-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.landscape-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.landscape-actions button:first-child {
+  background: #45664b;
+  color: #fff;
+  border-color: #45664b;
+}
+.landscape-switches {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.landscape-switches legend {
+  font-size: 12px;
+  margin-bottom: 12px;
+  color: #61725a;
+}
+.landscape-switches label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.landscape-evidence {
+  padding: 21px 30px;
+  background: #dce4d1;
+  border-bottom: 1px solid #b5c1a7;
+}
+.landscape-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.landscape-metric > span {
+  display: block;
+  font-size: 12px;
+  color: #5e7056;
+  margin-bottom: 7px;
+}
+.landscape-metric > strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 500;
+  color: #344f3b;
+  font-variant-numeric: tabular-nums;
+}
+.landscape-metric small {
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+  color: #52694b;
+}
+.landscape-observation {
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 16px 0 0;
+}
+.landscape-observation:first-child {
+  margin-top: 0;
+}

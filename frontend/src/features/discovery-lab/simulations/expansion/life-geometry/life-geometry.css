@@ -1,0 +1,315 @@
+@import "./life-learning.css";
+.life-lesson {
+  color: #e1eceb;
+  background: #14252b;
+  border: 1px solid #53656b;
+  border-radius: 22px;
+  overflow: hidden;
+}
+.life-lesson > header {
+  padding: 24px 28px 18px;
+  background: #1d3337;
+}
+.life-lesson h2 {
+  margin: 0 0 8px;
+  color: #f6eee0;
+  font:
+    600 clamp(23px, 2.5vw, 32px)/1.15 Georgia,
+    serif;
+}
+.life-lesson header p {
+  margin: 0;
+  max-width: 76ch;
+  color: #c2d1ce;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.life-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  gap: 0;
+  align-items: start;
+}
+.life-visual {
+  min-width: 0;
+  padding: 18px;
+  position: sticky;
+  top: 12px;
+}
+.life-visual .expansion-scene {
+  height: 500px;
+  border: 1px solid #4c6268;
+}
+.life-caption {
+  margin: 12px 4px 0;
+  color: #b6c6c9;
+  line-height: 1.45;
+  font-size: 13px;
+}
+.life-controls {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  background: #192d32;
+  border-left: 1px solid #40585c;
+  min-width: 0;
+}
+.life-controls > label {
+  display: grid;
+  gap: 7px;
+  color: #d4e2df;
+  font-weight: 600;
+  font-size: 14px;
+}
+.life-controls select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #668181;
+  border-radius: 8px;
+  background: #243d42;
+  color: #f1f0df;
+  font: inherit;
+  min-height: 44px;
+}
+.life-lesson button {
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #69847f;
+  border-radius: 8px;
+  color: #e9ede1;
+  background: #284747;
+  font:
+    600 13px/1.25 system-ui,
+    sans-serif;
+  cursor: pointer;
+  text-align: left;
+}
+.life-lesson button:hover:not(:disabled) {
+  background: #365c56;
+  border-color: #b7c6a2;
+}
+.life-lesson button[aria-pressed="true"],
+.life-lesson button[aria-selected="true"] {
+  background: #bcd0b4;
+  color: #163332;
+  border-color: #dce2b8;
+}
+.life-lesson button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+.life-lesson :is(button, select, input, [role="slider"]):focus-visible {
+  outline: 3px solid #f1c983;
+  outline-offset: 3px;
+}
+.life-parts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.life-part-note {
+  padding: 14px;
+  border-radius: 9px;
+  background: #243c40;
+  border-left: 3px solid #a9c2ac;
+}
+.life-part-note h3 {
+  font-size: 16px;
+  margin: 0 0 6px;
+  color: #eedcb4;
+}
+.life-part-note p,
+.life-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #bfcecd;
+}
+.life-controls .life-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+}
+.life-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: #b5c99e;
+}
+.life-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.life-controls .dl-slider {
+  margin: 0;
+}
+.life-controls .dl-slider-heading label {
+  color: #d5e1dc;
+  font-size: 13px;
+}
+.life-controls .dl-value {
+  color: #f4ddb3;
+  background: #304948;
+}
+.life-controls .dl-range-labels {
+  color: #aebfc1;
+}
+.life-controls input[type="range"] {
+  width: 100%;
+  accent-color: #b7cda8;
+  min-height: 28px;
+}
+.life-evidence {
+  padding: 18px 26px;
+  background: #29423f;
+  border-top: 1px solid #5c7266;
+  border-bottom: 1px solid #5c7266;
+}
+.life-evidence > strong {
+  text-transform: capitalize;
+  color: #f4dfb7;
+  font-size: 18px;
+}
+.life-evidence p {
+  margin: 5px 0;
+  line-height: 1.55;
+}
+.life-evidence span {
+  font-size: 13px;
+  color: #c4d3c9;
+}
+.life-section-view {
+  padding: 12px;
+  border: 1px solid #526a70;
+  border-radius: 8px;
+  background: #15252d;
+  text-align: center;
+}
+.life-section-view strong {
+  display: block;
+  color: #dbd8c1;
+  font-size: 13px;
+}
+.life-section-view svg {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  margin: auto;
+  color: #bdcccb;
+}
+.life-cut-rail {
+  height: 42px;
+  position: relative;
+  border-top: 3px solid #a78c5b;
+  margin: 6px 8px 0;
+  touch-action: none;
+  cursor: ew-resize;
+}
+.life-cut-rail > span {
+  position: absolute;
+  top: -11px;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 18px;
+  background: #e6c77d;
+  border-radius: 3px;
+}
+.life-cut-rail small {
+  display: block;
+  padding-top: 14px;
+  text-align: center;
+  color: #c8d5d0;
+}
+.life-generation {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: #c9d7cf;
+}
+.life-generation strong {
+  font-size: 36px;
+  font-family: Georgia, serif;
+  color: #ead8ac;
+}
+.life-generation small {
+  font-size: 18px;
+  color: #a6b6b3;
+}
+.life-population span {
+  font-size: 13px;
+  font-weight: 600;
+}
+.life-population-track {
+  margin-top: 8px;
+  background: #dfc393;
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #9eac9f;
+}
+.life-population-track i {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(
+    125deg,
+    #31495a,
+    #31495a 7px,
+    #567084 7px,
+    #567084 9px
+  );
+}
+.life-population p {
+  font-size: 12px;
+  margin: 6px 0 0;
+  color: #cad5ca;
+}
+@media (max-width: 900px) {
+  .life-workspace {
+    grid-template-columns: 1fr;
+  }
+  .life-visual {
+    position: static;
+  }
+  .life-controls {
+    grid-template-columns: 1fr 1fr;
+    border-left: 0;
+    border-top: 1px solid #40585c;
+  }
+  .life-controls > .life-part-note,
+  .life-controls > .life-hint,
+  .life-controls > .life-actions {
+    grid-column: 1/-1;
+  }
+  .life-investigation-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+@media (max-width: 540px) {
+  .life-lesson > header {
+    padding: 20px 16px 14px;
+  }
+  .life-visual {
+    padding: 10px;
+  }
+  .life-visual .expansion-scene {
+    height: 370px;
+  }
+  .life-controls {
+    padding: 16px;
+    gap: 16px;
+    grid-template-columns: 1fr;
+  }
+  .life-investigation,
+  .life-evidence,
+  .life-model-note {
+    padding: 18px 16px;
+  }
+  .life-tabs {
+    flex-wrap: wrap;
+  }
+  .life-actions button {
+    flex: 1 1 125px;
+  }
+}
