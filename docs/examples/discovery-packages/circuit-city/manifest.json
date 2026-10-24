@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "package_id": "circuit-city-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "circuit-city-package",
+    "title": "Circuit City",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "electricity",
+      "circuits",
+      "energy",
+      "systems"
+    ],
+    "summary": "Connect three model houses in series or parallel and investigate what happens when a switch opens.",
+    "question": "Can one house switch off while the others keep their lights on?",
+    "explanation": "Electric current needs a complete path. In a series circuit, the same current passes through every house, so one open switch breaks the whole path. Parallel branches provide separate paths across the battery; opening one branch leaves the others connected. The battery supplies energy, while charge keeps moving around complete paths. These houses are identical, fixed resistances with ideal wires and a battery that never runs down, not a model of household mains wiring.",
+    "experiments": [
+      {
+        "title": "Break one path",
+        "instruction": "Close all three switches in series. Predict which houses lose power when one switch opens, then try it. Repeat in parallel.",
+        "observe": "Compare the lit houses and current readings. Explain why one open switch affects every house in series but only its branch in parallel."
+      },
+      {
+        "title": "Raise the voltage",
+        "instruction": "Close all switches and keep the circuit arrangement fixed. Predict the change in current when battery voltage increases, then compare two settings.",
+        "observe": "Higher voltage produces more current through the same resistance. Explain why this comparison would change if the resistance also changed."
+      }
+    ],
+    "misconception": "A house uses electrical energy, not a supply of charge that disappears. Current is the rate at which charge passes a point.",
+    "sources": [
+      {
+        "title": "OpenStax: Resistors in series and parallel",
+        "url": "https://openstax.org/books/university-physics-volume-2/pages/10-2-resistors-in-series-and-parallel"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "1e0ece18fd9adff6ff3252ccde855e9b776d28ba28c4b27088ee66207310b305"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

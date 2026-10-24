@@ -21,7 +21,7 @@ class DiscoverySource(BaseModel):
 
 class DiscoveryPackageReference(BaseModel):
     version: str
-    runtime: Literal["declarative-v1", "worker-v1"]
+    runtime: Literal["declarative-v1", "worker-v1", "worker-3d-v1", "worker-rich-v1"]
     checksum: str
 
 

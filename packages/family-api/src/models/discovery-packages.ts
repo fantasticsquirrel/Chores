@@ -1,5 +1,9 @@
 import type { DiscoveryExploration } from "./discovery-lab";
-export type DiscoveryPackageRuntime = "declarative-v1" | "worker-v1";
+export type DiscoveryPackageRuntime =
+  | "declarative-v1"
+  | "worker-v1"
+  | "worker-3d-v1"
+  | "worker-rich-v1";
 export type DiscoveryPackageSummary = {
   package_id: string;
   version: string;

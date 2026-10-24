@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "package_id": "castle-defenses-package",
+  "version": "1.0.0",
+  "runtime": "worker-3d-v1",
+  "exploration": {
+    "id": "castle-defenses-package",
+    "title": "Castle Design Lab",
+    "subject": "History",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "history",
+      "castles",
+      "engineering",
+      "design"
+    ],
+    "summary": "Explore how gates, ditches, towers and walls worked together in a medieval castle.",
+    "question": "Why protect an entrance with more than one barrier?",
+    "explanation": "This simplified model is inspired by English castles of the 13th century, not a reconstruction of one site. Gatehouses protected entrances, projecting towers improved visibility along walls, and additional walls created further barriers. Castles also served as homes and centres of power. Designs varied by time, terrain and resources; this model explores routes and sight lines, not the outcome of a siege.",
+    "experiments": [
+      {
+        "title": "Compare the two approaches",
+        "instruction": "Predict whether opening the gate opens both approaches. Reset experiment, choose Predict yes or Predict no, then Test open gate and Compare north route. Keep the ditch at 22 m.",
+        "observe": "Compare each golden route endpoint. Explain why an open entrance does not remove the ditch or create a doorway through the north wall."
+      },
+      {
+        "title": "Compare wall-side visibility",
+        "instruction": "Predict whether a flat wall gives the same view along its base as a projecting tower. Choose Compare sight lines, make your prediction, then Remove corner towers and Restore towers. Keep the route and ditch fixed.",
+        "observe": "Trace the cyan dashed sight-line overlay with and without towers. It illustrates viewing directions, not cables or structures. Explain why projecting beyond the wall changes the view but does not guarantee a defense."
+      }
+    ],
+    "misconception": "Not every castle had stone walls or a water-filled moat. Ditches could be dry, and castle designs changed over centuries.",
+    "sources": [
+      {
+        "title": "English Heritage: Castles through time",
+        "url": "https://www.english-heritage.org.uk/castles/castles-through-time/"
+      },
+      {
+        "title": "English Heritage: Carisbrooke Castle teachers’ kit",
+        "url": "https://www.english-heritage.org.uk/siteassets/home/visit/places-to-visit/carisbrooke-castle/school-visits/carisbrooke-castle_teachers-kit_2023.pdf"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "castle.js",
+  "assets": [
+    {
+      "path": "castle.js",
+      "mime_type": "text/javascript",
+      "sha256": "5e52b93f4df62d9e0848b3a6fb38ab8de19fd4f3981a9f46811e9108adca2778"
+    }
+  ]
+}

@@ -89,8 +89,10 @@ export function PackageAuthorPanel({
             if (!file) return;
             event.target.value = "";
             void action(async () => {
-              if (file.size > 2 * 1024 * 1024)
-                throw new Error("ZIP must be 2 MiB or smaller.");
+              if (file.size > 8 * 1024 * 1024)
+                throw new Error(
+                  "ZIP must be 8 MiB or smaller. Legacy runtimes remain limited to 2 MiB.",
+                );
               const bytes = new Uint8Array(await file.arrayBuffer());
               if (!canApply()) return;
               let binary = "";

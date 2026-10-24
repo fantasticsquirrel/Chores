@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Change the environment",
+      "instruction": "Choose Change the environment. Will the same starting variants reach the same proportions on dark and pale ground? Select your prediction, then Set baseline and Compare pale ground after five generations. Start 50% each variant with predation and compare exactly five generations, changing only habitat. Each comparison resets the same population.",
+      "observe": "Generation 5: dark shells 5.0%, pale shells 95.0%. On light ground, pale shells have the higher survival weight. Individuals do not change shell color; inherited variants change in proportion across generations. Initial dark 50.0%; pale 50.0%. Current dark 5.0%; pale 95.0%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. Matching shells have survival weight 0.9; contrasting shells 0.5.  Which variant increased? How does relative survival change descendant proportions without changing individual shell colors?"
+    },
+    {
+      "title": "Remove predation",
+      "instruction": "Choose Remove predation. Will proportions change when both variants have equal survival? Select your prediction, then Set baseline and Compare no predation after five generations. Use dark ground, 50% each variant and five generations. Change only predation, with identical starting population.",
+      "observe": "Generation 5: dark shells 50.0%, pale shells 50.0%. Without predation, both shell colors have the same survival weight. Individuals do not change shell color; inherited variants change in proportion across generations. Initial dark 50.0%; pale 50.0%. Current dark 50.0%; pale 50.0%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. Both colors have survival weight 0.9 without predation.  Compare initial and current proportions. Which difference is necessary for selection to shift proportions here?"
+    }
+  ]
+}

@@ -98,8 +98,8 @@ def main():
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_bytes(archive)
         else:
-            if args.archive.stat().st_size > 2 * 1024 * 1024:
-                raise ValueError("Archive exceeds 2 MiB.")
+            if args.archive.stat().st_size > 8 * 1024 * 1024:
+                raise ValueError("Archive exceeds 8 MiB.")
             archive = args.archive.read_bytes()
         result = validate(archive)
         manifest = result["manifest"]

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "pattern-palace-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "pattern-palace-package",
+    "title": "Pattern Palace",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "geometry",
+      "symmetry",
+      "patterns",
+      "angles"
+    ],
+    "summary": "Rotate and reflect a motif, then test how regular polygons fit around a point.",
+    "question": "Why do some repeated shapes leave a gap while others fit exactly?",
+    "explanation": "A rotation turns a shape around a point. A reflection flips it across a line; both preserve lengths and angles. A full turn is 360°. Equal regular polygons can meet without a gap or overlap only when their corner angles fill that turn. Six equilateral triangles, four squares or three regular hexagons do so. This model checks one meeting point; a successful corner test alone is not a proof that any proposed pattern tiles an entire floor.",
+    "experiments": [
+      {
+        "title": "Turn or flip?",
+        "instruction": "Inspect the uneven motif. Predict where its marked point will move after a quarter-turn, then rotate it 90°. Compare with reflecting the motif.",
+        "observe": "Compare the position of the marked point. Explain why turning and making a mirror image are different transformations even though lengths stay the same."
+      },
+      {
+        "title": "Fill a full turn",
+        "instruction": "Predict how many squares meet at a point without gaps. Test four, then try three regular pentagons and four regular pentagons.",
+        "observe": "Four square corners fill 360°. Three pentagon corners leave 36°, while four overlap by 72°. Explain why adding another pentagon does not solve the gap."
+      }
+    ],
+    "misconception": "A regular shape does not necessarily tile a flat surface by itself. Its corner angles must fit with neighboring tiles without gaps or overlaps.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Rotations and reflections",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/8/G/A/3"
+      },
+      {
+        "title": "University of Cambridge NRICH: How polygons fit around a point",
+        "url": "https://nrich.maths.org/problems/semi-regular-tessellations?tab=help"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "2726fd26ce121e12b236e1bb112b53787b522d68836ae0a073875c66866bdeda"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

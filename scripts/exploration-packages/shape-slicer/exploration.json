@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Rotate a cube",
+      "instruction": "Choose Rotate a cube. Does a central cube slice always have four sides? Select your prediction, then Set baseline and Compare diagonal cube. Keep the same cube and central plane. Compare unrotated and diagonal orientations without moving the plane.",
+      "observe": "The cube cross-section is a hexagon. Area 5.20 square units; boundary length 8.49 units. 6 sides. Amber plane horizontal; solid tilt 45.0°, turn 35.3°, height 0.00. The straight-on view uses equal scale in both directions; camera motion changes view only. Count the solid edges touched by each cut. Why can square faces yield a six-sided section?"
+    },
+    {
+      "title": "Move through a sphere",
+      "instruction": "Choose Move through a sphere. Will moving a plane away from a sphere center change section shape, size, or both? Select your prediction, then Set baseline and Move sphere cut to 0.6. Keep radius 1 and orientation fixed. Compare height 0 and 0.6 using the straight-on view, not perspective.",
+      "observe": "The sphere cross-section is a circle. Area 2.01 square units; boundary length 5.03 units. Radius 0.80 units. Amber plane horizontal; solid tilt 0.0°, turn 0.0°, height 0.60. The straight-on view uses equal scale in both directions; camera motion changes view only. Compare circle radii and areas. Why does the circle shrink before the plane stops meeting the sphere?"
+    }
+  ]
+}

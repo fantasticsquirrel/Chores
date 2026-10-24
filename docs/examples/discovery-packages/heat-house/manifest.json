@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "heat-house-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "heat-house-package",
+    "title": "Heat House",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "heat",
+      "insulation",
+      "energy",
+      "engineering"
+    ],
+    "summary": "Change wall insulation, material and window area while comparing heat loss at matched temperatures.",
+    "question": "Why does adding wall insulation not stop heat loss through the windows?",
+    "explanation": "Thermal energy transfers from warmer places to cooler places. Insulation slows that transfer; it does not produce heat. This model holds the indoor and outdoor temperatures steady and calculates transfer through a fixed area of walls and windows. Adding windows replaces some opaque wall rather than enlarging the house. It omits the roof, floor, drafts, sunlight and stored heat. Material values describe a teaching example, not a real home or an energy-bill estimate.",
+    "experiments": [
+      {
+        "title": "Add wall insulation",
+        "instruction": "Choose Add wall insulation. Will adding wall insulation reduce the heat transfer through unchanged windows? Select your prediction, then Set baseline and Add 10 cm insulation. Keep brick walls, 8 m² of windows, 20°C inside and 0°C outside. Compare no added insulation with 10 cm. Both temperatures are held steady.",
+        "observe": "Wall transfer falls from 2066 W to 346 W. Window transfer stays 448 W. Combined transfer falls from 2514 W to 794 W. Why does extra wall insulation reduce only one heat-transfer path in this comparison? What else would need to change to reduce the window transfer?"
+      },
+      {
+        "title": "Change window area",
+        "instruction": "Choose Change window area. With insulated walls, what happens to heat loss if windows replace more of the wall area? Select your prediction, then Set baseline and Use 18 m² windows. Keep 10 cm of added insulation, brick, 20°C inside and 0°C outside. Increase windows from 2 to 18 m² within the same 60 m² wall envelope.",
+        "observe": "Opaque wall area falls from 58 to 42 m². Combined transfer rises from 498 W to 1288 W because these windows transfer more heat per square meter than these insulated walls. Why must window area replace wall area for a fair comparison? Would every real window and wall have this same result?"
+      }
+    ],
+    "misconception": "Insulation does not generate warmth or stop all heat transfer. It slows transfer through the part of the building where it is installed.",
+    "sources": [
+      {
+        "title": "OpenStax: Conduction and thermal resistance",
+        "url": "https://openstax.org/books/college-physics-2e/pages/14-5-conduction"
+      },
+      {
+        "title": "US Department of Energy: Window heat transfer and U-factor",
+        "url": "https://bsesc.energy.gov/energy-basics/energy-star-windows"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "eeeee016deb2ed4cf0629891096d804fe8bd067f552ebbced35018d99d283e58"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

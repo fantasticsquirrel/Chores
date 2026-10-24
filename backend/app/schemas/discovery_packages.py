@@ -83,7 +83,7 @@ class PackageManifest(StrictModel):
         pattern=r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$",
         max_length=60,
     )
-    runtime: Literal["declarative-v1", "worker-v1"]
+    runtime: Literal["declarative-v1", "worker-v1", "worker-3d-v1", "worker-rich-v1"]
     exploration: DiscoveryExploration
     scene: PackageScene | None = None
     entry: str | None = Field(default=None, max_length=160)
@@ -111,7 +111,7 @@ class PackageManifest(StrictModel):
             self.scene is None or self.entry is not None
         ):
             raise ValueError("Declarative packages require scene and no entry.")
-        if self.runtime == "worker-v1" and (
+        if self.runtime in {"worker-v1", "worker-3d-v1", "worker-rich-v1"} and (
             self.scene is not None or self.entry is None
         ):
             raise ValueError("Worker packages require entry and no scene.")
@@ -154,4 +154,4 @@ class PackageManifest(StrictModel):
 
 
 class PackageUpload(StrictModel):
-    archive_base64: str = Field(min_length=1, max_length=2796204)
+    archive_base64: str = Field(min_length=1, max_length=11184812)

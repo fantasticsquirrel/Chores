@@ -2,7 +2,7 @@
 
 from starlette.responses import JSONResponse
 
-MAX_UPLOAD_BODY = 3 * 1024 * 1024
+MAX_UPLOAD_BODY = 12 * 1024 * 1024
 
 
 class DiscoveryBodyLimitMiddleware:
@@ -19,7 +19,7 @@ class DiscoveryBodyLimitMiddleware:
 
         async def reject():
             await JSONResponse(
-                {"detail": "Package request exceeds 3 MiB."},
+                {"detail": "Package request exceeds 12 MiB."},
                 status_code=413,
                 headers={"Cache-Control": "no-store"},
             )(scope, receive, send)

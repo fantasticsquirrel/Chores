@@ -22,7 +22,11 @@
           "type": "string"
         }
       },
-      "required": ["title", "instruction", "observe"],
+      "required": [
+        "title",
+        "instruction",
+        "observe"
+      ],
       "title": "DiscoveryExperiment",
       "type": "object"
     },
@@ -67,7 +71,12 @@
         },
         "grade_bands": {
           "items": {
-            "enum": ["K-2", "3-5", "6-8", "9-12"],
+            "enum": [
+              "K-2",
+              "3-5",
+              "6-8",
+              "9-12"
+            ],
             "type": "string"
           },
           "maxItems": 4,
@@ -153,7 +162,12 @@
           "type": "string"
         },
         "runtime": {
-          "enum": ["declarative-v1", "worker-v1"],
+          "enum": [
+            "declarative-v1",
+            "worker-v1",
+            "worker-3d-v1",
+            "worker-rich-v1"
+          ],
           "title": "Runtime",
           "type": "string"
         },
@@ -162,7 +176,11 @@
           "type": "string"
         }
       },
-      "required": ["version", "runtime", "checksum"],
+      "required": [
+        "version",
+        "runtime",
+        "checksum"
+      ],
       "title": "DiscoveryPackageReference",
       "type": "object"
     },
@@ -182,7 +200,10 @@
           "type": "string"
         }
       },
-      "required": ["title", "url"],
+      "required": [
+        "title",
+        "url"
+      ],
       "title": "DiscoverySource",
       "type": "object"
     },
@@ -213,7 +234,11 @@
           "type": "string"
         }
       },
-      "required": ["path", "mime_type", "sha256"],
+      "required": [
+        "path",
+        "mime_type",
+        "sha256"
+      ],
       "title": "PackageAsset",
       "type": "object"
     },
@@ -255,7 +280,15 @@
           "type": "string"
         }
       },
-      "required": ["id", "label", "min", "max", "step", "initial", "unit"],
+      "required": [
+        "id",
+        "label",
+        "min",
+        "max",
+        "step",
+        "initial",
+        "unit"
+      ],
       "title": "PackageControl",
       "type": "object"
     },
@@ -274,7 +307,10 @@
           "type": "string"
         }
       },
-      "required": ["label", "unit"],
+      "required": [
+        "label",
+        "unit"
+      ],
       "title": "PackageOutput",
       "type": "object"
     },
@@ -282,7 +318,11 @@
       "additionalProperties": false,
       "properties": {
         "kind": {
-          "enum": ["proportional", "inverse", "linear"],
+          "enum": [
+            "proportional",
+            "inverse",
+            "linear"
+          ],
           "title": "Kind",
           "type": "string"
         },
@@ -313,7 +353,11 @@
           "type": "number"
         }
       },
-      "required": ["kind", "controls", "output"],
+      "required": [
+        "kind",
+        "controls",
+        "output"
+      ],
       "title": "PackageScene",
       "type": "object"
     }
@@ -338,7 +382,12 @@
       "type": "string"
     },
     "runtime": {
-      "enum": ["declarative-v1", "worker-v1"],
+      "enum": [
+        "declarative-v1",
+        "worker-v1",
+        "worker-3d-v1",
+        "worker-rich-v1"
+      ],
       "title": "Runtime",
       "type": "string"
     },

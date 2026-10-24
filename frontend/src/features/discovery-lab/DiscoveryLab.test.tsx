@@ -106,6 +106,30 @@ describe("Discovery Lab", () => {
     });
   });
   afterEach(() => vi.restoreAllMocks());
+  it("groups independently approved package alternatives without redirecting original bookmarks", async () => {
+    vi.mocked(apiClient.listDiscoveryExplorations).mockResolvedValue([
+      orbit,
+      {
+        ...orbit,
+        id: "orbital-mechanics-package",
+        package: {
+          version: "1.0.0",
+          runtime: "worker-rich-v1",
+          checksum: "test",
+        },
+      },
+    ]);
+    show();
+    expect(
+      await screen.findByRole("link", {
+        name: /Open downloaded version 1.0.0/,
+      }),
+    ).toHaveAttribute("href", "/discovery-lab/orbital-mechanics-package");
+    expect(
+      screen.getByRole("link", { name: /The art of falling sideways/ }),
+    ).toHaveAttribute("href", "/discovery-lab/orbital-mechanics");
+    expect(document.querySelectorAll(".discovery-card")).toHaveLength(1);
+  });
   it("browses, searches and resets without losing the complete filter vocabulary", async () => {
     show();
     expect(

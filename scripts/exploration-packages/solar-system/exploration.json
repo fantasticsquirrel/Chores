@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Compare orbital periods",
+      "instruction": "Predict which completes more of its orbit in one Earth year: Earth or Neptune. Select your prediction, then Advance one Earth year.",
+      "observe": "Earth completes 1 orbit and Neptune about 1/165. Explain why equal elapsed time does not mean equal orbital fractions."
+    },
+    {
+      "title": "Compare diameters",
+      "instruction": "Predict how many Earth diameters fit across Jupiter. Choose Jupiter, then View: True diameter comparison. Keep the same view while comparing other planets.",
+      "observe": "Jupiter spans about 11.21 Earth diameters. Explain why the separate close-up cannot establish this ratio."
+    }
+  ]
+}

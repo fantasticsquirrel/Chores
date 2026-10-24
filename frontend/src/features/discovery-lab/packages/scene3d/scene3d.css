@@ -1,0 +1,346 @@
+.package-3d-visual {
+  position: relative;
+  height: 650px;
+  background: radial-gradient(
+    ellipse at 49% 47%,
+    #e7e8db 0,
+    #d5d9c9 52%,
+    #b7c0ad 100%
+  );
+  isolation: isolate;
+}
+.package-3d-heading {
+  position: absolute;
+  top: 27px;
+  left: 30px;
+  z-index: 2;
+  pointer-events: none;
+}
+.discovery-lab .package-3d-heading h2,
+.package-3d-heading h2 {
+  font-family: Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: #25372e;
+}
+.discovery-lab .package-3d-heading p,
+.package-3d-heading p {
+  font-size: 12px;
+  margin: 9px 0 0;
+  color: #54614f;
+}
+.package-3d-canvas {
+  position: absolute;
+  inset: 72px 0 34px;
+  cursor: grab;
+  touch-action: none;
+  outline-offset: -5px;
+}
+.package-3d-canvas:active {
+  cursor: grabbing;
+}
+.package-3d-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.package-3d-annotation {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  color: #2d3e33;
+  padding: 5px 9px;
+  background: #f4f3e8e8;
+  border: 1px solid #9ba78c99;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px #243b2922;
+  pointer-events: none;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.package-3d-annotation::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 15px;
+  background: #586c4f;
+  position: absolute;
+  left: 50%;
+  top: 100%;
+}
+.package-3d-camera {
+  position: absolute;
+  bottom: 24px;
+  left: 25px;
+  right: 25px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.package-3d-camera > div {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #8e9c8599;
+  background: #e9eddfd9;
+  border-radius: 8px;
+}
+.discovery-package-runtime .package-3d-camera button {
+  border: 0;
+  background: transparent;
+  color: #465641;
+  border-radius: 5px;
+  padding: 9px 12px;
+  font-size: 12px;
+  min-width: 35px;
+  min-height: 35px;
+}
+.discovery-package-runtime .package-3d-camera button[aria-pressed="true"] {
+  background: #344d3d;
+  color: #f4f3e6;
+}
+.discovery-package-runtime .package-3d-camera button:hover {
+  background: #cbd3be;
+  color: #263d2c;
+}
+.package-3d-hint {
+  position: absolute;
+  bottom: 4px;
+  left: 25px;
+  right: 25px;
+  font-size: 10px;
+  text-align: center;
+  color: #4b5d45;
+  pointer-events: none;
+  margin: 0;
+}
+.package-3d-route {
+  position: absolute;
+  left: 30px;
+  top: 90px;
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: #4b5946;
+  pointer-events: none;
+}
+.package-3d-route i {
+  width: 17px;
+  border-top: 3px dashed #9b7131;
+}
+.package-3d-route span {
+  font-weight: 600;
+}
+
+.package-3d-visual {
+  overflow: hidden;
+  border-radius: 0;
+}
+.package-3d-error {
+  padding: 180px 30px;
+}
+@media (max-width: 760px) {
+  .package-3d-visual {
+    height: 510px;
+  }
+  .package-3d-heading {
+    left: 19px;
+    top: 20px;
+    right: 19px;
+  }
+  .discovery-lab .package-3d-heading h2,
+  .package-3d-heading h2 {
+    font-size: 24px;
+  }
+  .discovery-lab .package-3d-heading p,
+  .package-3d-heading p {
+    font-size: 11px;
+    max-width: 255px;
+  }
+  .package-3d-route {
+    left: 19px;
+    top: 91px;
+    font-size: 9px;
+    max-width: calc(100% - 36px);
+    gap: 5px;
+  }
+  .package-3d-route span {
+    max-width: 150px;
+  }
+  .package-3d-canvas {
+    inset: 94px -4% 60px;
+  }
+  .package-3d-annotation {
+    font-size: 9px;
+    padding: 4px 5px;
+  }
+  .package-3d-camera {
+    left: 10px;
+    right: 10px;
+    bottom: 29px;
+    gap: 4px;
+  }
+  .package-3d-camera > div {
+    padding: 3px;
+    gap: 1px;
+  }
+  .discovery-package-runtime .package-3d-camera button {
+    padding: 9px 7px;
+    min-width: 29px;
+    font-size: 9px;
+  }
+  .package-3d-hint {
+    font-size: 9px;
+    bottom: 9px;
+    left: 14px;
+    right: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .discovery-package-runtime .package-3d-camera button {
+    min-height: 44px;
+    padding: 8px 4px;
+  }
+  .package-3d-camera > div:first-child {
+    flex: 1;
+  }
+  .package-3d-camera > div:first-child button {
+    flex: 1;
+  }
+}
+
+.discovery-package-runtime-3d {
+  overflow: hidden;
+  border: 1px solid #b8c0ad;
+  border-radius: 18px;
+  background: #e9e8df;
+  color: #25372e;
+}
+
+.discovery-package-runtime-3d .discovery-package-controls {
+  padding: 24px 30px;
+  background: #f0efe6;
+  border-top: 1px solid #b5bea9;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.discovery-package-runtime-3d .discovery-package-controls label {
+  font-size: 12px;
+  color: #344b38;
+}
+.discovery-package-runtime-3d .discovery-package-controls input {
+  accent-color: #496c50;
+}
+.discovery-package-runtime-3d .discovery-package-evidence {
+  padding: 14px 30px;
+  margin: 0;
+  background: #dce3d3;
+  color: #3b513b;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.discovery-package-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding: 24px 30px;
+}
+.discovery-package-runtime-3d .discovery-package-sections {
+  border-top: 1px solid #b5bea9;
+  color: #344b38;
+}
+.discovery-package-sections h3 {
+  font-size: 16px;
+}
+.discovery-package-sections p {
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+.discovery-package-runtime-3d .discovery-package-sections button {
+  display: block;
+  margin: 8px 0;
+  background: #f0efe6;
+  border: 1px solid #9aa990;
+  border-radius: 6px;
+  color: #465a40;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.discovery-package-runtime-3d button[aria-pressed="true"] {
+  background: #344d3d;
+  color: #f4f3e6;
+}
+.discovery-package-footnote {
+  padding: 15px 30px;
+  font-size: 12px;
+  line-height: 1.65;
+  border-top: 1px solid #b5bea9;
+}
+@media (max-width: 760px) {
+  .discovery-package-sections {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+  .discovery-package-runtime-3d .discovery-package-controls {
+    grid-template-columns: 1fr 1fr;
+    padding: 22px;
+  }
+  .discovery-package-sections section + section {
+    border-top: 1px solid #d6dccb;
+    padding-top: 18px;
+  }
+}
+/* The vector package shell adds padding and generic button margins. The full-width
+   3D viewport owns its own spacing, including narrow-screen overflow framing. */
+.discovery-package-runtime.discovery-package-runtime-3d {
+  padding: 0;
+}
+.discovery-package-runtime .package-3d-camera button {
+  margin: 0;
+}
+
+.package-3d-route {
+  margin: 0;
+}
+.package-3d-route::before {
+  content: "";
+  width: 17px;
+  flex-shrink: 0;
+  border-top: 3px dashed #9b7131;
+}
+.discovery-package-runtime-3d .discovery-package-controls {
+  margin: 0;
+}
+.discovery-package-runtime-3d .discovery-package-control-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.discovery-package-runtime-3d .discovery-package-control-toggle input {
+  order: -1;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+.discovery-package-runtime-3d .discovery-package-controls select {
+  width: 100%;
+  background: #faf9f2;
+  color: #324733;
+  border: 1px solid #a5b19c;
+  padding: 10px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.discovery-package-runtime-3d > button {
+  margin: 12px 8px 12px 22px;
+  background: #f0efe6;
+  color: #465a40;
+  border: 1px solid #9aa990;
+  border-radius: 6px;
+  font-size: 12px;
+}

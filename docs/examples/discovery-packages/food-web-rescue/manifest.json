@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "package_id": "food-web-rescue-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "food-web-rescue-package",
+    "title": "Food Web Rescue",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "ecology",
+      "food-webs",
+      "ponds",
+      "systems"
+    ],
+    "summary": "Change a pond’s food supply and organisms, then follow populations and oxygen over time.",
+    "question": "Can adding more nutrients make conditions worse for fish?",
+    "explanation": "Algae capture light energy. Tiny animals called zooplankton eat algae, and some fish eat zooplankton. This chain is one part of a larger food web. Extra nutrients can encourage algal growth, but respiration and decomposition can use up dissolved oxygen that animals need. The model tracks relative population and oxygen indices, not animal counts or measured oxygen. Each step represents an illustrative week; many species, daily oxygen changes and real pond conditions are left out.",
+    "experiments": [
+      {
+        "title": "Remove a link",
+        "instruction": "Record your nutrients and drought settings. Predict how removing zooplankton changes algae and fish. Run several weeks with all groups present, then reset the pond, restore the recorded settings and remove zooplankton. Compare the same number of weeks.",
+        "observe": "Compare the algae and fish trends. Explain how removing one group changes both the food it eats and the animals that eat it."
+      },
+      {
+        "title": "More nutrients, less oxygen?",
+        "instruction": "Reset the pond and leave drought at zero. Predict what happens with high nutrients, then step through several weeks. Reset again, keep drought at zero and use lower nutrients. Compare the same number of weeks.",
+        "observe": "Compare algae, fish and oxygen rather than algae alone. Explain why more of one food source does not always mean better conditions for the whole pond."
+      }
+    ],
+    "misconception": "A food web is not a ladder where only the top animal matters. Changes can spread through feeding links and through shared conditions such as oxygen.",
+    "sources": [
+      {
+        "title": "US EPA: Nutrients, algal growth and dissolved oxygen",
+        "url": "https://www.epa.gov/system/files/documents/2021-07/parameter-factsheet_nutrients.pdf"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "201a10c247570f6e0b17b2dda4676b414666a4055ce34a8cd7bd621b28efa212"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

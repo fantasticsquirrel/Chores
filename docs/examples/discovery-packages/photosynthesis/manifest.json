@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "photosynthesis-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "photosynthesis-package",
+    "title": "Leaf Energy Lab",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "plants",
+      "energy",
+      "photosynthesis",
+      "systems"
+    ],
+    "summary": "Adjust light and water to investigate what limits a leaf’s sugar-making process.",
+    "question": "Can more sunlight help when a plant has too little water?",
+    "explanation": "Photosynthesis uses light energy to convert water and carbon dioxide into sugars, releasing oxygen. A shortage of a needed resource can limit the process; more light does not guarantee proportionally more activity. This qualitative resource model is not a growth forecast and leaves out temperature, species differences and many other processes. Plants also respire, by day and night.",
+    "experiments": [
+      {
+        "title": "Test a missing resource",
+        "instruction": "Predict whether extra light can restore activity when water is absent. Choose a prediction, then Test zero water and extra light. Keep carbon dioxide fixed.",
+        "observe": "Activity remains zero. Explain why light cannot replace water in sugar production."
+      },
+      {
+        "title": "Find the limiting resource",
+        "instruction": "Reset experiment, Save comparison, then predict what raising water above 80% will do while light 70% and carbon dioxide 80% remain fixed. Raise only water.",
+        "observe": "Activity first rises, then light becomes limiting. Compare the saved trial and explain why more water cannot replace light."
+      }
+    ],
+    "misconception": "Plants make sugars; they do not absorb their sugar food from soil. Soil supplies water and mineral nutrients, and sunlight supplies energy rather than matter.",
+    "sources": [
+      {
+        "title": "Oregon State University: Plant growth and development",
+        "url": "https://extension.oregonstate.edu/catalog/em-9901-plant-growth-development"
+      },
+      {
+        "title": "Royal Horticultural Society: How plants use light",
+        "url": "https://www.rhs.org.uk/advice/understanding-plants/how-plants-use-light-to-grow"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "36151ae983b2df301bb506c699f17de84777c0a8489939c174ee4d8fdbefa6bf"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

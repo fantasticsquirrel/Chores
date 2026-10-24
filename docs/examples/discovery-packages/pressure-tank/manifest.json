@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "pressure-tank-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "pressure-tank-package",
+    "title": "Pressure Tank",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "water",
+      "pressure",
+      "fluids",
+      "measurement"
+    ],
+    "summary": "Compare water pressure and outlet speed in differently shaped tanks at the same water level.",
+    "question": "Does a wider tank make water leave faster when the depth above the outlet stays the same?",
+    "explanation": "In still water, pressure increases with depth below the surface. For an open tank with a small outlet, the depth above that outlet also determines the ideal initial exit speed. A wider tank can hold more water without increasing either quantity at the same depth. The pressure reading is the static gauge pressure at outlet depth, above atmospheric pressure; the emerging free jet itself is approximately at atmospheric pressure. The model shows an instant and omits flow losses, air drag and the falling water level during draining.",
+    "experiments": [
+      {
+        "title": "Raise the water",
+        "instruction": "Choose Raise the water. If the surface rises from 1 to 2 m while the outlet stays at 0.5 m, what happens to the tank pressure at that height? Select your prediction, then Set baseline and Raise surface to 2 m. Keep the narrow tank and outlet height of 0.5 m. Compare water surfaces at 1 and 2 m. Measure the vertical depth below the surface, not the outlet’s height above the floor.",
+        "observe": "Head rises from 0.5 to 1.5 m. Tank gauge pressure triples from 4.905 to 14.715 kPa; ideal jet speed rises from 3.13 to 5.42 m/s, not threefold. Why does tripling head triple the pressure but not the jet speed? Compare the head and speed readouts."
+      },
+      {
+        "title": "Change tank shape",
+        "instruction": "Choose Change tank shape. Will a wider tank send the jet faster at the same water level and outlet height? Select your prediction, then Set baseline and Use the wide tank. Keep the surface at 2 m and the outlet at 0.5 m. Change only the tank from narrow to wide. This is an instantaneous comparison, not a timed draining test.",
+        "observe": "Volume increases from 2,000 to 6,480 liters, but the head remains 1.5 m. Static gauge pressure stays 14.715 kPa and ideal jet speed stays 5.42 m/s. Why can the wider tank hold more water without increasing pressure at the same depth? What would differ if both tanks were allowed to drain?"
+      }
+    ],
+    "misconception": "More water volume does not automatically mean greater pressure at a chosen depth. Tank shape can affect how the level falls during draining, which this instantaneous comparison does not calculate.",
+    "sources": [
+      {
+        "title": "OpenStax: Pressure variation with fluid depth",
+        "url": "https://openstax.org/books/college-physics-ap-courses/pages/11-4-variation-of-pressure-with-depth-in-a-fluid"
+      },
+      {
+        "title": "OpenStax: Torricelli’s theorem and ideal outlet speed",
+        "url": "https://openstax.org/books/college-physics/pages/12-3-the-most-general-applications-of-bernoullis-equation"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "75864e7a02ef5c76b23639f2cff368866ff01cc161476e99dd6d4e98af16a66b"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

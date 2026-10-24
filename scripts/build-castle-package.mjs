@@ -1,0 +1,12 @@
+import { build } from 'esbuild';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+const base = new URL('../', import.meta.url);
+const entry = new URL('scripts/castle-package/castle-worker.ts', base).pathname;
+const output = new URL('docs/examples/discovery-packages/castle-defenses/castle.js', base);
+await build({entryPoints:[entry],outfile:output.pathname,bundle:true,platform:'browser',format:'iife',target:'es2020',minify:false,legalComments:'none'});
+const manifestPath = new URL('docs/examples/discovery-packages/castle-defenses/manifest.json', base);
+const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+manifest.assets[0].sha256 = createHash('sha256').update(readFileSync(output)).digest('hex');
+writeFileSync(manifestPath, JSON.stringify(manifest, null, 2)+'\n');
+console.log(`Built independent castle worker (${readFileSync(output).length} bytes).`);

@@ -747,3 +747,8 @@
   min-width: 800px;
   max-height: none;
 }
+
+/* Independent versions share a card without changing authorized routes. */
+.discovery-card-primary { display: block; color: inherit; text-decoration: none; }
+.discovery-package-alternative { display: block; margin: 0 1rem 1rem; padding: .7rem; border-top: 1px solid currentColor; }
+.discovery-version-label { font-size: .875rem; }

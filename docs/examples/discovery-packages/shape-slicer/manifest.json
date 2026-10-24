@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "shape-slicer-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "shape-slicer-package",
+    "title": "Shape Slicer",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "geometry",
+      "solids",
+      "cross-sections",
+      "spatial-reasoning"
+    ],
+    "summary": "Rotate a cube, tetrahedron or sphere, move a slicing plane and compare the resulting cross sections.",
+    "question": "Can the same solid make different cross-section shapes?",
+    "explanation": "A cross section is where a solid meets a flat plane. Rotating a solid relative to the plane or moving the plane can change the section. Changing only the viewing angle does not change the actual section. A tetrahedron has four triangular faces. A cube can make several section polygons; a sphere’s non-tangent plane sections are circles of different sizes. This model uses ideal solids and reports area and boundary length in model units. A flat section has no thickness, unlike a physical slice.",
+    "experiments": [
+      {
+        "title": "Rotate a cube",
+        "instruction": "Choose Rotate a cube. Does a central cube slice always have four sides? Select your prediction, then Set baseline and Compare diagonal cube. Keep the same cube and central plane. Compare unrotated and diagonal orientations without moving the plane.",
+        "observe": "The cube cross-section is a hexagon. Area 5.20 square units; boundary length 8.49 units. 6 sides. Amber plane horizontal; solid tilt 45.0°, turn 35.3°, height 0.00. The straight-on view uses equal scale in both directions; camera motion changes view only. Count the solid edges touched by each cut. Why can square faces yield a six-sided section?"
+      },
+      {
+        "title": "Move through a sphere",
+        "instruction": "Choose Move through a sphere. Will moving a plane away from a sphere center change section shape, size, or both? Select your prediction, then Set baseline and Move sphere cut to 0.6. Keep radius 1 and orientation fixed. Compare height 0 and 0.6 using the straight-on view, not perspective.",
+        "observe": "The sphere cross-section is a circle. Area 2.01 square units; boundary length 5.03 units. Radius 0.80 units. Amber plane horizontal; solid tilt 0.0°, turn 0.0°, height 0.60. The straight-on view uses equal scale in both directions; camera motion changes view only. Compare circle radii and areas. Why does the circle shrink before the plane stops meeting the sphere?"
+      }
+    ],
+    "misconception": "A cross section is not a solid’s shadow or outer silhouette. A plane that misses the solid makes no section; a tangent plane can meet a sphere at just one point.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Different plane sections of a cube",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/7/G/A/3/tasks/1532"
+      },
+      {
+        "title": "Illustrative Mathematics: Slicing solids and comparing sections",
+        "url": "https://im.kendallhunt.com/HS/students/2/5/2/index.html"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "5e824982a85a740f5f8d26110696f1438ef5987e31f55381c0441ab6024a1fed"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

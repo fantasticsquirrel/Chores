@@ -24,8 +24,10 @@ from app.models.discovery import (
 )
 from app.schemas.discovery_packages import PackageManifest
 
-MAX_ARCHIVE = 2 * 1024 * 1024
-MAX_TOTAL = 4 * 1024 * 1024
+MAX_ARCHIVE = 8 * 1024 * 1024
+MAX_TOTAL = 12 * 1024 * 1024
+LEGACY_ARCHIVE = 2 * 1024 * 1024
+LEGACY_TOTAL = 4 * 1024 * 1024
 MAX_FILE = 1024 * 1024
 MIME_EXTENSIONS = {
     "text/javascript": {".js"},
@@ -70,19 +72,19 @@ def safe_path(path):
 
 def validate_archive(encoded: str) -> dict:
     """Return normalized {manifest, assets, checksum}; raise HTTPException(422)."""
-    if len(encoded) > 2796204:
-        raise invalid("Archive exceeds 2 MiB.")
+    if len(encoded) > 11184812:
+        raise invalid("Archive exceeds 8 MiB.")
     try:
         raw = base64.b64decode(encoded, validate=True)
         if not raw or len(raw) > MAX_ARCHIVE:
-            raise ValueError("Archive exceeds 2 MiB or is empty.")
+            raise ValueError("Archive exceeds 8 MiB or is empty.")
         files = {}
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
             infos = archive.infolist()
             if not 1 <= len(infos) <= 32:
                 raise ValueError("Archive must contain 1 to 32 files.")
             if sum(info.file_size for info in infos) > MAX_TOTAL:
-                raise ValueError("Expanded archive exceeds 4 MiB.")
+                raise ValueError("Expanded archive exceeds 12 MiB.")
             for info in infos:
                 mode = info.external_attr >> 16
                 if (
@@ -113,16 +115,25 @@ def validate_archive(encoded: str) -> dict:
         if "manifest.json" not in files:
             raise ValueError("manifest.json is required at archive root.")
         manifest = PackageManifest.model_validate(json_document(files["manifest.json"]))
+        if manifest.runtime != "worker-rich-v1" and (
+            len(raw) > LEGACY_ARCHIVE
+            or sum(len(data) for data in files.values()) > LEGACY_TOTAL
+        ):
+            raise ValueError(
+                "Legacy packages are limited to 2 MiB compressed / 4 MiB expanded."
+            )
         expected = {asset.path for asset in manifest.assets} | {"manifest.json"}
         if set(files) != expected or any(
             asset.path == "manifest.json" for asset in manifest.assets
         ):
             raise ValueError("Archive files must exactly match declared assets.")
         assets = []
+        image_pixels = 0
         for asset in manifest.assets:
             data = files[asset.path]
-            if asset.path == manifest.entry and len(data) > 262144:
-                raise ValueError("Worker entry exceeds 256 KiB.")
+            source_limit = 1048576 if manifest.runtime == "worker-rich-v1" else 262144
+            if asset.path == manifest.entry and len(data) > source_limit:
+                raise ValueError(f"Worker entry exceeds {source_limit // 1024} KiB.")
             extension = "." + asset.path.rsplit(".", 1)[-1]
             if extension not in MIME_EXTENSIONS[asset.mime_type]:
                 raise ValueError("Asset MIME type does not match extension.")
@@ -133,6 +144,11 @@ def validate_archive(encoded: str) -> dict:
                     warnings.simplefilter("error", Image.DecompressionBombWarning)
                     with Image.open(io.BytesIO(data)) as image:
                         if (
+                            getattr(image, "is_animated", False)
+                            or getattr(image, "n_frames", 1) != 1
+                        ):
+                            raise ValueError("Animated image assets are not supported.")
+                        if (
                             image.width * image.height > 4_000_000
                             or image.format
                             != {
@@ -142,6 +158,9 @@ def validate_archive(encoded: str) -> dict:
                             }[asset.mime_type]
                         ):
                             raise ValueError("Image dimensions or format invalid.")
+                        image_pixels += image.width * image.height
+                        if image_pixels > 16_777_216:
+                            raise ValueError("Aggregate image pixel budget exceeded.")
                         image.verify()
             else:
                 text = data.decode("utf-8")

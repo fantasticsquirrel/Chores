@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "package_id": "reflection-refraction-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "reflection-refraction-package",
+    "title": "Light Bending Studio",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8",
+      "9-12"
+    ],
+    "tags": [
+      "light",
+      "optics",
+      "reflection",
+      "refraction"
+    ],
+    "summary": "Aim a beam, swap materials and discover when light bends or reflects.",
+    "question": "What happens when light reaches a different material?",
+    "explanation": "Reflection sends light back into its first material. Refraction can bend light as it crosses into a material where it travels at a different speed. Measure angles from the normal: the line at right angles to the surface. From air into water, a slanting ray bends toward the normal. This single-color ray model leaves out changes in brightness and the separation of colors.",
+    "experiments": [
+      {
+        "title": "Find total internal reflection",
+        "instruction": "Predict whether a transmitted ray remains for glass to air above 42°. Choose a prediction, then Test glass to air at 43°. Compare 40° and 43° with materials fixed.",
+        "observe": "The transmitted ray disappears above the critical angle. Explain why the direction from higher to lower refractive index matters."
+      },
+      {
+        "title": "Reverse the materials",
+        "instruction": "Predict whether air to glass can produce total internal reflection. Swap materials and compare at the same angle. Then set both indices equal.",
+        "observe": "The transmitted ray persists from air to glass; equal indices show no reflected branch or bending. Explain both observations using refractive index."
+      }
+    ],
+    "misconception": "Total internal reflection is possible only from a higher to a lower refractive index, above the critical angle. It does not happen at every boundary.",
+    "sources": [
+      {
+        "title": "OpenStax: Refraction",
+        "url": "https://openstax.org/books/university-physics-volume-3/pages/1-3-refraction"
+      },
+      {
+        "title": "OpenStax: Total internal reflection",
+        "url": "https://openstax.org/books/university-physics-volume-3/pages/1-4-total-internal-reflection"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "daecbf5b781612598feb3f66473a0fb6531cbfedbfc83ac65b3099c0f368989e"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

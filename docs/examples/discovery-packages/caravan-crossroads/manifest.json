@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "caravan-crossroads-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "caravan-crossroads-package",
+    "title": "Caravan Crossroads",
+    "subject": "History",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "history",
+      "trade",
+      "geography",
+      "resources"
+    ],
+    "summary": "Plan a caravan’s route and supplies, then compare how terrain and seasons change a journey.",
+    "question": "Why might travelers choose a longer route instead of the shortest one?",
+    "explanation": "Trading routes connected communities and carried ideas and skills as well as goods. The Silk Roads were a changing network of land and sea routes, not a single road or one journey made by every merchant. Travelers had to consider terrain, water, seasons and supplies. This fictional journey borrows those general trade-offs. Its routes, prices, cargo losses and travel times are invented for comparison, not a reconstruction of a particular culture, place or century.",
+    "experiments": [
+      {
+        "title": "Choose a seasonal route",
+        "instruction": "Pack 14 supply days and keep the cargo fixed. Predict how changing from dry to wet season affects the river route, then compare travel time and cargo delivered.",
+        "observe": "Use the journey results to explain why the fastest route can depend on conditions, not just distance. Identify which numbers are model assumptions rather than historical evidence."
+      },
+      {
+        "title": "Pack for the journey",
+        "instruction": "Choose a route and predict the supplies needed for its travel time. Add supply days until the shortage is zero, then increase the cargo load.",
+        "observe": "Compare total load with carrying capacity. Explain the trade-off between carrying more goods and leaving room for the supplies needed to complete the journey."
+      }
+    ],
+    "misconception": "Trade was not simply one-way travel between two distant empires. Networks involved many communities, local exchanges and changing routes.",
+    "sources": [
+      {
+        "title": "UNESCO: About the Silk Roads",
+        "url": "https://www.unesco.org/en/silk-roads/about-silk-roads?hub=196704"
+      },
+      {
+        "title": "UNESCO: The Chang’an–Tianshan routes network",
+        "url": "https://whc.unesco.org/en/list/1442"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "4827832fe3a9b4ec6878d05b0460197f29dbd92f011c70213199dec5416206d4"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

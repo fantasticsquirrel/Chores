@@ -9,7 +9,7 @@ This guide complements [the education-first content standard](discovery-content-
 Read that standard before writing a lesson, then review the rendered experience.
 The existing module system and its authorization remain unchanged.
 
-**Platform support in this release:** both downloaded runtimes run on the web
+**Platform support in this release:** all downloaded runtimes run on the web
 only. Native mobile clearly marks packages as web-only and does not execute
 them or present a nonworking simulation as playable. Existing bundled
 Explorations retain their native implementations.
@@ -23,6 +23,12 @@ Explorations retain their native implementations.
   numeric controls inside a browser worker. Use it when a relationship graph
   cannot adequately represent the investigation. It cannot provide arbitrary
   HTML, navigation, third-party libraries, network calls, or native functionality.
+
+- `worker-3d-v1`: self-contained JavaScript computes a bounded, custom 3D scene
+  using the [rich scene contract](discovery-rich-scene-contract.md). It requires
+  the one-time rich-renderer application upgrade. Geometry, materials, procedural
+  textures, camera presets, controls and teaching logic can then change in packages
+  without rebuilding the application. It does not load arbitrary Three scripts.
 
 This is a narrow exception to the module guide's prohibition on dynamic code
 execution: reviewed Discovery computation runs only through this restricted
@@ -83,7 +89,7 @@ minimal working manifest. Required fields are:
 - `version`: `major.minor.patch`, optionally followed by a prerelease suffix,
   for example `1.0.0` or `1.1.0-preview.1`. Numeric core components have no leading
   zeros. Build-metadata suffixes (`+...`) are not supported. Maximum 60 characters.
-- `runtime`: `declarative-v1` or `worker-v1`.
+- `runtime`: `declarative-v1`, `worker-v1`, or `worker-3d-v1`.
 - `exploration`: the teaching fields below. Its `id` must equal `package_id`.
   Do not supply a `package` field; the server owns runtime/version annotations.
 - `assets`: an array of `{ "path", "mime_type", "sha256" }` entries. Use an
@@ -224,8 +230,9 @@ Allowed type/extension pairs are `text/javascript`/`.js`,
 `image/jpeg`/`.jpg` or `.jpeg`, and `image/webp`/`.webp`. Images are decoded and
 verified, with at most 4,000,000 pixels. UTF-8 text must not contain NUL; JSON
 assets must also parse. Declaring a MIME type does not convert the file.
-Accepted assets are not automatically renderable: worker-v1 currently exposes
-only its entry script and vector protocol, not an image/asset-loading API.
+Accepted assets are not automatically renderable. Workers expose only their entry
+script and validated output protocol, not an image/asset-loading API. The 3D
+contract supports bounded procedural texture rectangles, never remote images.
 
 Limits: 2 MiB compressed ZIP; 4 MiB expanded total; 1 MiB per asset; 128 KiB for
 the manifest; 32 files including the manifest; expansion ratio at most 100:1
@@ -405,3 +412,11 @@ wording in these examples are original; the source figures are not copied.
   Reconnect; do not persist an allowed flag or serve a cached authorized view.
 - **Visual differs from teaching:** stop publication and correct the model or
   instructions. Passing structural validation does not make the lesson correct.
+
+## Rich Castle conversion example
+
+Build the independent authoring sources with `node scripts/build-castle-package.mjs`,
+then build `docs/examples/discovery-packages/castle-defenses` with the same ZIP CLI.
+Its ID is `castle-defenses-package`; the original `castle-defenses` remains bundled.
+See [the rich scene contract](discovery-rich-scene-contract.md) for capability and
+resource limits and [the proof plan](plans/2026-10-24-castle-package-proof.md) for scope.

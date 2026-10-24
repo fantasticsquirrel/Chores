@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "package_id": "gravity-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "gravity-package",
+    "title": "Gravity Drop Lab",
+    "subject": "Physics",
+    "grade_bands": [
+      "K-2",
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "gravity",
+      "forces",
+      "mass",
+      "measurement"
+    ],
+    "summary": "Drop two objects on different worlds and compare their motion.",
+    "question": "Does a heavier object always reach the ground first?",
+    "explanation": "Without air resistance, objects released together from the same height fall with the same acceleration, regardless of their mass. Mass stays the same on another world, but weight changes with local gravity. This near-surface model uses constant, rounded gravity values and leaves out air and wind.",
+    "experiments": [
+      {
+        "title": "Compare masses fairly",
+        "instruction": "Predict which reaches the floor first. Keep height fixed, select a prediction, then Compare 1 kg with 10 kg.",
+        "observe": "Both Earth objects land at the same time. Explain why their different weights do not imply different accelerations."
+      },
+      {
+        "title": "Compare worlds",
+        "instruction": "Predict whether Moon gravity makes the same-height drop faster or slower. Keep height and mass fixed. Choose Moon, then Play motion or Timeline.",
+        "observe": "Compare the Earth reference and Moon object at the same elapsed time. Explain the difference using their accelerations."
+      }
+    ],
+    "misconception": "A heavy object does not necessarily fall faster. Air resistance can change real-world results; this lab models a vacuum.",
+    "sources": [
+      {
+        "title": "NASA: What is microgravity?",
+        "url": "https://www.nasa.gov/centers-and-facilities/glenn/what-is-microgravity/"
+      },
+      {
+        "title": "NASA: Planetary fact sheet",
+        "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+      }
+    ],
+    "duration_minutes": 10
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "985d52cb819b5305a74f7140c44ca84dc3f9e75af136ab604eb58dbcdd27058d"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

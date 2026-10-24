@@ -333,3 +333,23 @@ def test_publish_audit_and_approval_are_household_scoped(actors):
         ).all()
         assert len(events) == 2
         assert all(event.household_id == parent.household_id for event in events)
+
+
+def test_rich_3d_worker_requires_explicit_supported_runtime():
+    import hashlib
+
+    code = b"self.onmessage=()=>self.postMessage({scene3d:{}});"
+    value = manifest()
+    del value["scene"]
+    value.update(runtime="worker-3d-v1", entry="main.js")
+    value["assets"] = [{"path": "main.js", "mime_type": "text/javascript", "sha256": hashlib.sha256(code).hexdigest()}]
+    result = validate_archive(archive(value, [("main.js", code)]))
+    assert result["manifest"]["runtime"] == "worker-3d-v1"
+    for invalid in ["worker-3d-v2", "arbitrary-html-v1"]:
+        value["runtime"] = invalid
+        with pytest.raises(HTTPException):
+            validate_archive(archive(value, [("main.js", code)]))
+    value["runtime"] = "worker-3d-v1"
+    value.pop("entry")
+    with pytest.raises(HTTPException):
+        validate_archive(archive(value, [("main.js", code)]))

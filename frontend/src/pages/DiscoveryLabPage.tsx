@@ -1,3 +1,4 @@
+import { groupExplorationVersions } from "../features/discovery-lab/lib/catalogGroups";
 import { AuthorizedPackage } from "../features/discovery-lab/packages/PackageRuntime";
 import { PackageAuthorPanel } from "../features/discovery-lab/packages/PackageAuthorPanel";
 import { useCallback, useState } from "react";
@@ -46,6 +47,7 @@ export function DiscoveryLabPage() {
   if (!allowed) return <DiscoveryUnavailable />;
   const items = catalog.data ?? [];
   const visible = filterExplorations(items, filters);
+  const groups = groupExplorationVersions(visible);
   return (
     <div className="discovery-lab">
       <header className="discovery-hero">
@@ -90,7 +92,8 @@ export function DiscoveryLabPage() {
               <h2>Explorations</h2>
             </div>
             <span>
-              {visible.length} of {items.length} Explorations
+              {groups.length} of {groupExplorationVersions(items).length}{" "}
+              Explorations
             </span>
           </div>
           <DiscoveryFilters
@@ -105,36 +108,52 @@ export function DiscoveryLabPage() {
             </section>
           ) : (
             <div className="discovery-card-grid">
-              {visible.map((item, index) => (
-                <Link
-                  className="discovery-card"
-                  key={item.id}
-                  to={`/discovery-lab/${item.id}`}
-                >
-                  <div className="discovery-card-art">
-                    <ExplorationArtwork id={item.id} />
-                    <span className="discovery-card-number">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                  </div>
-                  <div className="discovery-card-copy">
-                    <div className="discovery-card-meta">
-                      <span>{item.subject}</span>
-                      <span>{item.duration_minutes} min</span>
+              {groups.map(({ item, alternatives }, index) => (
+                <article className="discovery-card" key={item.id}>
+                  <Link
+                    className="discovery-card-primary"
+                    to={`/discovery-lab/${item.id}`}
+                  >
+                    <div className="discovery-card-art">
+                      <ExplorationArtwork id={item.id} />
+                      <span className="discovery-card-number">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
                     </div>
-                    <h3>{item.title}</h3>
-                    <p>{item.summary}</p>
-                    <div className="discovery-tags">
-                      <span>Grades {item.grade_bands.join(" · ")}</span>
-                      {item.tags.slice(0, 2).map((tag) => (
-                        <span key={tag}>{tag}</span>
-                      ))}
+                    <div className="discovery-card-copy">
+                      <div className="discovery-card-meta">
+                        <span>{item.subject}</span>
+                        <span>
+                          {item.package
+                            ? `Downloaded v${item.package.version}`
+                            : "Built-in"}
+                        </span>
+                        <span>{item.duration_minutes} min</span>
+                      </div>
+                      <h3>{item.title}</h3>
+                      <p>{item.summary}</p>
+                      <div className="discovery-tags">
+                        <span>Grades {item.grade_bands.join(" · ")}</span>
+                        {item.tags.slice(0, 2).map((tag) => (
+                          <span key={tag}>{tag}</span>
+                        ))}
+                      </div>
+                      <span className="discovery-card-start">
+                        Open Exploration <span aria-hidden="true">↗</span>
+                      </span>
                     </div>
-                    <span className="discovery-card-start">
-                      Open Exploration <span aria-hidden="true">↗</span>
-                    </span>
-                  </div>
-                </Link>
+                  </Link>
+                  {alternatives.map((alternative) => (
+                    <Link
+                      key={alternative.id}
+                      className="discovery-package-alternative"
+                      to={`/discovery-lab/${alternative.id}`}
+                    >
+                      Open downloaded version {alternative.package?.version}{" "}
+                      (web)
+                    </Link>
+                  ))}
+                </article>
               ))}
             </div>
           )}
@@ -183,6 +202,11 @@ export function DiscoveryExplorationPage() {
                 {item.duration_minutes} minutes
               </div>
               <h1>{item.title}</h1>
+              <p className="discovery-version-label">
+                {item.package
+                  ? `Downloaded package · Version ${item.package.version} · Web only`
+                  : "Built-in Exploration"}
+              </p>
               <p>{item.question}</p>
               <div className="discovery-tags">
                 {item.tags.map((tag) => (

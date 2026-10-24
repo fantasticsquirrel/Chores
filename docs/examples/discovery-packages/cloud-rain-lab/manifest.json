@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "cloud-rain-lab-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "cloud-rain-lab-package",
+    "title": "Cloud and Rain Lab",
+    "subject": "Earth science",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "weather",
+      "clouds",
+      "water",
+      "temperature"
+    ],
+    "summary": "Change air temperature, water vapor and uplift, then test why a cloud need not produce rain.",
+    "question": "Why can rising air make a cloud without making rain?",
+    "explanation": "Rising air expands as pressure decreases and usually cools. Near saturation, water vapor can condense into tiny visible droplets. Those droplets need additional growth before they can become rain. This warm-cloud model estimates a condensation height from starting temperature and moisture, with fixed cooling rates before and after saturation. Its droplet-growth index and rain threshold are invented teaching values. It omits mixing, detailed droplet growth and ice processes, so it cannot forecast rainfall.",
+    "experiments": [
+      {
+        "title": "Lift the same air",
+        "instruction": "Choose Lift the same air. Will lifting the same air to 600 m and 1800 m produce the same cloud state? Select your prediction, then Set baseline and Lift to 1800 m. Keep 22°C starting temperature, 10 g/kg vapor and growth 30. Change only lift from 600 to 1800 m.",
+        "observe": "Cloud without rain. Lifted 1800 m; parcel 7.3°C; approximate condensation level 1018 m. Growth teaching index 30. Cooling reached saturation, but growth does not yet produce falling drops. How did expansion and cooling connect lift to condensation? At fixed lift, why can warmer starting air remove the cloud?"
+      },
+      {
+        "title": "Cloud is not rain",
+        "instruction": "Choose Cloud is not rain. If the parcel is already cloudy, does that guarantee falling rain? Select your prediction, then Set baseline and Set growth to 90. Keep lift 1400 m, 22°C and 10 g/kg. Compare growth 30 with 90 and the unchanged parcel temperature.",
+        "observe": "Cloud with falling drops. Lifted 1400 m; parcel 9.7°C; approximate condensation level 1018 m. Growth teaching index 90. Condensation and chosen growth condition are present. Which process formed the cloud, and which extra condition changed falling drops? Why is this teaching threshold not a forecast?"
+      }
+    ],
+    "misconception": "A visible cloud consists of tiny liquid droplets or ice particles, not invisible water vapor. Cloud formation does not guarantee rain at the ground.",
+    "sources": [
+      {
+        "title": "NOAA: How clouds form",
+        "url": "https://www.noaa.gov/jetstream/clouds/how-clouds-form"
+      },
+      {
+        "title": "NOAA: How cloud particles grow into precipitation",
+        "url": "https://www.noaa.gov/jetstream/atmosphere/precipitation"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "a7c55481ab6ce2a4cfff34bef634af6db9a9db61f020b23bfb9d2503d4c9a2c7"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

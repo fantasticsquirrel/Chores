@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Compare launch speeds",
+      "instruction": "Predict what happens at 0.60× baseline speed. Keep central mass at 1×. Choose a prediction, then Test 0.60× speed.",
+      "observe": "The path reaches the planet. Explain how insufficient sideways motion lets gravity curve the path into the surface."
+    },
+    {
+      "title": "Test escape",
+      "instruction": "Predict what 1.42× speed will do. Choose 1.42× speed, keeping central mass at 1×, then use Play motion or Trace position.",
+      "observe": "Compare with 1.00× speed. The escaping probe still experiences gravity; explain why escape does not mean gravity disappears."
+    }
+  ]
+}

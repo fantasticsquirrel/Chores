@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "package_id": "chance-carnival-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "chance-carnival-package",
+    "title": "Chance Carnival",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "probability",
+      "data",
+      "fractions",
+      "sampling"
+    ],
+    "summary": "Set the chances on a spinner or die, run trials and compare predictions with results.",
+    "question": "Does an outcome with a one-in-four chance have to appear once every four tries?",
+    "explanation": "Probability describes how likely an outcome is. Each outcome’s weight divided by the total weight gives its chance in this model. Equal weights mean equal chances; a weight of zero makes an outcome impossible. Trial results vary, especially in small samples. More trials often bring the observed proportions closer to the predicted probabilities, but exact agreement is not guaranteed. Trials are independent computer-generated samples; a streak does not change the next trial’s chances.",
+    "experiments": [
+      {
+        "title": "Small sample, large sample",
+        "instruction": "Reset to give all four spinner outcomes equal weights. Predict the fraction for each, run 10 trials, then add a larger batch without changing the weights.",
+        "observe": "Compare each observed percentage with 25%. Explain why uneven counts in a small sample are not by themselves evidence of unequal chances."
+      },
+      {
+        "title": "Change the chances",
+        "instruction": "Reset the spinner, then double the first outcome’s weight while leaving the others at 1. Predict its chance before running a fresh set of trials.",
+        "observe": "The doubled outcome has weight 2 out of a total of 5, or a 40% chance. Compare that prediction with the sample and explain why twice the weight does not mean a 50% chance."
+      }
+    ],
+    "misconception": "An outcome is not “due” because it has been absent. With unchanged weights, each independent trial has the same probabilities as before.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Probability models and observed frequencies",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/7/SP/C/7"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "4d0452f5ba76dc3cac88fe7f3be7afadf029c7909b755d7c826d9a4d3d38a3d5"
+    },
+    {
+      "path": "assets/number-1.png",
+      "mime_type": "image/png",
+      "sha256": "c378a077fe80b4257b345402bd869d74d97d12205c80ecbb8a7dbb506cba9df0"
+    },
+    {
+      "path": "assets/number-2.png",
+      "mime_type": "image/png",
+      "sha256": "82d5164e5be2f1381c0f20276a7d2362bfd7b9da77af43bb18f2751c69ca231e"
+    },
+    {
+      "path": "assets/number-3.png",
+      "mime_type": "image/png",
+      "sha256": "f1f27d71603b63c69ce9ac127257a8f1a30f507f2235378df152d46aa3a3b317"
+    },
+    {
+      "path": "assets/number-4.png",
+      "mime_type": "image/png",
+      "sha256": "d74374fd91c736524d59e4914945db020aab1672940e9a413f8adea950b3ced6"
+    },
+    {
+      "path": "assets/number-5.png",
+      "mime_type": "image/png",
+      "sha256": "2b58a8169f769d3ed4a71c4e2f6339f8388067725072a2bbfc8fd6f7a040d06c"
+    },
+    {
+      "path": "assets/number-6.png",
+      "mime_type": "image/png",
+      "sha256": "5fe778bc98b39fb916338050bccc829749473c6bc5ecb6cb35a0cbf490445486"
+    },
+    {
+      "path": "assets/pips-1.png",
+      "mime_type": "image/png",
+      "sha256": "b2b610999952ad31eb27044414cec62aa57f381a252d31c5aef93053ed0c3ba4"
+    },
+    {
+      "path": "assets/pips-2.png",
+      "mime_type": "image/png",
+      "sha256": "41c15ed904c0622cd25f3c5279c97d52484cc7e79efadcea0964c345881d34bf"
+    },
+    {
+      "path": "assets/pips-3.png",
+      "mime_type": "image/png",
+      "sha256": "a4b4aa3f6c1596e579be30ca5b3c548807f8dd03f99c6af258396d7e4950e474"
+    },
+    {
+      "path": "assets/pips-4.png",
+      "mime_type": "image/png",
+      "sha256": "92467ca2b5e88876061ab9d8b0176134dc20564be5c27a8e25a1d486878369cb"
+    },
+    {
+      "path": "assets/pips-5.png",
+      "mime_type": "image/png",
+      "sha256": "87e9554346a7f0950849de8dac3752e41a3cdfd4bd2ba04b3d65ac0f5bb2f590"
+    },
+    {
+      "path": "assets/pips-6.png",
+      "mime_type": "image/png",
+      "sha256": "5b78a5b72444e4d79fa7dc84c9d239ac32e6b85abe785b6ff1c8aba8bd1e7493"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}
