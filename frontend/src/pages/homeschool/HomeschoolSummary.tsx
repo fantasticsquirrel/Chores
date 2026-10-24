@@ -1,9 +1,13 @@
 import type { ReactElement } from "react";
 
 import type { HomeschoolAttendance, HomeschoolDayComment, HomeschoolGrade, HomeschoolSemester, HomeschoolSubject } from "../../api";
-import { Card } from "../../ui";
+import { SemesterReportExport } from "../../features/homeschool/components/SemesterReportExport";
+import { Card, FormField } from "../../ui";
 
 type HomeschoolSummaryProps = {
+  householdId: number | null;
+  semesters: HomeschoolSemester[];
+  onSemesterChange: (semesterId: string) => void;
   calendarChildId: string;
   selectedSemester: HomeschoolSemester | null;
   selectedChildAttendance: HomeschoolAttendance[];
@@ -13,6 +17,9 @@ type HomeschoolSummaryProps = {
 };
 
 export function HomeschoolSummary({
+  householdId,
+  semesters,
+  onSemesterChange,
   calendarChildId,
   selectedSemester,
   selectedChildAttendance,
@@ -31,12 +38,12 @@ export function HomeschoolSummary({
     days: reportRecords.filter((record) => record.subject_id === subject.id && record.present).length,
     grade: selectedChildGrades.find(
       (record) => record.subject_id === subject.id && record.semester_id === (selectedSemester?.id ?? null),
-    )?.grade || selectedChildGrades.find((record) => record.subject_id === subject.id && record.semester_id === null)?.grade || "—",
+    )?.grade || "—",
   }));
   const reportUniqueDays = new Set(reportRecords.filter((record) => record.present).map((record) => record.date)).size;
 
   return (
-    <Card className="dashboard-panel">
+    <Card className="dashboard-panel homeschool-report">
       <div className="panel-header-row">
         <div>
           <h2>Semester Summary</h2>
@@ -47,6 +54,13 @@ export function HomeschoolSummary({
           </p>
         </div>
       </div>
+      <FormField label="Report semester">
+        <select className="text-input" value={selectedSemester?.id ?? ""} onChange={(event) => onSemesterChange(event.target.value)}>
+          {semesters.length === 0 ? <option value="">Create a semester first</option> : null}
+          {semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
+        </select>
+      </FormField>
+      {householdId !== null && selectedSemester !== null && calendarChildId !== "" ? <SemesterReportExport key={`${householdId}:${calendarChildId}:${selectedSemester.id}`} householdId={householdId} semesterId={selectedSemester.id} childId={Number(calendarChildId)} /> : null}
       {calendarChildId === "" ? <p>Select a child above to preview a summary.</p> : null}
       {calendarChildId !== "" ? (
         <>

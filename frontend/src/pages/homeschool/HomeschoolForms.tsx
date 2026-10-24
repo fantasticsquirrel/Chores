@@ -2,14 +2,7 @@ import type { FormEvent, ReactElement } from "react";
 
 import type { Child, HomeschoolSemester, HomeschoolSubject } from "../../api";
 import { Button, Card, DateInput, FormField, TextInput } from "../../ui";
-
-export type AttendanceFormState = {
-  childId: string;
-  subjectId: string;
-  date: string;
-  present: boolean;
-  comment: string;
-};
+import { subjectColors } from "../../features/homeschool/lib/attendance";
 
 export type DayCommentFormState = {
   childId: string;
@@ -36,7 +29,6 @@ type HomeschoolFormsProps = {
   subjectColor: string;
   editingSemesterId: number | null;
   editingSubjectId: number | null;
-  attendance: AttendanceFormState;
   dayComment: DayCommentFormState;
   grade: GradeFormState;
   onSemesterNameChange: (value: string) => void;
@@ -44,14 +36,12 @@ type HomeschoolFormsProps = {
   onSemesterEndChange: (value: string) => void;
   onSubjectNameChange: (value: string) => void;
   onSubjectColorChange: (value: string) => void;
-  onAttendanceChange: (patch: Partial<AttendanceFormState>) => void;
   onDayCommentChange: (patch: Partial<DayCommentFormState>) => void;
   onGradeChange: (patch: Partial<GradeFormState>) => void;
   onCancelSemesterEdit: () => void;
   onCancelSubjectEdit: () => void;
   onCreateSemester: (event: FormEvent<HTMLFormElement>) => void;
   onCreateSubject: (event: FormEvent<HTMLFormElement>) => void;
-  onSaveAttendance: (event: FormEvent<HTMLFormElement>) => void;
   onSaveDayComment: (event: FormEvent<HTMLFormElement>) => void;
   onSaveGrade: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -68,7 +58,6 @@ export function HomeschoolForms({
   subjectColor,
   editingSemesterId,
   editingSubjectId,
-  attendance,
   dayComment,
   grade,
   onSemesterNameChange,
@@ -76,14 +65,12 @@ export function HomeschoolForms({
   onSemesterEndChange,
   onSubjectNameChange,
   onSubjectColorChange,
-  onAttendanceChange,
   onDayCommentChange,
   onGradeChange,
   onCancelSemesterEdit,
   onCancelSubjectEdit,
   onCreateSemester,
   onCreateSubject,
-  onSaveAttendance,
   onSaveDayComment,
   onSaveGrade,
 }: HomeschoolFormsProps): ReactElement {
@@ -115,31 +102,16 @@ export function HomeschoolForms({
             <TextInput value={subjectName} onChange={(event) => onSubjectNameChange(event.target.value)} placeholder="Math" required maxLength={255} />
           </FormField>
           <FormField label="Color">
-            <TextInput value={subjectColor} onChange={(event) => onSubjectColorChange(event.target.value)} placeholder="#3b82f6" required maxLength={32} />
+            <input className="homeschool-color-input" type="color" value={/^#[0-9a-f]{6}$/i.test(subjectColor) ? subjectColor : "#1d4ed8"} onChange={(event) => onSubjectColorChange(event.target.value)} />
           </FormField>
+          <div className="homeschool-color-swatches" role="group" aria-label="Subject colors">
+            {subjectColors.map((color) => <button type="button" key={color.value} aria-label={color.name} aria-pressed={subjectColor.toLowerCase() === color.value} style={{ background: color.value }} onClick={() => onSubjectColorChange(color.value)}>{subjectColor.toLowerCase() === color.value ? "✓" : ""}</button>)}
+          </div>
+          <div className="homeschool-subject-preview" aria-label="Subject color preview"><span className="subject-attendance-color" style={{ background: subjectColor }} />{subjectName.trim() || "New subject"}</div>
           <div className="item-actions">
             <Button type="submit" disabled={householdId === null || subjectName.trim().length === 0}>{editingSubjectId === null ? "Create Subject" : "Update Subject"}</Button>
             {editingSubjectId !== null ? <Button type="button" onClick={onCancelSubjectEdit}>Cancel</Button> : null}
           </div>
-        </form>
-      </Card>
-
-      <Card className="dashboard-panel homeschool-record-card">
-        <h2>Quick Attendance</h2>
-        <form className="children-form" onSubmit={onSaveAttendance}>
-          <ChildSelect value={attendance.childId} children={children} onChange={(childId) => onAttendanceChange({ childId })} />
-          <SubjectSelect value={attendance.subjectId} subjects={subjects} onChange={(subjectId) => onAttendanceChange({ subjectId })} />
-          <FormField label="Date">
-            <DateInput value={attendance.date} onChange={(event) => onAttendanceChange({ date: event.target.value })} required />
-          </FormField>
-          <label className="checkbox-row">
-            <input type="checkbox" checked={attendance.present} onChange={(event) => onAttendanceChange({ present: event.target.checked })} />
-            Present
-          </label>
-          <FormField label="Comment">
-            <TextInput value={attendance.comment} onChange={(event) => onAttendanceChange({ comment: event.target.value })} placeholder="Fractions, copywork, field trip..." maxLength={2000} />
-          </FormField>
-          <Button type="submit" disabled={attendance.childId === "" || attendance.subjectId === ""}>Save Attendance</Button>
         </form>
       </Card>
 

@@ -84,3 +84,10 @@ export interface UpsertHomeschoolGradeRequest {
   semester_id?: number | null;
   grade: string;
 }
+
+export interface HomeschoolSemesterReportRequest {
+  household_id: number;
+  child_id: number;
+  semester_id: number;
+  include_notes?: boolean;
+}

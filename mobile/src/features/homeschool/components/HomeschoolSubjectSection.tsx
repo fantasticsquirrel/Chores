@@ -66,20 +66,30 @@ export function HomeschoolSubjectFormSection({
         value={form.name}
       />
       <FieldLabel label="Color" />
-      <TextInput
-        autoCapitalize="none"
-        maxLength={32}
-        onChangeText={(color) => onChange({ color })}
-        placeholder="#3b82f6"
-        placeholderTextColor="#94a3b8"
-        style={formStyles.input}
-        value={form.color}
-      />
+      <View
+        style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+        accessibilityLabel={`Color preview for ${form.name || "new subject"}: ${form.color}`}
+      >
+        <View
+          style={[
+            homeschoolStyles.rowColorDot,
+            { backgroundColor: form.color },
+          ]}
+        />
+        <Text style={formStyles.rowTitle}>
+          {form.name.trim() || "New subject"}
+        </Text>
+      </View>
       <View style={homeschoolStyles.swatchRow}>
         {subjectColorSwatches.map((color) => (
           <Pressable
-            accessibilityLabel={`Use ${color}`}
-            accessibilityRole="button"
+            accessibilityLabel={`Use ${["blue", "teal", "orange", "purple", "green", "red", "gold", "slate"][subjectColorSwatches.indexOf(color)]} color`}
+            accessibilityRole="radio"
+            accessibilityState={{
+              selected: form.color.toLowerCase() === color,
+              disabled: busy,
+            }}
+            disabled={busy}
             key={color}
             onPress={() => onChange({ color })}
             style={[
@@ -128,7 +138,9 @@ export function HomeschoolSubjectListSection({
   return (
     <SectionCard title="Subjects">
       {subjects.length === 0 ? (
-        <Text style={shellStyles.mutedText}>No subjects have been created yet.</Text>
+        <Text style={shellStyles.mutedText}>
+          No subjects have been created yet.
+        </Text>
       ) : null}
       {subjects.map((subject) => (
         <View key={subject.id} style={cardStyles.reviewItem}>
@@ -140,7 +152,10 @@ export function HomeschoolSubjectListSection({
               </Text>
             </View>
             <View
-              style={[homeschoolStyles.rowColorDot, { backgroundColor: subject.color }]}
+              style={[
+                homeschoolStyles.rowColorDot,
+                { backgroundColor: subject.color },
+              ]}
             />
           </View>
           <View style={formStyles.inlineButtons}>

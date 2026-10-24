@@ -1,3 +1,4 @@
+import type { BinaryDownload, RequestOptions } from "../client-core";
 import type {
   Child,
   ChildAccount,
@@ -33,6 +34,7 @@ import type {
   HomeschoolDayComment,
   HomeschoolGrade,
   HomeschoolSemester,
+  HomeschoolSemesterReportRequest,
   HomeschoolSubject,
   UpdateHomeschoolSemesterRequest,
   UpdateHomeschoolSubjectRequest,
@@ -82,6 +84,21 @@ export abstract class FamilyCoreApiEndpoints extends FamilyNotificationApiEndpoi
     return this.patch<ChildAccount, ResetChildAccountPasswordRequest>(
       `/children/${childId}/account-password`,
       payload,
+    );
+  }
+
+  async downloadHomeschoolSemesterReport(
+    request: HomeschoolSemesterReportRequest,
+    options?: RequestOptions,
+  ): Promise<BinaryDownload> {
+    const query = new URLSearchParams({
+      household_id: String(request.household_id),
+      child_id: String(request.child_id),
+      include_notes: String(request.include_notes ?? false),
+    });
+    return this.getBinary(
+      `/homeschool/semesters/${request.semester_id}/report.pdf?${query.toString()}`,
+      options,
     );
   }
 

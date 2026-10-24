@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiClient } from "../../../api/client";
 import type {
@@ -48,7 +48,16 @@ export function useHomeschoolData({
   enabled: boolean;
   householdId: number;
 }) {
-  const [state, setState] = useState<HomeschoolDataState>(emptyState);
+  const [storedState, setState] = useState<HomeschoolDataState>(emptyState);
+  const scope = `${householdId}:${enabled}`;
+  const scopeRef = useRef(scope);
+  const generation = useRef(0);
+  const loadedScope = useRef(scope);
+  if (scopeRef.current !== scope) {
+    scopeRef.current = scope;
+    generation.current += 1;
+  }
+  const state = loadedScope.current === scope ? storedState : emptyState;
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
     null,
@@ -62,7 +71,14 @@ export function useHomeschoolData({
     if (!enabled) {
       return;
     }
-    setState((previous) => ({ ...previous, error: null, loading: true }));
+    const requestScope = `${householdId}:${enabled}`;
+    if (scopeRef.current !== requestScope) return;
+    const request = ++generation.current;
+    if (loadedScope.current !== requestScope) {
+      loadedScope.current = requestScope;
+      setState({ ...emptyState, loading: true });
+    } else
+      setState((previous) => ({ ...previous, error: null, loading: true }));
     try {
       const [children, semesters, subjects, attendance, comments, grades] =
         await Promise.all([
@@ -76,6 +92,8 @@ export function useHomeschoolData({
           apiClient.listHomeschoolDayComments(householdId),
           apiClient.listHomeschoolGrades(householdId),
         ]);
+      if (generation.current !== request || scopeRef.current !== requestScope)
+        return;
       setState({
         attendance,
         children,
@@ -87,6 +105,8 @@ export function useHomeschoolData({
         subjects,
       });
     } catch (error) {
+      if (generation.current !== request || scopeRef.current !== requestScope)
+        return;
       setState((previous) => ({
         ...previous,
         error: formatError(error),
@@ -97,6 +117,9 @@ export function useHomeschoolData({
 
   useEffect(() => {
     void refresh();
+    return () => {
+      generation.current += 1;
+    };
   }, [refresh]);
 
   const activeChildren = useMemo(
@@ -166,7 +189,32 @@ export function useHomeschoolData({
     selectedSemester,
   );
 
+  function applyAttendanceRecord(record: HomeschoolAttendance) {
+    if (
+      record.household_id !== householdId ||
+      scopeRef.current !== `${householdId}:${enabled}`
+    )
+      return;
+    generation.current += 1; // A pending read must not overwrite a newly acknowledged write.
+    setState((previous) => ({
+      ...previous,
+      loading: false,
+      attendance: [
+        ...previous.attendance.filter(
+          (existing) =>
+            !(
+              existing.child_id === record.child_id &&
+              existing.subject_id === record.subject_id &&
+              existing.date === record.date
+            ),
+        ),
+        record,
+      ],
+    }));
+  }
+
   return {
+    applyAttendanceRecord,
     activeChildren,
     calendarYearMonth,
     commentsInSemester,

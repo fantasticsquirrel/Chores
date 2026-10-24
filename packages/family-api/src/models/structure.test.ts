@@ -181,6 +181,7 @@ const expectedPublicModels = [
   "HomeschoolDayComment",
   "HomeschoolGrade",
   "HomeschoolSemester",
+  "HomeschoolSemesterReportRequest",
   "HomeschoolSubject",
   "HouseholdModuleAccess",
   "HouseholdOwnershipResponse",

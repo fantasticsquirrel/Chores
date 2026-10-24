@@ -1,5 +1,8 @@
 import type { FormEvent, ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { AttendanceDialog } from "../features/homeschool/components/AttendanceDialog";
+import { isAttendanceDate, nextSubjectColor } from "../features/homeschool/lib/attendance";
 
 import { apiClient, type HomeschoolSemester, type HomeschoolSubject } from "../api";
 import { useAuth } from "../auth/useAuth";
@@ -7,7 +10,7 @@ import { ButtonLink, Card, InlineNotice } from "../ui";
 import { todayISO, toYearMonth } from "./homeschool/dateUtils";
 import { AttendanceCalendar } from "./homeschool/AttendanceCalendar";
 import { HomeschoolSummary } from "./homeschool/HomeschoolSummary";
-import { HomeschoolForms, type AttendanceFormState, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
+import { HomeschoolForms, type DayCommentFormState, type GradeFormState } from "./homeschool/HomeschoolForms";
 import { HomeschoolStatus } from "./homeschool/HomeschoolStatus";
 import { useHomeschoolData } from "./homeschool/useHomeschoolData";
 import { formatApiError } from "../lib/errors";
@@ -17,19 +20,33 @@ function confirmDestructiveAction(message: string): boolean {
 }
 
 export function HomeschoolPage(): ReactElement {
-  const { user } = useAuth();
+  const { user, manageableModuleKeys } = useAuth();
+  const canManage = manageableModuleKeys.includes("homeschool");
   const householdId = user?.household_id ?? null;
-  const { data: state, refresh } = useHomeschoolData(householdId);
+  const { data: state, refresh, applyAttendanceRecord } = useHomeschoolData(householdId);
   const [semesterName, setSemesterName] = useState("");
   const [semesterStart, setSemesterStart] = useState(todayISO());
   const [semesterEnd, setSemesterEnd] = useState(todayISO());
   const [subjectName, setSubjectName] = useState("");
-  const [subjectColor, setSubjectColor] = useState("#3b82f6");
+  const [subjectColorOverride, setSubjectColor] = useState<string | null>(null);
+  const subjectColor = subjectColorOverride ?? nextSubjectColor(state.subjects);
   const [editingSemesterId, setEditingSemesterId] = useState<number | null>(null);
   const [editingSubjectId, setEditingSubjectId] = useState<number | null>(null);
   const [calendarYearMonth, setCalendarYearMonth] = useState(toYearMonth(todayISO()));
+  const [reportSemesterId, setReportSemesterId] = useState("");
   const [calendarChildId, setCalendarChildId] = useState("");
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const requestedDate = searchParams.get("attendance");
+  const selectedCalendarDate = isAttendanceDate(requestedDate) ? requestedDate : null;
+  function setSelectedCalendarDate(date: string | null): void {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous);
+      if (date === null) next.delete("attendance");
+      else next.set("attendance", date);
+      return next;
+    }, { replace: date === null });
+  }
   const [dayComment, setDayComment] = useState<DayCommentFormState>({
     childId: "",
     date: todayISO(),
@@ -41,33 +58,53 @@ export function HomeschoolPage(): ReactElement {
     semesterId: "",
     grade: "",
   });
-  const [attendance, setAttendance] = useState<AttendanceFormState>({
-    childId: "",
-    subjectId: "",
-    date: todayISO(),
-    present: true,
-    comment: "",
-  });
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
+  const previousHousehold = useRef(householdId);
+  const initializedForms = useRef<number | null>(null);
   useEffect(() => {
-    setAttendance((prev) => ({
-      ...prev,
-      childId: prev.childId || state.children[0]?.id.toString() || "",
-      subjectId: prev.subjectId || state.subjects[0]?.id.toString() || "",
-    }));
-    setCalendarChildId((prev) => prev || state.children[0]?.id.toString() || "");
-    setDayComment((prev) => ({ ...prev, childId: prev.childId || state.children[0]?.id.toString() || "" }));
-    setGrade((prev) => ({
-      ...prev,
-      childId: prev.childId || state.children[0]?.id.toString() || "",
-      subjectId: prev.subjectId || state.subjects[0]?.id.toString() || "",
-      semesterId: prev.semesterId || state.semesters[0]?.id.toString() || "",
-    }));
-  }, [state.children, state.semesters, state.subjects]);
+    if (previousHousehold.current !== null && previousHousehold.current !== householdId) {
+      initializedForms.current = null;
+      setCalendarChildId(""); setReportSemesterId("");
+      setSubjectName(""); setSubjectColor(null); setEditingSubjectId(null);
+      setSemesterName(""); setSemesterStart(todayISO()); setSemesterEnd(todayISO()); setEditingSemesterId(null);
+      setDayComment({ childId: "", date: todayISO(), comment: "" });
+      setGrade({ childId: "", subjectId: "", semesterId: "", grade: "" });
+      setActionError(null); setActionMessage(null);
+      setCalendarYearMonth(toYearMonth(todayISO()));
+      setSearchParams((previous) => { const next = new URLSearchParams(previous); next.delete("attendance"); return next; }, { replace: true });
+    }
+    previousHousehold.current = householdId;
+  }, [householdId, setSearchParams]);
 
   useEffect(() => {
+    if (state.loading || state.error || householdId === null) return;
+    const initial = initializedForms.current !== householdId;
+    initializedForms.current = householdId;
+    const reconcile = (value: string, rows: { id: number }[], allowEmpty = false) => {
+      if (value === "" && (allowEmpty || !initial)) return "";
+      return rows.some((row) => row.id.toString() === value) ? value : rows[0]?.id.toString() ?? "";
+    };
+    setCalendarChildId((prev) => reconcile(prev, state.children));
+    setReportSemesterId((prev) => reconcile(prev, state.semesters));
+    setDayComment((prev) => ({ ...prev, childId: reconcile(prev.childId, state.children) }));
+    setGrade((prev) => ({ ...prev, childId: reconcile(prev.childId, state.children), subjectId: reconcile(prev.subjectId, state.subjects), semesterId: reconcile(prev.semesterId, state.semesters, !initial) }));
+    if (editingSubjectId !== null && !state.subjects.some((subject) => subject.id === editingSubjectId)) {
+      setEditingSubjectId(null); setSubjectName(""); setSubjectColor(null);
+    }
+    if (editingSemesterId !== null && !state.semesters.some((semester) => semester.id === editingSemesterId)) {
+      setEditingSemesterId(null); setSemesterName(""); setSemesterStart(todayISO()); setSemesterEnd(todayISO());
+    }
+  }, [householdId, state.loading, state.error, state.children, state.semesters, state.subjects, editingSubjectId, editingSemesterId]);
+
+  const initializedCalendar = useRef("");
+  useEffect(() => {
+    if (state.loading || state.error) return;
+    const context = `${householdId}:${calendarChildId}`;
+    if (initializedCalendar.current === context) return;
+    initializedCalendar.current = context;
     const selectedChild = calendarChildId || state.children[0]?.id.toString() || "";
     const childAttendance = state.attendanceRecords
       .filter((record) => selectedChild !== "" && record.child_id === Number(selectedChild))
@@ -76,7 +113,7 @@ export function HomeschoolPage(): ReactElement {
     if (preferredDate !== undefined) {
       setCalendarYearMonth(toYearMonth(preferredDate));
     }
-  }, [calendarChildId, state.attendanceRecords, state.children, state.semesters]);
+  }, [householdId, calendarChildId, state.attendanceRecords, state.children, state.semesters, state.loading, state.error]);
 
   async function handleSaveSemester(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -160,7 +197,7 @@ export function HomeschoolPage(): ReactElement {
   function clearSubjectEdit(): void {
     setEditingSubjectId(null);
     setSubjectName("");
-    setSubjectColor("#3b82f6");
+    setSubjectColor(null);
   }
 
   async function handleDeleteSubject(subjectId: number): Promise<void> {
@@ -171,29 +208,6 @@ export function HomeschoolPage(): ReactElement {
       await apiClient.deleteHomeschoolSubject(subjectId, householdId);
       if (editingSubjectId === subjectId) clearSubjectEdit();
       setActionMessage("Deleted subject.");
-      refresh();
-    } catch (error: unknown) {
-      setActionError(formatApiError(error));
-    }
-  }
-
-  async function handleSaveAttendance(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    if (householdId === null || attendance.childId === "" || attendance.subjectId === "") return;
-    setActionError(null);
-    setActionMessage(null);
-    try {
-      await apiClient.upsertHomeschoolAttendance({
-        household_id: householdId,
-        child_id: Number(attendance.childId),
-        subject_id: Number(attendance.subjectId),
-        date: attendance.date,
-        present: attendance.present,
-        comment: attendance.comment,
-      });
-      setAttendance((prev) => ({ ...prev, comment: "" }));
-      setSelectedCalendarDate(null);
-      setActionMessage("Saved attendance.");
       refresh();
     } catch (error: unknown) {
       setActionError(formatApiError(error));
@@ -287,7 +301,7 @@ export function HomeschoolPage(): ReactElement {
   const selectedChildGrades = state.grades.filter(
     (record) => calendarChildId !== "" && record.child_id === Number(calendarChildId),
   );
-  const selectedSemester = state.semesters.find((semester) => semester.id.toString() === grade.semesterId) ?? state.semesters[0] ?? null;
+  const selectedSemester = state.semesters.find((semester) => semester.id.toString() === reportSemesterId) ?? state.semesters[0] ?? null;
 
   return (
     <section className="dashboard-grid" aria-label="Homeschool module">
@@ -298,45 +312,11 @@ export function HomeschoolPage(): ReactElement {
             <h1>Homeschool</h1>
           </div>
         </div>
-        <p>
-          Homeschool now shares Family Manager children and accounts. This slice adds basic semester, subject, and
-          attendance entry before the full calendar UI comes over.
-        </p>
-        <div className="quick-actions">
-          <ButtonLink to="/parent/children">Review Linked Children</ButtonLink>
-          <ButtonLink to="/admin/dashboard">Module Access</ButtonLink>
-        </div>
       </Card>
-
-      <Card className="metric-card">
-        <p className="metric-label">Linked Children</p>
-        <p className="metric-value">{state.loading ? "-" : state.children.length}</p>
-        <p className="metric-footnote">Shared with Chores.</p>
-      </Card>
-
-      <Card className="metric-card">
-        <p className="metric-label">Semesters</p>
-        <p className="metric-value">{state.loading ? "-" : state.semesters.length}</p>
-        <p className="metric-footnote">Backed by homeschool tables.</p>
-      </Card>
-
-      <Card className="metric-card">
-        <p className="metric-label">Subjects</p>
-        <p className="metric-value">{state.loading ? "-" : state.subjects.length}</p>
-        <p className="metric-footnote">Household-scoped subject palette.</p>
-      </Card>
-
-      {state.error !== null ? <InlineNotice variant="error">Could not load homeschool data: {state.error}</InlineNotice> : null}
-      {actionError !== null ? <InlineNotice variant="error">Homeschool action failed: {actionError}</InlineNotice> : null}
-      {actionMessage !== null ? <InlineNotice>{actionMessage}</InlineNotice> : null}
-
-      <div className="dashboard-section-header">
-        <p className="eyebrow">Review</p>
-        <h2>Calendar & Progress</h2>
-        <p>Review logged attendance, notes, grades, and setup records for the selected child.</p>
-      </div>
 
       <AttendanceCalendar
+        canManage={canManage}
+        saving={attendanceSaving}
         calendarYearMonth={calendarYearMonth}
         calendarChildId={calendarChildId}
         children={state.children}
@@ -344,7 +324,6 @@ export function HomeschoolPage(): ReactElement {
         selectedChildComments={selectedChildComments}
         subjects={state.subjects}
         selectedDate={selectedCalendarDate}
-        attendance={attendance}
         onMonthChange={(yearMonth) => {
           setCalendarYearMonth(yearMonth);
           setSelectedCalendarDate(null);
@@ -354,18 +333,39 @@ export function HomeschoolPage(): ReactElement {
           setSelectedCalendarDate(null);
         }}
         onDaySelect={(date, comment) => {
+          if (!canManage) return;
           setSelectedCalendarDate(date);
-          setAttendance((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date }));
-          setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date, comment: comment || prev.comment }));
+          setDayComment((prev) => ({ ...prev, childId: calendarChildId || prev.childId, date, comment }));
         }}
-        onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
-        onSaveAttendance={(event) => void handleSaveAttendance(event)}
-        onCloseDayEditor={() => setSelectedCalendarDate(null)}
         onClearAttendance={(attendanceId) => void handleClearAttendance(attendanceId)}
         onClearDayComment={(commentId) => void handleClearDayComment(commentId)}
       />
 
+      {attendanceSaving && selectedCalendarDate === null ? <p role="status">Saving attendance. Please wait before opening another day.</p> : null}
+      {state.error !== null ? <InlineNotice variant="error">Could not load homeschool data: {state.error}</InlineNotice> : null}
+      {actionError !== null ? <InlineNotice variant="error">Homeschool action failed: {actionError}</InlineNotice> : null}
+      {actionMessage !== null ? <InlineNotice>{actionMessage}</InlineNotice> : null}
+      {canManage && selectedCalendarDate !== null && householdId !== null && state.children.some((child) => child.id === Number(calendarChildId)) ? (
+        <AttendanceDialog
+          key={`${householdId}:${calendarChildId}:${selectedCalendarDate}:${location.key}`}
+          householdId={householdId}
+          childId={Number(calendarChildId)}
+          childName={state.children.find((child) => child.id === Number(calendarChildId))?.name ?? "Child"}
+          date={selectedCalendarDate}
+          subjects={state.subjects}
+          records={state.attendanceRecords}
+          onClose={() => setSelectedCalendarDate(null)}
+          onSaved={refresh}
+          onRecordSaved={applyAttendanceRecord}
+          onSavingChange={setAttendanceSaving}
+          externallySaving={attendanceSaving}
+        />
+      ) : null}
+
       <HomeschoolSummary
+        householdId={householdId}
+        semesters={state.semesters}
+        onSemesterChange={setReportSemesterId}
         calendarChildId={calendarChildId}
         selectedSemester={selectedSemester}
         selectedChildAttendance={selectedChildAttendance}
@@ -373,6 +373,14 @@ export function HomeschoolPage(): ReactElement {
         selectedChildGrades={selectedChildGrades}
         subjects={state.subjects}
       />
+
+      <div className="dashboard-section-header">
+        <h2>Setup & Records</h2>
+        <div className="quick-actions">
+          <ButtonLink to="/parent/children">Review Linked Children</ButtonLink>
+          <ButtonLink to="/admin/dashboard">Module Access</ButtonLink>
+        </div>
+      </div>
 
       <HomeschoolStatus
         loading={state.loading}
@@ -388,12 +396,6 @@ export function HomeschoolPage(): ReactElement {
         onDeleteSubject={(subjectId) => void handleDeleteSubject(subjectId)}
       />
 
-      <div className="dashboard-section-header">
-        <p className="eyebrow">Daily tools</p>
-        <h2>Setup & Records</h2>
-        <p>Create the reusable school structure, then log daily work without bouncing around the page.</p>
-      </div>
-
       <HomeschoolForms
         householdId={householdId}
         children={state.children}
@@ -406,7 +408,6 @@ export function HomeschoolPage(): ReactElement {
         subjectColor={subjectColor}
         editingSemesterId={editingSemesterId}
         editingSubjectId={editingSubjectId}
-        attendance={attendance}
         dayComment={dayComment}
         grade={grade}
         onSemesterNameChange={setSemesterName}
@@ -414,14 +415,12 @@ export function HomeschoolPage(): ReactElement {
         onSemesterEndChange={setSemesterEnd}
         onSubjectNameChange={setSubjectName}
         onSubjectColorChange={setSubjectColor}
-        onAttendanceChange={(patch) => setAttendance((prev) => ({ ...prev, ...patch }))}
         onDayCommentChange={(patch) => setDayComment((prev) => ({ ...prev, ...patch }))}
         onGradeChange={(patch) => setGrade((prev) => ({ ...prev, ...patch }))}
         onCancelSemesterEdit={clearSemesterEdit}
         onCancelSubjectEdit={clearSubjectEdit}
         onCreateSemester={(event) => void handleSaveSemester(event)}
         onCreateSubject={(event) => void handleSaveSubject(event)}
-        onSaveAttendance={(event) => void handleSaveAttendance(event)}
         onSaveDayComment={(event) => void handleSaveDayComment(event)}
         onSaveGrade={(event) => void handleSaveGrade(event)}
       />

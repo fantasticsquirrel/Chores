@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -271,3 +271,23 @@ def delete_grade(
     require_household_scope(current_user, household_id)
     delete_household_grade(session, grade_id, household_id)
     session.commit()
+
+
+@router.get("/semesters/{semester_id}/report.pdf", response_class=Response)
+def export_semester_report(
+    semester_id: int = Path(gt=0),
+    household_id: int = Query(gt=0),
+    child_id: int = Query(gt=0),
+    include_notes: bool = Query(default=False),
+    current_user: User = Depends(_require_homeschool_access),
+    session: Session = Depends(get_db_session),
+) -> Response:
+    require_household_scope(current_user, household_id)
+    from app.services.homeschool.report import build_semester_report
+
+    pdf = build_semester_report(session, household_id=household_id, child_id=child_id, semester_id=semester_id, include_notes=include_notes)
+    return Response(pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f'attachment; filename="homeschool-child-{child_id}-semester-{semester_id}.pdf"',
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+    })

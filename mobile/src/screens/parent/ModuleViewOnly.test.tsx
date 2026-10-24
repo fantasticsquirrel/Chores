@@ -78,7 +78,7 @@ describe("native module view-only permissions", () => {
   it("keeps homeschool sections and calendar browseable but disables record/setup writes", async () => {
     arrangeSchool();
     render(<ModuleAccessProvider module={schoolModule}><HomeschoolScreen modules={[schoolModule]} session={session} /></ModuleAccessProvider>);
-    await screen.findByText("Fall");
+    await screen.findByText("Mia");
     for (const [section, labels] of [
       ["Setup", ["Create", "Edit", "Delete"]],
       ["Attend", ["Save Attendance", "Edit", "Delete"]],
@@ -86,6 +86,7 @@ describe("native module view-only permissions", () => {
       ["Grades", ["Save Grade", "Edit", "Delete"]],
     ] as const) {
       fireEvent.press(screen.getByRole("button", { name: section }));
+      if (section === "Attend") fireEvent.press(screen.getByRole("button", { name: "Show attendance log" }));
       for (const label of labels) {
         for (const button of screen.getAllByRole("button", { name: label })) expect(button).toBeDisabled();
       }
