@@ -1,6 +1,6 @@
 {
   "name": "@family-manager/mobile",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "main": "index.ts",
   "dependencies": {
     "@expo/metro-runtime": "~56.0.21",
