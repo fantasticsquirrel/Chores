@@ -8,6 +8,7 @@ import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
+import { AttendanceDayModal } from "../../features/homeschool/components/AttendanceDayModal";
 import { HomeschoolAttendanceSection } from "../../features/homeschool/components/HomeschoolAttendanceSection";
 import { HomeschoolCommentSection } from "../../features/homeschool/components/HomeschoolCommentSection";
 import { HomeschoolGradeSection } from "../../features/homeschool/components/HomeschoolGradeSection";
@@ -41,7 +42,11 @@ export function HomeschoolScreen({
   const householdId = session.user.household_id;
   const homeschoolEnabled =
     isParentRole(session.user.role) && hasModule(modules, "homeschool");
-  const [activeSection, setActiveSection] = useState<HomeschoolTab>("overview");
+  const [activeSection, setActiveSection] = useState<HomeschoolTab>("calendar");
+  const [attendanceDay, setAttendanceDay] = useState<{
+    childId: number;
+    date: string;
+  } | null>(null);
   const data = useHomeschoolData({ enabled: homeschoolEnabled, householdId });
   const mutations = useHomeschoolMutations({
     activeChildren: data.activeChildren,
@@ -102,33 +107,6 @@ export function HomeschoolScreen({
         <LoadingRow label="Loading homeschool data" />
       ) : null}
 
-      <SectionCard title="Workspace">
-        <ChoiceGroup
-          disabled={data.state.loading || mutations.busy}
-          onChange={setActiveSection}
-          options={homeschoolTabOptions}
-          value={activeSection}
-        />
-      </SectionCard>
-
-      {activeSection === "overview" ? (
-        <HomeschoolOverview
-          activeChildren={data.activeChildren}
-          commentsInSemester={data.commentsInSemester.length}
-          grades={data.selectedChildGrades.length}
-          selectedChild={data.selectedChild}
-          selectedChildId={data.selectedChildId}
-          selectedSemester={data.selectedSemester}
-          selectedSemesterId={data.selectedSemesterId}
-          semesters={data.semesterChoices}
-          subjectRows={data.subjectRows}
-          totalAttendanceEntries={data.totalAttendanceEntries}
-          uniqueAttendanceDays={data.uniqueAttendanceDays}
-          onChildSelect={data.setSelectedChildId}
-          onSemesterSelect={data.setSelectedSemesterId}
-        />
-      ) : null}
-
       {activeSection === "calendar" ? (
         <HomeschoolCalendarScreen
           activeChildren={data.activeChildren}
@@ -143,12 +121,13 @@ export function HomeschoolScreen({
             data.setSelectedDate(date);
             mutations.updateAttendanceForm({ date });
             mutations.updateCommentForm({ date });
+            if (data.selectedChildId !== null)
+              setAttendanceDay({ childId: data.selectedChildId, date });
           }}
           onDeleteAttendance={mutations.confirmDeleteAttendance}
           onDeleteComment={mutations.confirmDeleteComment}
           onEditAttendance={(record) => {
-            mutations.editAttendance(record);
-            setActiveSection("attendance");
+            setAttendanceDay({ childId: record.child_id, date: record.date });
           }}
           onEditComment={(comment) => {
             mutations.editComment(comment);
@@ -156,13 +135,44 @@ export function HomeschoolScreen({
           }}
           onMonthChange={data.setCalendarYearMonth}
           onOpenAttendance={() => {
-            mutations.openAttendanceForSelectedDay();
-            setActiveSection("attendance");
+            if (data.selectedChildId !== null)
+              setAttendanceDay({
+                childId: data.selectedChildId,
+                date: data.selectedDate,
+              });
           }}
           onOpenComments={() => {
             mutations.openCommentForSelectedDay();
             setActiveSection("comments");
           }}
+        />
+      ) : null}
+
+      <SectionCard title="Workspace">
+        <ChoiceGroup
+          disabled={data.state.loading || mutations.busy}
+          onChange={setActiveSection}
+          options={homeschoolTabOptions}
+          value={activeSection}
+        />
+      </SectionCard>
+
+      {activeSection === "overview" ? (
+        <HomeschoolOverview
+          householdId={householdId}
+          activeChildren={data.activeChildren}
+          commentsInSemester={data.commentsInSemester.length}
+          grades={data.selectedChildGrades.length}
+          selectedChild={data.selectedChild}
+          selectedChildId={data.selectedChildId}
+          selectedSemester={data.selectedSemester}
+          selectedSemesterId={data.selectedSemesterId}
+          semesters={data.semesterChoices}
+          subjectRows={data.subjectRows}
+          totalAttendanceEntries={data.totalAttendanceEntries}
+          uniqueAttendanceDays={data.uniqueAttendanceDays}
+          onChildSelect={data.setSelectedChildId}
+          onSemesterSelect={data.setSelectedSemesterId}
         />
       ) : null}
 
@@ -213,8 +223,7 @@ export function HomeschoolScreen({
           onChange={mutations.updateAttendanceForm}
           onDelete={mutations.confirmDeleteAttendance}
           onEdit={(record) => {
-            mutations.editAttendance(record);
-            setActiveSection("attendance");
+            setAttendanceDay({ childId: record.child_id, date: record.date });
           }}
           onSave={() => {
             void mutations.saveAttendance();
@@ -257,6 +266,31 @@ export function HomeschoolScreen({
           onSave={() => {
             void mutations.saveGrade();
           }}
+        />
+      ) : null}
+      {attendanceDay !== null &&
+      data.activeChildren.some(
+        (child) =>
+          child.id === attendanceDay.childId &&
+          child.household_id === householdId,
+      ) ? (
+        <AttendanceDayModal
+          key={`${householdId}:${attendanceDay.childId}:${attendanceDay.date}`}
+          householdId={householdId}
+          childId={attendanceDay.childId}
+          childName={
+            data.activeChildren.find(
+              (child) => child.id === attendanceDay.childId,
+            )?.name ?? "Child"
+          }
+          date={attendanceDay.date}
+          subjects={data.state.subjects.filter(
+            (subject) => subject.household_id === householdId,
+          )}
+          records={data.state.attendance}
+          onClose={() => setAttendanceDay(null)}
+          onRefresh={data.refresh}
+          onRecordSaved={data.applyAttendanceRecord}
         />
       ) : null}
     </View>

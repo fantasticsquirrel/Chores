@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert } from "react-native";
 
 import { apiClient } from "../../../api/client";
@@ -14,18 +14,21 @@ import {
   type SemesterFormState,
   type SubjectFormState,
 } from "../lib/defaults";
+import { nextSubjectColor } from "../lib/attendanceDraft";
 import { normalizeSubjectColor } from "../lib/options";
 import { validateSemesterForm, validateSubjectForm } from "../lib/validation";
 import type { RunHomeschoolAction } from "./useHomeschoolActionState";
 
 export function useHomeschoolSetupMutations({
   clearFeedback,
+  subjects,
   householdId,
   runAction,
   setActionError,
   setActionMessage,
 }: {
   clearFeedback: () => void;
+  subjects: HomeschoolSubject[];
   householdId: number;
   runAction: RunHomeschoolAction;
   setActionError: (message: string | null) => void;
@@ -43,12 +46,23 @@ export function useHomeschoolSetupMutations({
   );
   const [editingSubjectId, setEditingSubjectId] = useState<number | null>(null);
 
+  const [colorChosen, setColorChosen] = useState(false);
+  useEffect(() => {
+    if (editingSubjectId === null && !colorChosen) {
+      setSubjectForm((previous) => ({
+        ...previous,
+        color: nextSubjectColor(subjects.map((subject) => subject.color)),
+      }));
+    }
+  }, [subjects, editingSubjectId, colorChosen]);
+
   function updateSemesterForm(patch: Partial<SemesterFormState>) {
     setSemesterForm((previous) => ({ ...previous, ...patch }));
     clearFeedback();
   }
 
   function updateSubjectForm(patch: Partial<SubjectFormState>) {
+    if (patch.color !== undefined) setColorChosen(true);
     setSubjectForm((previous) => ({ ...previous, ...patch }));
     clearFeedback();
   }
@@ -60,7 +74,14 @@ export function useHomeschoolSetupMutations({
 
   function clearSubjectEdit() {
     setEditingSubjectId(null);
-    setSubjectForm(buildDefaultSubjectForm());
+    setSubjectForm({
+      ...buildDefaultSubjectForm(),
+      color: nextSubjectColor([
+        ...subjects.map((subject) => subject.color),
+        subjectForm.color,
+      ]),
+    });
+    setColorChosen(false);
   }
 
   function editSemester(semester: HomeschoolSemester) {

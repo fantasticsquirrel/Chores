@@ -26,8 +26,8 @@ function createHomeschoolStyles() {
       borderColor: colors.borderStrong,
       borderRadius: 8,
       borderWidth: 1,
-      height: 38,
-      width: 38,
+      height: 44,
+      width: 44,
     },
     colorSwatchSelected: {
       borderColor: colors.text,

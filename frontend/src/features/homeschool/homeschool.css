@@ -1,0 +1,36 @@
+.homeschool-attendance-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--surface-border);
+  border-radius: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  color: var(--text-main);
+  background: var(--surface-solid);
+  box-shadow: 0 24px 80px #0f172a55;
+}
+.homeschool-attendance-dialog::backdrop { background: #0f172a99; }
+.homeschool-attendance-dialog .panel-header-row { align-items: start; }
+.homeschool-attendance-dialog h2 { font-size: 1.3rem; margin-top: 0; }
+.homeschool-subject-entries { border: 0; padding: 0; margin: 1rem 0; min-width: 0; }
+.homeschool-subject-entry { border: 1px solid var(--surface-border); border-radius: .75rem; padding: .75rem; margin: .5rem 0; }
+.homeschool-subject-entry .children-form { margin-top: .75rem; }
+.homeschool-subject-entry input[type="text"] { width: 100%; box-sizing: border-box; }
+.homeschool-save-success { background: #dcfce7; color: #14532d; padding: .75rem; border-radius: .5rem; }
+.homeschool-save-error { background: #fee2e2; color: #7f1d1d; padding: .75rem; border-radius: .5rem; }
+.homeschool-log { margin-top: 1rem; }
+.homeschool-log > summary { cursor: pointer; font-weight: 700; padding: .75rem 0; }
+.homeschool-color-swatches { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
+.homeschool-color-swatches button { min-width: 44px; min-height: 44px; border: 3px solid transparent; border-radius: .6rem; color: #fff; font-weight: 700; }
+.homeschool-color-swatches button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; border-color: #fff; box-shadow: 0 0 0 3px #172554; }
+.homeschool-subject-preview { display: flex; align-items: center; gap: .5rem; padding: .5rem; border: 1px solid var(--surface-border); border-radius: .5rem; color: #172554; background: #fff; }
+.homeschool-color-input { width: 100%; min-height: 44px; padding: .25rem; }
+
+/* Read-only controls only: backend module/child authorization remains authoritative. */
+.module-read-only .homeschool-report button,
+.module-read-only .homeschool-report input,
+.module-read-only .homeschool-report select,
+.module-read-only .homeschool-calendar-child select,
+.module-read-only .homeschool-calendar-navigation button,
+.module-read-only .homeschool-calendar .calendar-day { display: inline-block !important; }

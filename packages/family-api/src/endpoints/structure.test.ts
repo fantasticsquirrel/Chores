@@ -31,6 +31,7 @@ const expectedMethodsByFile: Record<string, string[]> = {
     "deleteHomeschoolGrade",
     "deleteHomeschoolSemester",
     "deleteHomeschoolSubject",
+    "downloadHomeschoolSemesterReport",
     "listChildBalances",
     "listChildren",
     "listChoreTransactions",

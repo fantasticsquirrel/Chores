@@ -41,7 +41,7 @@ export function useHomeschoolMutations({
     setActionError: action.setActionError,
     setActionMessage: action.setActionMessage,
   };
-  const setup = useHomeschoolSetupMutations(sharedAction);
+  const setup = useHomeschoolSetupMutations({ ...sharedAction, subjects });
   const records = useHomeschoolRecordMutations({
     ...sharedAction,
     activeChildren,

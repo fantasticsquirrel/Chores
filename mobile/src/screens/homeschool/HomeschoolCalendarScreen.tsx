@@ -56,7 +56,9 @@ export function HomeschoolCalendarScreen({
   onOpenAttendance: () => void;
   onOpenComments: () => void;
 }) {
-  const subjectLookup = new Map(subjects.map((subject) => [subject.id, subject]));
+  const subjectLookup = new Map(
+    subjects.map((subject) => [subject.id, subject]),
+  );
   const daySummaries = buildCalendarDaySummaries({
     attendance: selectedChildAttendance,
     comments: selectedChildComments,
@@ -111,15 +113,15 @@ export function HomeschoolCalendarScreen({
 
         <View style={homeschoolStyles.divider} />
         <View style={shellStyles.splitRow}>
-          <Text style={cardStyles.cardTitle}>{formatYearMonth(calendarYearMonth)}</Text>
+          <Text style={cardStyles.cardTitle}>
+            {formatYearMonth(calendarYearMonth)}
+          </Text>
         </View>
         <View style={formStyles.inlineButtons}>
           <ActionButton
             compact
             label="Previous"
-            onPress={() =>
-              onMonthChange(shiftYearMonth(calendarYearMonth, -1))
-            }
+            onPress={() => onMonthChange(shiftYearMonth(calendarYearMonth, -1))}
             variant="secondary"
           />
           <ActionButton
@@ -142,7 +144,10 @@ export function HomeschoolCalendarScreen({
 
         <View style={homeschoolStyles.calendarWeekRow}>
           {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-            <Text key={`${day}-${index}`} style={homeschoolStyles.calendarWeekday}>
+            <Text
+              key={`${day}-${index}`}
+              style={homeschoolStyles.calendarWeekday}
+            >
               {day}
             </Text>
           ))}
@@ -153,6 +158,8 @@ export function HomeschoolCalendarScreen({
             return (
               <Pressable
                 accessibilityRole="button"
+                accessibilityLabel={`Record attendance for ${day.iso}`}
+                disabled={selectedChildId === null}
                 key={day.iso}
                 onPress={() => onDateSelect(day.iso)}
                 style={[
@@ -164,7 +171,9 @@ export function HomeschoolCalendarScreen({
                 <Text
                   style={[
                     homeschoolStyles.calendarCellText,
-                    !day.inMonth ? homeschoolStyles.calendarCellTextMuted : null,
+                    !day.inMonth
+                      ? homeschoolStyles.calendarCellTextMuted
+                      : null,
                     selected ? homeschoolStyles.calendarCellTextSelected : null,
                   ]}
                 >
@@ -196,10 +205,14 @@ export function HomeschoolCalendarScreen({
 
       <SectionCard subtitle={selectedDate} title="Day Detail">
         {selectedChildId === null ? (
-          <Text style={shellStyles.mutedText}>Select a child to review this day.</Text>
+          <Text style={shellStyles.mutedText}>
+            Select a child to review this day.
+          </Text>
         ) : null}
         {selectedChildId !== null && selectedDayAttendance.length === 0 ? (
-          <Text style={shellStyles.mutedText}>No attendance entries for this day.</Text>
+          <Text style={shellStyles.mutedText}>
+            No attendance entries for this day.
+          </Text>
         ) : null}
         {selectedDayAttendance.map((record) => {
           const subject = subjectLookup.get(record.subject_id);
@@ -210,9 +223,7 @@ export function HomeschoolCalendarScreen({
               </Text>
               <Text style={formStyles.rowMeta}>
                 {record.present ? "Present" : "Not present"}
-                {record.comment.trim().length > 0
-                  ? ` - ${record.comment}`
-                  : ""}
+                {record.comment.trim().length > 0 ? ` - ${record.comment}` : ""}
               </Text>
               <View style={formStyles.inlineButtons}>
                 <ActionButton
@@ -255,7 +266,9 @@ export function HomeschoolCalendarScreen({
             </View>
           </View>
         ) : (
-          <Text style={shellStyles.mutedText}>No day comment for this date.</Text>
+          <Text style={shellStyles.mutedText}>
+            No day comment for this date.
+          </Text>
         )}
         <View style={formStyles.inlineButtons}>
           <ActionButton
