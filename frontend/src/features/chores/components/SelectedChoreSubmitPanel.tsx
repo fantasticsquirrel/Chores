@@ -1,6 +1,6 @@
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 
-import type { Child } from "../../../api";
+import type { Child, EligibleChore } from "../../../api";
 import { Badge, Button, Card, FormField, InlineNotice } from "../../../ui";
 import type { EligibleChildState } from "../hooks/useEligibleChores";
 
@@ -9,6 +9,7 @@ type SelectedChoreSubmitPanelProps = {
   onChildChange: (childId: string) => void;
   onRefresh: () => void;
   onSubmit: () => void;
+  onQuickSubmit: (child: Child, chore: EligibleChore) => void;
   onToggleChore: (choreId: number) => void;
   selectedChild: Child | null;
   selectedChildId: string;
@@ -25,6 +26,7 @@ export function SelectedChoreSubmitPanel({
   onChildChange,
   onRefresh,
   onSubmit,
+  onQuickSubmit,
   onToggleChore,
   selectedChild,
   selectedChildId,
@@ -35,10 +37,19 @@ export function SelectedChoreSubmitPanel({
   submitting,
   targetDate,
 }: SelectedChoreSubmitPanelProps): ReactElement {
+  const [multiple, setMultiple] = useState(false);
+  const busy =
+    submitting ||
+    selectedEligibleState.loading ||
+    selectedEligibleState.submittingChoreId !== null;
   return (
     <Card className="dashboard-panel">
       <div className="panel-header-row">
-        <h2>Selected Child Submit</h2>
+        <h2>
+          {selectedChild
+            ? `${selectedChild.name}’s chores`
+            : "Available chores"}
+        </h2>
         <Badge>{selectedChoreIds.length} selected</Badge>
       </div>
       <form
@@ -48,6 +59,7 @@ export function SelectedChoreSubmitPanel({
         <FormField label="Child">
           <select
             className="text-input"
+            disabled={busy}
             value={selectedChildId}
             onChange={(event) => onChildChange(event.target.value)}
           >
@@ -62,12 +74,27 @@ export function SelectedChoreSubmitPanel({
         <Button
           type="button"
           onClick={onRefresh}
-          disabled={selectedChild === null || selectedEligibleState.loading}
+          disabled={
+            busy || selectedChild === null || selectedEligibleState.loading
+          }
         >
           Refresh
         </Button>
       </form>
 
+      <Button
+        type="button"
+        aria-pressed={multiple}
+        disabled={busy}
+        onClick={() => setMultiple(!multiple)}
+      >
+        {multiple ? "Quick submit mode" : "Select multiple"}
+      </Button>
+      {selectedEligibleState.message ? (
+        <InlineNotice variant="success">
+          {selectedEligibleState.message}
+        </InlineNotice>
+      ) : null}
       {selectedChild === null ? (
         <p>Select a child to submit multiple completed chores.</p>
       ) : null}
@@ -92,41 +119,62 @@ export function SelectedChoreSubmitPanel({
         <ul className="balance-list" aria-label="Selected child chores">
           {selectedEligibleState.chores.map((chore) => (
             <li key={chore.chore_id} className="balance-item">
-              <label className="checkbox-row task-checkbox">
-                <input
-                  type="checkbox"
-                  checked={selectedChoreIds.includes(chore.chore_id)}
-                  onChange={() => onToggleChore(chore.chore_id)}
-                  disabled={submitting}
-                />
-                <span>
-                  <span className="balance-name">{chore.name}</span>
-                  <span className="balance-meta">
-                    Due {chore.occurrence_date}
-                    {chore.expires_on !== null && chore.expires_on !== undefined
-                      ? ` - Ends ${chore.expires_on}`
-                      : ""}
+              {multiple ? (
+                <label className="checkbox-row task-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedChoreIds.includes(chore.chore_id)}
+                    onChange={() => onToggleChore(chore.chore_id)}
+                    disabled={busy}
+                  />
+                  <span>
+                    <span className="balance-name">{chore.name}</span>
+                    <span className="balance-meta">
+                      Due {chore.occurrence_date}
+                      {chore.expires_on !== null &&
+                      chore.expires_on !== undefined
+                        ? ` - Ends ${chore.expires_on}`
+                        : ""}
+                    </span>
                   </span>
-                </span>
-              </label>
+                </label>
+              ) : (
+                <Button
+                  type="button"
+                  className="chore-submit-button"
+                  disabled={busy}
+                  onClick={() => onQuickSubmit(selectedChild, chore)}
+                >
+                  <span>{chore.name}</span>
+                  <small>
+                    Due {chore.occurrence_date}
+                    {chore.expires_on ? ` · Ends ${chore.expires_on}` : ""}
+                  </small>
+                  <strong>
+                    {selectedEligibleState.submittingChoreId === chore.chore_id
+                      ? "Submitting..."
+                      : "Submit"}
+                  </strong>
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       ) : null}
 
-      <div className="quick-actions">
-        <Button
-          type="button"
-          onClick={onSubmit}
-          disabled={
-            submitting ||
-            selectedChild === null ||
-            selectedChoreIds.length === 0
-          }
-        >
-          {submitting ? "Submitting..." : "Submit Selected Chores"}
-        </Button>
-      </div>
+      {multiple ? (
+        <div className="quick-actions">
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={
+              busy || selectedChild === null || selectedChoreIds.length === 0
+            }
+          >
+            {submitting ? "Submitting..." : "Submit Selected Chores"}
+          </Button>
+        </div>
+      ) : null}
       {submitError !== null ? (
         <InlineNotice variant="error">
           Could not submit chores: {submitError}

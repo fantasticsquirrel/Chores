@@ -164,6 +164,7 @@ function TreeGraph({
   );
   const [listOnly, setListOnly] = useState(false);
   const [legend, setLegend] = useState(false);
+  const [lensOpen, setLensOpen] = useState(false);
   const isGraph = layout.mode === "graph" && !listOnly;
   const verticalRef = useRef<ScrollView>(null);
   const horizontalRef = useRef<ScrollView>(null);
@@ -302,12 +303,9 @@ function TreeGraph({
   }
   return (
     <View style={{ width: "100%", minWidth: 0, gap: 12 }}>
-      <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
-        Graph revision {graphRevision}
-      </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <FamilyTreeButton
-          label="Tree"
+          label="Graph"
           selected={isGraph}
           disabled={layout.mode !== "graph"}
           onPress={() => setListOnly(false)}
@@ -319,7 +317,8 @@ function TreeGraph({
         />
         {isGraph ? <FamilyTreeButton label="Fit" onPress={fit} /> : null}
       </View>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      <FamilyTreeButton label="Tree lens options" expanded={lensOpen} onPress={() => setLensOpen((value) => !value)} />
+      {lensOpen ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
         <FamilyTreeToggle
           label="Show partnerships"
           disabled={loading}
@@ -352,12 +351,12 @@ function TreeGraph({
             update((current) => ({ ...current, care: !effective.includeCare }))
           }
         />
-      </View>
+      </View> : null}
       <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
         Care connections do not assert ancestry. Co-parents do not imply a
         partnership.
       </Text>
-      {maxDepth < 32 ? (
+      {lensOpen && maxDepth < 32 ? (
         <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
           Maximum server depth: {maxDepth}. Focus a frontier person to explore
           further.
@@ -408,6 +407,9 @@ function TreeGraph({
           }}
         />
       )}
+      <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
+        Graph revision {graphRevision}
+      </Text>
       {isGraph ? (
         <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
           Scroll rows sideways and vertically. Fit returns the focused person to

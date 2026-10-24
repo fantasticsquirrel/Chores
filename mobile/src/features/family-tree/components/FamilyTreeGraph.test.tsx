@@ -32,6 +32,7 @@ describe("FamilyTreeGraph native presentation", () => {
         })}
       />,
     );
+    fireEvent.press(view.getByRole("button", { name: "Tree lens options" }));
     const history = view.getByRole("checkbox", {
       name: "Show historical partnerships",
     });
@@ -58,6 +59,7 @@ describe("FamilyTreeGraph native presentation", () => {
       expansionCounts: { 1: { parents: 2, children: 0 } },
     });
     const view = render(<FamilyTreeGraph {...p} />);
+    fireEvent.press(view.getByRole("button", { name: "Tree lens options" }));
     fireEvent.press(
       view.getByRole("button", { name: "Expand ancestors of Frontier" }),
     );
@@ -97,6 +99,7 @@ describe("FamilyTreeGraph native presentation", () => {
       expansionToken: "old-lens",
     });
     const view = render(<FamilyTreeGraph {...p} />);
+    fireEvent.press(view.getByRole("button", { name: "Tree lens options" }));
     fireEvent.press(
       view.getByRole("checkbox", { name: "Show historical partnerships" }),
     );
@@ -180,6 +183,7 @@ describe("FamilyTreeGraph native presentation", () => {
   });
   it("has explicit historical/care decisions and real filters", () => {
     const view = render(<FamilyTreeGraph {...props()} />);
+    fireEvent.press(view.getByRole("button", { name: "Tree lens options" }));
     expect(view.queryByRole("button", { name: "Select Carer" })).toBeNull();
     expect(
       view.queryByRole("button", { name: "Select Past partner" }),
@@ -323,6 +327,7 @@ describe("FamilyTreeGraph native presentation", () => {
   });
   it("preserves local filters and collapse across new arrays/revision", () => {
     const view = render(<FamilyTreeGraph {...props()} />);
+    fireEvent.press(view.getByRole("button", { name: "Tree lens options" }));
     fireEvent.press(
       view.getByRole("checkbox", { name: "Show care connections" }),
     );
@@ -452,6 +457,7 @@ describe("FamilyTreeGraph native presentation", () => {
   });
   it("keeps handset viewport bounded and every native action touch sized", () => {
     const view = render(<FamilyTreeGraph {...props()} />);
+    fireEvent.press(view.getByRole("button", { name: "Tree lens options" }));
     const viewport = StyleSheet.flatten(
       view.getByTestId("family-tree-viewport").props.style,
     );

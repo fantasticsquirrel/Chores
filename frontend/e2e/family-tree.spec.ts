@@ -1,6 +1,7 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { familyTreeEvidenceDirectory } from "../scripts/family-tree-smoke-evidence";
 
 type Fixture = {
   parent_email: string;
@@ -16,15 +17,12 @@ test.use({ actionTimeout: 15000 });
 const fixture = JSON.parse(
   readFileSync(process.env.PLAYWRIGHT_SMOKE_FIXTURE_PATH!, "utf8"),
 ) as Fixture;
-const evidence = process.env.FAMILY_TREE_SMOKE_EVIDENCE!;
+let evidence: string;
 function assertEvidenceDirectory() {
-  if (
-    !evidence ||
-    !path.isAbsolute(evidence) ||
-    path.dirname(evidence) !== process.env.PLAYWRIGHT_SMOKE_DIR
-  )
-    throw new Error("Evidence must stay inside the wrapper-owned directory.");
-  mkdirSync(evidence, { recursive: true, mode: 0o700 });
+  evidence = familyTreeEvidenceDirectory(process.env);
+  if (!fixture.photo_path || !fixture.viewer?.email || !fixture.manager?.email || !fixture.denied?.email) {
+    throw new Error("Family Tree smoke requires its augmented photo and role fixtures. Run scripts/run-family-tree-smoke.sh or augment the standard wrapper with family_tree_smoke_fixture.py before running this spec.");
+  }
 }
 async function ownedBackend(page: Page) {
   const response = await page.request.get("/chore-api/health/ready");
@@ -73,6 +71,7 @@ async function save(page: Page, dialog: Locator, confirmation = false) {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 async function create(page: Page, name: string) {
+  await page.getByRole("button", { name: "People", exact: true }).click();
   const first = page.getByRole("button", {
     name: "Add first person",
     exact: true,
@@ -356,7 +355,16 @@ for (const viewport of [
       name: "Family tree",
       exact: true,
     });
+    await page.getByRole("button", { name: "People", exact: true }).click();
+    await page.getByLabel("Search names and aliases").fill(label);
+    await page.getByRole("button", { name: `Show ${label} in tree`, exact: true }).click();
+    await expect(page.getByRole("button", { name: "Tree", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("region", { name: "Tree workspace", exact: true })).toBeFocused();
+    await expect(page).toHaveURL(new RegExp(`focus=${rootId}`));
     await graph.scrollIntoViewIfNeeded();
+    await graph.getByText("Tree lens options", { exact: true }).click();
+    await expect(graph.getByLabel("Care connections", { exact: true })).not.toBeChecked();
+    await graph.getByText("Tree lens options", { exact: true }).click();
     await snapshot(page, `${viewport.name}-core-tree.png`);
     await page
       .getByRole("button", { name: "Relationship list only", exact: true })
@@ -488,6 +496,7 @@ for (const viewport of [
         ),
       ),
     ).toEqual([]);
+    await page.getByRole("button", { name: "People", exact: true }).click();
     await context.setOffline(true);
     await expect(
       page.getByText(/Offline: showing only this session/),

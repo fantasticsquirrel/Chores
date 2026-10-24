@@ -134,4 +134,13 @@ describe("Account security page", () => {
       "/account",
     );
   });
+  it("opens Security first on a security bookmark and separates Appearance", async () => {
+    render(<MemoryRouter initialEntries={["/account/security"]}><App /></MemoryRouter>);
+    expect(await screen.findByRole("heading", { name: "Account Security" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Appearance" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Appearance" }));
+    expect(screen.getByRole("heading", { name: "Appearance" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Account Security" })).not.toBeInTheDocument();
+  });
+
 });

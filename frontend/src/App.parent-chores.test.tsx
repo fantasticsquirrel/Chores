@@ -83,7 +83,10 @@ describe("Parent chores page", () => {
       await screen.findByRole("heading", { name: "Chores" }),
     ).toBeVisible();
     expect(screen.getByText("Daily Board")).toBeVisible();
-    expect(screen.getByText("Selected Child Submit")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Riley’s chores" }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByText("Manage chores"));
     expect(await screen.findByText("Laundry")).toBeVisible();
     await waitFor(() =>
       expect(screen.getAllByText("Riley").length).toBeGreaterThan(0),
@@ -117,6 +120,8 @@ describe("Parent chores page", () => {
       </MemoryRouter>,
     );
 
+    await screen.findByRole("heading", { name: "Chores" });
+    fireEvent.click(screen.getByText("Manage chores"));
     await screen.findByText("No chores yet. Add one above to get started.");
     fireEvent.click(screen.getAllByRole("button", { name: "Add Chore" })[0]);
     fireEvent.change(screen.getByLabelText("Name"), {
@@ -167,6 +172,7 @@ describe("Parent chores page", () => {
     );
 
     await screen.findByText("Laundry");
+    fireEvent.click(screen.getByText("Manage chores"));
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Fold towels" },
@@ -256,6 +262,8 @@ describe("Parent chores page", () => {
       </MemoryRouter>,
     );
 
+    await screen.findByText("Wipe table");
+    fireEvent.click(screen.getByRole("button", { name: "Select multiple" }));
     fireEvent.click(
       await screen.findByRole("checkbox", { name: /Wipe table/u }),
     );
@@ -294,9 +302,13 @@ describe("Parent chores page", () => {
     );
 
     await screen.findByText("Laundry");
+    fireEvent.click(screen.getByText("Manage chores"));
     fireEvent.click(screen.getByRole("button", { name: "Archive" }));
 
     await waitFor(() => expect(archiveChoreSpy).toHaveBeenCalledWith(21, 1));
+    fireEvent.change(screen.getByLabelText("Chore status"), {
+      target: { value: "archived" },
+    });
     const list = await screen.findByRole("list", { name: "Chores list" });
     expect(within(list).getByText("archived")).toBeVisible();
   });

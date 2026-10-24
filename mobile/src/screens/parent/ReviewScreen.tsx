@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 
 import { apiClient } from "../../api/client";
@@ -15,6 +15,10 @@ import { shellStyles } from "../../styles/shell";
 import { formatError } from "../../utils/format";
 
 export function ParentReviewScreen() {
+  const actionLock = useRef(false);
+  const refreshing = useRef(false);
+  const requestId = useRef(0);
+  const mounted = useRef(false);
   const { canManageRef } = useModuleAccess();
   const [submissions, setSubmissions] = useState<SubmissionReview[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,35 +26,46 @@ export function ParentReviewScreen() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (afterSave = false) => {
+    const request = ++requestId.current;
+    refreshing.current = true;
     setLoading(true);
     setError(null);
     try {
       const pending = await apiClient.listSubmissions({ status: "PENDING" });
+      if (request !== requestId.current) return;
       setSubmissions(pending);
     } catch (refreshError) {
-      setError(formatError(refreshError));
+      if (request !== requestId.current) return;
+      setError(`${afterSave ? "Decision saved, but refresh failed. Tap Refresh to update the queue. " : ""}${formatError(refreshError)}`);
     } finally {
-      setLoading(false);
+      if (request === requestId.current) { refreshing.current = false; setLoading(false); }
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void refresh();
+    const requests = requestId;
+    return () => { mounted.current = false; requests.current += 1; };
   }, [refresh]);
 
   async function approveAll(submissionId: number) {
-    if (!canManageRef.current) return;
+    if (!canManageRef.current || actionLock.current || refreshing.current) return;
+    actionLock.current = true;
     setActionId(`submission-${submissionId}`);
     setError(null);
     setSuccess(null);
     try {
       await apiClient.approveSubmission(submissionId);
+      if (!mounted.current) return;
       setSuccess("Submission approved.");
-      await refresh();
+      setSubmissions((current) => current.filter((row) => row.id !== submissionId));
+      await refresh(true);
     } catch (approvalError) {
       setError(formatError(approvalError));
     } finally {
+      actionLock.current = false;
       setActionId(null);
     }
   }
@@ -60,17 +75,21 @@ export function ParentReviewScreen() {
     item: SubmissionReviewItem,
     status: "APPROVED" | "REJECTED",
   ) {
-    if (!canManageRef.current) return;
+    if (!canManageRef.current || actionLock.current || refreshing.current) return;
+    actionLock.current = true;
     setActionId(`item-${item.id}-${status}`);
     setError(null);
     setSuccess(null);
     try {
-      await apiClient.decideSubmissionItem(submissionId, item.id, { status });
+      const updated = await apiClient.decideSubmissionItem(submissionId, item.id, { status });
+      if (!mounted.current) return;
+      setSubmissions((current) => current.map((row) => row.id === submissionId ? updated : row).filter((row) => row.status === "PENDING"));
       setSuccess(status === "APPROVED" ? "Chore approved." : "Chore rejected.");
-      await refresh();
+      await refresh(true);
     } catch (decisionError) {
       setError(formatError(decisionError));
     } finally {
+      actionLock.current = false;
       setActionId(null);
     }
   }
@@ -83,20 +102,20 @@ export function ParentReviewScreen() {
         trailing={
           <ActionButton
             compact
-            disabled={loading}
+            disabled={loading || actionId !== null}
             label={loading ? "Refreshing" : "Refresh"}
-            onPress={refresh}
+            onPress={() => refresh()}
             variant="secondary"
           />
         }
       />
       {error !== null ? <InlineNotice tone="error" message={error} /> : null}
       {success !== null ? <InlineNotice tone="success" message={success} /> : null}
-      {loading ? (
+      {loading && submissions.length === 0 ? (
         <SectionCard title="Pending">
           <LoadingRow label="Loading submissions" />
         </SectionCard>
-      ) : submissions.length === 0 ? (
+      ) : submissions.length === 0 && error === null ? (
         <SectionCard title="Pending">
           <Text style={shellStyles.mutedText}>No pending submissions.</Text>
         </SectionCard>
@@ -116,7 +135,7 @@ export function ParentReviewScreen() {
                 <View style={cardStyles.itemButtonRow}>
                   <ActionButton
                     compact
-                    disabled={actionId !== null}
+                    disabled={actionId !== null || loading || item.status !== "PENDING"}
                     label="Approve"
                     requiresManage
                     onPress={() => decideItem(submission.id, item, "APPROVED")}
@@ -124,7 +143,7 @@ export function ParentReviewScreen() {
                   />
                   <ActionButton
                     compact
-                    disabled={actionId !== null}
+                    disabled={actionId !== null || loading || item.status !== "PENDING"}
                     label="Reject"
                     requiresManage
                     onPress={() => decideItem(submission.id, item, "REJECTED")}
@@ -134,7 +153,7 @@ export function ParentReviewScreen() {
               </View>
             ))}
             <ActionButton
-              disabled={actionId !== null}
+              disabled={actionId !== null || loading}
               label={
                 actionId === `submission-${submission.id}`
                   ? "Approving..."

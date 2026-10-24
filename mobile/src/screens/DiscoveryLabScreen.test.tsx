@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { StrictMode } from "react";
-import { AppState, type AppStateStatus } from "react-native";
+import { AppState, Linking, type AppStateStatus } from "react-native";
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import { DiscoveryLabScreen } from "./DiscoveryLabScreen";
 import { apiClient } from "../api/client";
@@ -198,4 +198,33 @@ it("keeps the accepted child-access result after duplicate taps", async () => {
   });
   expect(access).toHaveBeenCalledTimes(1);
   expect(await view.findByText("Disable 1 matching Explorations")).toBeTruthy();
+});
+
+it("keeps subject and tag choices collapsed until requested", async () => {
+  mocks();
+  const view = render(<DiscoveryLabScreen session={session} modules={modules} />);
+  await view.findByText("Explore Gravity lab");
+  expect(view.queryByRole("button", { name: "gravity" })).toBeNull();
+  expect(view.getByRole("button", { name: "Subject: All subjects" })).toBeTruthy();
+  fireEvent.press(view.getByRole("button", { name: "Filters (0)" }));
+  fireEvent.press(view.getByRole("button", { name: "gravity" }));
+  fireEvent.press(view.getByRole("button", { name: "Filters (1)" }));
+  expect(view.getByText("Tag: gravity")).toBeTruthy();
+  expect(view.queryByRole("button", { name: "gravity" })).toBeNull();
+  fireEvent.press(view.getByRole("button", { name: "Reset filters" }));
+  expect(view.getByRole("button", { name: "Filters (0)" })).toBeTruthy();
+});
+
+it("labels uploaded packages before opening and uses only the paired web destination", async () => {
+  mocks();
+  jest.spyOn(apiClient, "apiBaseUrl", "get").mockReturnValue("https://family.example/chore-api");
+  jest.mocked(apiClient.listDiscoveryExplorations).mockResolvedValue([{ ...item, package: { version: "2.0.0", runtime: "worker-rich-v1", checksum: "test" } }]);
+  const read = jest.spyOn(apiClient, "getDiscoveryExploration");
+  const open = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
+  const view = render(<DiscoveryLabScreen session={session} modules={modules} />);
+  await view.findByText(/Web-only Exploration · Version 2.0.0/);
+  expect(view.queryByText("Explore Gravity lab")).toBeNull();
+  fireEvent.press(view.getByText("Open Gravity lab on web"));
+  await waitFor(() => expect(open).toHaveBeenCalledWith("https://family.example/chore/discovery-lab/gravity"));
+  expect(read).not.toHaveBeenCalled();
 });

@@ -1,0 +1,24 @@
+.child-account-workspace {
+  grid-column: 1 / -1;
+}
+.children-roster [aria-pressed="true"] {
+  outline: 2px solid var(--ring-focus);
+  outline-offset: 2px;
+}
+.child-account-dialog {
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  margin: auto;
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  padding: 1rem;
+  color: var(--text-main);
+  background: var(--surface-solid);
+}
+.child-account-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.child-account-dialog > button {
+  margin-bottom: 1rem;
+}

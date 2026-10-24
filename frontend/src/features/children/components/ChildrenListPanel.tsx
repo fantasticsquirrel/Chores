@@ -5,12 +5,16 @@ import { Button, Card, InlineNotice } from "../../../ui";
 import type { ChildrenState } from "../hooks/useChildren";
 
 type ChildrenListPanelProps = {
+  onSelect?: (child: Child) => void;
+  selectedChildId?: number | null;
   onToggleActive: (child: Child) => void;
   state: ChildrenState;
   updatingChildId: number | null;
 };
 
 export function ChildrenListPanel({
+  onSelect,
+  selectedChildId,
   onToggleActive,
   state,
   updatingChildId,
@@ -33,7 +37,7 @@ export function ChildrenListPanel({
       ) : null}
 
       {!state.loading && state.error === null && state.children.length > 0 ? (
-        <ul className="balance-list" aria-label="Children list">
+        <ul className="balance-list children-roster" aria-label="Children list">
           {state.children.map((child) => {
             const isUpdating = updatingChildId === child.id;
             const buttonLabel = child.active ? "Set Inactive" : "Set Active";
@@ -45,13 +49,31 @@ export function ChildrenListPanel({
                   <p className="balance-meta">
                     {child.active ? "Active" : "Inactive"}
                   </p>
+                  <p className="balance-meta">
+                    {child.has_login === true
+                      ? "Login linked"
+                      : child.has_login === false
+                        ? "No login linked"
+                        : "Login status unavailable"}
+                  </p>
                 </div>
-                <Button
-                  onClick={() => onToggleActive(child)}
-                  disabled={isUpdating}
-                >
-                  {isUpdating ? "Updating..." : buttonLabel}
-                </Button>
+                <div className="item-actions">
+                  {onSelect ? (
+                    <Button
+                      type="button"
+                      aria-pressed={selectedChildId === child.id}
+                      onClick={() => onSelect(child)}
+                    >
+                      Manage login for {child.name}
+                    </Button>
+                  ) : null}
+                  <Button
+                    onClick={() => onToggleActive(child)}
+                    disabled={isUpdating}
+                  >
+                    {isUpdating ? "Updating..." : buttonLabel}
+                  </Button>
+                </div>
               </li>
             );
           })}

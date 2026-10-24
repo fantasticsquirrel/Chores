@@ -11,26 +11,33 @@ import { ActionButton } from "../../components/ActionButton";
 import { InlineNotice } from "../../components/InlineNotice";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
-import { StatCard } from "../../components/StatCard";
 import { hasMobileDashboardCard } from "../../modules/registry";
 import type { AppTab } from "../../navigation/types";
 import { cardStyles } from "../../styles/cards";
 import { formStyles } from "../../styles/forms";
 import { shellStyles } from "../../styles/shell";
 import { todayDateString } from "../../utils/date";
-import {
-  formatCents,
-  formatError,
-  formatNullableCount,
-  isParentRole,
-} from "../../utils/format";
+import { formatCents, formatError, isParentRole } from "../../utils/format";
 
+type Resource<T> = { data: T | null; loading: boolean; error: string | null };
+const pending = <T,>(): Resource<T> => ({
+  data: null,
+  loading: true,
+  error: null,
+});
 type Snapshot = {
-  children: Child[];
-  pending: number;
-  owed: number;
-  counts: Record<number, number>;
+  children: Resource<Child[]>;
+  pending: Resource<number>;
+  owed: Resource<number>;
+  counts: Record<number, Resource<number>>;
 };
+const emptySnapshot = (): Snapshot => ({
+  children: pending(),
+  pending: pending(),
+  owed: pending(),
+  counts: {},
+});
+type RetryKey = "children" | "pending" | "owed" | `child:${number}`;
 
 export function ParentHomeScreen({
   modules,
@@ -40,10 +47,15 @@ export function ParentHomeScreen({
 }: {
   modules: FamilyModule[];
   onModulesLoaded: (modules: FamilyModule[]) => void;
-  onNavigate?: (tab: AppTab) => void;
+  onNavigate?: (
+    tab: AppTab,
+    context?: { childId?: number; date?: string },
+  ) => void;
   session: AuthSessionResponse;
 }) {
   const scope = `${session.user.id}:${session.user.household_id}:${session.user.role}`;
+  const [date, setDate] = useState(todayDateString);
+  const [showAll, setShowAll] = useState(false);
   const [authority, setAuthority] = useState<{
     scope: string;
     modules: FamilyModule[];
@@ -60,6 +72,7 @@ export function ParentHomeScreen({
   const [error, setError] = useState<string | null>(null);
   const generation = useRef(0);
   const treeRequest = useRef<AbortController | null>(null);
+  const retries = useRef<Partial<Record<RetryKey, () => Promise<void>>>>({});
   const publish = useRef(onModulesLoaded);
   publish.current = onModulesLoaded;
   const effectiveModules =
@@ -73,6 +86,8 @@ export function ParentHomeScreen({
     parent && hasMobileDashboardCard("chores") && choresModule !== undefined;
 
   const refresh = useCallback(async () => {
+    const requestedDate = todayDateString();
+    setDate(requestedDate);
     treeRequest.current?.abort();
     treeRequest.current = null;
     const request = ++generation.current;
@@ -80,87 +95,145 @@ export function ParentHomeScreen({
     const current = () =>
       generation.current === request &&
       authentication === apiClient.authenticationGeneration;
+    retries.current = {};
     setTreeCount(null);
+    setResult(null);
     setLoading(true);
     setError(null);
     try {
       const response = await apiClient.getMyModules();
       if (!current()) return;
       setAuthority({ scope, modules: response.modules });
-      // Publish access changes even if a later snapshot request fails.
       publish.current(response.modules);
+      // The optional tree shortcut must not block the daily action queue.
       if (
         isParentRole(session.user.role) &&
         hasMobileDashboardCard("family-tree") &&
         response.modules.some((module) => module.key === "family-tree")
       ) {
-        try {
-          const controller = new AbortController();
-          treeRequest.current = controller;
-          const tree = await (Reflect.apply(
-            apiClient.getFamilyTreeCollection,
-            apiClient,
-            [{ signal: controller.signal }],
-          ) as ReturnType<typeof apiClient.getFamilyTreeCollection>);
-          if (treeRequest.current === controller) treeRequest.current = null;
-          if (!current()) return;
-          setTreeCount({ scope, count: tree.active_people_count });
-        } catch (treeError) {
-          if (!current()) return;
-          setError(formatError(treeError));
-          if (
-            typeof treeError === "object" &&
-            treeError &&
-            "status" in treeError &&
-            [401, 403].includes(Number(treeError.status))
-          ) {
-            const revoked = response.modules.filter(
-              (module) => module.key !== "family-tree",
-            );
-            setAuthority({ scope, modules: revoked });
-            publish.current(revoked);
+        const controller = new AbortController();
+        treeRequest.current = controller;
+        void (async () => {
+          try {
+            const tree = await (Reflect.apply(
+              apiClient.getFamilyTreeCollection,
+              apiClient,
+              [{ signal: controller.signal }],
+            ) as ReturnType<typeof apiClient.getFamilyTreeCollection>);
+            if (current())
+              setTreeCount({ scope, count: tree.active_people_count });
+          } catch (treeError) {
+            if (!current()) return;
+            setError(formatError(treeError));
+            if (
+              typeof treeError === "object" &&
+              treeError &&
+              "status" in treeError &&
+              [401, 403].includes(Number(treeError.status))
+            ) {
+              const revoked = response.modules.filter(
+                (module) => module.key !== "family-tree",
+              );
+              setAuthority({ scope, modules: revoked });
+              publish.current(revoked);
+            }
+          } finally {
+            if (treeRequest.current === controller) treeRequest.current = null;
           }
-        }
+        })();
       }
       if (
         !isParentRole(session.user.role) ||
         !hasMobileDashboardCard("chores") ||
         !response.modules.some((module) => module.key === "chores")
-      ) {
-        setResult(null);
+      )
         return;
+      setResult({ scope, snapshot: emptySnapshot() });
+      function update(change: (old: Snapshot) => Snapshot) {
+        if (!current()) return;
+        setResult((old) => ({
+          scope,
+          snapshot: change(
+            old?.scope === scope ? old.snapshot : emptySnapshot(),
+          ),
+        }));
       }
-      const [children, submissions, balances] = await Promise.all([
-        apiClient.listChildren({
-          household_id: session.user.household_id,
-          active_only: true,
-        }),
-        apiClient.listSubmissions({ status: "PENDING" }),
-        apiClient.listChildBalances(),
-      ]);
-      if (!current()) return;
-      const active = children.filter((child) => child.active);
-      const date = todayDateString();
-      const rows = await Promise.all(
-        active.map(
-          async (child) =>
-            [
-              child.id,
-              (await apiClient.listEligibleChores({ date, child_id: child.id }))
-                .length,
-            ] as const,
-        ),
-      );
-      if (!current()) return;
-      setResult({
-        scope,
-        snapshot: {
-          children: active,
-          pending: submissions.length,
-          owed: balances.reduce((sum, row) => sum + row.balance_cents, 0),
-          counts: Object.fromEntries(rows),
+      function section<T>(
+        key: RetryKey,
+        read: () => Promise<T>,
+        write: (old: Snapshot, value: Resource<T>) => Snapshot,
+        after?: (data: T) => void,
+      ) {
+        let latest = 0;
+        const load = async () => {
+          if (!current()) return;
+          const version = ++latest;
+          update((old) => write(old, pending<T>()));
+          try {
+            const data = await read();
+            if (!current() || latest !== version) return;
+            update((old) => write(old, { data, loading: false, error: null }));
+            after?.(data);
+          } catch (caught) {
+            if (current() && latest === version)
+              update((old) =>
+                write(old, {
+                  data: null,
+                  loading: false,
+                  error: formatError(caught),
+                }),
+              );
+          }
+        };
+        retries.current[key] = load;
+        void load();
+      }
+      section(
+        "children",
+        () =>
+          apiClient
+            .listChildren({
+              household_id: session.user.household_id,
+              active_only: true,
+            })
+            .then((rows) => rows.filter((child) => child.active)),
+        (old, value) => ({ ...old, children: value }),
+        (children) => {
+          for (const child of children)
+            section(
+              `child:${child.id}`,
+              () =>
+                apiClient
+                  .listEligibleChores({
+                    date: requestedDate,
+                    child_id: child.id,
+                  })
+                  .then((rows) => rows.length),
+              (old, value) => ({
+                ...old,
+                counts: { ...old.counts, [child.id]: value },
+              }),
+            );
         },
-      });
+      );
+      section(
+        "pending",
+        () =>
+          apiClient
+            .listSubmissions({ status: "PENDING" })
+            .then((rows) => rows.length),
+        (old, value) => ({ ...old, pending: value }),
+      );
+      section(
+        "owed",
+        () =>
+          apiClient
+            .listChildBalances()
+            .then((rows) =>
+              rows.reduce((sum, row) => sum + row.balance_cents, 0),
+            ),
+        (old, value) => ({ ...old, owed: value }),
+      );
     } catch (refreshError) {
       if (current()) setError(formatError(refreshError));
     } finally {
@@ -174,15 +247,16 @@ export function ParentHomeScreen({
       generation.current += 1;
       treeRequest.current?.abort();
       treeRequest.current = null;
+      retries.current = {};
     };
   }, [refresh]);
-
   useEffect(
     () =>
       apiClient.subscribeAuthentication(() => {
         generation.current += 1;
         treeRequest.current?.abort();
         treeRequest.current = null;
+        retries.current = {};
         setTreeCount(null);
         setAuthority(null);
         setResult(null);
@@ -191,21 +265,45 @@ export function ParentHomeScreen({
     [],
   );
 
-  function action(label: string, tab: AppTab) {
+  function action(
+    label: string,
+    tab: AppTab,
+    context?: { childId?: number; date?: string },
+  ) {
     return onNavigate ? (
       <ActionButton
         label={label}
         variant="secondary"
-        onPress={() => onNavigate(tab)}
+        onPress={() => (context ? onNavigate(tab, context) : onNavigate(tab))}
       />
     ) : null;
   }
+  function retry(label: string, key: RetryKey) {
+    return (
+      <ActionButton
+        label={label}
+        variant="secondary"
+        onPress={() => void retries.current[key]?.()}
+      />
+    );
+  }
+  const children = snapshot?.children.data ?? [];
+  const caughtUp =
+    snapshot?.pending.data === 0 &&
+    snapshot.children.data !== null &&
+    children.every((child) => snapshot.counts[child.id]?.data === 0);
+  const value = (resource?: Resource<number>) =>
+    resource?.data !== null && resource?.data !== undefined
+      ? String(resource.data)
+      : resource?.error
+        ? "Unavailable"
+        : "Loading...";
 
   return (
     <View>
       <ScreenHeader
         title="Home"
-        subtitle="Household snapshot"
+        subtitle="Today’s household actions"
         trailing={
           <ActionButton
             compact
@@ -219,60 +317,131 @@ export function ParentHomeScreen({
       {error !== null ? <InlineNotice tone="error" message={error} /> : null}
       {choresEnabled ? (
         <>
-          <View style={cardStyles.statGrid}>
-            <StatCard
-              label="Active children"
-              value={formatNullableCount(snapshot?.children.length ?? null)}
-            />
-            <StatCard
-              label="Pending reviews"
-              value={formatNullableCount(snapshot?.pending ?? null)}
-            />
-            <StatCard
-              label="Total amount owed"
-              value={snapshot ? formatCents(snapshot.owed) : "-"}
-            />
-          </View>
           <SectionCard title="Today" subtitle="Action queue">
-            {loading ? (
-              <Text style={shellStyles.mutedText}>
-                Building today's household queue...
+            {!snapshot || snapshot.pending.loading ? (
+              <Text style={shellStyles.mutedText}>Loading approvals...</Text>
+            ) : null}
+            {snapshot?.pending.error ? (
+              <>
+                <InlineNotice
+                  tone="error"
+                  message={`Approvals unavailable: ${snapshot.pending.error}`}
+                />
+                {retry("Retry approvals", "pending")}
+              </>
+            ) : null}
+            {snapshot?.pending.data && snapshot.pending.data > 0 ? (
+              <View style={cardStyles.reviewItem}>
+                <Text style={formStyles.rowTitle}>Chore approvals</Text>
+                <Text style={shellStyles.mutedText}>
+                  {snapshot.pending.data} pending{" "}
+                  {snapshot.pending.data === 1 ? "submission" : "submissions"}
+                </Text>
+                {choresModule?.can_manage !== false
+                  ? action(
+                      `Review ${snapshot.pending.data} ${snapshot.pending.data === 1 ? "submission" : "submissions"}`,
+                      "review",
+                    )
+                  : null}
+              </View>
+            ) : null}
+            {snapshot?.children.loading ? (
+              <Text style={shellStyles.mutedText}>Loading children...</Text>
+            ) : null}
+            {snapshot?.children.error ? (
+              <>
+                <InlineNotice
+                  tone="error"
+                  message={`Could not load children: ${snapshot.children.error}`}
+                />
+                {retry("Retry children", "children")}
+              </>
+            ) : null}
+            {caughtUp ? (
+              <Text
+                accessibilityLiveRegion="polite"
+                style={shellStyles.mutedText}
+              >
+                All caught up. No chores or approvals need attention today.
               </Text>
             ) : null}
-            {snapshot ? (
-              <>
-                {snapshot.pending > 0 ? (
-                  <View style={cardStyles.reviewItem}>
-                    <Text style={formStyles.rowTitle}>Chore approvals</Text>
-                    <Text style={shellStyles.mutedText}>
-                      {snapshot.pending} pending{" "}
-                      {snapshot.pending === 1 ? "submission" : "submissions"}
-                    </Text>
-                    {choresModule?.can_manage !== false
-                      ? action(
-                          `Review ${snapshot.pending} ${snapshot.pending === 1 ? "submission" : "submissions"}`,
-                          "review",
-                        )
-                      : null}
-                  </View>
-                ) : null}
-                {snapshot.children.map((child) => (
-                  <View key={child.id} style={cardStyles.reviewItem}>
-                    <Text style={formStyles.rowTitle}>
-                      {child.name} · {snapshot.counts[child.id]}{" "}
-                      {snapshot.counts[child.id] === 1 ? "chore" : "chores"} due
-                    </Text>
-                    <Text style={shellStyles.mutedText}>
-                      See assignments and help with anything blocked.
-                    </Text>
-                    {action("Open Chores", "chores")}
-                  </View>
-                ))}
-                {snapshot.pending === 0 && snapshot.children.length === 0 ? (
-                  <Text style={shellStyles.mutedText}>
-                    No household actions need attention.
+            {snapshot?.children.data?.length === 0 ? (
+              <Text style={shellStyles.mutedText}>
+                No children yet. Add a child in Children.
+              </Text>
+            ) : null}
+            {children.map((child) => {
+              const count = snapshot?.counts[child.id] ?? pending<number>();
+              if (count.data === 0 && !showAll) return null;
+              return (
+                <View key={child.id} style={cardStyles.reviewItem}>
+                  <Text style={formStyles.rowTitle}>
+                    {child.name} ·{" "}
+                    {count.error
+                      ? "chores unavailable"
+                      : count.loading
+                        ? "loading chores..."
+                        : `${count.data} ${count.data === 1 ? "chore" : "chores"} due`}
                   </Text>
-                ) : null}
+                  {count.error ? (
+                    <>
+                      <InlineNotice tone="error" message={count.error} />
+                      {retry(
+                        `Retry ${child.name}’s chores`,
+                        `child:${child.id}`,
+                      )}
+                    </>
+                  ) : null}
+                  {action(`Open ${child.name}’s chores`, "chores", {
+                    childId: child.id,
+                    date,
+                  })}
+                </View>
+              );
+            })}
+            {children.length > 0 ? (
+              <ActionButton
+                variant="secondary"
+                label={
+                  showAll
+                    ? "Show due work only"
+                    : `Show all ${children.length} ${children.length === 1 ? "child" : "children"}`
+                }
+                onPress={() => setShowAll(!showAll)}
+              />
+            ) : null}
+          </SectionCard>
+          <SectionCard title="Household summary">
+            <View style={shellStyles.splitRow}>
+              <Text>Active children</Text>
+              <Text>
+                {snapshot?.children.data
+                  ? children.length
+                  : snapshot?.children.error
+                    ? "Unavailable"
+                    : "Loading..."}
+              </Text>
+            </View>
+            <View style={shellStyles.splitRow}>
+              <Text>Pending reviews</Text>
+              <Text>{value(snapshot?.pending)}</Text>
+            </View>
+            <View style={shellStyles.splitRow}>
+              <Text>Total amount owed</Text>
+              <Text>
+                {snapshot?.owed.data !== null &&
+                snapshot?.owed.data !== undefined
+                  ? formatCents(snapshot.owed.data)
+                  : value(snapshot?.owed)}
+              </Text>
+            </View>
+            {snapshot?.owed.error ? (
+              <>
+                <InlineNotice
+                  tone="error"
+                  message={`Balances unavailable: ${snapshot.owed.error}`}
+                />
+                {retry("Retry balances", "owed")}
               </>
             ) : null}
           </SectionCard>
@@ -289,7 +458,7 @@ export function ParentHomeScreen({
                     : "Manage Children",
                   "children",
                 )}
-                {action("Open Board", "review")}
+                {action("Open Review", "review")}
                 {action("Money & History", "money")}
               </>
             ) : null}

@@ -5,6 +5,7 @@ import { Button, FormField, TextInput } from "../../../ui";
 import type { FeedbackReviewerType } from "../hooks/useRecipeDetail";
 
 type RecipeFeedbackPanelProps = {
+  canManage?: boolean;
   childId: string;
   children: Child[];
   notes: string;
@@ -21,6 +22,7 @@ type RecipeFeedbackPanelProps = {
 };
 
 export function RecipeFeedbackPanel({
+  canManage = true,
   childId,
   children,
   notes,
@@ -44,58 +46,62 @@ export function RecipeFeedbackPanel({
     <>
       <h2>Family Feedback</h2>
       <p>
-        Average family rating: {recipe.feedback_summary.average_rating ?? "not rated"} ({recipe.feedback_summary.rating_count} ratings)
+        Average family rating:{" "}
+        {recipe.feedback_summary.average_rating ?? "not rated"} (
+        {recipe.feedback_summary.rating_count} ratings)
       </p>
-      <form onSubmit={handleSubmit}>
-        <FormField label="Feedback For">
-          <select
-            value={reviewerType}
-            onChange={(event) =>
-              setReviewerType(event.target.value as FeedbackReviewerType)
-            }
-          >
-            <option value="PARENT">Parent</option>
-            <option value="CHILD">Child</option>
-          </select>
-        </FormField>
-        {reviewerType === "CHILD" ? (
-          <FormField label="Child">
+      {canManage && (
+        <form onSubmit={handleSubmit}>
+          <FormField label="Feedback For">
             <select
-              value={childId}
-              onChange={(event) => setChildId(event.target.value)}
+              value={reviewerType}
+              onChange={(event) =>
+                setReviewerType(event.target.value as FeedbackReviewerType)
+              }
             >
-              {children.map((child) => (
-                <option key={child.id} value={child.id}>
-                  {child.name}
-                </option>
-              ))}
+              <option value="PARENT">Parent</option>
+              <option value="CHILD">Child</option>
             </select>
           </FormField>
-        ) : null}
-        <FormField label="Family Rating">
-          <TextInput
-            type="number"
-            min="1"
-            max="5"
-            value={rating}
-            onChange={(event) => setRating(event.target.value)}
-          />
-        </FormField>
-        <FormField label="Verdict">
-          <TextInput
-            value={verdict}
-            onChange={(event) => setVerdict(event.target.value)}
-            placeholder="Loved it, okay, too spicy..."
-          />
-        </FormField>
-        <FormField label="Feedback Notes">
-          <TextInput
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-          />
-        </FormField>
-        <Button type="submit">Save Feedback</Button>
-      </form>
+          {reviewerType === "CHILD" ? (
+            <FormField label="Child">
+              <select
+                value={childId}
+                onChange={(event) => setChildId(event.target.value)}
+              >
+                {children.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          ) : null}
+          <FormField label="Family Rating">
+            <TextInput
+              type="number"
+              min="1"
+              max="5"
+              value={rating}
+              onChange={(event) => setRating(event.target.value)}
+            />
+          </FormField>
+          <FormField label="Verdict">
+            <TextInput
+              value={verdict}
+              onChange={(event) => setVerdict(event.target.value)}
+              placeholder="Loved it, okay, too spicy..."
+            />
+          </FormField>
+          <FormField label="Feedback Notes">
+            <TextInput
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
+          </FormField>
+          <Button type="submit">Save Feedback</Button>
+        </form>
+      )}
       {recipe.feedback.length > 0 ? (
         <ul>
           {recipe.feedback.map((row) => (

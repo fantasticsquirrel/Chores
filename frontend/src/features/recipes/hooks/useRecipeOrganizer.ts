@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   apiClient,
@@ -31,7 +31,15 @@ export type UseRecipeOrganizerResult = {
   categoryId: string;
   createRecipe: () => Promise<RecipeDetail | null>;
   editing: boolean;
+  loading: boolean;
+  loaded: boolean;
+  hasAppliedFilters: boolean;
+  taxonomyError: string | null;
+  retryTaxonomy: () => Promise<void>;
+  resetFilters: () => Promise<void>;
   error: string | null;
+  mutationError: string | null;
+  saving: boolean;
   exportBackup: () => Promise<void>;
   favoriteOnly: boolean;
   importBackup: () => Promise<void>;
@@ -71,7 +79,10 @@ const EMPTY_FILTERS: RecipeFilters = {
   tag_id: undefined,
 };
 
-export function useRecipeOrganizer(): UseRecipeOrganizerResult {
+export function useRecipeOrganizer(
+  workflowKey = "cookbook",
+  canManage = true,
+): UseRecipeOrganizerResult {
   const [categories, setCategories] = useState<RecipeCategory[]>([]);
   const [tags, setTags] = useState<RecipeTag[]>([]);
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
@@ -89,28 +100,96 @@ export function useRecipeOrganizer(): UseRecipeOrganizerResult {
   const [backupJson, setBackupJson] = useState("");
   const [showBackupTools, setShowBackupTools] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [hasAppliedFilters, setHasAppliedFilters] = useState(false);
+  const [taxonomyError, setTaxonomyError] = useState<string | null>(null);
+  const mounted = useRef(true);
+  const request = useRef(0);
+  const taxonomyRequest = useRef(0);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const writeLock = useRef(false);
+  const currentDraft = useRef({
+    payload,
+    importUrl,
+    backupJson,
+    workflowKey,
+    canManage,
+  });
+  currentDraft.current = {
+    payload,
+    importUrl,
+    backupJson,
+    workflowKey,
+    canManage,
+  };
+  const latestFilters = useRef(EMPTY_FILTERS);
+  useEffect(() => {
+    setMutationError(null);
+  }, [workflowKey]);
 
   const loadRecipes = useCallback(async (filters: RecipeFilters) => {
+    const ticket = ++request.current;
+    setLoading(true);
     setError(null);
+    setHasAppliedFilters(
+      Object.values(filters).some((value) => value !== undefined),
+    );
     try {
-      const [categoryRows, tagRows, recipeRows] = await Promise.all([
-        apiClient.listRecipeCategories(),
-        apiClient.listRecipeTags(),
-        apiClient.listRecipes(filters),
-      ]);
-      setCategories(categoryRows);
-      setTags(tagRows);
-      setRecipes(recipeRows);
+      const recipeRows = await apiClient.listRecipes(filters);
+      if (mounted.current && ticket === request.current) {
+        setRecipes(recipeRows);
+        setLoaded(true);
+      }
     } catch (loadError: unknown) {
-      setError(formatApiError(loadError));
+      if (mounted.current && ticket === request.current)
+        setError(formatApiError(loadError));
+    } finally {
+      if (mounted.current && ticket === request.current) setLoading(false);
     }
   }, []);
 
+  const loadTaxonomy = useCallback(async () => {
+    const ticket = ++taxonomyRequest.current;
+    setTaxonomyError(null);
+    const results = await Promise.allSettled([
+      apiClient.listRecipeCategories(),
+      apiClient.listRecipeTags(),
+    ]);
+    if (!mounted.current || ticket !== taxonomyRequest.current) return;
+    if (results[0].status === "fulfilled") setCategories(results[0].value);
+    if (results[1].status === "fulfilled") setTags(results[1].value);
+    if (results.some((result) => result.status === "rejected"))
+      setTaxonomyError(
+        "Some categories or tags could not load. Recipes are still available.",
+      );
+  }, []);
+
   useEffect(() => {
+    mounted.current = true;
     void loadRecipes(EMPTY_FILTERS);
-  }, [loadRecipes]);
+    void loadTaxonomy();
+    const recipesGeneration = request;
+    const taxonomyGeneration = taxonomyRequest;
+    return () => {
+      mounted.current = false;
+      recipesGeneration.current++;
+      taxonomyGeneration.current++;
+    };
+  }, [loadRecipes, loadTaxonomy]);
+
+  async function resetFilters(): Promise<void> {
+    setQuery("");
+    setIngredient("");
+    setCategoryId("");
+    setTagId("");
+    setFavoriteOnly(false);
+    setMinRating("");
+    await loadRecipes(EMPTY_FILTERS);
+  }
 
   function currentFilters(): RecipeFilters {
     return {
@@ -127,64 +206,103 @@ export function useRecipeOrganizer(): UseRecipeOrganizerResult {
     await loadRecipes(currentFilters());
   }
 
-  async function createRecipe(): Promise<RecipeDetail | null> {
-    setError(null);
+  latestFilters.current = currentFilters();
+
+  async function write<T>(
+    operation: () => Promise<T>,
+    apply: (value: T) => void,
+    unchanged: () => boolean,
+  ): Promise<T | null> {
+    if (writeLock.current || !currentDraft.current.canManage) return null;
+    writeLock.current = true;
+    setSaving(true);
+    setMutationError(null);
+    const isCurrent = () =>
+      mounted.current &&
+      currentDraft.current.workflowKey === workflowKey &&
+      currentDraft.current.canManage &&
+      unchanged();
     try {
-      const saved = await apiClient.createRecipe(
-        buildRecipePayloadForSave(payload),
-      );
-      setMessage(`Saved ${saved.title}.`);
-      setEditing(false);
-      setPayload(buildEmptyRecipePayload());
-      await refresh();
-      return saved;
-    } catch (saveError: unknown) {
-      setError(formatApiError(saveError));
+      const result = await operation();
+      const currentBeforeRefresh = isCurrent();
+      if (mounted.current) await loadRecipes(latestFilters.current);
+      // Only clear the submitted draft and return a navigation target if it
+      // stayed current through both the write and the cookbook refresh.
+      if (!currentBeforeRefresh || !isCurrent()) return null;
+      apply(result);
+      return result;
+    } catch (failure) {
+      if (isCurrent()) setMutationError(formatApiError(failure));
       return null;
+    } finally {
+      writeLock.current = false;
+      if (mounted.current) setSaving(false);
     }
+  }
+
+  async function createRecipe(): Promise<RecipeDetail | null> {
+    const draft = payload;
+    return write(
+      () => apiClient.createRecipe(buildRecipePayloadForSave(draft)),
+      (saved) => {
+        setMessage(`Saved ${saved.title}.`);
+        setEditing(false);
+        setPayload(buildEmptyRecipePayload());
+      },
+      () => currentDraft.current.payload === draft,
+    );
   }
 
   async function importRecipeFromUrl(): Promise<RecipeDetail | null> {
     if (importUrl.trim() === "") return null;
-    setError(null);
-    try {
-      const imported = await apiClient.importRecipeFromUrl(importUrl.trim());
-      setImportUrl("");
-      setMessage(`Imported ${imported.title}.`);
-      await refresh();
-      return imported;
-    } catch (importError: unknown) {
-      setError(formatApiError(importError));
-      return null;
-    }
+    const draft = importUrl;
+    return write(
+      () => apiClient.importRecipeFromUrl(draft.trim()),
+      (imported) => {
+        setImportUrl("");
+        setMessage(`Imported ${imported.title}.`);
+      },
+      () => currentDraft.current.importUrl === draft,
+    );
   }
 
   async function exportBackup(): Promise<void> {
-    const backup = await apiClient.exportRecipeBackup();
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "family-manager-recipes-backup.json";
-    link.click();
-    URL.revokeObjectURL(url);
-    setMessage(`Exported ${backup.recipes.length} recipes.`);
+    const scope = workflowKey;
+    try {
+      const backup = await apiClient.exportRecipeBackup();
+      if (!mounted.current || currentDraft.current.workflowKey !== scope)
+        return;
+      const blob = new Blob([JSON.stringify(backup, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "family-manager-recipes-backup.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      setMessage(`Exported ${backup.recipes.length} recipes.`);
+    } catch (failure) {
+      if (mounted.current && currentDraft.current.workflowKey === scope)
+        setMutationError(formatApiError(failure));
+    }
   }
 
   async function importBackup(): Promise<void> {
-    setError(null);
-    try {
-      const parsed = JSON.parse(backupJson) as { recipes?: RecipeDetail[] };
-      const recipesToImport = (parsed.recipes ?? []).map(backupRecipeToPayload);
-      const result = await apiClient.importRecipeBackup(recipesToImport);
-      setBackupJson("");
-      setMessage(`Imported ${result.imported_count} recipes from backup.`);
-      await refresh();
-    } catch (backupError: unknown) {
-      setError(formatApiError(backupError));
-    }
+    const draft = backupJson;
+    await write(
+      async () => {
+        const parsed = JSON.parse(draft) as { recipes?: RecipeDetail[] };
+        return apiClient.importRecipeBackup(
+          (parsed.recipes ?? []).map(backupRecipeToPayload),
+        );
+      },
+      (result) => {
+        setBackupJson("");
+        setMessage(`Imported ${result.imported_count} recipes from backup.`);
+      },
+      () => currentDraft.current.backupJson === draft,
+    );
   }
 
   return {
@@ -193,7 +311,15 @@ export function useRecipeOrganizer(): UseRecipeOrganizerResult {
     categoryId,
     createRecipe,
     editing,
+    loading,
+    loaded,
+    hasAppliedFilters,
+    taxonomyError,
+    retryTaxonomy: loadTaxonomy,
+    resetFilters,
     error,
+    mutationError,
+    saving,
     exportBackup,
     favoriteOnly,
     importBackup,

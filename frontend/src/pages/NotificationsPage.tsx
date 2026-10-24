@@ -1,9 +1,11 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactElement } from "react";
 import { Link } from "react-router-dom";
 
 import { apiClient, type NotificationItem, type NotificationSettings } from "../api";
+import { useAuth } from "../auth/useAuth";
 import { formatApiError } from "../lib/errors";
 import { Button, Card, FormField, InlineNotice } from "../ui";
+import "../features/notifications/notification-views.css";
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   in_app_enabled: true,
@@ -18,6 +20,19 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 };
 
 export function NotificationsPage(): ReactElement {
+  const { user } = useAuth();
+  return <NotificationWorkspace key={`${user?.household_id}:${user?.id}:${user?.role}`} />;
+}
+
+function NotificationWorkspace(): ReactElement {
+  const [view, setView] = useState<"inbox" | "settings">("inbox");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsReady, setSettingsReady] = useState(false);
+  const [savedSettings, setSavedSettings] = useState(DEFAULT_SETTINGS);
+  const savingRef = useRef(false);
+  const inboxGeneration = useRef(0);
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [settings, setSettings] = useState<NotificationSettings>(DEFAULT_SETTINGS);
@@ -27,28 +42,46 @@ export function NotificationsPage(): ReactElement {
   const [pushRegistered, setPushRegistered] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const loadInbox = useCallback(async () => {
+    const generation = ++inboxGeneration.current;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.listNotifications({ unread: unreadOnly ? 1 : 0, limit: 100 });
+      if (generation !== inboxGeneration.current) return;
+      setItems(response.items);
+      setUnreadCount(response.unread_count);
+    } catch (loadError) {
+      if (generation === inboxGeneration.current) setError(`Could not load notifications: ${formatApiError(loadError)}`);
+    } finally {
+      if (generation === inboxGeneration.current) setLoading(false);
+    }
+  }, [unreadOnly]);
+  const latestInboxLoad = useRef(loadInbox);
+  latestInboxLoad.current = loadInbox;
+  const markingRead = useRef(new Set<number>());
+  useEffect(() => {
+    const requests = inboxGeneration;
+    void loadInbox();
+    return () => { requests.current++; };
+  }, [loadInbox]);
+
+  const [settingsAttempt, setSettingsAttempt] = useState(0);
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    Promise.all([apiClient.listNotifications({ limit: 100 }), apiClient.getNotificationSettings()])
-      .then(([notificationResponse, settingsResponse]) => {
-        if (!active) return;
-        setItems(notificationResponse.items);
-        setUnreadCount(notificationResponse.unread_count);
-        setSettings({ ...DEFAULT_SETTINGS, ...(settingsResponse.chores ?? {}) });
-        setError(null);
-      })
-      .catch((loadError: unknown) => {
-        if (!active) return;
-        setError(`Could not load notifications: ${formatApiError(loadError)}`);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+    setSettingsLoading(true);
+    setSettingsError(null);
+    apiClient.getNotificationSettings().then((response) => {
+      if (!active) return;
+      const next = { ...DEFAULT_SETTINGS, ...(response.chores ?? {}) };
+      setSettings(next);
+      setSavedSettings(next);
+      setSettingsReady(true);
+    }).catch((loadError: unknown) => {
+      if (active) setSettingsError(`Could not load reminder settings: ${formatApiError(loadError)}`);
+    }).finally(() => { if (active) setSettingsLoading(false); });
+    return () => { active = false; };
+  }, [settingsAttempt]);
 
   useEffect(() => {
     let active = true;
@@ -67,40 +100,53 @@ export function NotificationsPage(): ReactElement {
   }, []);
 
   async function markRead(item: NotificationItem): Promise<void> {
-    await apiClient.markNotificationRead(item.id);
-    setItems((current) => current.map((row) => (row.id === item.id ? { ...row, read_at: new Date().toISOString() } : row)));
-    setUnreadCount((current) => Math.max(0, current - (item.read_at === null ? 1 : 0)));
+    if (markingRead.current.has(item.id)) return;
+    markingRead.current.add(item.id);
+    try {
+      await apiClient.markNotificationRead(item.id);
+      // Read back the current filter, not the filter captured before the write.
+      await latestInboxLoad.current();
+    } catch (readError) {
+      setError(`Could not mark notification read: ${formatApiError(readError)}`);
+    } finally {
+      markingRead.current.delete(item.id);
+    }
   }
 
   async function saveSettings(): Promise<void> {
+    if (savingRef.current || !settingsReady) return;
+    savingRef.current = true;
     setSaving(true);
-    setError(null);
+    setSettingsError(null);
+    setPushStatus(null);
     try {
       const response = await apiClient.updateNotificationSettings("chores", settings);
       setSettings(response.settings);
+      setSavedSettings(response.settings);
       setPushStatus("Reminder settings saved.");
     } catch (saveError: unknown) {
-      setError(`Could not save reminder settings: ${formatApiError(saveError)}`);
+      setSettingsError(`Could not save reminder settings: ${formatApiError(saveError)}`);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
 
   async function enablePush(): Promise<void> {
-    setError(null);
+    setSettingsError(null);
     setPushStatus(null);
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-      setError("This browser does not support app push notifications.");
+      setSettingsError("This browser does not support app push notifications.");
       return;
     }
     const permission = window.Notification.permission === "granted" ? "granted" : await window.Notification.requestPermission();
     if (permission !== "granted") {
-      setError("Push notification permission was not granted.");
+      setSettingsError("Push notification permission was not granted.");
       return;
     }
     const config = await apiClient.getPushConfig();
     if (config.vapid_public_key.length === 0) {
-      setError("Push notifications are not configured on the server yet.");
+      setSettingsError("Push notifications are not configured on the server yet.");
       return;
     }
     try {
@@ -122,16 +168,17 @@ export function NotificationsPage(): ReactElement {
         device_label: "This browser",
       });
       const response = await apiClient.updateNotificationSettings("chores", { push_enabled: true });
-      setSettings(response.settings);
+      setSettings((current) => ({ ...current, push_enabled: response.settings.push_enabled }));
+      setSavedSettings((current) => ({ ...current, push_enabled: response.settings.push_enabled }));
       setPushRegistered(true);
       setPushStatus("App push notifications are enabled for this browser.");
     } catch (pushError: unknown) {
-      setError(`Could not enable app push notifications: ${formatApiError(pushError)}`);
+      setSettingsError(`Could not enable app push notifications: ${formatApiError(pushError)}`);
     }
   }
 
   async function disablePush(): Promise<void> {
-    setError(null);
+    setSettingsError(null);
     setPushStatus(null);
     try {
       const registration = "serviceWorker" in navigator ? await navigator.serviceWorker.ready : null;
@@ -139,11 +186,12 @@ export function NotificationsPage(): ReactElement {
       if (subscription) await subscription.unsubscribe();
       await apiClient.disablePushSubscriptions();
       const response = await apiClient.updateNotificationSettings("chores", { push_enabled: false });
-      setSettings(response.settings);
+      setSettings((current) => ({ ...current, push_enabled: response.settings.push_enabled }));
+      setSavedSettings((current) => ({ ...current, push_enabled: response.settings.push_enabled }));
       setPushRegistered(false);
       setPushStatus("App push notifications are disabled for this account.");
     } catch (pushError: unknown) {
-      setError(`Could not disable app push notifications: ${formatApiError(pushError)}`);
+      setSettingsError(`Could not disable app push notifications: ${formatApiError(pushError)}`);
     }
   }
 
@@ -158,14 +206,21 @@ export function NotificationsPage(): ReactElement {
         <span className="badge">{unreadCount} unread</span>
       </div>
 
-      {error !== null ? <InlineNotice variant="error">{error}</InlineNotice> : null}
-      {pushStatus !== null ? <InlineNotice variant="success">{pushStatus}</InlineNotice> : null}
-      {loading ? <p>Loading notifications...</p> : null}
-
-      <div className="notification-layout">
-        <section>
+      <nav className="quick-actions" aria-label="Notification views">
+        <Button aria-pressed={view === "inbox"} onClick={() => setView("inbox")}>Inbox</Button>
+        <Button aria-pressed={view === "settings"} onClick={() => setView("settings")}>Settings</Button>
+      </nav>
+      <div>
+        {view === "inbox" ? <section>
+          {error !== null ? <InlineNotice variant="error">{error} <Button onClick={() => void loadInbox()}>Retry inbox</Button></InlineNotice> : null}
+          <div className="quick-actions" aria-label="Inbox filter">
+            <Button aria-pressed={!unreadOnly} onClick={() => setUnreadOnly(false)}>All</Button>
+            <Button aria-pressed={unreadOnly} onClick={() => setUnreadOnly(true)}>Unread</Button>
+            <Button disabled={loading} onClick={() => void loadInbox()}>Refresh inbox</Button>
+          </div>
+          {loading ? <p role="status">Loading notifications...</p> : null}
           <h2>Inbox</h2>
-          {items.length === 0 ? <p>No notifications yet.</p> : null}
+          {!loading && !error && items.length === 0 ? <p>{unreadOnly ? "No unread notifications." : "No notifications yet."}</p> : null}
           <div className="notification-list">
             {items.map((item) => (
               <article key={item.id} className={`notification-card${item.read_at === null ? " unread" : ""}`}>
@@ -183,9 +238,16 @@ export function NotificationsPage(): ReactElement {
               </article>
             ))}
           </div>
-        </section>
+        </section> : null}
 
-        <section className="settings-panel">
+        {view === "settings" ? <section className="settings-panel">
+          {settingsError !== null ? <InlineNotice variant="error">{settingsError}</InlineNotice> : null}
+          {pushStatus !== null ? <InlineNotice variant="success">{pushStatus}</InlineNotice> : null}
+          {settingsLoading ? <p role="status">Loading reminder settings...</p> : null}
+          {!settingsReady && !settingsLoading ? <Button onClick={() => setSettingsAttempt((value) => value + 1)}>Retry reminder settings</Button> : null}
+          {JSON.stringify(settings) !== JSON.stringify(savedSettings) ? <p role="status">Unsaved reminder changes</p> : null}
+          <fieldset disabled={!settingsReady || settingsLoading || saving} style={{ border: 0, padding: 0, margin: 0 }}>
+
           <h2>Chore reminder settings</h2>
           <label className="checkbox-row">
             <input type="checkbox" checked={settings.in_app_enabled} onChange={(event) => setSettings({ ...settings, in_app_enabled: event.target.checked })} />
@@ -223,7 +285,8 @@ export function NotificationsPage(): ReactElement {
               <Button type="button" onClick={() => void enablePush()}>Enable app push notifications</Button>
             )}
           </div>
-        </section>
+          </fieldset>
+        </section> : null}
       </div>
     </Card>
   );

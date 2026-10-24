@@ -37,6 +37,7 @@ export function UserModuleAccessPanel({
   return (
     <Card className="dashboard-panel">
       <h2>Module Access Matrix</h2>
+      <p>Individual user access: these controls affect only the named person. They cannot enable a module that is off for the household.</p>
       {loading ? <p>Loading module access...</p> : null}
       {error !== null ? (
         <InlineNotice variant="error">
@@ -87,6 +88,7 @@ export function UserModuleAccessPanel({
                       key={module.key}
                       type="button"
                       className={`jewel-button button-reset${enabled ? "" : " danger-button"}`}
+                      aria-pressed={enabled}
                       disabled={disabled}
                       title={
                         householdStateUnavailable

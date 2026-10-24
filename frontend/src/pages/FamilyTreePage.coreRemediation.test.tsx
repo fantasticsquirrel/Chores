@@ -350,6 +350,7 @@ describe("Origin revision across core intent callers", () => {
         .mockRejectedValue(revisionConflict());
       renderTree();
       await screen.findByRole("heading", { name: "First" });
+      if (button === "Add disconnected person") fireEvent.click(screen.getByRole("button", { name: "People" }));
       await waitFor(() =>
         expect(screen.getByRole("button", { name: button })).toBeEnabled(),
       );

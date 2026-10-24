@@ -15,6 +15,11 @@ describe("theme picker", () => {
     expect(localStorage.getItem("family-manager-theme")).toBe("orbit-club");
   });
 
+  it("names compact theme buttons independently of visually hidden labels", () => {
+    render(<ThemeProvider><ThemePicker compact /></ThemeProvider>);
+    expect(screen.getByRole("button", { name: "Paper & Pine" })).toHaveAttribute("aria-label", "Paper & Pine");
+  });
+
   it("restores a valid stored theme", () => {
     localStorage.setItem("family-manager-theme", "clearline");
     render(<ThemeProvider><ThemePicker /></ThemeProvider>);

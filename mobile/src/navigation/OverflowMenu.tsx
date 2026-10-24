@@ -5,6 +5,7 @@ import {
   AccessibilityInfo,
   Modal,
   Pressable,
+  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -95,6 +96,7 @@ export function OverflowMenu({
           >
             More
           </Text>
+          <ScrollView testID="overflow-menu-scroll" keyboardShouldPersistTaps="handled" style={{ flexShrink: 1 }}>
           {items.map((item) => {
             const selected = item.key === activeTab;
             return (
@@ -127,6 +129,7 @@ export function OverflowMenu({
               </Pressable>
             );
           })}
+          </ScrollView>
           <Pressable
             accessibilityLabel="Close More menu"
             accessibilityRole="button"

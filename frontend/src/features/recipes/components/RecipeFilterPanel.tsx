@@ -10,6 +10,8 @@ type RecipeFilterPanelProps = {
   ingredient: string;
   minRating: string;
   onFilter: () => Promise<void>;
+  onReset: () => Promise<void>;
+  loading: boolean;
   query: string;
   setCategoryId: (value: string) => void;
   setFavoriteOnly: (value: boolean) => void;
@@ -30,6 +32,8 @@ export function RecipeFilterPanel({
   ingredient,
   minRating,
   onFilter,
+  onReset,
+  loading,
   query,
   setCategoryId,
   setFavoriteOnly,
@@ -48,17 +52,19 @@ export function RecipeFilterPanel({
   }
 
   return (
-    <Card as="section" className="recipe-page-card recipe-tool-card">
+    <Card
+      as="section"
+      className="recipe-page-card recipe-tool-card recipe-browse-search"
+    >
       <div className="recipe-section-heading">
         <div>
-          <p className="eyebrow">Cookbook Search</p>
           <h2>Find a recipe</h2>
-          <p>
-            Search by name or ingredient, then narrow by category, tags,
-            favorites, or rating.
-          </p>
         </div>
-        <Button type="button" onClick={toggleAdvancedFilters}>
+        <Button
+          type="button"
+          aria-expanded={showAdvancedFilters}
+          onClick={toggleAdvancedFilters}
+        >
           {showAdvancedFilters ? "Hide Advanced" : "Advanced Filters"}
         </Button>
       </div>
@@ -71,15 +77,23 @@ export function RecipeFilterPanel({
               placeholder="Spaghetti, cake, fajitas..."
             />
           </FormField>
-          <FormField label="Ingredient" className="recipe-form-field">
-            <TextInput
-              value={ingredient}
-              onChange={(event) => setIngredient(event.target.value)}
-              placeholder="beef, flour, peppers..."
-            />
-          </FormField>
+          <label className="recipe-checkbox-pill">
+            <input
+              type="checkbox"
+              checked={favoriteOnly}
+              onChange={(event) => setFavoriteOnly(event.target.checked)}
+            />{" "}
+            Favorites only
+          </label>
           {showAdvancedFilters ? (
             <>
+              <FormField label="Ingredient" className="recipe-form-field">
+                <TextInput
+                  value={ingredient}
+                  onChange={(event) => setIngredient(event.target.value)}
+                  placeholder="beef, flour, peppers..."
+                />
+              </FormField>
               <FormField label="Category" className="recipe-form-field">
                 <select
                   value={categoryId}
@@ -115,19 +129,20 @@ export function RecipeFilterPanel({
                   onChange={(event) => setMinRating(event.target.value)}
                 />
               </FormField>
-              <label className="recipe-checkbox-pill">
-                <input
-                  type="checkbox"
-                  checked={favoriteOnly}
-                  onChange={(event) => setFavoriteOnly(event.target.checked)}
-                />{" "}
-                Favorites only
-              </label>
             </>
           ) : null}
         </div>
         <div className="recipe-filter-actions">
-          <Button type="submit">Apply Filters</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Loading…" : "Apply Filters"}
+          </Button>
+          <Button
+            type="button"
+            className="recipe-secondary"
+            onClick={() => void onReset()}
+          >
+            Reset filters
+          </Button>
         </div>
       </form>
     </Card>

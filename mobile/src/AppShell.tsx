@@ -48,6 +48,8 @@ export function AppShell() {
 
   const nativePush = useNativePush(session, modules, setActiveTab);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [choreContext, setChoreContext] = useState<{ childId?: number; date?: string }>({});
+  useEffect(() => { setChoreContext({}); }, [session?.user.id, session?.user.household_id]);
   const moreButtonRef = useRef<View>(null);
   const scrollRef = useRef<ScrollView>(null);
   const resetScroll = useCallback(
@@ -111,7 +113,10 @@ export function AppShell() {
         <ParentHomeScreen
           modules={modules}
           onModulesLoaded={setModules}
-          onNavigate={setActiveTab}
+          onNavigate={(tab, context) => {
+            if (tab === "chores") setChoreContext(context ?? {});
+            setActiveTab(tab);
+          }}
           session={session}
         />
       ) : null}
@@ -119,7 +124,7 @@ export function AppShell() {
         <ChildrenScreen session={session} />
       ) : null}
       {activeTab === "chores" && canAccessMobileModule(modules, "chores") ? (
-        <ChoresScreen session={session} />
+        <ChoresScreen session={session} initialChildId={choreContext.childId} initialDate={choreContext.date} />
       ) : null}
       {activeTab === "review" && canAccessMobileModule(modules, "chores") ? (
         <ParentReviewScreen />
@@ -141,6 +146,7 @@ export function AppShell() {
       {activeTab === "family-tree" &&
       canAccessMobileModule(modules, "family-tree") ? (
         <FamilyTreeScreen
+          onViewChanged={resetScroll}
           key={`${session.user.household_id}:${session.user.id}`}
           session={session}
           modules={modules}
@@ -242,7 +248,7 @@ export function AppShell() {
         keyboardShouldPersistTaps="handled"
       >
         {moduleKey !== null ? (
-          <ModuleAccessProvider module={activeModule}>
+          <ModuleAccessProvider key={`${session.user.household_id}:${session.user.id}:${moduleKey}`} module={activeModule}>
             {activeModule?.can_manage !== true ? (
               <InlineNotice tone="warning" message="View-only access" />
             ) : null}

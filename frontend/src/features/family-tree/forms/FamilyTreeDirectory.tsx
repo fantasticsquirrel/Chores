@@ -8,8 +8,7 @@ import { personEditor, type EditorSpec } from "../lib/workflows/editors";
 import type { useTreePages } from "../hooks/useTreeReads";
 type Props = {
   activePeopleCount: number;
-  query: string;
-  setQuery: Dispatch<SetStateAction<string>>;
+  searchParams: URLSearchParams;
   tag: string;
   setTag: Dispatch<SetStateAction<string>>;
   living: string;
@@ -27,8 +26,7 @@ type Props = {
 };
 export function FamilyTreeDirectory({
   activePeopleCount,
-  query,
-  setQuery,
+  searchParams,
   tag,
   setTag,
   living,
@@ -47,14 +45,6 @@ export function FamilyTreeDirectory({
       <h2>People directory</h2>
       <p>Find any recorded person, including disconnected branches.</p>
       <div className="family-tree-directory-filters">
-        <label>
-          Search names and aliases
-          <input
-            value={query}
-            disabled={busy}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </label>
         <label>
           Tag filter
           <input
@@ -121,7 +111,7 @@ export function FamilyTreeDirectory({
       <ul aria-label="Recorded people">
         {people.items.map((person) => (
           <li key={person.id}>
-            <Link to={`/family-tree/people/${person.id}`}>
+            <Link to={`/family-tree/people/${person.id}?${searchParams.toString()}`}>
               {personName(person)}
             </Link>{" "}
             · {person.living_status}

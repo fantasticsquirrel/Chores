@@ -155,12 +155,15 @@ describe("native module view-only permissions", () => {
     arrangeChores();
     const view = render(wrap(<ChoresScreen session={session} />));
     await screen.findByText("Call plumber");
-    fireEvent.press(screen.getByText("Select"));
-    for (const label of ["Add", "Edit", "Archive", "Submit", "Submit Selected", "Done"]) {
+    expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
+    fireEvent.press(screen.getByRole("button", { name: "Select multiple" }));
+    fireEvent.press(screen.getByRole("checkbox", { name: "Laundry" }));
+    fireEvent.press(screen.getByRole("button", { name: "Manage chores" }));
+    for (const label of ["Add", "Edit", "Archive", "Submit Selected", "Done"]) {
       expect(screen.getByRole("button", { name: label })).toBeDisabled();
     }
     expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
-    expect(view.getAllByText("Laundry")).toHaveLength(3);
+    expect(view.getAllByText("Laundry")).toHaveLength(2);
   });
 
   it("gates a chore form left open when manage access is revoked", async () => {
@@ -182,10 +185,15 @@ describe("native module view-only permissions", () => {
     jest.spyOn(apiClient, "listChildren").mockResolvedValue([child]);
     render(wrap(<ChildrenScreen session={session} />));
     await screen.findAllByText("Mia");
-    for (const label of ["Create Child", "Set Inactive", "Create Login", "Reset Email", "Reset Password"]) {
-      expect(screen.getByRole("button", { name: label })).toBeDisabled();
-    }
-    expect(screen.getByRole("button", { name: "Refresh" })).toBeEnabled();
+    fireEvent.press(screen.getByRole("button", { name: "Add Child" }));
+    for (const label of ["Create Child", "Set Inactive"]) expect(screen.getByRole("button", { name: label })).toBeDisabled();
+    fireEvent.press(screen.getByRole("button", { name: "Manage login for Mia" }));
+    expect(screen.getByRole("button", { name: "Create Login" })).toBeDisabled();
+    fireEvent.press(screen.getByRole("button", { name: "Advanced account tools" }));
+    expect(screen.getByRole("button", { name: "Reset Email for Mia" })).toBeDisabled();
+    fireEvent.press(screen.getByRole("button", { name: "Reset Password" }));
+    expect(screen.getByRole("button", { name: "Reset Password for Mia" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Refresh children" })).toBeEnabled();
   });
 
   it("allows balance/history browsing but no financial recording", async () => {
@@ -225,12 +233,11 @@ describe("native module view-only permissions", () => {
     const parent = jest.spyOn(apiClient, "createParentUser");
     const view = render(wrap(<AdminScreen />));
     await screen.findByText("parent@example.com");
-    fireEvent.changeText(screen.getByPlaceholderText("other.parent@example.com"), "new.parent@example.com");
-    fireEvent.changeText(screen.getByPlaceholderText("At least 8 characters"), "valid-password");
+    expect(screen.queryByPlaceholderText("other.parent@example.com")).toBeNull();
     expect(screen.getByRole("switch", { name: "Chores household access" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Off Chores" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Create Parent Login" })).toBeDisabled();
-    await act(async () => directPress(view, "Create Parent Login")());
+    expect(screen.getByRole("button", { name: "Add Parent" })).toBeDisabled();
+    await act(async () => directPress(view, "Add Parent")());
     expect(household).not.toHaveBeenCalled();
     expect(user).not.toHaveBeenCalled();
     expect(parent).not.toHaveBeenCalled();
@@ -288,6 +295,7 @@ describe("native module view-only permissions", () => {
     const access = revocableWrapper();
     const noop = async () => {};
     const { result, rerender } = renderHook(() => useChoreMutations({
+      canSubmitChores: () => true,
       householdId: 7, userId: 2, targetDate: "2026-09-01", selectedChild: child, selectedChoreIds: [11], myTasksError: null,
       clearMyTasksError: jest.fn(), clearSelectedChores: jest.fn(), loadChildrenAndEligible: noop, loadChores: noop, loadMyTasks: noop,
       patchEligibleChildState: jest.fn(), refreshEligibleForChild: noop, setChoresError: jest.fn(), setSelectedSubmitError: jest.fn(), setSelectedSubmitSuccess: jest.fn(),

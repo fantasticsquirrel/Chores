@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { colors } from "../../styles/colors";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { apiClient } from "../../api/client";
@@ -17,6 +18,10 @@ import { formatError } from "../../utils/format";
 export function ChildTodayScreen() {
   const { canManageRef } = useModuleAccess();
   const initialDate = useMemo(() => todayDateString(), []);
+  const requestId = useRef(0);
+  const mounted = useRef(false);
+  const submitLock = useRef(false);
+  const dateRef = useRef(initialDate);
   const [date, setDate] = useState(initialDate);
   const [chores, setChores] = useState<EligibleChore[]>([]);
   const [selectedChoreIds, setSelectedChoreIds] = useState<Set<number>>(
@@ -27,23 +32,29 @@ export function ChildTodayScreen() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const refresh = useCallback(async (nextDate: string) => {
+  const refresh = useCallback(async (nextDate: string, afterSave = false) => {
+    const request = ++requestId.current;
     setLoading(true);
     setError(null);
-    setSuccess(null);
+    if (!afterSave) setSuccess(null);
     try {
       const eligible = await apiClient.listEligibleChores({ date: nextDate });
+      if (request !== requestId.current || nextDate !== dateRef.current) return;
       setChores(eligible);
       setSelectedChoreIds(new Set());
     } catch (refreshError) {
-      setError(formatError(refreshError));
+      if (request !== requestId.current || nextDate !== dateRef.current) return;
+      setError(`${afterSave ? "Submitted, but chores could not refresh. Try Refresh. " : ""}${formatError(refreshError)}`);
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     void refresh(initialDate);
+    const requests = requestId;
+    return () => { mounted.current = false; requests.current += 1; };
   }, [initialDate, refresh]);
 
   function toggleChore(choreId: number) {
@@ -60,7 +71,9 @@ export function ChildTodayScreen() {
   }
 
   async function submitSelected() {
-    if (!canManageRef.current) return;
+    if (!canManageRef.current || submitLock.current || selectedChoreIds.size === 0 || loading) return;
+    submitLock.current = true;
+    const submittedDate = date;
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -69,17 +82,23 @@ export function ChildTodayScreen() {
         for_date: date,
         chore_ids: Array.from(selectedChoreIds),
       });
-      setSuccess("Submitted for parent review.");
-      await refresh(date);
+      if (mounted.current && submittedDate === dateRef.current) {
+        setSelectedChoreIds(new Set());
+        setChores((current) => current.filter((chore) => !selectedChoreIds.has(chore.chore_id)));
+        setSuccess("Submitted for parent review.");
+        await refresh(submittedDate, true);
+      }
     } catch (submitError) {
-      setError(formatError(submitError));
+      if (mounted.current && submittedDate === dateRef.current) setError(formatError(submitError));
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   }
 
   function setToday() {
     const nextDate = todayDateString();
+    dateRef.current = nextDate;
     setDate(nextDate);
     void refresh(nextDate);
   }
@@ -90,26 +109,32 @@ export function ChildTodayScreen() {
       <SectionCard title="Date">
         <TextInput
           autoCapitalize="none"
+          editable={!submitting}
           onChangeText={(value) => {
+            dateRef.current = value;
+            requestId.current++;
+            setChores([]);
+            setSelectedChoreIds(new Set());
+            setLoading(false);
             setDate(value);
             setSuccess(null);
           }}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           style={formStyles.input}
           value={date}
         />
         <View style={formStyles.inlineButtons}>
           <ActionButton
             compact
-            disabled={loading}
+            disabled={loading || submitting}
             label="Today"
             onPress={setToday}
             variant="secondary"
           />
           <ActionButton
             compact
-            disabled={loading}
+            disabled={loading || submitting}
             label={loading ? "Loading" : "Refresh"}
             onPress={() => refresh(date)}
             variant="secondary"
@@ -122,13 +147,15 @@ export function ChildTodayScreen() {
         {loading ? (
           <LoadingRow label="Loading chores" />
         ) : chores.length === 0 ? (
-          <Text style={shellStyles.mutedText}>No chores are available for this date.</Text>
+          <Text style={shellStyles.mutedText}>{error ? "Chores are unavailable. Try Refresh." : "No chores are available for this date."}</Text>
         ) : (
           <View>
             {chores.map((chore) => (
               <Pressable
                 key={chore.chore_id}
                 accessibilityRole="button"
+                accessibilityState={{ selected: selectedChoreIds.has(chore.chore_id), disabled: submitting }}
+                disabled={submitting}
                 onPress={() => toggleChore(chore.chore_id)}
                 style={[
                   formStyles.selectableRow,
@@ -157,7 +184,7 @@ export function ChildTodayScreen() {
         )}
       </SectionCard>
       <ActionButton
-        disabled={selectedChoreIds.size === 0 || submitting}
+        disabled={selectedChoreIds.size === 0 || submitting || loading}
         requiresManage
         label={
           submitting

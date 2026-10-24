@@ -77,3 +77,35 @@ describe("useEligibleChores", () => {
     expect(listEligibleChores).not.toHaveBeenCalled();
   });
 });
+
+it("ignores an older same-date refresh after a newer one finishes", async () => {
+  vi.spyOn(apiClient, "listChildren").mockResolvedValue(children);
+  const request = vi
+    .spyOn(apiClient, "listEligibleChores")
+    .mockResolvedValue([eligibleChore]);
+  const { result } = renderHook(() => useEligibleChores(7));
+  await waitFor(() =>
+    expect(result.current.selectedEligibleState.chores).toHaveLength(1),
+  );
+  let old!: (rows: EligibleChore[]) => void;
+  request
+    .mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          old = done;
+        }),
+    )
+    .mockResolvedValueOnce([]);
+  let pending!: Promise<void>;
+  act(() => {
+    pending = result.current.refreshEligibleForChild(11);
+  });
+  await act(async () => result.current.refreshEligibleForChild(11));
+  expect(result.current.selectedEligibleState.chores).toEqual([]);
+  await act(async () => {
+    old([eligibleChore]);
+    await pending;
+  });
+  expect(result.current.selectedEligibleState.chores).toEqual([]);
+  vi.restoreAllMocks();
+});

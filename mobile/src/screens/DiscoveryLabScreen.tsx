@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   AppState,
   BackHandler,
+  Linking,
   Text,
   View,
 } from "react-native";
@@ -21,6 +22,7 @@ import {
   emptyFilters,
   matches,
 } from "../features/discovery-lab/components/DiscoveryFilters";
+import { discoveryWebDestination } from "../features/discovery-lab/lib/webDestination";
 import { ExplorationDetail } from "../features/discovery-lab/components/ExplorationDetail";
 
 type Props = { session: AuthSessionResponse; modules: FamilyModule[] };
@@ -168,7 +170,7 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
       if (alive.current && ticket === epoch.current) {
         setAccess(result);
         setNotice(
-          `${ids.length} Exploration${ids.length === 1 ? "" : "s"} ${enabled ? "enabled" : "disabled"}.`,
+          `${ids.length} Exploration${ids.length === 1 ? "" : "s"} ${enabled ? "enabled" : "disabled"} for ${children.find(child => child.id === id)?.name ?? "this child"}.`,
         );
       }
     });
@@ -277,6 +279,7 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
               </SectionCard>
               {manage ? (
                 <View style={{ gap: 8 }}>
+                  <Text style={{ color: colors.text }}>Changes apply to {children.find(child => child.id === childId)?.name}: {matched.length} matching Explorations. Other Explorations stay unchanged.</Text>
                   <ActionButton
                     label={`Enable ${matched.length} matching Explorations`}
                     disabled={busy || !matched.length}
@@ -336,6 +339,13 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
                         )
                       }
                     />
+                  ) : item.package ? (
+                    discoveryWebDestination(apiClient.apiBaseUrl, item.id) ? <ActionButton
+                      label={`Open ${item.title} on web`}
+                      variant="secondary"
+                      disabled={busy}
+                      onPress={() => void run(async () => { await Linking.openURL(discoveryWebDestination(apiClient.apiBaseUrl, item.id)!); })}
+                    /> : <Text style={{ color: colors.textMuted }}>Open Family Manager on the web to use this uploaded Exploration.</Text>
                   ) : (
                     <ActionButton
                       label={`Explore ${item.title}`}

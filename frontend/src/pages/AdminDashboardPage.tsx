@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 
 import { useAuth } from "../auth/useAuth";
 import { CreateParentPanel } from "../features/admin/components/CreateParentPanel";
@@ -6,16 +6,28 @@ import { HouseholdModulesPanel } from "../features/admin/components/HouseholdMod
 import { UserModuleAccessPanel } from "../features/admin/components/UserModuleAccessPanel";
 import { useAdminUsers } from "../features/admin/hooks/useAdminUsers";
 import { useHouseholdModules } from "../features/admin/hooks/useHouseholdModules";
-import { familyModules } from "../modules/registry";
-import { ButtonLink, Card } from "../ui";
+import { Button, ButtonLink, Card } from "../ui";
 
 export function AdminDashboardPage(): ReactElement {
+  const [addingParent, setAddingParent] = useState(false);
+  const addTrigger = useRef<HTMLButtonElement | null>(null);
   const { refreshModuleAccess } = useAuth();
   const userManagement = useAdminUsers();
   const householdManagement = useHouseholdModules({
     refreshModuleAccess,
     refreshUsers: userManagement.loadUsers,
   });
+
+  function closeParent() {
+    setAddingParent(false);
+    addTrigger.current?.focus();
+  }
+  useEffect(() => {
+    if (userManagement.actionMessage?.startsWith("Created ")) {
+      setAddingParent(false);
+      addTrigger.current?.focus();
+    }
+  }, [userManagement.actionMessage]);
 
   return (
     <section className="dashboard-grid" aria-label="Admin dashboard">
@@ -30,12 +42,15 @@ export function AdminDashboardPage(): ReactElement {
           Manage household-wide Family Manager module access from one place.
         </p>
         <div className="quick-actions">
+          <Button aria-expanded={addingParent} onClick={(event) => { addTrigger.current = event.currentTarget; setAddingParent(true); }}>Add Parent</Button>
           <ButtonLink to="/parent/children">Manage Children</ButtonLink>
           <ButtonLink to="/chore/account/security">Account Security</ButtonLink>
         </div>
       </Card>
 
-      <CreateParentPanel
+      {addingParent ? <CreateParentPanel
+        onClose={closeParent}
+        error={userManagement.actionError}
         createParent={userManagement.createParent}
         creating={userManagement.creatingParent}
         email={userManagement.newParentEmail}
@@ -44,7 +59,9 @@ export function AdminDashboardPage(): ReactElement {
         setEmail={userManagement.setNewParentEmail}
         setPassword={userManagement.setNewParentPassword}
         setRole={userManagement.setNewParentRole}
-      />
+      /> : null}
+
+      <div hidden={addingParent} style={addingParent ? { display: "none" } : undefined} className="dashboard-grid">
 
       <HouseholdModulesPanel
         actionError={householdManagement.actionError}
@@ -69,20 +86,7 @@ export function AdminDashboardPage(): ReactElement {
         users={userManagement.users}
       />
 
-      <Card className="dashboard-panel">
-        <h2>Default Modules</h2>
-        <ul className="balance-list">
-          {familyModules.map((module) => (
-            <li key={module.key} className="balance-item">
-              <div>
-                <p className="balance-name">{module.label}</p>
-                <p className="balance-meta">{module.description}</p>
-              </div>
-              <div className="balance-pill">{module.roles.join(", ")}</div>
-            </li>
-          ))}
-        </ul>
-      </Card>
+      </div>
     </section>
   );
 }

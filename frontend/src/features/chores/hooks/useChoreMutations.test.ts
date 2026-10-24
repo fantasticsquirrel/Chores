@@ -36,12 +36,14 @@ describe("useChoreMutations", () => {
       });
     const patchEligibleChildState = vi.fn();
     const refreshEligibleForChild = vi.fn(async () => undefined);
+    const loadChildrenAndEligible = vi.fn(async () => undefined);
 
     const { result } = renderHook(() =>
       useChoreMutations({
+        canSubmitChores: () => true,
         clearSelectedChores: vi.fn(),
         householdId: 7,
-        loadChildrenAndEligible: vi.fn(async () => undefined),
+        loadChildrenAndEligible,
         loadChores: vi.fn(async () => undefined),
         loadMyTasks: vi.fn(async () => undefined),
         patchEligibleChildState,
@@ -71,8 +73,9 @@ describe("useChoreMutations", () => {
       message: "Submitted Wipe table for review.",
       submittingChoreId: null,
     });
-    expect(refreshEligibleForChild).toHaveBeenCalledWith(11, {
-      preserveMessage: true,
+    expect(loadChildrenAndEligible).toHaveBeenCalledOnce();
+    expect(patchEligibleChildState).toHaveBeenLastCalledWith(11, {
+      message: "Submitted Wipe table for review.",
     });
   });
 
@@ -86,12 +89,14 @@ describe("useChoreMutations", () => {
     });
     const clearSelectedChores = vi.fn();
     const refreshEligibleForChild = vi.fn(async () => undefined);
+    const loadChildrenAndEligible = vi.fn(async () => undefined);
 
     const { result } = renderHook(() =>
       useChoreMutations({
+        canSubmitChores: () => true,
         clearSelectedChores,
         householdId: 7,
-        loadChildrenAndEligible: vi.fn(async () => undefined),
+        loadChildrenAndEligible,
         loadChores: vi.fn(async () => undefined),
         loadMyTasks: vi.fn(async () => undefined),
         patchEligibleChildState: vi.fn(),
@@ -110,7 +115,48 @@ describe("useChoreMutations", () => {
       "Submitted 1 chore(s) for Riley.",
     );
     expect(clearSelectedChores).toHaveBeenCalledOnce();
-    expect(refreshEligibleForChild).toHaveBeenCalledWith(11);
+    expect(loadChildrenAndEligible).toHaveBeenCalledOnce();
     expect(result.current.selectedSubmitting).toBe(false);
   });
+});
+
+it("rejects retained quick and selected handlers synchronously when the date scope changes", async () => {
+  const { useEligibleChores } = await import("./useEligibleChores");
+  vi.spyOn(apiClient, "listChildren").mockResolvedValue([child]);
+  vi.spyOn(apiClient, "listEligibleChores").mockResolvedValue([eligibleChore]);
+  const submit = vi.spyOn(apiClient, "createSubmission");
+  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+  const { result } = renderHook(() => {
+    const data = useEligibleChores(7, { childId: "11", date: "2026-09-05" });
+    const mutations = useChoreMutations({
+      ...data,
+      householdId: 7,
+      userId: 31,
+      loadChores: async () => undefined,
+      loadMyTasks: async () => undefined,
+      setChoresError: vi.fn(),
+    });
+    return { data, mutations };
+  });
+  await act(async () => undefined);
+  act(() => result.current.data.toggleSelectedChore(77));
+  expect(result.current.data.selectedChoreIds).toEqual([77]);
+  const quick = result.current.mutations.handleQuickSubmit;
+  const selected = result.current.mutations.handleSelectedSubmit;
+  vi.mocked(apiClient.listChildren).mockImplementationOnce(
+    () => new Promise(() => {}),
+  );
+  await act(async () => {
+    result.current.data.changeTargetDate("2026-09-06");
+    await quick(child, eligibleChore);
+    await selected();
+  });
+  await act(async () => {
+    await quick(child, eligibleChore);
+    await selected();
+  });
+  expect(submit).not.toHaveBeenCalled();
+  expect(confirm).not.toHaveBeenCalled();
+  expect(result.current.data.selectedChoreIds).toEqual([]);
+  vi.restoreAllMocks();
 });

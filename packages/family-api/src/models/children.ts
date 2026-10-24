@@ -5,6 +5,8 @@ export interface Child {
   household_id: number;
   name: string;
   active: boolean;
+  /** Authoritative linked-login state; absent with older servers. */
+  has_login?: boolean;
 }
 
 export interface ListChildrenParams {

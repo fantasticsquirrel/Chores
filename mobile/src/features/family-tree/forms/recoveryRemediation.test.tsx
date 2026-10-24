@@ -40,6 +40,7 @@ describe("native recovery remediation composition", () => {
     await screen.findByText("Discovery outage");
     expect(screen.queryByText("Choose photograph")).toBeNull();
     fireEvent.press(screen.getByText("Retry Family Tree"));
+    fireEvent.press(await screen.findByRole("button", { name: "People" }));
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
     await waitFor(() =>
       expect(
@@ -206,6 +207,7 @@ describe("native recovery remediation composition", () => {
     await screen.findByText("Discovery outage");
     expect(apiClient.attachFamilyTreeMedia).toHaveBeenCalledTimes(2);
     fireEvent.press(screen.getByText("Retry Family Tree"));
+    fireEvent.press(await screen.findByRole("button", { name: "People" }));
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
     await waitFor(() =>
       expect(apiClient.getFamilyTreePerson).toHaveBeenCalledTimes(2),

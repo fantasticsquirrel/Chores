@@ -190,12 +190,13 @@ describe("FT2 real web core journeys at the API method seam", () => {
   });
   it("opens a disconnected directory person as a bookmark and fetches its focus", async () => {
     mount("/family-tree");
+    fireEvent.click(await screen.findByRole("button", { name: "People" }));
     await screen.findByRole("list", { name: "Recorded people" });
     const directory = within(
       screen.getByRole("list", { name: "Recorded people" }),
     );
     fireEvent.click(
-      directory.getByRole("button", { name: "Show Disconnected in tree" }),
+      await directory.findByRole("button", { name: "Show Disconnected in tree" }),
     );
     await screen.findByRole("region", { name: "Person details: Disconnected" });
     expect(apiClient.getFamilyTreePerson).toHaveBeenCalledWith(

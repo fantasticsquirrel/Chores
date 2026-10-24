@@ -1,6 +1,8 @@
-import { Text, View } from "react-native";
+import { useState } from "react";
+import { Text, TextInput, View } from "react-native";
 
 import type { Child, Chore } from "../../../api/models";
+import { ChoiceGroup } from "../../../components/ChoiceGroup";
 import { ActionButton } from "../../../components/ActionButton";
 import { InlineNotice } from "../../../components/InlineNotice";
 import { LoadingRow } from "../../../components/LoadingRow";
@@ -31,8 +33,40 @@ export function ChoreList({
   onArchive: (chore: Chore) => void;
   onEdit: (chore: Chore) => void;
 }) {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("active");
+  const visible = choresState.chores.filter(
+    (chore) =>
+      (status === "all" ||
+        (status === "active" ? chore.is_active : !chore.is_active)) &&
+      chore.name.toLowerCase().includes(search.toLowerCase()),
+  );
   return (
-    <SectionCard title="All Chores">
+    <SectionCard title="Chore Management">
+      <TextInput
+        accessibilityLabel="Search chores"
+        placeholder="Search chores"
+        style={formStyles.input}
+        value={search}
+        onChangeText={setSearch}
+      />
+      <ChoiceGroup
+        options={[
+          { value: "active", label: "Active" },
+          { value: "archived", label: "Archived" },
+          { value: "all", label: "All" },
+        ]}
+        value={status}
+        onChange={setStatus}
+      />
+      {!choresState.loading &&
+      !choresState.error &&
+      choresState.chores.length > 0 &&
+      visible.length === 0 ? (
+        <Text style={shellStyles.mutedText}>
+          No matching chores. Change the search or status filter.
+        </Text>
+      ) : null}
       {choresState.loading ? <LoadingRow label="Loading chores" /> : null}
       {choresState.error !== null ? (
         <InlineNotice
@@ -41,9 +75,11 @@ export function ChoreList({
         />
       ) : null}
       {!choresState.loading && choresState.chores.length === 0 ? (
-        <Text style={shellStyles.mutedText}>No chores have been created yet.</Text>
+        <Text style={shellStyles.mutedText}>
+          No chores have been created yet.
+        </Text>
       ) : null}
-      {choresState.chores.map((chore) => (
+      {visible.map((chore) => (
         <ChoreCard
           archiving={archivingId === chore.id}
           chore={chore}
@@ -79,11 +115,17 @@ export function ChoreCard({
       </Text>
       <Text style={formStyles.rowMeta}>{rewardLabel(chore)}</Text>
       {chore.owner_user_id === null ? (
-        <Text style={formStyles.rowMeta}>{eligibilityLabel(chore, children)}</Text>
+        <Text style={formStyles.rowMeta}>
+          {eligibilityLabel(chore, children)}
+        </Text>
       ) : null}
-      {timing.length > 0 ? <Text style={formStyles.rowMeta}>{timing}</Text> : null}
+      {timing.length > 0 ? (
+        <Text style={formStyles.rowMeta}>{timing}</Text>
+      ) : null}
       {chore.archived_at !== null ? (
-        <Text style={[formStyles.rowMeta, choreStyles.dangerText]}>Archived</Text>
+        <Text style={[formStyles.rowMeta, choreStyles.dangerText]}>
+          Archived
+        </Text>
       ) : null}
       <View style={formStyles.inlineButtons}>
         <ActionButton

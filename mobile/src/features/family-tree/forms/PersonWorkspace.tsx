@@ -19,7 +19,9 @@ export function PersonWorkspace({
   workflow,
   onDirty,
   requestDiscard,
+  onShowInTree,
 }: {
+  onShowInTree?: (id: number) => void;
   state: TreeState;
   workflow: TreeWorkflow;
   onDirty: (dirty: boolean) => void;
@@ -287,10 +289,10 @@ export function PersonWorkspace({
       ) : null}
       <View style={formStyles.inlineButtons}>
         <ActionButton
-          label="Focus this person"
+          label="Show in tree"
           disabled={state.loading || state.busy}
           variant="secondary"
-          onPress={() => void workflow.focus(p.id)}
+          onPress={() => onShowInTree ? onShowInTree(p.id) : void workflow.focus(p.id)}
         />
         <ActionButton
           label="Edit person"

@@ -148,6 +148,34 @@ describe("Discovery Lab", () => {
       screen.getByRole("link", { name: /The art of falling sideways/ }),
     ).toBeVisible();
   });
+  it("keeps advanced filters tucked away and their active count visible", async () => {
+    show();
+    await screen.findByRole("link", { name: /Inside a leaf/ });
+    expect(screen.queryByLabelText("Tag")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Filters (0)" }));
+    fireEvent.change(screen.getByLabelText("Tag"), {
+      target: { value: "plants" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Filters (1)" }));
+    expect(screen.queryByLabelText("Tag")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Filters (1)" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(screen.getByText("Tag: plants")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByRole("button", { name: "Filters (0)" })).toBeVisible();
+  });
+  it("opens child access first and loads package authoring only on request", async () => {
+    show("/discovery-lab/manage");
+    await screen.findByRole("checkbox", { name: `Enable ${orbit.title}` });
+    expect(
+      screen.queryByLabelText("Upload package ZIP"),
+    ).not.toBeInTheDocument();
+    expect(apiClient.listDiscoveryPackages).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Package authoring" }));
+    expect(await screen.findByLabelText("Upload package ZIP")).toBeVisible();
+  });
   it("renders guided exploration and code simulation after authoritative detail read", async () => {
     show("/discovery-lab/orbital-mechanics");
     expect(

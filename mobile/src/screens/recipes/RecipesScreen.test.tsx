@@ -11,8 +11,15 @@ import {ActionButton} from '../../components/ActionButton';
 jest.mock('../../api/client', () => ({ apiClient: Object.fromEntries(['listRecipes', 'listRecipeCategories', 'listRecipeTags', 'listChildren', 'getRecipe', 'scaleRecipe', 'createRecipe', 'updateRecipe', 'importRecipeFromUrl', 'exportRecipeBackup', 'importRecipeBackup', 'duplicateRecipe', 'createRecipeVariant', 'upsertRecipeFeedback', 'deleteRecipe'].map(k => [k, jest.fn()])) }));
 jest.mock('../../features/recipes/lib/recipe-output',()=>({printRecipe:jest.fn(),shareCookbookBackup:jest.fn()}));
 const api = apiClient as unknown as Record<string, jest.Mock<(...args: unknown[]) => Promise<unknown>>>;
-const press = (label: string) => fireEvent.press(screen.queryByRole('button', { name: label }) ?? screen.getByRole('checkbox', { name: label }));
-const change = (label: string, text: string) => fireEvent.changeText(screen.getByLabelText(label), text);
+const press = (label: string) => {
+  if (['Edit Recipe', 'Delete Recipe', 'Duplicate Recipe', 'Add Variant'].includes(label) && !screen.queryByRole('button', { name: label })) fireEvent.press(screen.getByRole('button', { name: 'Recipe tools' }));
+  fireEvent.press(screen.queryByRole('button', { name: label }) ?? screen.getByRole('checkbox', { name: label }));
+};
+const change = (label: string, text: string) => {
+  if (['Target servings', 'Multiplier'].includes(label) && !screen.queryByLabelText(label)) press('Adjust servings');
+  if (label === 'Recipe URL' && !screen.queryByLabelText(label)) press('Import Recipe');
+  fireEvent.changeText(screen.getByLabelText(label), text);
+};
 async function open() {
   render(<RecipesScreen modules={modules} session={session} />);
   await screen.findByRole('button', { name: 'Open Soup' });
@@ -122,7 +129,7 @@ it('Android Back closes confirmation then editor then cooking then detail', asyn
   let back: (() => boolean | null | undefined) | undefined;
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, cb) => { back = cb; return { remove: jest.fn() }; });
   await open(); press('Start Cooking'); act(() => { expect(back!()).toBe(true); }); expect(screen.getByRole('button', { name: 'Start Cooking' })).toBeTruthy();
-  press('Edit Recipe'); act(() => { expect(back!()).toBe(true); }); expect(screen.getByRole('button', { name: 'Edit Recipe' })).toBeTruthy();
+  press('Edit Recipe'); act(() => { expect(back!()).toBe(true); }); expect(screen.getByRole('button', { name: 'Recipe tools' })).toBeTruthy();
   press('Delete Recipe'); act(() => { expect(back!()).toBe(true); }); expect(screen.queryByLabelText('Type recipe title')).toBeNull();
   act(() => { expect(back!()).toBe(true); }); expect(screen.getByLabelText('Search recipes')).toBeTruthy(); act(() => { expect(back!()).toBe(false); });
 });
@@ -138,6 +145,7 @@ it('household admin can edit another creator recipe with an explicit manage gran
   api.getRecipe.mockResolvedValue({ ...recipe, owner_user_id: 99 });
   render(<RecipesScreen modules={modules} session={{ ...session, user: { ...session.user, role: 'PARENT_ADMIN' } }} />);
   await screen.findByRole('button', { name: 'Open Soup' }); press('Open Soup'); await screen.findByText('Default Servings: 4');
+  press('Recipe tools');
   expect(screen.getByRole('button', { name: 'Delete Recipe' })).toBeTruthy();
   press('Edit Recipe'); change('Title', 'Admin edit'); press('Save Changes');
   await waitFor(() => expect(api.updateRecipe).toHaveBeenCalledWith(11, expect.objectContaining({ title: 'Admin edit' })));
@@ -225,4 +233,42 @@ it('rejects invalid scaling numbers without an API request', async () => {
   await open(); change('Target servings', '0'); press('Scale servings');
   expect(api.scaleRecipe).not.toHaveBeenCalled();
   expect(await screen.findByText('Enter a positive number for scaling.')).toBeTruthy();
+});
+
+it('shows focused import and cooking-first detail tools', async () => {
+  render(<RecipesScreen modules={modules} session={session} />);
+  await screen.findByRole('button', { name: 'Open Soup' });
+  expect(screen.queryByLabelText('Recipe URL')).toBeNull();
+  expect(screen.getByRole('checkbox', { name: 'Favorites only' })).toBeTruthy();
+  press('Import Recipe');
+  expect(screen.getByLabelText('Recipe URL')).toBeTruthy();
+  press('Cancel Import');
+  press('Open Soup');
+  await screen.findByRole('button', { name: 'Start Cooking' });
+  expect(screen.queryByRole('button', { name: 'Edit Recipe' })).toBeNull();
+  expect(screen.queryByLabelText('Target servings')).toBeNull();
+  press('Recipe tools');
+  expect(screen.getByRole('button', { name: 'Edit Recipe' })).toBeTruthy();
+});
+it('distinguishes initial loading, an empty cookbook and no matching results', async () => {
+  let finish!: (rows: unknown[]) => void;
+  api.listRecipes.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  render(<RecipesScreen modules={modules} session={session} />);
+  expect(screen.getByText('Loading recipes…')).toBeTruthy();
+  expect(screen.queryByText(/No recipes/)).toBeNull();
+  await act(async () => { finish([]); });
+  expect(screen.getByText('Your cookbook is empty. Add or import your first recipe.')).toBeTruthy();
+  api.listRecipes.mockResolvedValue([]);
+  change('Search recipes', 'missing'); press('Apply filters');
+  await screen.findByText('No recipes match these filters. Clear filters to browse your cookbook.');
+});
+
+it('loads recipes independently of slow taxonomy and keeps filter requests separate', async () => {
+  api.listRecipeCategories.mockImplementationOnce(() => new Promise(() => {}));
+  render(<RecipesScreen modules={modules} session={session} />);
+  await screen.findByRole('button', { name: 'Open Soup' });
+  change('Search recipes', 'soup'); press('Apply filters');
+  await waitFor(() => expect(api.listRecipes).toHaveBeenCalledTimes(2));
+  expect(api.listRecipeCategories).toHaveBeenCalledTimes(1);
+  expect(api.listRecipeTags).toHaveBeenCalledTimes(1);
 });

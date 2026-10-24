@@ -1,6 +1,5 @@
 import { View } from "react-native";
 
-import { InlineNotice } from "../../components/InlineNotice";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import {
   BalanceSelectionPanel,
@@ -15,9 +14,6 @@ export function MoneyScreen({ readOnly = false }: { readOnly?: boolean }) {
   return (
     <View>
       <ScreenHeader title="Money & History" subtitle="Allowance ledger" />
-      {finance.error ? (
-        <InlineNotice tone="error" message={finance.error} />
-      ) : null}
       <BalanceSelectionPanel finance={finance} />
       {!readOnly ? <FinancialActionPanel finance={finance} /> : null}
       <TransactionHistoryPanel finance={finance} />

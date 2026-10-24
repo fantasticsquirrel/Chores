@@ -50,7 +50,7 @@ describe("Chore finance page", () => {
     );
 
     expect(
-      await screen.findByRole("heading", { name: "Record Activity" }),
+      await screen.findByRole("heading", { name: "Record payment for Riley" }),
     ).toBeVisible();
     expect(
       screen.getByRole("list", { name: "Child balances" }),
@@ -82,6 +82,37 @@ describe("Chore finance page", () => {
     );
   });
 
+  it("shows recipient, selected state and payment effect without claiming a transfer", async () => {
+    vi.mocked(apiClient.listChildBalances).mockResolvedValue([
+      { child_id: 11, child_name: "Riley", balance_cents: 500 },
+      { child_id: 12, child_name: "Robin", balance_cents: 750 },
+    ]);
+    render(
+      <MemoryRouter initialEntries={["/parent/money"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Robin, $7.50" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Record payment for Robin" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Robin’s history" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Robin, $7.50, selected" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    fireEvent.change(screen.getByLabelText("Amount ($)"), {
+      target: { value: "2.50" },
+    });
+    expect(
+      screen.getByText("Amount owed: $7.50 → $5.00 after this payment."),
+    ).toBeVisible();
+    expect(screen.getByText(/It does not transfer money/)).toBeVisible();
+  });
+
   it("keeps finance mutations hidden from child sessions", async () => {
     vi.spyOn(apiClient, "getCurrentSession").mockResolvedValue({
       user: {
@@ -105,7 +136,7 @@ describe("Chore finance page", () => {
       await screen.findByRole("heading", { name: "Money & History" }),
     ).toBeVisible();
     expect(
-      screen.queryByRole("heading", { name: "Record Activity" }),
+      screen.queryByRole("heading", { name: "Record payment for Riley" }),
     ).not.toBeInTheDocument();
   });
 });

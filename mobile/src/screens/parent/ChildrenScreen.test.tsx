@@ -7,7 +7,11 @@ import {
 } from "@testing-library/react-native";
 
 import { apiClient } from "../../api/client";
-import type { AuthSessionResponse, Child, ChildAccount } from "../../api/models";
+import type {
+  AuthSessionResponse,
+  Child,
+  ChildAccount,
+} from "../../api/models";
 import { ChildrenScreen } from "./ChildrenScreen";
 
 const session: AuthSessionResponse = {
@@ -57,9 +61,10 @@ describe("ChildrenScreen", () => {
 
     render(<ChildrenScreen session={session} />);
 
-    expect(await screen.findAllByText("Mia")).toHaveLength(2);
+    expect(await screen.findAllByText("Mia")).toHaveLength(1);
     expect(apiClient.listChildren).toHaveBeenCalledWith({ household_id: 7 });
 
+    fireEvent.press(screen.getByRole("button", { name: "Add Child" }));
     fireEvent.changeText(screen.getByPlaceholderText("Avery"), "  Avery  ");
     fireEvent.press(screen.getByRole("button", { name: "Create Child" }));
     await waitFor(() =>
@@ -95,6 +100,9 @@ describe("ChildrenScreen", () => {
 
     render(<ChildrenScreen session={session} />);
     await screen.findAllByText("Mia");
+    fireEvent.press(
+      screen.getByRole("button", { name: "Manage login for Mia" }),
+    );
 
     fireEvent.changeText(
       screen.getByPlaceholderText("kid@example.com"),
@@ -112,13 +120,20 @@ describe("ChildrenScreen", () => {
         password: "password-one",
       }),
     );
-    expect(await screen.findByText(/Linked login created for Mia/)).toBeTruthy();
+    expect(
+      await screen.findByText(/Linked login created for Mia/),
+    ).toBeTruthy();
 
+    fireEvent.press(
+      screen.getByRole("button", { name: "Advanced account tools" }),
+    );
     fireEvent.changeText(
       screen.getByPlaceholderText("Leave blank to auto-generate"),
       "  NEW@EXAMPLE.COM  ",
     );
-    fireEvent.press(screen.getByRole("button", { name: "Reset Email" }));
+    fireEvent.press(
+      screen.getByRole("button", { name: "Reset Email for Mia" }),
+    );
     await waitFor(() =>
       expect(resetEmail).toHaveBeenCalledWith(3, {
         email: "new@example.com",
@@ -126,15 +141,18 @@ describe("ChildrenScreen", () => {
       }),
     );
 
+    fireEvent.press(screen.getByRole("button", { name: "Reset Password" }));
     fireEvent.changeText(
-      screen.getAllByPlaceholderText("At least 8 characters")[1],
+      screen.getByPlaceholderText("At least 8 characters"),
       "password-two",
     );
     fireEvent.changeText(
       screen.getByPlaceholderText("Repeat temporary password"),
       "password-two",
     );
-    fireEvent.press(screen.getByRole("button", { name: "Reset Password" }));
+    fireEvent.press(
+      screen.getByRole("button", { name: "Reset Password for Mia" }),
+    );
     await waitFor(() =>
       expect(resetPassword).toHaveBeenCalledWith(3, {
         household_id: 7,
@@ -142,4 +160,17 @@ describe("ChildrenScreen", () => {
       }),
     );
   });
+});
+
+it("shows each child once before revealing contextual account tools", async () => {
+  arrangeSuccessfulLoad();
+  render(<ChildrenScreen session={session} />);
+  expect(await screen.findAllByText("Mia")).toHaveLength(1);
+  expect(screen.queryByPlaceholderText("kid@example.com")).toBeNull();
+  expect(screen.queryByPlaceholderText("Avery")).toBeNull();
+  fireEvent.press(screen.getByRole("button", { name: "Manage login for Mia" }));
+  expect(screen.getByText("Mia’s account")).toBeTruthy();
+  expect(
+    screen.queryByPlaceholderText("Leave blank to auto-generate"),
+  ).toBeNull();
 });

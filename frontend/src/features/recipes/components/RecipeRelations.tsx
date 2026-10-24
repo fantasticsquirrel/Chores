@@ -5,11 +5,13 @@ import type { RecipeDetail } from "../../../api";
 import { Button } from "../../../ui";
 
 type RecipeRelationsProps = {
+  canManage?: boolean;
   onAddVariant: () => Promise<void>;
   recipe: RecipeDetail;
 };
 
 export function RecipeRelations({
+  canManage = true,
   onAddVariant,
   recipe,
 }: RecipeRelationsProps): ReactElement {
@@ -20,9 +22,11 @@ export function RecipeRelations({
         Use variants for varieties like gluten-free, spicy, kid-friendly, or
         batch-size versions that stay attached to this core recipe.
       </p>
-      <Button type="button" onClick={() => void onAddVariant()}>
-        Add Variant
-      </Button>
+      {canManage && (
+        <Button type="button" onClick={() => void onAddVariant()}>
+          Add Variant
+        </Button>
+      )}
       {recipe.variants.length > 0 ? (
         <ul>
           {recipe.variants.map((row) => (

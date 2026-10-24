@@ -17,6 +17,7 @@ import type {
 } from "../../api/models";
 import { todayDateString } from "../../utils/date";
 import { ChoresScreen } from "./ChoresScreen";
+import { SelectedChoreSubmitPanel } from "../../features/chores/components/ChoreBoardPanels";
 
 const session: AuthSessionResponse = {
   csrf_token: "mobile-csrf",
@@ -100,7 +101,7 @@ describe("ChoresScreen", () => {
       screen.getByText("Loading children and available chores"),
     ).toBeTruthy();
     expect(await screen.findByText("Call plumber")).toBeTruthy();
-    expect(screen.getAllByText("Laundry")).toHaveLength(3);
+    expect(screen.getAllByText("Laundry")).toHaveLength(1);
     expect(apiClient.listChores).toHaveBeenCalledWith({
       active_only: false,
       household_id: 7,
@@ -140,7 +141,8 @@ describe("ChoresScreen", () => {
       { child_id: 3 },
     );
 
-    fireEvent.press(screen.getByText("Select"));
+    fireEvent.press(screen.getByRole("button", { name: "Select multiple" }));
+    fireEvent.press(screen.getByRole("checkbox", { name: "Laundry" }));
     fireEvent.press(screen.getByRole("button", { name: "Submit Selected" }));
     await screen.findByText("Submitted 1 chore(s) for Mia.");
     expect(createSubmission).toHaveBeenNthCalledWith(
@@ -192,6 +194,7 @@ describe("ChoresScreen", () => {
       timeout_days: null,
     });
 
+    fireEvent.press(screen.getByRole("button", { name: "Manage chores" }));
     fireEvent.press(screen.getByRole("button", { name: "Edit" }));
     fireEvent.changeText(
       screen.getByDisplayValue("Laundry"),
@@ -240,6 +243,7 @@ describe("ChoresScreen", () => {
 
     render(<ChoresScreen session={session} />);
     await screen.findByText("Call plumber");
+    fireEvent.press(screen.getByRole("button", { name: "Manage chores" }));
     fireEvent.press(screen.getByRole("button", { name: "Archive" }));
 
     expect(archiveChore).not.toHaveBeenCalled();
@@ -253,5 +257,198 @@ describe("ChoresScreen", () => {
       buttons?.[1]?.onPress?.();
     });
     await waitFor(() => expect(archiveChore).toHaveBeenCalledWith(11, 7));
+  });
+});
+
+it("shows one board and opens an immediately visible, dismissible editor without losing context", async () => {
+  arrangeSuccessfulLoad();
+  render(<ChoresScreen session={session} />);
+  await screen.findByText("Call plumber");
+  expect(screen.getAllByText("Laundry")).toHaveLength(1);
+  fireEvent.press(screen.getByRole("button", { name: "Add" }));
+  expect(screen.getByTestId("chore-editor-modal")).toBeTruthy();
+  fireEvent.changeText(screen.getByPlaceholderText("Take out trash"), "Draft");
+  fireEvent.press(screen.getByRole("button", { name: "Cancel" }));
+  expect(screen.queryByTestId("chore-editor-modal")).toBeNull();
+  expect(screen.getAllByText("Laundry")).toHaveLength(1);
+});
+
+describe("focused chore board edge cases", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+  it("submits six chores once for the Today deep-linked child and date", async () => {
+    arrangeSuccessfulLoad();
+    const robin = { ...child, id: 4, name: "Robin" };
+    jest.spyOn(apiClient, "listChildren").mockResolvedValue([child, robin]);
+    jest.spyOn(apiClient, "listEligibleChores").mockResolvedValue(
+      Array.from({ length: 6 }, (_, index) => ({
+        ...eligibleChore,
+        chore_id: index + 1,
+        name: `Task ${index + 1}`,
+      })),
+    );
+    let resolve!: (value: {
+      child_id: number;
+      for_date: string;
+      id: number;
+      items: [];
+      status: "PENDING";
+    }) => void;
+    const submit = jest.spyOn(apiClient, "createSubmission").mockImplementation(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    render(
+      <ChoresScreen
+        session={session}
+        initialChildId={4}
+        initialDate="2026-10-23"
+      />,
+    );
+    await screen.findByText("Robin’s chores");
+    await screen.findByText("Task 1");
+    expect(screen.getAllByText("Task 1")).toHaveLength(1);
+    fireEvent.press(screen.getByRole("button", { name: "Select multiple" }));
+    for (let id = 1; id <= 6; id++)
+      fireEvent.press(screen.getByRole("checkbox", { name: `Task ${id}` }));
+    const button = screen.getByRole("button", { name: "Submit Selected" });
+    fireEvent.press(button);
+    fireEvent.press(button);
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledWith(
+      { for_date: "2026-10-23", chore_ids: [1, 2, 3, 4, 5, 6] },
+      { child_id: 4 },
+    );
+    await act(async () => {
+      resolve({
+        child_id: 4,
+        for_date: "2026-10-23",
+        id: 20,
+        items: [],
+        status: "PENDING",
+      });
+    });
+    expect(
+      await screen.findByText("Submitted 6 chore(s) for Robin."),
+    ).toBeTruthy();
+  });
+  it("retains a failed editor draft and supports Android Back through Modal onRequestClose", async () => {
+    arrangeSuccessfulLoad();
+    jest
+      .spyOn(apiClient, "createChore")
+      .mockRejectedValue(new Error("Offline"));
+    render(<ChoresScreen session={session} initialDate="2026-10-23" />);
+    await screen.findByText("Call plumber");
+    fireEvent.press(screen.getByRole("button", { name: "Add" }));
+    fireEvent.changeText(
+      screen.getByPlaceholderText("Take out trash"),
+      "Keep draft",
+    );
+    fireEvent.press(screen.getByRole("button", { name: "Save Chore" }));
+    await screen.findByText("Offline");
+    expect(screen.getByDisplayValue("Keep draft")).toBeTruthy();
+    fireEvent(screen.getByTestId("chore-editor-modal"), "requestClose");
+    expect(screen.queryByTestId("chore-editor-modal")).toBeNull();
+    expect(screen.getByDisplayValue("2026-10-23")).toBeTruthy();
+  });
+  it("keeps Add and management reachable with no children", async () => {
+    arrangeSuccessfulLoad();
+    jest.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+    render(<ChoresScreen session={session} />);
+    await screen.findByText("No active children found.");
+    fireEvent.press(screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByPlaceholderText("Take out trash")).toBeTruthy();
+    fireEvent.press(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.press(screen.getByRole("button", { name: "Manage chores" }));
+    expect(screen.getByRole("button", { name: "Edit" })).toBeTruthy();
+  });
+});
+
+describe("date-scope submission safety", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+  it("blocks retained quick/multi handlers and selection until the new date roster and eligibility arrive", async () => {
+    arrangeSuccessfulLoad();
+    const submit = jest.spyOn(apiClient, "createSubmission").mockResolvedValue({
+      id: 8,
+      child_id: 3,
+      for_date: "2026-10-25",
+      status: "PENDING",
+      items: [],
+    });
+    render(<ChoresScreen session={session} initialDate="2026-10-24" />);
+    await screen.findByText("Laundry");
+    const retainedQuickSubmit = screen.UNSAFE_getByType(
+      SelectedChoreSubmitPanel,
+    ).props.onQuickSubmit;
+    fireEvent.press(screen.getByRole("button", { name: "Select multiple" }));
+    fireEvent.press(screen.getByRole("checkbox", { name: "Laundry" }));
+    const retainedSelectedSubmit = screen.UNSAFE_getByType(
+      SelectedChoreSubmitPanel,
+    ).props.onSubmit;
+    let resolveChildren!: (value: Child[]) => void;
+    let resolveEligible!: (value: EligibleChore[]) => void;
+    jest.mocked(apiClient.listChildren).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveChildren = resolve;
+        }),
+    );
+    jest.mocked(apiClient.listEligibleChores).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveEligible = resolve;
+        }),
+    );
+    act(() => {
+      fireEvent.changeText(screen.getByLabelText("Date"), "2026-10-25");
+      void retainedQuickSubmit(child, eligibleChore);
+      void retainedSelectedSubmit();
+    });
+    expect(submit).not.toHaveBeenCalled();
+    expect(screen.queryByText("Laundry")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Quick submit mode" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Change child (Mia)" }),
+    ).toBeDisabled();
+    await act(async () => resolveChildren([child]));
+    expect(
+      screen.getByRole("button", { name: "Quick submit mode" }),
+    ).toBeDisabled();
+    act(() => {
+      void retainedQuickSubmit(child, eligibleChore);
+      void retainedSelectedSubmit();
+    });
+    expect(submit).not.toHaveBeenCalled();
+    await act(async () =>
+      resolveEligible([
+        {
+          ...eligibleChore,
+          chore_id: 20,
+          name: "New date task",
+          occurrence_date: "2026-10-25",
+        },
+      ]),
+    );
+    act(() => {
+      void retainedQuickSubmit(child, eligibleChore);
+      void retainedSelectedSubmit();
+    });
+    expect(submit).not.toHaveBeenCalled();
+    fireEvent.press(screen.getByRole("button", { name: "Quick submit mode" }));
+    await act(async () => {
+      fireEvent.press(screen.getByRole("button", { name: "Submit" }));
+    });
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(submit).toHaveBeenCalledWith(
+      { for_date: "2026-10-25", chore_ids: [20] },
+      { child_id: 3 },
+    );
   });
 });

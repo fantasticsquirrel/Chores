@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { DiscoveryPackagePayload } from "@family-manager/family-api/models";
+import type {
+  DiscoveryPackagePayload,
+  DiscoveryPackageSummary,
+} from "@family-manager/family-api/models";
 import { apiClient } from "../../../api";
 import { formatApiError } from "../../../lib/errors";
 import { useDiscoveryRead } from "../hooks/useDiscoveryRead";
@@ -25,6 +28,8 @@ export function PackageAuthorPanel({
   }, []);
   const read = useCallback(() => apiClient.listDiscoveryPackages(), []);
   const list = useDiscoveryRead(identity, read);
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<string[]>([]);
   const [preview, setPreview] = useState<DiscoveryPackagePayload | null>(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -68,6 +73,62 @@ export function PackageAuthorPanel({
       if (canApply()) setBusy(false);
     }
   };
+  const groups = new Map<string, DiscoveryPackageSummary[]>();
+  for (const item of list.data ?? []) {
+    const versions = groups.get(item.package_id) ?? [];
+    versions.push(item);
+    groups.set(item.package_id, versions);
+  }
+  const matchingGroups = [...groups.entries()]
+    .filter(([id, versions]) =>
+      `${id} ${versions.map((item) => `${item.version} ${item.runtime}`).join(" ")}`
+        .toLowerCase()
+        .includes(query.trim().toLowerCase()),
+    )
+    .sort(([a], [b]) => a.localeCompare(b));
+  const versionActions = (item: DiscoveryPackageSummary) => (
+    <div>
+      <span>
+        {item.version} · {item.runtime}
+        {item.published ? " · Published" : ""}
+      </span>
+      <div>
+        <button
+          disabled={busy}
+          onClick={() =>
+            void action(async () => {
+              const next = await apiClient.previewDiscoveryPackage(
+                item.package_id,
+                item.version,
+              );
+              if (canApply()) setPreview(next);
+            })
+          }
+        >
+          Preview {item.version}
+        </button>{" "}
+        <button
+          disabled={busy || item.published}
+          onClick={() =>
+            void action(async () => {
+              await apiClient.publishDiscoveryPackage(
+                item.package_id,
+                item.version,
+              );
+              if (!canApply()) return;
+              onPublished();
+              setNotice(
+                `Published ${item.package_id} version ${item.version}. Review Child access to approve this exact version again.`,
+              );
+              list.refresh();
+            })
+          }
+        >
+          Publish {item.version}
+        </button>
+      </div>
+    </div>
+  );
   return (
     <section className="discovery-package-author">
       <h2>Author packages</h2>
@@ -111,48 +172,70 @@ export function PackageAuthorPanel({
       </label>
       {(notice || list.error) && <p role="status">{notice || list.error}</p>}
       {list.loading && <p>Loading package versions…</p>}
-      <ul>
-        {list.data?.map((item) => (
-          <li key={`${item.package_id}:${item.version}`}>
-            <strong>{item.package_id}</strong> · {item.version} · {item.runtime}{" "}
-            {item.published ? "· Published" : ""}
-            <div>
-              <button
-                disabled={busy}
-                onClick={() =>
-                  void action(async () => {
-                    const next = await apiClient.previewDiscoveryPackage(
-                      item.package_id,
-                      item.version,
-                    );
-                    if (canApply()) setPreview(next);
-                  })
-                }
-              >
-                Preview {item.version}
-              </button>{" "}
-              <button
-                disabled={busy || item.published}
-                onClick={() =>
-                  void action(async () => {
-                    await apiClient.publishDiscoveryPackage(
-                      item.package_id,
-                      item.version,
-                    );
-                    if (!canApply()) return;
-                    onPublished();
-                    setNotice(
-                      `Published ${item.package_id} version ${item.version}. Review child access below.`,
-                    );
-                    list.refresh();
-                  })
-                }
-              >
-                Publish {item.version}
-              </button>
-            </div>
-          </li>
-        ))}
+      <label className="discovery-package-search">
+        Search packages
+        <input
+          type="search"
+          value={query}
+          placeholder="Package name or version"
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </label>
+      {!list.loading && !list.error && !list.data?.length && (
+        <p>
+          No packages uploaded yet. Child access for built-in Explorations is
+          managed separately.
+        </p>
+      )}
+      {!list.loading && !!list.data?.length && !matchingGroups.length && (
+        <p>No packages match. Clear the search to see all packages.</p>
+      )}
+      <ul className="discovery-package-groups">
+        {matchingGroups.map(([id, versions]) => {
+          const ordered = [...versions].sort(
+            (a, b) =>
+              b.created_at.localeCompare(a.created_at) ||
+              b.version.localeCompare(a.version, undefined, { numeric: true }),
+          );
+          const current = ordered.find((item) => item.published);
+          const primary = current ?? ordered[0];
+          const other = ordered.filter((item) => item !== primary);
+          const isExpanded = expanded.includes(id);
+          return (
+            <li key={id} className="discovery-package-group">
+              <h3>{id}</h3>
+              <p>
+                {current
+                  ? `Current version: ${current.version}`
+                  : "Not published"}
+              </p>
+              {versionActions(primary)}
+              {!!other.length && (
+                <>
+                  <button
+                    aria-expanded={isExpanded}
+                    onClick={() =>
+                      setExpanded((value) =>
+                        isExpanded
+                          ? value.filter((key) => key !== id)
+                          : [...value, id],
+                      )
+                    }
+                  >
+                    Other versions ({other.length})
+                  </button>
+                  {isExpanded && (
+                    <ul>
+                      {other.map((item) => (
+                        <li key={item.version}>{versionActions(item)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
       {preview && (
         <section aria-label="Package preview">

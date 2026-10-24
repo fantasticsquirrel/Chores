@@ -7,7 +7,7 @@
   --nav-bg: #173c32;
   --nav-text: #f3f8ed;
   --text-main: #19342d;
-  --text-muted: #68766d;
+  --text-muted: #536258;
   --surface-solid: #fffdf6;
   --surface-soft: #e4eddc;
   --surface-border: #d8d4c6;
@@ -15,11 +15,12 @@
   --surface-shadow: 0 14px 36px #433a2618;
   --surface-shadow-strong: 0 22px 48px #433a2624;
   --accent-cyan: #ec6b4f;
+  --accent-foreground: #000000;
   --accent-sky: #d95a43;
   --accent-pink: #ec6b4f;
   --accent-danger-a: #ff7ca0;
   --accent-danger-b: #f34a69;
-  --ring-focus: #ec6b4f;
+  --ring-focus: #d95a43;
   --radius-card: 1rem;
   --radius-pill: 999px;
   --radius-button: 0.9rem;
@@ -32,7 +33,7 @@
   --nav-bg: #111b38;
   --nav-text: #e5ecff;
   --text-main: #17213c;
-  --text-muted: #6c7892;
+  --text-muted: #56637d;
   --surface-solid: #fff;
   --surface-soft: #e8eefb;
   --surface-border: #dbe2ee;

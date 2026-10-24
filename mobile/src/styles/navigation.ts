@@ -39,6 +39,7 @@ function createNavigationStyles() { return StyleSheet.create({
     justifyContent: "flex-end",
   },
   menu: {
+    maxHeight: "90%",
     backgroundColor: colors.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -69,6 +70,7 @@ function createNavigationStyles() { return StyleSheet.create({
     paddingHorizontal: 10,
   },
   menuItemLabel: {
+    flexShrink: 1,
     color: colors.text,
     fontSize: 16,
     fontWeight: "700",

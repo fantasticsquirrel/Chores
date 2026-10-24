@@ -24,6 +24,7 @@ function apply(theme: ThemeId) {
 }
 async function mount() {
   render(<NotificationsScreen modules={[]} session={session} onNavigate={jest.fn()} />);
+  fireEvent.press(screen.getByRole('button', { name: 'Settings' }));
   await screen.findByText('Chore reminders');
 }
 beforeEach(() => {

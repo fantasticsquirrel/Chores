@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import type {
+  DiscoveryChild,
+  DiscoveryChildAccess,
+} from "@family-manager/family-api";
 
 test.use({ actionTimeout: 15_000 });
 
@@ -23,9 +27,6 @@ const catalog = JSON.parse(
   ),
 ) as Array<{ id: string; subject: string }>;
 const explorationIds = catalog.map((entry) => entry.id);
-const physicsCount = catalog.filter(
-  (entry) => entry.subject === "Physics",
-).length;
 
 test.beforeAll(() => {
   execFileSync(
@@ -59,6 +60,17 @@ async function checkLayout(page: Page) {
   ).toBe(true);
 }
 
+async function readAccess(
+  page: Page,
+  childId: number,
+): Promise<DiscoveryChildAccess> {
+  const response = await page.request.get(
+    `/chore-api/discovery/children/${childId}/access`,
+  );
+  expect(response.ok()).toBe(true);
+  return response.json();
+}
+
 for (const viewport of [
   { name: "desktop", width: 1440, height: 1050 },
   { name: "android", width: 390, height: 844 },
@@ -76,30 +88,68 @@ for (const viewport of [
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await signIn(page);
-    const children = await (
+    const children: DiscoveryChild[] = await (
       await page.request.get("/chore-api/discovery/children")
     ).json();
-    const childId = children.find(
-      (child: { name: string }) => child.name === fixture.child_name,
-    ).id;
+    const fixtureChild = children.find(
+      (child) => child.name === fixture.child_name,
+    );
+    expect(fixtureChild).toBeDefined();
+    const childId = fixtureChild!.id;
     const csrf = (await page.context().cookies()).find(
       (cookie) => cookie.name === "chore_tracker_csrf",
     )!.value;
-    // Each viewport starts with the same persisted, explicitly enabled catalog.
-    expect(
-      (
-        await page.request.put(
-          `/chore-api/discovery/children/${childId}/access`,
-          {
-            headers: { "X-CSRF-Token": csrf },
-            data: { enabled: true, exploration_ids: explorationIds },
-          },
-        )
-      ).ok(),
-    ).toBe(true);
+    // Enable the original lessons without assuming no earlier spec added packages.
+    const reset = await page.request.put(
+      `/chore-api/discovery/children/${childId}/access`,
+      {
+        headers: { "X-CSRF-Token": csrf },
+        data: { enabled: true, exploration_ids: explorationIds },
+      },
+    );
+    expect(reset.ok()).toBe(true);
+    const baseline: DiscoveryChildAccess = await reset.json();
+    for (const id of explorationIds)
+      expect(
+        baseline.explorations.find((entry) => entry.id === id)?.enabled,
+      ).toBe(true);
+    const physics = baseline.explorations.filter(
+      (entry) => entry.subject === "Physics",
+    );
+    const physicsCount = physics.length;
+    const otherChildren = await Promise.all(
+      children
+        .filter((child) => child.id !== childId)
+        .map((child) => readAccess(page, child.id)),
+    );
     await page.goto("/chore/discovery-lab");
     await expect(
       page.getByRole("heading", { name: /^Discovery Lab$/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Filters (0)", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("combobox", { name: "Tag", exact: true }),
+    ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Filters (0)", exact: true })
+      .click();
+    await page
+      .getByRole("combobox", { name: "Grade band", exact: true })
+      .selectOption({ index: 1 });
+    await expect(
+      page.getByRole("button", { name: "Filters (1)", exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Filters (1)", exact: true })
+      .click();
+    await expect(page.locator(".discovery-active-filters")).toBeVisible();
+    await page
+      .getByRole("button", { name: "Clear filters", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Filters (0)", exact: true }),
     ).toBeVisible();
     await checkLayout(page);
     const evidence = path.join(
@@ -177,49 +227,101 @@ for (const viewport of [
       });
     }
     await page.goto("/chore/discovery-lab/manage");
+    await expect(
+      page.getByRole("button", { name: "Child access", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByLabel("Upload package ZIP")).toHaveCount(0);
+    const childPicker = page.getByRole("combobox", {
+      name: "Choose a child",
+      exact: true,
+    });
+    await childPicker.selectOption(String(childId));
+    await expect(childPicker).toHaveValue(String(childId));
     const switches = page.getByRole("checkbox");
-    await expect(switches).toHaveCount(explorationIds.length);
+    await expect(switches).toHaveCount(baseline.explorations.length);
     await page
       .getByRole("combobox", { name: "Subject", exact: true })
       .selectOption("Physics");
     await expect(switches).toHaveCount(physicsCount);
-    await page
-      .getByRole("button", {
-        name: `Turn off ${physicsCount} matching explorations`,
-        exact: true,
-      })
-      .click();
-    await expect(page.getByRole("status")).toContainText(
-      `Updated ${physicsCount} explorations`,
-    );
-    await expect(switches.first()).not.toBeChecked();
-    await page
-      .getByRole("button", {
-        name: `Turn on ${physicsCount} matching explorations`,
-        exact: true,
-      })
-      .click();
-    await expect(switches.first()).toBeChecked();
+    let expectedAccess = baseline;
+    for (const enabled of [false, true]) {
+      const saved = page.waitForResponse(
+        (response) =>
+          response.url().endsWith(`/discovery/children/${childId}/access`) &&
+          response.request().method() === "PUT",
+      );
+      await page
+        .getByRole("button", {
+          name: `Turn ${enabled ? "on" : "off"} ${physicsCount} matching explorations`,
+          exact: true,
+        })
+        .click();
+      const response = await saved;
+      expect(response.ok()).toBe(true);
+      expect(response.request().postDataJSON()).toEqual({
+        enabled,
+        exploration_ids: physics.map((entry) => entry.id),
+        ...(enabled && physics.some((entry) => entry.package)
+          ? {
+              package_versions: Object.fromEntries(
+                physics
+                  .filter((entry) => entry.package)
+                  .map((entry) => [entry.id, entry.package!.version]),
+              ),
+            }
+          : {}),
+      });
+      await expect(page.getByRole("status")).toHaveText(
+        `Updated ${physicsCount} explorations for ${fixture.child_name}.`,
+      );
+      await expect(
+        page.getByRole("checkbox", { checked: enabled }),
+      ).toHaveCount(physicsCount);
+      expectedAccess = {
+        ...baseline,
+        explorations: baseline.explorations.map((entry) =>
+          entry.subject === "Physics"
+            ? { ...entry, enabled, override: enabled }
+            : entry,
+        ),
+      };
+      expect(await readAccess(page, childId)).toEqual(expectedAccess);
+    }
     await page
       .getByRole("button", { name: "Clear filters", exact: true })
       .click();
-    await expect(switches).toHaveCount(explorationIds.length);
-    await switches.first().click();
-    await expect(switches.first()).not.toBeChecked();
-    await expect(page.getByRole("status")).toContainText(
-      "Updated 1 exploration",
+    await expect(switches).toHaveCount(baseline.explorations.length);
+    const disabled = baseline.explorations.find(
+      (entry) => entry.id === explorationIds[0],
+    )!;
+    // Uploaded alternatives may share a title; target the original lesson row.
+    const originalSwitch = page
+      .locator(".discovery-access-list > li")
+      .filter({
+        has: page.getByRole("heading", { name: disabled.title, exact: true }),
+      })
+      .filter({ hasNot: page.getByText(/^Package version /) })
+      .getByRole("checkbox");
+    await expect(originalSwitch).toBeChecked();
+    await originalSwitch.click();
+    await expect(originalSwitch).not.toBeChecked();
+    await expect(page.getByRole("status")).toHaveText(
+      `Updated 1 exploration for ${fixture.child_name}.`,
     );
     await page.screenshot({
       path: path.join(evidence, `${viewport.name}-parent-controls.png`),
       fullPage: true,
     });
-    const access = await (
-      await page.request.get(`/chore-api/discovery/children/${childId}/access`)
-    ).json();
-    const disabled = access.explorations.find(
-      (entry: { enabled: boolean }) => !entry.enabled,
-    );
-    expect(disabled).toBeTruthy();
+    expect(await readAccess(page, childId)).toEqual({
+      ...expectedAccess,
+      explorations: expectedAccess.explorations.map((entry) =>
+        entry.id === disabled.id
+          ? { ...entry, enabled: false, override: false }
+          : entry,
+      ),
+    });
+    for (const other of otherChildren)
+      expect(await readAccess(page, other.child_id)).toEqual(other);
     await signIn(page, true);
     await page.goto("/chore/discovery-lab");
     await expect(

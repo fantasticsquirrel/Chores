@@ -129,9 +129,9 @@ describe("Protected routes", () => {
     ).toBeVisible();
 
     fireEvent.click(screen.getByRole("link", { name: "Today" }));
-    fireEvent.click(await screen.findByRole("link", { name: "Open Board" }));
+    fireEvent.click(await screen.findByRole("link", { name: "Open Review" }));
     expect(
-      await screen.findByRole("heading", { name: "Submission Review" }),
+      await screen.findByRole("heading", { name: "Review" }),
     ).toBeVisible();
   });
 

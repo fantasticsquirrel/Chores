@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Linking, Switch, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, Switch, Text, TextInput, View } from "react-native";
 
 import { apiClient } from "../../api/client";
 import type { AuthSessionResponse, FamilyModule, NotificationItem, NotificationListResponse, NotificationSettings } from "../../api/models";
@@ -41,6 +41,10 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
   const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const unreadOnly = useRef(false);
+  const [view, setView] = useState<"inbox" | "settings">("inbox");
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const settingsGeneration = useRef(0);
   const [loading, setLoading] = useState(true);
   const [inbox, setInbox] = useState<{ key: string; data: NotificationListResponse } | null>(null);
   const [reminders, setReminders] = useState<ReminderState | null>(null);
@@ -56,25 +60,38 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
   const data = inbox?.key === key ? inbox.data : null;
   const reminder = reminders?.key === key && settingsEnabled ? reminders : null;
 
-  const load = useCallback(async (withSettings = true) => {
+  const load = useCallback(async () => {
     const request = ++generation.current;
     const current = () => mounted.current && liveKey.current === key && generation.current === request;
     setLoading(true);
     setLoadError(null);
-    setActionError(null);
-    setNotice(null);
     try {
-      const [response, settings] = await Promise.all([
-        apiClient.listNotifications({ unread: unreadOnly.current ? 1 : 0, limit: 200 }),
-        withSettings && settingsEnabled ? apiClient.getNotificationSettings() : Promise.resolve(null),
-      ]);
+      const response = await apiClient.listNotifications({ unread: unreadOnly.current ? 1 : 0, limit: 200 });
       if (!current()) return;
       setInbox({ key, data: response });
-      if (withSettings) setReminders(settings?.chores ? reminderState(key, settings.chores) : null);
+
     } catch (error) {
       if (current()) setLoadError(formatError(error));
     } finally {
       if (current()) setLoading(false);
+    }
+  }, [key]);
+
+  const loadSettings = useCallback(async () => {
+    const request = ++settingsGeneration.current;
+    const current = () => mounted.current && liveKey.current === key && settingsGeneration.current === request;
+    if (!settingsEnabled) { setSettingsLoading(false); return; }
+    setSettingsLoading(true);
+    setSettingsError(null);
+    try {
+      const settings = await apiClient.getNotificationSettings();
+      if (!current()) return;
+      if (!settings.chores) throw new Error("Reminder settings are unavailable.");
+      setReminders(reminderState(key, settings.chores));
+    } catch (error) {
+      if (current()) setSettingsError(formatError(error));
+    } finally {
+      if (current()) setSettingsLoading(false);
     }
   }, [key, settingsEnabled]);
 
@@ -82,17 +99,23 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
     mounted.current = true;
     busyRef.current = false;
     setBusy(false);
+    unreadOnly.current = false;
+    setView("inbox");
+    setActionError(null);
+    setNotice(null);
     void load();
+    void loadSettings();
     return () => {
       mounted.current = false;
       generation.current += 1;
+      settingsGeneration.current += 1;
       actionGeneration.current += 1;
       busyRef.current = false;
     };
-  }, [load]);
+  }, [load, loadSettings]);
 
-  async function runAction(operation: (current: () => boolean) => Promise<void>) {
-    if (!mounted.current || liveKey.current !== key || !canManage || !data || loading || busyRef.current) return;
+  async function runAction(operation: (current: () => boolean) => Promise<void>, needsInbox = true) {
+    if (!mounted.current || liveKey.current !== key || !canManage || (needsInbox && (!data || loading)) || busyRef.current) return;
     const request = ++actionGeneration.current;
     const current = () => mounted.current && liveKey.current === key && actionGeneration.current === request;
     busyRef.current = true;
@@ -115,7 +138,7 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
     void runAction(async (current) => {
       if (item) await apiClient.markNotificationRead(item.id);
       else await apiClient.markAllNotificationsRead();
-      if (current()) await load(false);
+      if (current()) await load();
     });
   }
 
@@ -134,26 +157,23 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
     }
     void runAction(async (current) => {
       const { push_enabled: _push, ...preferences } = draft;
-      await apiClient.updateNotificationSettings("chores", {
+      const response = await apiClient.updateNotificationSettings("chores", {
         ...preferences,
         due_soon_hours: hours,
       });
       if (!current()) return;
-      const settings = await apiClient.getNotificationSettings();
-      if (!current()) return;
-      if (!settings.chores) throw new Error("Reminder settings are unavailable.");
-      setReminders(reminderState(key, settings.chores));
+      setReminders(reminderState(key, response.settings));
       setNotice("Reminder settings saved.");
-    });
+    }, false);
   }
 
   function edit<K extends keyof ReminderDraft>(field: K, value: ReminderDraft[K]) {
-    if (!canManage || busyRef.current || loading) return;
+    if (!canManage || busyRef.current || settingsLoading) return;
     setNotice(null);
     setReminders((previous) => previous?.key === key ? { ...previous, draft: { ...previous.draft, [field]: value } } : previous);
   }
 
-  const editable = canManage && !busy && !loading;
+  const editable = canManage && !busy && !settingsLoading;
   function toggle(label: string, field: "in_app_enabled" | "daily_digest_enabled" | "due_soon_enabled" | "approval_notifications_enabled") {
     return <View style={[formStyles.selectableRow, formTheme.row]}>
       <Text style={[formStyles.rowTitle, formTheme.title]}>{label}</Text>
@@ -167,19 +187,33 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
     </View>;
   }
 
+  function choice(label: string, selected: boolean, onPress: () => void, disabled = false) {
+    return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected, disabled }} disabled={disabled} onPress={onPress}
+      style={[formStyles.choiceButton, selected && formStyles.choiceButtonSelected]}>
+      <Text style={[formStyles.choiceButtonText, selected && formStyles.choiceButtonTextSelected]}>{selected ? "✓ " : ""}{label}</Text>
+    </Pressable>;
+  }
+  const dirty = reminder && JSON.stringify(reminder.draft) !== JSON.stringify(reminderState(key, reminder.server).draft);
+
   return <View>
-    <ScreenHeader title="Notifications" subtitle="Your household inbox" trailing={<ActionButton label="Refresh" variant="secondary" disabled={loading || busy} onPress={() => { void load(); }} />} />
+    <ScreenHeader title="Notifications" subtitle="Your household inbox" trailing={view === "inbox" ? <ActionButton label="Refresh" variant="secondary" disabled={loading || busy} onPress={() => { void load(); }} /> : undefined} />
     <View style={formStyles.inlineButtons}>
-      <ActionButton label="All" variant="secondary" disabled={busy} onPress={() => { unreadOnly.current = false; void load(); }} />
-      <ActionButton label="Unread" variant="secondary" disabled={busy} onPress={() => { unreadOnly.current = true; void load(); }} />
+      {choice("Inbox", view === "inbox", () => setView("inbox"))}
+      {choice("Settings", view === "settings", () => setView("settings"))}
     </View>
-    {loading ? <Text style={shellStyles.mutedText}>Loading notifications...</Text> : null}
-    {loadError ? <View><InlineNotice tone="error" message={loadError} /><ActionButton label="Retry" disabled={loading || busy} onPress={() => { void load(); }} /></View> : null}
+    {view === "inbox" ? <>
+      <View style={formStyles.inlineButtons}>
+        {choice("All", !unreadOnly.current, () => { unreadOnly.current = false; void load(); }, busy)}
+        {choice("Unread", unreadOnly.current, () => { unreadOnly.current = true; void load(); }, busy)}
+      </View>
+      {loading ? <Text style={shellStyles.mutedText}>Loading notifications...</Text> : null}
+      {loadError ? <View><InlineNotice tone="error" message={loadError} /><ActionButton label="Retry" disabled={loading || busy} onPress={() => { void load(); }} /></View> : null}
+    </> : null}
     {actionError ? <InlineNotice tone="error" message={actionError} /> : null}
     {notice ? <Text style={shellStyles.mutedText}>{notice}</Text> : null}
-    {data ? <SectionCard title="Inbox" subtitle={`${data.unread_count} unread`}>
+    {view === "inbox" && data ? <SectionCard title="Inbox" subtitle={`${data.unread_count} unread`}>
       {canManage ? <ActionButton label="Mark all read" disabled={loading || busy || data.unread_count === 0} variant="secondary" onPress={() => markRead()} /> : null}
-      {data.items.length === 0 ? <Text style={shellStyles.mutedText}>No notifications yet.</Text> : data.items.map((item) => {
+      {data.items.length === 0 ? <Text style={shellStyles.mutedText}>{unreadOnly.current ? "No unread notifications." : "No notifications yet."}</Text> : data.items.map((item) => {
         const tab = relatedTab(item, modules, parent);
         const itemWritable = canManage;
         return <View key={item.id} style={cardStyles.reviewItem}>
@@ -193,7 +227,11 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
         </View>;
       })}
     </SectionCard> : null}
-    {data && reminder && !loadError ? <SectionCard title="Chore reminders" subtitle={canManage ? "Reminder preferences" : "View-only reminder preferences"}>
+    {view === "settings" ? <>
+    {settingsLoading ? <Text style={shellStyles.mutedText}>Loading reminder settings...</Text> : null}
+    {settingsError ? <View><InlineNotice tone="error" message={settingsError} /><ActionButton label="Retry reminder settings" disabled={settingsLoading || busy} onPress={() => { void loadSettings(); }} /></View> : null}
+    {dirty ? <Text accessibilityLiveRegion="polite" style={shellStyles.mutedText}>Unsaved reminder changes</Text> : null}
+    {reminder ? <SectionCard title="Chore reminders" subtitle={canManage ? "Reminder preferences" : "View-only reminder preferences"}>
       {toggle("In-app notifications", "in_app_enabled")}
       {toggle("Daily chore digest", "daily_digest_enabled")}
       {input("Daily digest time", "daily_digest_time")}
@@ -218,5 +256,6 @@ export function NotificationsScreen({ modules, session, onNavigate, nativePush }
         void runAction(async () => { await Linking.openURL("https://family.multihost.ing/chore/notifications"); });
       }} /> : null}
     </SectionCard>
+    </> : null}
   </View>;
 }

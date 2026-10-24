@@ -50,22 +50,16 @@ export function DiscoveryLabPage() {
   const groups = groupExplorationVersions(visible);
   return (
     <div className="discovery-lab">
-      <header className="discovery-hero">
+      <header className="discovery-hero discovery-hero--compact">
         <div className="discovery-hero-copy">
           <h1>Discovery Lab</h1>
-          <p>
-            Change one variable, compare the results, and explain what happened.
-            Each Exploration includes a model and guided experiments.
-          </p>
+          <p>Choose an Exploration. Predict, experiment, and discover.</p>
           {manage && (
             <Link className="discovery-manage-link" to="/discovery-lab/manage">
               Choose Explorations for each child{" "}
               <span aria-hidden="true">↗</span>
             </Link>
           )}
-        </div>
-        <div className="discovery-hero-orbit" aria-hidden="true">
-          <ExplorationArtwork id="orbital-mechanics" />
         </div>
       </header>
       {catalog.loading ? (
@@ -298,6 +292,7 @@ export function DiscoveryExplorationPage() {
 
 export function DiscoveryAccessPage() {
   const [packageRevision, setPackageRevision] = useState(0);
+  const [view, setView] = useState<"access" | "authoring">("access");
   const { identity, allowed, manage } = useDiscoveryIdentity();
   if (!allowed) return <DiscoveryUnavailable />;
   return (
@@ -314,12 +309,32 @@ export function DiscoveryAccessPage() {
       </header>
       {manage ? (
         <>
-          <PackageAuthorPanel
-            key={`packages:${identity}`}
-            identity={identity}
-            onPublished={() => setPackageRevision((value) => value + 1)}
-          />
-          <DiscoveryAccessPanel key={`${identity}:${packageRevision}`} />
+          <nav className="discovery-actions" aria-label="Discovery management">
+            <Button
+              className={view === "access" ? "" : "discovery-secondary"}
+              aria-pressed={view === "access"}
+              onClick={() => setView("access")}
+            >
+              Child access
+            </Button>
+            <Button
+              className={view === "authoring" ? "" : "discovery-secondary"}
+              aria-pressed={view === "authoring"}
+              onClick={() => setView("authoring")}
+            >
+              Package authoring
+            </Button>
+          </nav>
+          <div hidden={view !== "access"}>
+            <DiscoveryAccessPanel key={`${identity}:${packageRevision}`} />
+          </div>
+          {view === "authoring" && (
+            <PackageAuthorPanel
+              key={`packages:${identity}`}
+              identity={identity}
+              onPublished={() => setPackageRevision((value) => value + 1)}
+            />
+          )}
         </>
       ) : (
         <InlineNotice>

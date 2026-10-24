@@ -28,6 +28,7 @@ export function AddChildPanel({ mutations }: AddChildPanelProps): ReactElement {
       <form className="children-form" onSubmit={handleSubmit}>
         <FormField label="Name">
           <TextInput
+            autoFocus
             type="text"
             value={mutations.nameInput}
             onChange={(event) => mutations.setNameInput(event.target.value)}
