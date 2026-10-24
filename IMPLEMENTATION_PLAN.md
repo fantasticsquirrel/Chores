@@ -73,7 +73,7 @@ STATUS: COMPLETE
 - [x] Port core Homeschool setup, attendance calendar, comments, grades, and semester summary UI into the Vite React app.
 - [x] Replace standalone/Firebase/local-state persistence with Family Manager FastAPI endpoints for the implemented Homeschool scope.
 - [x] Add backend and frontend tests for Homeschool workflows, module access, and setup record mutations.
-- [ ] Add richer report/export generation after the first Family Manager PR.
+- [x] Add semester PDF attendance/recorded-grade reports with opt-in notes, plus calendar-first web/native attendance entry. See `docs/plans/2026-10-24-homeschool-attendance-ui.md` for scope and verification.
 
 
 STATUS: READY FOR PR REVIEW — `family-manager` keeps `/chore/` and `/chore-api/` routes stable, adds persisted modules/admin access, ports core Homeschool workflows, and has passing frontend/backend gates. Do not merge without Jon approval.

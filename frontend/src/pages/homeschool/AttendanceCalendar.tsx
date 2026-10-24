@@ -1,11 +1,12 @@
-import type { FormEvent, ReactElement } from "react";
+import type { ReactElement } from "react";
 
 import type { Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolSubject } from "../../api";
-import { Button, Card, FormField, TextInput } from "../../ui";
-import type { AttendanceFormState } from "./HomeschoolForms";
+import { Button, Card, FormField } from "../../ui";
 import { buildMonthGrid, formatYearMonth, shiftYearMonth, todayISO, toYearMonth } from "./dateUtils";
 
 type AttendanceCalendarProps = {
+  saving: boolean;
+  canManage: boolean;
   calendarYearMonth: string;
   calendarChildId: string;
   children: Child[];
@@ -13,18 +14,16 @@ type AttendanceCalendarProps = {
   selectedChildComments: HomeschoolDayComment[];
   subjects: HomeschoolSubject[];
   selectedDate: string | null;
-  attendance: AttendanceFormState;
   onMonthChange: (yearMonth: string) => void;
   onChildChange: (childId: string) => void;
   onDaySelect: (date: string, comment: string) => void;
-  onAttendanceChange: (patch: Partial<AttendanceFormState>) => void;
-  onSaveAttendance: (event: FormEvent<HTMLFormElement>) => void;
-  onCloseDayEditor: () => void;
   onClearAttendance: (attendanceId: number) => void;
   onClearDayComment: (commentId: number) => void;
 };
 
 export function AttendanceCalendar({
+  saving,
+  canManage,
   calendarYearMonth,
   calendarChildId,
   children,
@@ -32,13 +31,9 @@ export function AttendanceCalendar({
   selectedChildComments,
   subjects,
   selectedDate,
-  attendance,
   onMonthChange,
   onChildChange,
   onDaySelect,
-  onAttendanceChange,
-  onSaveAttendance,
-  onCloseDayEditor,
   onClearAttendance,
   onClearDayComment,
 }: AttendanceCalendarProps): ReactElement {
@@ -58,38 +53,38 @@ export function AttendanceCalendar({
   const activeSubjectRows = subjectRows.filter((row) => row.entries > 0);
 
   return (
-    <Card className="dashboard-panel">
+    <Card className="dashboard-panel homeschool-calendar">
       <div className="panel-header-row">
         <h2>Attendance Calendar</h2>
-        <div className="quick-actions">
-          <Button type="button" onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, -1))}>Previous</Button>
-          <Button type="button" onClick={() => onMonthChange(toYearMonth(todayISO()))}>Today</Button>
-          <Button type="button" onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, 1))}>Next</Button>
+        <div className="quick-actions homeschool-calendar-navigation">
+          <Button type="button" disabled={saving} onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, -1))}>Previous</Button>
+          <Button type="button" disabled={saving} onClick={() => onMonthChange(toYearMonth(todayISO()))}>Today</Button>
+          <Button type="button" disabled={saving} onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, 1))}>Next</Button>
         </div>
       </div>
-      <FormField label="Child">
-        <select className="text-input" value={calendarChildId} onChange={(event) => onChildChange(event.target.value)}>
+      <FormField label="Child" className="homeschool-calendar-child">
+        <select disabled={saving} className="text-input" value={calendarChildId} onChange={(event) => onChildChange(event.target.value)}>
           <option value="">Select child</option>
           {children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
         </select>
       </FormField>
       <h3>{calendarLabel}</h3>
       <p className="calendar-instructions">
-        {calendarChildId === "" ? "Select a child to record attendance." : "Tap or click a date to record attendance."}
+        {!canManage ? "View attendance for the selected child." : calendarChildId === "" ? "Select a child to record attendance." : "Tap or click a date to record attendance."}
       </p>
       <div className="calendar-grid">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
           <div key={day} className="eyebrow calendar-weekday">{day}</div>
         ))}
         {monthCells.map((cell) => {
-          const records = selectedChildAttendance.filter((record) => record.date === cell.iso && record.present);
+          const records = selectedChildAttendance.filter((record) => record.date === cell.iso);
           const comment = selectedChildComments.find((entry) => entry.date === cell.iso);
           return (
             <button
               key={cell.iso}
               type="button"
               className={`glass-card button-reset calendar-day${cell.inMonth ? "" : " muted"}${selectedDate === cell.iso ? " selected" : ""}`}
-              disabled={!cell.inMonth || calendarChildId === ""}
+              disabled={!canManage || saving || !cell.inMonth || calendarChildId === ""}
               aria-label={`${cell.iso}${records.length > 0 ? `, ${records.length} attendance ${records.length === 1 ? "entry" : "entries"}` : ", no attendance recorded"}`}
               aria-pressed={selectedDate === cell.iso}
               onClick={() => onDaySelect(cell.iso, comment?.comment || "")}
@@ -100,8 +95,8 @@ export function AttendanceCalendar({
                 {records.slice(0, 3).map((record) => {
                   const subject = subjectLookup.get(record.subject_id);
                   return (
-                    <span key={record.id} className="calendar-subject-initial" style={{ borderColor: subject?.color || undefined }}>
-                      {(subject?.name || `S${record.subject_id}`).slice(0, 1).toUpperCase()}
+                    <span key={record.id} className="calendar-subject-initial" title={`${subject?.name || `Subject ${record.subject_id}`}: ${record.present ? "Present" : "Absent"}`} style={{ borderColor: subject?.color || undefined }}>
+                      {record.present ? (subject?.name || `S${record.subject_id}`).slice(0, 1).toUpperCase() : "–"}
                     </span>
                   );
                 })}
@@ -112,48 +107,6 @@ export function AttendanceCalendar({
           );
         })}
       </div>
-
-      {selectedDate !== null ? (
-        <section className="calendar-day-editor" aria-labelledby="calendar-day-editor-title">
-          <div className="panel-header-row">
-            <div>
-              <p className="eyebrow">Selected school day</p>
-              <h3 id="calendar-day-editor-title">Record attendance for {selectedDate}</h3>
-            </div>
-            <Button type="button" onClick={onCloseDayEditor}>Close</Button>
-          </div>
-          <form className="children-form calendar-attendance-form" onSubmit={onSaveAttendance}>
-            <FormField label="Subject">
-              <select
-                className="text-input"
-                value={attendance.subjectId}
-                onChange={(event) => onAttendanceChange({ subjectId: event.target.value })}
-                required
-                autoFocus
-              >
-                <option value="">Select subject</option>
-                {subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
-              </select>
-            </FormField>
-            <label className="checkbox-row">
-              <input type="checkbox" checked={attendance.present} onChange={(event) => onAttendanceChange({ present: event.target.checked })} />
-              Present
-            </label>
-            <FormField label="Comment">
-              <TextInput
-                value={attendance.comment}
-                onChange={(event) => onAttendanceChange({ comment: event.target.value })}
-                placeholder="Fractions, copywork, field trip..."
-                maxLength={2000}
-              />
-            </FormField>
-            <div className="item-actions">
-              <Button type="submit" disabled={attendance.subjectId === ""}>Save Attendance</Button>
-              <Button type="button" onClick={onCloseDayEditor}>Cancel</Button>
-            </div>
-          </form>
-        </section>
-      ) : null}
 
       {activeSubjectRows.length > 0 ? (
         <div className="subject-attendance-strip" aria-label="Subject attendance totals">
@@ -182,6 +135,8 @@ export function AttendanceCalendar({
           ))}
         </ul>
       ) : null}
+      <details className="homeschool-log">
+        <summary>Attendance log ({selectedChildAttendance.length})</summary>
       {selectedChildAttendance.length > 0 ? (
         <ul className="balance-list" aria-label="Attendance entries">
           {selectedChildAttendance.map((record) => {
@@ -190,14 +145,15 @@ export function AttendanceCalendar({
               <li key={record.id} className="balance-item">
                 <div>
                   <p className="balance-name">{record.date} · {subject?.name || `Subject ${record.subject_id}`}</p>
-                  <p className="balance-meta">{record.comment || "No comment"}</p>
+                  <p className="balance-meta">{record.present ? "Present" : "Absent"} · {record.comment || "No comment"}</p>
                 </div>
                 <Button type="button" onClick={() => onClearAttendance(record.id)}>Clear</Button>
               </li>
             );
           })}
         </ul>
-      ) : null}
+      ) : <p>No attendance recorded yet.</p>}
+      </details>
     </Card>
   );
 }

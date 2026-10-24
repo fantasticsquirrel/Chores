@@ -73,7 +73,7 @@ describe("HomeschoolScreen", () => {
 
     render(<HomeschoolScreen modules={modules} session={session} />);
 
-    expect(await screen.findByText("Selected Child")).toBeTruthy();
+    expect(await screen.findByText("Calendar Review")).toBeTruthy();
     fireEvent.press(screen.getByText("Setup"));
     const headings = screen
       .getAllByText(/New Semester|New Subject|Semesters|Subjects/)

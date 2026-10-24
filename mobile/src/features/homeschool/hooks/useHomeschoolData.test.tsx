@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
-import { renderHook, waitFor } from "@testing-library/react-native";
+import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 import { apiClient } from "../../../api/client";
 import type {
@@ -117,6 +117,65 @@ describe("useHomeschoolData", () => {
     await result.current.refresh();
     expect(listChildren).not.toHaveBeenCalled();
     expect(result.current.state).toMatchObject({ error: null, loading: false });
+  });
+
+  it("ignores late responses after household changes", async () => {
+    arrangeSuccessfulLoad();
+    let finishOld!: (children: Child[]) => void;
+    jest
+      .spyOn(apiClient, "listChildren")
+      .mockImplementation(({ household_id }) =>
+        household_id === 7
+          ? new Promise((resolve) => {
+              finishOld = resolve;
+            })
+          : Promise.resolve([
+              { ...child, household_id: 8, id: 8, name: "Alex" },
+            ]),
+      );
+    const { result, rerender } = renderHook<
+      ReturnType<typeof useHomeschoolData>,
+      { householdId: number }
+    >(({ householdId }) => useHomeschoolData({ enabled: true, householdId }), {
+      initialProps: { householdId: 7 },
+    });
+    rerender({ householdId: 8 });
+    await waitFor(() =>
+      expect(result.current.selectedChild?.name).toBe("Alex"),
+    );
+    await act(async () => {
+      finishOld([child]);
+    });
+    expect(result.current.selectedChild?.name).toBe("Alex");
+  });
+
+  it("does not let an old refresh callback invalidate the new household request", async () => {
+    arrangeSuccessfulLoad();
+    let finishNew!: (children: Child[]) => void;
+    jest
+      .spyOn(apiClient, "listChildren")
+      .mockImplementation(({ household_id }) =>
+        household_id === 8
+          ? new Promise((resolve) => {
+              finishNew = resolve;
+            })
+          : Promise.resolve([child]),
+      );
+    const { result, rerender } = renderHook<
+      ReturnType<typeof useHomeschoolData>,
+      { householdId: number }
+    >(({ householdId }) => useHomeschoolData({ enabled: true, householdId }), {
+      initialProps: { householdId: 7 },
+    });
+    await waitFor(() => expect(result.current.selectedChild?.name).toBe("Mia"));
+    const oldRefresh = result.current.refresh;
+    rerender({ householdId: 8 });
+    await act(async () => {
+      await oldRefresh();
+      finishNew([{ ...child, household_id: 8, id: 8, name: "Alex" }]);
+    });
+    expect(result.current.state.loading).toBe(false);
+    expect(result.current.selectedChild?.name).toBe("Alex");
   });
 
   it("keeps prior data and exposes load failures", async () => {

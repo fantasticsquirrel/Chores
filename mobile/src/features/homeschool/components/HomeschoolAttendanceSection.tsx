@@ -1,4 +1,5 @@
-import { Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 import type {
   Child,
@@ -42,6 +43,7 @@ export function HomeschoolAttendanceSection({
   onEdit: (record: HomeschoolAttendance) => void;
   onSave: () => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const filteredRecords = form.childId
     ? attendance.filter((record) => record.child_id === Number(form.childId))
     : attendance;
@@ -97,41 +99,58 @@ export function HomeschoolAttendanceSection({
         />
       </SectionCard>
 
-      <SectionCard title="Recent Attendance">
-        {recentRecords.length === 0 ? (
-          <Text style={shellStyles.mutedText}>No attendance records yet.</Text>
+      <SectionCard title="Attendance log">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          onPress={() => setExpanded((value) => !value)}
+        >
+          <Text style={formStyles.rowTitle}>
+            {expanded ? "Hide attendance log" : "Show attendance log"}
+          </Text>
+        </Pressable>
+        {expanded ? (
+          <>
+            {recentRecords.length === 0 ? (
+              <Text style={shellStyles.mutedText}>
+                No attendance records yet.
+              </Text>
+            ) : null}
+            {recentRecords.map((record) => (
+              <View key={record.id} style={cardStyles.reviewItem}>
+                <Text style={formStyles.rowTitle}>
+                  {record.date} -{" "}
+                  {subjectLookup.get(record.subject_id)?.name ??
+                    `Subject ${record.subject_id}`}
+                </Text>
+                <Text style={formStyles.rowMeta}>
+                  {record.present ? "Present" : "Absent"}
+                  {record.comment.trim().length > 0
+                    ? ` - ${record.comment}`
+                    : ""}
+                </Text>
+                <View style={formStyles.inlineButtons}>
+                  <ActionButton
+                    compact
+                    disabled={busy}
+                    label="Edit"
+                    onPress={() => onEdit(record)}
+                    requiresManage
+                    variant="secondary"
+                  />
+                  <ActionButton
+                    compact
+                    disabled={busy}
+                    label="Delete"
+                    onPress={() => onDelete(record)}
+                    requiresManage
+                    variant="danger"
+                  />
+                </View>
+              </View>
+            ))}
+          </>
         ) : null}
-        {recentRecords.map((record) => (
-          <View key={record.id} style={cardStyles.reviewItem}>
-            <Text style={formStyles.rowTitle}>
-              {record.date} -{" "}
-              {subjectLookup.get(record.subject_id)?.name ??
-                `Subject ${record.subject_id}`}
-            </Text>
-            <Text style={formStyles.rowMeta}>
-              {record.present ? "Present" : "Absent"}
-              {record.comment.trim().length > 0 ? ` - ${record.comment}` : ""}
-            </Text>
-            <View style={formStyles.inlineButtons}>
-              <ActionButton
-                compact
-                disabled={busy}
-                label="Edit"
-                onPress={() => onEdit(record)}
-                requiresManage
-                variant="secondary"
-              />
-              <ActionButton
-                compact
-                disabled={busy}
-                label="Delete"
-                onPress={() => onDelete(record)}
-                requiresManage
-                variant="danger"
-              />
-            </View>
-          </View>
-        ))}
       </SectionCard>
     </View>
   );

@@ -96,7 +96,7 @@ describe("Homeschool page", () => {
       screen.getByRole("heading", { name: "Setup & Records" }),
     ).toBeVisible();
     expect(
-      screen.getByRole("heading", { name: "Calendar & Progress" }),
+      screen.getByRole("heading", { name: "Attendance Calendar" }),
     ).toBeVisible();
     expect(screen.getByText("Subjects: 1")).toBeVisible();
     expect(
@@ -104,6 +104,34 @@ describe("Homeschool page", () => {
     ).toBeVisible();
     expect(await screen.findByText("Grade: A")).toBeVisible();
     expect(apiClient.listHomeschoolAttendance).toHaveBeenCalledWith(1);
+    expect(screen.queryByText("Linked Children", { exact: true })).not.toBeInTheDocument();
+    expect(screen.queryByText(/This slice adds basic semester/)).not.toBeInTheDocument();
+    const panels = screen.getByRole("region", { name: "Homeschool module" }).querySelectorAll(":scope > article");
+    expect(within(panels[1] as HTMLElement).getByRole("heading", { name: "Attendance Calendar" })).toBeVisible();
+    expect(screen.getByText("Attendance log (1)").closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByRole("button", { name: "Export Semester PDF" })).toBeVisible();
+    expect(screen.getByLabelText("Include attendance and day notes")).not.toBeChecked();
+  });
+
+  it("does not expose the portal editor through a direct query for view-only access", async () => {
+    mockHomeschoolApi();
+    vi.mocked(apiClient.getMyModules).mockResolvedValue({ modules: [{ key: "homeschool", name: "Homeschool", description: "", can_manage: false }] });
+    const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance");
+    render(<MemoryRouter initialEntries={["/homeschool?attendance=2026-09-02"]}><App /></MemoryRouter>);
+    await screen.findByText("View attendance for the selected child.");
+    await screen.findByText("Children: Maya");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save Attendance" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Export Semester PDF" })).toBeEnabled();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("does not open an editor for a nonexistent date in the URL", async () => {
+    mockHomeschoolApi();
+    render(<MemoryRouter initialEntries={["/homeschool?attendance=2026-02-31"]}><App /></MemoryRouter>);
+    await screen.findByText("Children: Maya");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("creates semesters and subjects through the Family Manager APIs", async () => {
@@ -214,23 +242,11 @@ describe("Homeschool page", () => {
 
     await screen.findByText("Children: Maya");
 
-    const attendancePanel = screen
-      .getByRole("heading", { name: "Quick Attendance" })
-      .closest("article");
-    expect(attendancePanel).not.toBeNull();
-    fireEvent.change(
-      within(attendancePanel as HTMLElement).getByLabelText("Date"),
-      { target: { value: "2026-09-02" } },
-    );
-    fireEvent.change(
-      within(attendancePanel as HTMLElement).getByLabelText("Comment"),
-      { target: { value: "Decimals" } },
-    );
-    fireEvent.click(
-      within(attendancePanel as HTMLElement).getByRole("button", {
-        name: "Save Attendance",
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
+    const attendancePanel = screen.getByRole("dialog");
+    fireEvent.click(within(attendancePanel).getByLabelText("Select Math"));
+    fireEvent.change(within(attendancePanel).getByLabelText("Math comment"), { target: { value: "Decimals" } });
+    fireEvent.click(within(attendancePanel).getByRole("button", { name: "Save Attendance" }));
 
     await waitFor(() =>
       expect(attendanceSpy).toHaveBeenCalledWith({
@@ -242,6 +258,9 @@ describe("Homeschool page", () => {
         comment: "Decimals",
       }),
     );
+
+    await screen.findByText("Attendance saved. Closing shortly…");
+    fireEvent.click(screen.getByRole("button", { name: "Close attendance editor" }));
 
     const commentPanel = screen
       .getByRole("heading", { name: "Day Comment" })
@@ -324,9 +343,10 @@ describe("Homeschool page", () => {
       name: "Record attendance for 2026-09-02",
     });
     expect(editorHeading).toBeVisible();
-    const editor = editorHeading.closest("section");
+    const editor = editorHeading.closest("dialog");
     expect(editor).not.toBeNull();
-    fireEvent.change(within(editor as HTMLElement).getByLabelText("Comment"), {
+    fireEvent.click(within(editor as HTMLElement).getByLabelText("Select Math"));
+    fireEvent.change(within(editor as HTMLElement).getByLabelText("Math comment"), {
       target: { value: "Decimals" },
     });
     fireEvent.click(
@@ -351,6 +371,7 @@ describe("Homeschool page", () => {
           name: "Record attendance for 2026-09-02",
         }),
       ).not.toBeInTheDocument(),
+      { timeout: 4000 },
     );
   });
 
@@ -373,7 +394,7 @@ describe("Homeschool page", () => {
       name: "Record attendance for 2026-09-02",
     });
     fireEvent.click(
-      within(editorHeading.closest("section") as HTMLElement).getByRole(
+      within(editorHeading.closest("dialog") as HTMLElement).getByRole(
         "button",
         { name: "Cancel" },
       ),
@@ -512,6 +533,8 @@ describe("Homeschool page", () => {
       </MemoryRouter>,
     );
 
+    await screen.findByText("Children: Maya");
+    fireEvent.click(screen.getByText("Attendance log (1)"));
     const attendanceEntries = await screen.findByRole("list", {
       name: "Attendance entries",
     });

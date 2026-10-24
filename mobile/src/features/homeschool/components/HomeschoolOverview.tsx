@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 
 import type { Child, HomeschoolSemester } from "../../../api/models";
+import { SemesterReportExport } from "./SemesterReportExport";
 import { SectionCard } from "../../../components/SectionCard";
 import { StatCard } from "../../../components/StatCard";
 import { cardStyles } from "../../../styles/cards";
@@ -11,6 +12,7 @@ import type { SubjectSummaryRow } from "../lib/records";
 
 export function HomeschoolOverview({
   activeChildren,
+  householdId,
   commentsInSemester,
   grades,
   selectedChild,
@@ -25,6 +27,7 @@ export function HomeschoolOverview({
   onSemesterSelect,
 }: {
   activeChildren: Child[];
+  householdId: number;
   commentsInSemester: number;
   grades: number;
   selectedChild: Child | null;
@@ -128,6 +131,14 @@ export function HomeschoolOverview({
         ))}
       </SectionCard>
 
+      <SectionCard title="Semester report">
+        <SemesterReportExport
+          householdId={householdId}
+          childId={selectedChildId}
+          semesterId={selectedSemesterId}
+        />
+      </SectionCard>
+
       <SectionCard title="Subject Progress">
         {subjectRows.length === 0 ? (
           <Text style={shellStyles.mutedText}>
@@ -145,7 +156,10 @@ export function HomeschoolOverview({
                 </Text>
               </View>
               <View
-                style={[homeschoolStyles.rowColorDot, { backgroundColor: row.color }]}
+                style={[
+                  homeschoolStyles.rowColorDot,
+                  { backgroundColor: row.color },
+                ]}
               />
             </View>
           </View>
