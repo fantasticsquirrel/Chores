@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "adaptation-island-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "adaptation-island-package",
+    "title": "Adaptation Island",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "evolution",
+      "inheritance",
+      "variation",
+      "populations"
+    ],
+    "summary": "Change a habitat and follow inherited shell colors through generations of a model population.",
+    "question": "How can a population change over generations without individuals choosing new traits?",
+    "explanation": "Individuals can differ in inherited traits. In this fictional population, predators are less likely to find shells that blend with the ground. Surviving individuals contribute offspring with the same shell-color type, so the proportions can change across generations. Individuals do not change their own shell color. The model shows deterministic expected percentages using invented survival weights, not sampled animal counts. It holds population size constant and omits mutation, migration, chance and other traits.",
+    "experiments": [
+      {
+        "title": "Change the environment",
+        "instruction": "Choose Change the environment. Will the same starting variants reach the same proportions on dark and pale ground? Select your prediction, then Set baseline and Compare pale ground after five generations. Start 50% each variant with predation and compare exactly five generations, changing only habitat. Each comparison resets the same population.",
+        "observe": "Generation 5: dark shells 5.0%, pale shells 95.0%. On light ground, pale shells have the higher survival weight. Individuals do not change shell color; inherited variants change in proportion across generations. Initial dark 50.0%; pale 50.0%. Current dark 5.0%; pale 95.0%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. Matching shells have survival weight 0.9; contrasting shells 0.5.  Which variant increased? How does relative survival change descendant proportions without changing individual shell colors?"
+      },
+      {
+        "title": "Remove predation",
+        "instruction": "Choose Remove predation. Will proportions change when both variants have equal survival? Select your prediction, then Set baseline and Compare no predation after five generations. Use dark ground, 50% each variant and five generations. Change only predation, with identical starting population.",
+        "observe": "Generation 5: dark shells 50.0%, pale shells 50.0%. Without predation, both shell colors have the same survival weight. Individuals do not change shell color; inherited variants change in proportion across generations. Initial dark 50.0%; pale 50.0%. Current dark 50.0%; pale 50.0%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. Both colors have survival weight 0.9 without predation.  Compare initial and current proportions. Which difference is necessary for selection to shift proportions here?"
+      }
+    ],
+    "misconception": "Natural selection does not plan ahead, create a needed trait on demand or guarantee progress. It changes the frequency of existing inherited variants under particular conditions.",
+    "sources": [
+      {
+        "title": "UC Berkeley: Variation, heredity and natural selection",
+        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/natural-selection/"
+      },
+      {
+        "title": "UC Berkeley: Misconceptions about natural selection",
+        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/misconceptions-about-natural-selection/"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "78b2394d454daed61356d3d999a0daa04eacbff2bbe65099d74f7a67dbebc365"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

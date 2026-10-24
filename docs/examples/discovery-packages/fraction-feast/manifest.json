@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "package_id": "fraction-feast-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "fraction-feast-package",
+    "title": "Fraction Feast",
+    "subject": "Mathematics",
+    "grade_bands": [
+      "3-5"
+    ],
+    "tags": [
+      "fractions",
+      "equivalence",
+      "addition",
+      "number-sense"
+    ],
+    "summary": "Divide equal-sized plates into equal parts, compare portions and combine fractions.",
+    "question": "How can two different fractions describe the same amount?",
+    "explanation": "A fraction describes equal parts of a whole. The denominator tells how many equal parts make the whole; the numerator counts the parts selected. One half and two quarters cover the same amount of an equal-sized plate. To add fractions with different denominators, describe them using equal-sized pieces first. Every plate here represents the same whole, and every cut makes equal portions. The total can be greater than one plate.",
+    "experiments": [
+      {
+        "title": "Different pieces, same portion",
+        "instruction": "Show 1/2 on plate A and 2/4 on plate B. Predict whether they cover the same amount, then split every slice on one plate.",
+        "observe": "The pieces get smaller and more numerous, but the selected amount stays the same. Explain why doubling both numerator and denominator preserves the fraction."
+      },
+      {
+        "title": "Combine unlike pieces",
+        "instruction": "Select 2/3 on one plate and 3/4 on the other. Predict whether the total is below, equal to or above one whole, then compare the combined total.",
+        "observe": "Compare the total, 17/12, with one whole. Explain how 8/12 plus 9/12 represents the same portions using equal-sized twelfths."
+      }
+    ],
+    "misconception": "A larger denominator does not automatically mean more food. With the same whole and numerator, more equal parts make each selected part smaller.",
+    "sources": [
+      {
+        "title": "Illustrative Mathematics: Fraction equivalence and comparison",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/3/NF/A/3"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "cdc66d3ed8fbe9b07a2631945a8dc0dbfca2eb6244dd9a2ea210bd5f7dd2d96a"
+    },
+    {
+      "path": "assets/bread.png",
+      "mime_type": "image/png",
+      "sha256": "86f21447c4b64c588aadee6acf600ea014f4ddbc6997762bec01b093a98c5dab"
+    },
+    {
+      "path": "assets/cheese.png",
+      "mime_type": "image/png",
+      "sha256": "78ce089f36eb96db2f7664d4833f1ed2006aa72c4af7e87a1e0e1d331f0272fd"
+    },
+    {
+      "path": "assets/number-1.png",
+      "mime_type": "image/png",
+      "sha256": "fa36d233377cd5fb910884a32487cb2c18f65285399c6ea89a906ac2faaa5188"
+    },
+    {
+      "path": "assets/number-10.png",
+      "mime_type": "image/png",
+      "sha256": "5c541d64208caec7c3bb0c6163a6b7a9fdeea3b8e9b5d68fe9cf98bbbc336ea1"
+    },
+    {
+      "path": "assets/number-11.png",
+      "mime_type": "image/png",
+      "sha256": "14d3c7f7c53b99b4685037e57ae70f65682a890536ca15512d0286b4b51e65d0"
+    },
+    {
+      "path": "assets/number-12.png",
+      "mime_type": "image/png",
+      "sha256": "f304991d9570eeba0ceb042e6b51df6783baefd6a1138a6680ab28d97f5d6852"
+    },
+    {
+      "path": "assets/number-13.png",
+      "mime_type": "image/png",
+      "sha256": "e9f0971ee98deb53f1a13a37e0a9585db68a0003cea1cf090e1f65c6ffbb5f56"
+    },
+    {
+      "path": "assets/number-14.png",
+      "mime_type": "image/png",
+      "sha256": "66858336e644d84cf8877a213901b9bc759ef48b50928976aaf97413c450ec60"
+    },
+    {
+      "path": "assets/number-15.png",
+      "mime_type": "image/png",
+      "sha256": "35eb79e10f1b26ce549e381584d7b8aa4eeaf6f5163e0e6b715d59ad422bf05d"
+    },
+    {
+      "path": "assets/number-16.png",
+      "mime_type": "image/png",
+      "sha256": "d6e9d1530b32b7352bdc85e7b6efde11e8553a7dcecd4ddd1dfd36a545fabbc1"
+    },
+    {
+      "path": "assets/number-17.png",
+      "mime_type": "image/png",
+      "sha256": "bcfeab491c1829f8350203e97997ab03068457565873a695c63757e45e684642"
+    },
+    {
+      "path": "assets/number-18.png",
+      "mime_type": "image/png",
+      "sha256": "9b71194100593a2c489adefccab365b8020f5e93cf0a6abe6d0b3bb16ba51126"
+    },
+    {
+      "path": "assets/number-19.png",
+      "mime_type": "image/png",
+      "sha256": "0480fbd73e285be0cd033dcb3bd98452fd0e5201977ce937af867571484968a1"
+    },
+    {
+      "path": "assets/number-2.png",
+      "mime_type": "image/png",
+      "sha256": "7d832dbb00f6299247caf8add5b6a9c078ac3ec6ade7a316d3242af05b0b1387"
+    },
+    {
+      "path": "assets/number-20.png",
+      "mime_type": "image/png",
+      "sha256": "10a42c1375153257aa90d1980dfc6af01c99cdde2eeabea9253f977a075f14b4"
+    },
+    {
+      "path": "assets/number-21.png",
+      "mime_type": "image/png",
+      "sha256": "6de79bf56122ff2dbed8b997f6000e4dc4a26210046ae5b26931b7a83c4b8b5e"
+    },
+    {
+      "path": "assets/number-22.png",
+      "mime_type": "image/png",
+      "sha256": "47f02c38f079f9f6fe85e2a87f23009c1b03f9622d3d86a00f65970de09c9830"
+    },
+    {
+      "path": "assets/number-23.png",
+      "mime_type": "image/png",
+      "sha256": "0a616b416d625fea7a49b43efcd58272d9a59c24e6a59836b396ba8f66f8b7b6"
+    },
+    {
+      "path": "assets/number-24.png",
+      "mime_type": "image/png",
+      "sha256": "081320d8d20d48bce4217828f1e53b66ee000081407e5129803f6d21bc8436c3"
+    },
+    {
+      "path": "assets/number-3.png",
+      "mime_type": "image/png",
+      "sha256": "669b3a8c44504bcf8ee1418fd1184d534c6df5b8f97be9baf5973c8aa9190370"
+    },
+    {
+      "path": "assets/number-4.png",
+      "mime_type": "image/png",
+      "sha256": "0719f2a04537547d3db8e955181d1413e2cdae65781848d0bddaa376184bf226"
+    },
+    {
+      "path": "assets/number-5.png",
+      "mime_type": "image/png",
+      "sha256": "5d99ad56048a2ec6e26a883ce3f62d8e7a4cdeeac7fb596b121c81bc0594d80c"
+    },
+    {
+      "path": "assets/number-6.png",
+      "mime_type": "image/png",
+      "sha256": "336f89fc760fb88647860d64c7d2594a0d5610a8719931d019678930c396bd14"
+    },
+    {
+      "path": "assets/number-7.png",
+      "mime_type": "image/png",
+      "sha256": "0c720ece5db164fa1d0a813f8ce4b960502d028edb7869a62878d6d7dc4f9729"
+    },
+    {
+      "path": "assets/number-8.png",
+      "mime_type": "image/png",
+      "sha256": "75bf426ecef4d02831a453597cb23c94806118595725a1a389c24c183f61d407"
+    },
+    {
+      "path": "assets/number-9.png",
+      "mime_type": "image/png",
+      "sha256": "1fc56d4e4147563f7e14ee22275cbb14a47ef7b4712f7eb936751818d8a6366b"
+    },
+    {
+      "path": "assets/pepperoni.png",
+      "mime_type": "image/png",
+      "sha256": "d9a8123bdbea718f2f85b6fc4f20aa59bd50964c0d8907bcbac9e132d09923ef"
+    },
+    {
+      "path": "assets/wood.png",
+      "mime_type": "image/png",
+      "sha256": "ceaf414a72a9fb986b21aec73fa1bb3d5d496d7283c2784c5d4f7c38d91cb5aa"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

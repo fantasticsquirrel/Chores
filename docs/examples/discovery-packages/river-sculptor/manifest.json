@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "river-sculptor-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "river-sculptor-package",
+    "title": "River Sculptor",
+    "subject": "Earth science",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "rivers",
+      "erosion",
+      "water",
+      "landforms"
+    ],
+    "summary": "Send rain down a slope and trace soil as it erodes, settles or travels downstream.",
+    "question": "Where does soil go when rain washes it away?",
+    "explanation": "Flowing water can remove soil, carry it as sediment and deposit it where the flow slows. Steeper slopes and heavier rainfall can increase runoff and erosion. Plant cover helps protect soil and slows runoff. This model follows soil through a one-hour storm on a small plot: some stays on the slope, some settles nearby and some leaves downstream. Its amounts use teaching assumptions, not measurements from a real river or a flood forecast.",
+    "experiments": [
+      {
+        "title": "Follow the sediment",
+        "instruction": "Predict where the soil will go. Set rainfall above zero, run one storm and compare soil remaining, deposited sediment and sediment leaving downstream.",
+        "observe": "Check that eroded soil is divided between deposition and downstream export. Explain why erosion moves material rather than making it disappear."
+      },
+      {
+        "title": "Protect the slope",
+        "instruction": "Record your slope and rainfall settings. Reset the landscape, restore those settings and run a storm with little vegetation. Reset again and restore the same slope and rainfall. Predict the effect of more vegetation before repeating.",
+        "observe": "Compare erosion and runoff from the two storms. Explain why a fair comparison needs the same starting soil, slope and rain."
+      }
+    ],
+    "misconception": "Clearer water does not mean sediment has vanished. It may have settled on the bed or moved farther downstream.",
+    "sources": [
+      {
+        "title": "USGS: Sediment and suspended sediment",
+        "url": "https://www.usgs.gov/water-science-school/science/sediment-and-suspended-sediment"
+      },
+      {
+        "title": "USDA NRCS: Water erosion and vegetation",
+        "url": "https://www.nrcs.usda.gov/sites/default/files/2024-05/NRCS_Rangeland%20Soil_Water%20Erosion_Factsheet_04092024.pdf"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "93435ab5b38672f8838883bcde45ea8abe7d8aea9419709ab5edd9b3b97c7bbe"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

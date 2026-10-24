@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "package_id": "moon-phases-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "moon-phases-package",
+    "title": "Moon Phase Observatory",
+    "subject": "Space science",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "moon",
+      "patterns",
+      "sunlight",
+      "perspective"
+    ],
+    "summary": "Move the Moon around Earth and connect its position to the phase we see.",
+    "question": "Why does the Moon seem to change shape?",
+    "explanation": "Sunlight illuminates half the Moon. As the Moon travels around Earth, we see different amounts of that sunlit half. A phase cycle takes about 29.5 days. The model links orbital position to the illuminated fraction seen from Earth. Objects are enlarged, geometry is simplified, and the fixed viewing direction does not predict your local sky. Eclipses are not included.",
+    "experiments": [
+      {
+        "title": "Test first quarter",
+        "instruction": "Predict 25%,50% or 75% illuminated at a quarter orbit, then Test at first quarter.",
+        "observe": "Half of the visible disk is lit at 90°. Explain the distinction between the sunlit half of the Moon and the part visible from Earth."
+      },
+      {
+        "title": "Compare opposite quarters",
+        "instruction": "Predict whether Quarter 90° and Last quarter 270° have different illuminated fractions. Select both presets and keep the Earth-view orientation fixed.",
+        "observe": "Both are 50% lit, on opposite sides. Explain why changing the viewing geometry changes phase without Earth casting a shadow."
+      }
+    ],
+    "misconception": "The usual Moon phases are not Earth’s shadow. Earth’s shadow causes a lunar eclipse, a separate event that does not happen every month.",
+    "sources": [
+      {
+        "title": "NASA: Phases of the Moon",
+        "url": "https://science.nasa.gov/resource/phases-of-the-moon-2/"
+      },
+      {
+        "title": "NASA: Moon phases and shadows lesson",
+        "url": "https://assets.science.nasa.gov/content/dam/science/cds/eclips/assets/documents/nasa-spotlite-interactive-lesson-moon-phases-and-shadows-student.pdf"
+      },
+      {
+        "title": "Lunar surface imagery: NASA’s Scientific Visualization Studio (LRO CGI Moon Kit)",
+        "url": "https://svs.gsfc.nasa.gov/4720/"
+      }
+    ],
+    "duration_minutes": 10
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "113fa0c4ca8597bacda6456db26c8778bfbab5cfd55b0c8ee57c4f588ab7ab66"
+    },
+    {
+      "path": "assets/SOURCES.txt",
+      "mime_type": "text/plain",
+      "sha256": "8e3036855bbf6b6cd0c6ed3c9855e9f3173380b347df866ac2203683faf52e80"
+    },
+    {
+      "path": "assets/lola-elevation-1k.jpg",
+      "mime_type": "image/jpeg",
+      "sha256": "6d93f887e7d8bedfe35ab89ba785e5e3ca12381bd092a5e6abe2c707dda8bb98"
+    },
+    {
+      "path": "assets/lroc-color-2k.jpg",
+      "mime_type": "image/jpeg",
+      "sha256": "f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

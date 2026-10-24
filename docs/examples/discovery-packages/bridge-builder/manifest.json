@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "package_id": "bridge-builder-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "bridge-builder-package",
+    "title": "Bridge Builder",
+    "subject": "Engineering",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "bridges",
+      "forces",
+      "structures",
+      "design"
+    ],
+    "summary": "Add braces, move a load and compare how a bridge carries weight to its supports.",
+    "question": "Why can the same load be harder to support in the middle of a bridge?",
+    "explanation": "A bridge transfers a load to its supports. The load can bend the span; diagonal braces form triangles that help a frame resist changing shape. Materials and reinforcement affect what a structure can carry and how much it costs. This model calculates a simple beam’s bending and uses invented brace strengths and costs for comparison. Its capacity-use display is not a real bridge safety rating, and it does not calculate every force in a truss.",
+    "experiments": [
+      {
+        "title": "Move the load",
+        "instruction": "Keep material, load size and braces fixed. Predict whether the middle or near an end will bend the span more, then move the load across.",
+        "observe": "Compare the capacity-use readings and force on each support. Explain why moving weight changes how the load is carried."
+      },
+      {
+        "title": "Place a brace where it helps",
+        "instruction": "Keep the load in the middle. Predict which brace will reduce the highest capacity-use reading, then add braces one at a time.",
+        "observe": "Compare each section’s capacity use and the material cost. Explain which brace helped at this load position, then test whether it still helps when the load moves."
+      }
+    ],
+    "misconception": "A triangular shape is not a guarantee of safety. Connections, materials, loads and many other conditions matter in a real bridge.",
+    "sources": [
+      {
+        "title": "Science Buddies: How triangular trusses resist changing shape",
+        "url": "https://www.sciencebuddies.org/stem-activities/popsicle-stick-trusses-what-shape-is-strongest"
+      },
+      {
+        "title": "Federal Highway Administration: Bridge force and stress analysis",
+        "url": "https://www.fhwa.dot.gov/publications/research/infrastructure/structures/04098/12.cfm"
+      }
+    ],
+    "duration_minutes": 15
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "bfdaf254931834c222219e86bcdd4e522363b906d24ed0f0136b7569e335f3b2"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

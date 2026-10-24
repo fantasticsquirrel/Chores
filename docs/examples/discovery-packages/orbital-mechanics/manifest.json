@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "package_id": "orbital-mechanics-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "orbital-mechanics-package",
+    "title": "Orbit Workshop",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8",
+      "9-12"
+    ],
+    "tags": [
+      "space",
+      "gravity",
+      "motion",
+      "orbits"
+    ],
+    "summary": "Launch a satellite and discover how speed and gravity shape its path.",
+    "question": "How can something keep falling without reaching the ground?",
+    "explanation": "An orbit is a continuing fall around a world. Sideways motion carries a satellite forward while gravity curves its path inward. Gravity weakens with the square of distance from the center. This scaled, two-dimensional model leaves out air resistance, other worlds and the satellite’s pull on the planet.",
+    "experiments": [
+      {
+        "title": "Compare launch speeds",
+        "instruction": "Predict what happens at 0.60× baseline speed. Keep central mass at 1×. Choose a prediction, then Test 0.60× speed.",
+        "observe": "The path reaches the planet. Explain how insufficient sideways motion lets gravity curve the path into the surface."
+      },
+      {
+        "title": "Test escape",
+        "instruction": "Predict what 1.42× speed will do. Choose 1.42× speed, keeping central mass at 1×, then use Play motion or Trace position.",
+        "observe": "Compare with 1.00× speed. The escaping probe still experiences gravity; explain why escape does not mean gravity disappears."
+      }
+    ],
+    "misconception": "Orbiting spacecraft have not escaped gravity. Gravity is what keeps their paths curving.",
+    "sources": [
+      {
+        "title": "NASA: Gravity and mechanics",
+        "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/"
+      },
+      {
+        "title": "NASA: Orbital motion",
+        "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-4/"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "9bfa2e2bde61085434f1cb7d3c5344374c9b46e52bb499c68ebe385f45dc4274"
+    },
+    {
+      "path": "assets/SOURCES.txt",
+      "mime_type": "text/plain",
+      "sha256": "7d119fa732c2b428aa4dd1baf533df74cc40ede04dcc102582a7aa1a0df4c8ef"
+    },
+    {
+      "path": "assets/earth.jpg",
+      "mime_type": "image/jpeg",
+      "sha256": "9be979ce1ce54564a51ca7a456b948599bd2480cd8c7e450d259a99ad3bcef86"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

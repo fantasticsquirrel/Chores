@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Lift the same air",
+      "instruction": "Choose Lift the same air. Will lifting the same air to 600 m and 1800 m produce the same cloud state? Select your prediction, then Set baseline and Lift to 1800 m. Keep 22°C starting temperature, 10 g/kg vapor and growth 30. Change only lift from 600 to 1800 m.",
+      "observe": "Cloud without rain. Lifted 1800 m; parcel 7.3°C; approximate condensation level 1018 m. Growth teaching index 30. Cooling reached saturation, but growth does not yet produce falling drops. How did expansion and cooling connect lift to condensation? At fixed lift, why can warmer starting air remove the cloud?"
+    },
+    {
+      "title": "Cloud is not rain",
+      "instruction": "Choose Cloud is not rain. If the parcel is already cloudy, does that guarantee falling rain? Select your prediction, then Set baseline and Set growth to 90. Keep lift 1400 m, 22°C and 10 g/kg. Compare growth 30 with 90 and the unchanged parcel temperature.",
+      "observe": "Cloud with falling drops. Lifted 1400 m; parcel 9.7°C; approximate condensation level 1018 m. Growth teaching index 90. Condensation and chosen growth condition are present. Which process formed the cloud, and which extra condition changed falling drops? Why is this teaching threshold not a forecast?"
+    }
+  ]
+}

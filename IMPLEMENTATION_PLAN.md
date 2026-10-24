@@ -77,3 +77,11 @@ STATUS: COMPLETE
 
 
 STATUS: READY FOR PR REVIEW — `family-manager` keeps `/chore/` and `/chore-api/` routes stable, adds persisted modules/admin access, ports core Homeschool workflows, and has passing frontend/backend gates. Do not merge without Jon approval.
+
+## Discovery rich package proof (2026-10-24)
+- [x] Convert one Castle Exploration into an independent rich 3D web package, preserve the original, and verify matched visual fidelity, bounded rendering, and package-only version publication. See `docs/plans/2026-10-24-castle-package-proof.md` and `docs/discovery-rich-scene-contract.md`. This local proof does not authorize pushing, merging, deploying, or changing Android releases.
+
+## All 26 independent rich Exploration packages (2026-10-24)
+- [x] Upgrade the bounded web runtime and convert all 26 registered Explorations with package-owned geometry, assets, mathematics and teaching. Preserve bundled native originals and existing bookmarks/overrides; require explicit per-version child approvals.
+- [x] Complete per-topic planning, independent security/education review, matched desktop/mobile visual review and integrated upload/update/rollback verification without app rebuilds. Full backend 828, web 708, shared 468 and native 758 tests pass, plus author/tool/browser gates. See `docs/verification/2026-10-24-all-exploration-packages.md` for exact evidence and remaining limitations.
+- [ ] Obtain separate authorization before any push, remote PR creation, merge, deployment or production package migration. Local PR draft: `docs/plans/2026-10-24-all-exploration-packages-pr-draft.md`. No Android release changes are included.

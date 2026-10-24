@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "package_id": "magnetic-fields-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "magnetic-fields-package",
+    "title": "Magnetic Fields",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "magnets",
+      "fields",
+      "forces",
+      "direction"
+    ],
+    "summary": "Flip a magnet and move a compass to investigate the direction of the combined magnetic field.",
+    "question": "What happens to a compass where two magnetic fields cancel?",
+    "explanation": "A compass is a small magnet whose north-seeking end aligns with the local magnetic field. Outside a bar magnet, field direction runs away from its north pole and toward its south pole. Fields from several magnets combine; a compass does not simply choose the nearest one. This model approximates exterior directions with paired sources, excludes meaningful readings inside the bars and omits Earth’s field. Strength and spacing are relative diagram quantities, not measured force or tesla.",
+    "experiments": [
+      {
+        "title": "Reverse one magnet",
+        "instruction": "Choose Reverse one magnet. Will reversing only the right magnet change attraction to repulsion? Select your prediction, then Set baseline and Reverse right bar. Keep gap 2 and probe (0,2). Compare facing pole letters, force arrows and compass before and after reversing the right bar.",
+        "observe": "Facing poles repel. North tip 90° from +x; field strength 0.26 relative units. The compass follows the vector sum, not simply the nearest magnet. Which poles face across the gap in each case? How does the compass respond to the combined field?"
+      },
+      {
+        "title": "Test cancellation",
+        "instruction": "Choose Test cancellation. With north poles facing, will the compass have a direction exactly halfway between them? Select your prediction, then Set baseline and Move compass z to 2. Keep north poles facing with gap 2. Compare probe (0,0) and (0,2), changing only z.",
+        "observe": "Facing poles repel. North tip 90° from +x; field strength 0.26 relative units. The compass follows the vector sum, not simply the nearest magnet. Why can equal opposing contributions cancel at one point but not everywhere? Does weak field mean the magnets stopped being magnets?"
+      }
+    ],
+    "misconception": "Field lines are not material strings or streams of magnetic substance. They represent directions and continue through real magnets in closed loops.",
+    "sources": [
+      {
+        "title": "OpenStax: Magnetic field direction, compasses and combined fields",
+        "url": "https://openstax.org/books/physics/pages/20-1-magnetic-fields-field-lines-and-force"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "f7571a163e9859b96608d5a4951f4ce9dfad6c850b1125bf03d803dfa7fa6860"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

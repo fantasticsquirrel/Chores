@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "package_id": "solar-system-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "solar-system-package",
+    "title": "Solar System Explorer",
+    "subject": "Space science",
+    "grade_bands": [
+      "K-2",
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "planets",
+      "space",
+      "scale",
+      "orbits"
+    ],
+    "summary": "Tour the eight planets and compare their distances from the Sun and the lengths of their years.",
+    "question": "How different are the worlds that share our Sun?",
+    "explanation": "The eight planets orbit the Sun, which is a star. Their sizes, distances and orbital periods vary greatly. An astronomical unit, or AU, is about the average Earth–Sun distance. This is a schematic: planet sizes and orbit distances use different scales, paths are simplified circles and positions are illustrative, not today’s sky.",
+    "experiments": [
+      {
+        "title": "Compare orbital periods",
+        "instruction": "Predict which completes more of its orbit in one Earth year: Earth or Neptune. Select your prediction, then Advance one Earth year.",
+        "observe": "Earth completes 1 orbit and Neptune about 1/165. Explain why equal elapsed time does not mean equal orbital fractions."
+      },
+      {
+        "title": "Compare diameters",
+        "instruction": "Predict how many Earth diameters fit across Jupiter. Choose Jupiter, then View: True diameter comparison. Keep the same view while comparing other planets.",
+        "observe": "Jupiter spans about 11.21 Earth diameters. Explain why the separate close-up cannot establish this ratio."
+      }
+    ],
+    "misconception": "Planets are not evenly spaced, and a convenient orbit diagram cannot show both true planet sizes and true gaps at the same scale.",
+    "sources": [
+      {
+        "title": "NASA/JPL: Solar system sizes and distances",
+        "url": "https://www.jpl.nasa.gov/edu/pdfs/scaless_reference.pdf"
+      },
+      {
+        "title": "NASA: Planetary fact sheet",
+        "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+      },
+      {
+        "title": "NASA: Cosmic distances",
+        "url": "https://science.nasa.gov/solar-system/cosmic-distances/"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "77f982b879d3e364da78b21bd9d19f78c0791357671d52e3ac378a754dfc375e"
+    },
+    {
+      "path": "assets/SOURCES.txt",
+      "mime_type": "text/plain",
+      "sha256": "7d119fa732c2b428aa4dd1baf533df74cc40ede04dcc102582a7aa1a0df4c8ef"
+    },
+    {
+      "path": "assets/earth.jpg",
+      "mime_type": "image/jpeg",
+      "sha256": "9be979ce1ce54564a51ca7a456b948599bd2480cd8c7e450d259a99ad3bcef86"
+    },
+    {
+      "path": "assets/planet-0.png",
+      "mime_type": "image/png",
+      "sha256": "a7672d2a903be83468092a7d5c3a4f3558c1399f33a0ffa2f62e542c04874345"
+    },
+    {
+      "path": "assets/planet-1.png",
+      "mime_type": "image/png",
+      "sha256": "04782866ec2f20cca3a6b37d9d9b9afeb296018fc2268e1da94a1698551848d0"
+    },
+    {
+      "path": "assets/planet-3.png",
+      "mime_type": "image/png",
+      "sha256": "13e60b0c8bd08baa05bbf10d41e59797f1ba99c4ed5081140e886ac390002e23"
+    },
+    {
+      "path": "assets/planet-4.png",
+      "mime_type": "image/png",
+      "sha256": "bf49681e5619b5b8cc4d3788358fd27bb4dcf016338ddb02200e0485271e0de0"
+    },
+    {
+      "path": "assets/planet-5.png",
+      "mime_type": "image/png",
+      "sha256": "c716ad4d58e18c659241ff54e106e1d1ad66a3d7b47d87443bc860efbf1f4231"
+    },
+    {
+      "path": "assets/planet-6.png",
+      "mime_type": "image/png",
+      "sha256": "07b996a9ede47aff4d52a27db1e1b390a0e4cef14da737bc2aa56f4cf66bd8eb"
+    },
+    {
+      "path": "assets/planet-7.png",
+      "mime_type": "image/png",
+      "sha256": "3e50467bebec19fdddd2ca130d053e7a9634728c6fa65e275533dc1ec4fd8a7d"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

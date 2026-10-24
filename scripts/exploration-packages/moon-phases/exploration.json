@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Test first quarter",
+      "instruction": "Predict 25%,50% or 75% illuminated at a quarter orbit, then Test at first quarter.",
+      "observe": "Half of the visible disk is lit at 90°. Explain the distinction between the sunlit half of the Moon and the part visible from Earth."
+    },
+    {
+      "title": "Compare opposite quarters",
+      "instruction": "Predict whether Quarter 90° and Last quarter 270° have different illuminated fractions. Select both presets and keep the Earth-view orientation fixed.",
+      "observe": "Both are 50% lit, on opposite sides. Explain why changing the viewing geometry changes phase without Earth casting a shadow."
+    }
+  ]
+}

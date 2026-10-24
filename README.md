@@ -9,6 +9,7 @@ Family Manager is the evolution of Chore Tracker v3: a FastAPI backend and React
 - Homeschool module for semesters, subjects, attendance calendar entries, day comments, and grades
 - [Discovery Lab](docs/discovery-lab.md): 26 interactive learning Explorations, with per-child and filtered bulk parent controls on web and native; household opt-in rollout
 - [Publishable Discovery packages](docs/discovery-content-packages.md): author, validate, preview, publish and roll back new web Explorations without rebuilding the app; includes runnable examples and version-specific child approval
+- [Rich independent Exploration collection](docs/discovery-rich-packages.md): all 26 original activities as separately versioned web packages, with preserved native originals and explicit child approvals; [verification and rollout](docs/verification/2026-10-24-all-exploration-packages.md)
 - Admin module for per-user module access management, with last-admin protection
 - SQLite persistence with Alembic migrations, startup checks, and WAL mode
 - Frontend and backend automated test coverage for implemented flows

@@ -20,13 +20,20 @@ const content = {
 } as DiscoveryExploration;
 
 describe("downloaded Exploration platform support", () => {
-  it("does not present a missing native model as a working activity", () => {
-    const view = render(<ExplorationDetail detail={content} />);
-    expect(view.getByRole("alert")).toHaveTextContent(
-      "This published Exploration runs in the web app. Open Discovery Lab in your browser to use its interactive model.",
-    );
-    expect(view.queryByText("Reset experiment")).toBeNull();
-    expect(view.queryByText("Displacements add at each point.")).toBeNull();
-    expect(view.queryByText("Think again")).toBeNull();
-  });
+  it.each(["worker-v1", "worker-3d-v1", "worker-rich-v1"] as const)(
+    "does not present %s as a working native activity",
+    (runtime) => {
+      const view = render(
+        <ExplorationDetail
+          detail={{ ...content, package: { ...content.package!, runtime } }}
+        />,
+      );
+      expect(view.getByRole("alert")).toHaveTextContent(
+        "This published Exploration runs in the web app. Open Discovery Lab in your browser to use its interactive model.",
+      );
+      expect(view.queryByText("Reset experiment")).toBeNull();
+      expect(view.queryByText("Displacements add at each point.")).toBeNull();
+      expect(view.queryByText("Think again")).toBeNull();
+    },
+  );
 });

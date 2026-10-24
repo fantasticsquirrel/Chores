@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Compare directions",
+      "instruction": "Choose Compare directions. At equal diagram progress, will pulling apart and pushing together make the same boundary shape? Select your prediction, then Set baseline and Compare Together at 40%. Compare Apart and Together at the same 40% diagram stage; vertical relief is not a measurement.",
+      "observe": "Oceanic plate bends into a subduction zone. Plates move together. Diagram progress 40%; stored deformation index 0 / 60 threshold; 0 illustrated slips. Progress is not elapsed years. Which adds crust at the boundary and which carries oceanic crust beneath another plate? Use arrows and cutaway."
+    },
+    {
+      "title": "Load, then slip",
+      "instruction": "Choose Load, then slip. Will the road shift gradually at every loading step, or suddenly after deformation builds? Select your prediction, then Set baseline and Add the fifth loading step. Compare Sideways after four identical loading steps and one further step. Use the index, offset and slip count.",
+      "observe": "Crust slides sideways along a fault. Plates move past each other. Diagram progress 20%; stored deformation index 12 / 60 threshold; 1 illustrated slips. The latest slip released stored deformation; the road is now offset. Why can slowly accumulating motion lead to a sudden slip? Does this invented threshold predict a real earthquake?"
+    }
+  ]
+}

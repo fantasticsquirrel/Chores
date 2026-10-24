@@ -1,0 +1,79 @@
+.package-rich-readouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.package-rich-readouts > div {
+  padding: 14px;
+  border: 1px solid var(--color-border, #d6d1e8);
+  border-radius: 12px;
+  background: var(--color-surface, #fff);
+  min-width: 0;
+}
+.package-rich-readouts dt {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.package-rich-readouts dd {
+  margin: 6px 0 0;
+  font-weight: 600;
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+.package-rich-readouts .package-rich-readout-detail {
+  font-weight: 400;
+  font-size: 0.85rem;
+}
+.package-rich-stat {
+  position: absolute;
+  right: 24px;
+  top: 27px;
+  z-index: 2;
+  text-align: right;
+  pointer-events: none;
+  max-width: 40%;
+}
+.package-rich-stat strong,
+.package-rich-stat span {
+  display: block;
+}
+.package-rich-stat strong {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.package-rich-stat span {
+  font-size: 0.8rem;
+}
+@media (max-width: 600px) {
+  .package-rich-stat {
+    top: 18px;
+    right: 12px;
+    max-width: 35%;
+  }
+  .package-rich-stat strong {
+    font-size: 1.1rem;
+  }
+  .package-rich-stat span {
+    font-size: 0.7rem;
+  }
+}
+.package-rich-visual .package-3d-heading {
+  max-width: 55%;
+}
+@media (max-width: 600px) {
+  .package-rich-visual .package-3d-heading h2 {
+    font-size: 21px;
+  }
+  .package-rich-visual .package-3d-heading p {
+    font-size: 11px;
+  }
+}
+@media (max-width: 600px) {
+  .package-rich-anchored {
+    max-width: 95px;
+    white-space: normal;
+    font-size: 9px;
+    padding: 3px 4px;
+  }
+}

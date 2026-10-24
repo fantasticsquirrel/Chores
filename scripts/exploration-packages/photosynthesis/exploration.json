@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Test a missing resource",
+      "instruction": "Predict whether extra light can restore activity when water is absent. Choose a prediction, then Test zero water and extra light. Keep carbon dioxide fixed.",
+      "observe": "Activity remains zero. Explain why light cannot replace water in sugar production."
+    },
+    {
+      "title": "Find the limiting resource",
+      "instruction": "Reset experiment, Save comparison, then predict what raising water above 80% will do while light 70% and carbon dioxide 80% remain fixed. Raise only water.",
+      "observe": "Activity first rises, then light becomes limiting. Compare the saved trial and explain why more water cannot replace light."
+    }
+  ]
+}

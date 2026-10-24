@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Find total internal reflection",
+      "instruction": "Predict whether a transmitted ray remains for glass to air above 42°. Choose a prediction, then Test glass to air at 43°. Compare 40° and 43° with materials fixed.",
+      "observe": "The transmitted ray disappears above the critical angle. Explain why the direction from higher to lower refractive index matters."
+    },
+    {
+      "title": "Reverse the materials",
+      "instruction": "Predict whether air to glass can produce total internal reflection. Swap materials and compare at the same angle. Then set both indices equal.",
+      "observe": "The transmitted ray persists from air to glass; equal indices show no reflected branch or bending. Explain both observations using refractive index."
+    }
+  ]
+}

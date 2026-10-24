@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "package_id": "pollinator-express-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "pollinator-express-package",
+    "title": "Pollinator Express",
+    "subject": "Biology",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "plants",
+      "pollination",
+      "habitats",
+      "ecology"
+    ],
+    "summary": "Guide a bee between flowers and test when a visit transfers compatible pollen.",
+    "question": "Is visiting any flower enough to pollinate it?",
+    "explanation": "Pollination moves pollen to the receptive part of a flower and can allow seeds to develop. Animals may carry pollen while gathering food. In this model, a bee transfers pollen only between different flowers of the same species. Added habitat flowers can help it cross a gap. The bee carries pollen from only its last visit; flight limits and flower types are invented. Real pollination can involve mixed pollen, self-pollination, wind and other animals, and does not always result in seeds.",
+    "experiments": [
+      {
+        "title": "A visit or a transfer?",
+        "instruction": "Predict which visit will transfer compatible pollen. Visit Gold 1, then Gold 2. Reset and compare Gold 1 followed by Violet 1.",
+        "observe": "Compare visits with compatible transfers. Explain why two visits do not necessarily mean two pollinated flowers."
+      },
+      {
+        "title": "Bridge a habitat gap",
+        "instruction": "Set flight reach to 170 and leave habitat patches off. Visit Gold 1 and Gold 2, then predict whether Gold 3 is reachable. Reset, add habitat patches and repeat the route via Gold bridge.",
+        "observe": "Compare the possible paths before and after adding flowers. Explain how an extra feeding stop can connect otherwise separated patches in this model."
+      }
+    ],
+    "misconception": "Bees are not the only pollinators, and a flower visit is not a guarantee of fertilization or seed production.",
+    "sources": [
+      {
+        "title": "USDA Forest Service: What pollination is and who does it",
+        "url": "https://www.fs.usda.gov/wildflowers/pollinators/documents/simpletruthbrochure.pdf"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "61e525703879ab1aceca327ca5a74acb4fad0c71510e1d30454f2984cc86d1ea"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

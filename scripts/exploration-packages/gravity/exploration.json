@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Compare masses fairly",
+      "instruction": "Predict which reaches the floor first. Keep height fixed, select a prediction, then Compare 1 kg with 10 kg.",
+      "observe": "Both Earth objects land at the same time. Explain why their different weights do not imply different accelerations."
+    },
+    {
+      "title": "Compare worlds",
+      "instruction": "Predict whether Moon gravity makes the same-height drop faster or slower. Keep height and mass fixed. Choose Moon, then Play motion or Timeline.",
+      "observe": "Compare the Earth reference and Moon object at the same elapsed time. Explain the difference using their accelerations."
+    }
+  ]
+}

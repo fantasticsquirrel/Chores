@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Compare molecules",
+      "instruction": "Choose Compare molecules. With no carrier, will both molecules enter at the same rate? Select your prediction, then Set baseline and Compare glucose after one step. Start both trials at outside 12, inside 4 with the same cell type and carrier off. Compare one transfer step for oxygen and glucose.",
+      "observe": "Photosynthetic plant cell with wall, membrane, central vacuole and chloroplasts. Both have nucleus and mitochondria. Cell membrane: A selectively permeable boundary controls exchange. Small oxygen molecules diffuse through the lipid layer; glucose needs a transport protein in this model. Outside 12.0; inside 4.0 relative concentration units. No glucose transfer: this membrane has no glucose carrier. Total concentration units in equal volumes 16.0; a transfer step conserves this total. Which changed inside concentration? What does that show about a selectively permeable membrane?"
+    },
+    {
+      "title": "Add a carrier",
+      "instruction": "Choose Add a carrier. Can a carrier change glucose transfer without changing the starting concentration difference? Select your prediction, then Set baseline and Compare carrier after one step. Start glucose at outside 12 and inside 4 for each trial. Compare one step without and with the carrier.",
+      "observe": "Photosynthetic plant cell with wall, membrane, central vacuole and chloroplasts. Both have nucleus and mitochondria. Cell membrane: A selectively permeable boundary controls exchange. Small oxygen molecules diffuse through the lipid layer; glucose needs a transport protein in this model. Outside 11.0; inside 5.0 relative concentration units. Net glucose transfer is inward, from higher to lower concentration. Total concentration units in equal volumes 16.0; a transfer step conserves this total. Compare amounts on each side and total. Does a carrier create glucose, or provide a path?"
+    }
+  ]
+}

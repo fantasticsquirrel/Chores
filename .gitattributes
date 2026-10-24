@@ -1,2 +1,6 @@
 # Preserve upstream vendored package/license/patch bytes exactly.
 vendor/security-backports/** -whitespace -text
+
+# Generated workers embed upstream Three shader template strings verbatim.
+# Do not rewrite whitespace inside executable string literals.
+docs/examples/discovery-packages/*/worker.js -whitespace

@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "package_id": "sound-playground-package",
+  "version": "1.0.0",
+  "runtime": "worker-rich-v1",
+  "exploration": {
+    "id": "sound-playground-package",
+    "title": "Sound Playground",
+    "subject": "Physics",
+    "grade_bands": [
+      "3-5",
+      "6-8"
+    ],
+    "tags": [
+      "sound",
+      "vibrations",
+      "waves",
+      "measurement"
+    ],
+    "summary": "Change a string’s length, tension and vibration size to investigate pitch and energy.",
+    "question": "Why can two plucks sound equally high but have different strengths?",
+    "explanation": "A vibrating string can make the air vibrate, producing sound. Frequency counts vibrations per second and helps determine pitch. A shorter string or greater tension produces a higher frequency when the string’s mass per length stays fixed. Amplitude is the size of a vibration; increasing it adds energy without changing this model’s pitch. The model shows an ideal string’s lowest vibration pattern, not every vibration in a real instrument. The drawing slows or stops the motion so you can inspect the string’s shape.",
+    "experiments": [
+      {
+        "title": "Shorten the string",
+        "instruction": "Keep tension and amplitude fixed. Predict what happens to frequency when you halve the string length, then compare the readings at each length.",
+        "observe": "Compare the frequency readings: halving the length doubles the frequency here. Explain how that changes pitch."
+      },
+      {
+        "title": "Change the pluck, not the pitch",
+        "instruction": "Keep length and tension fixed. Predict whether a larger amplitude changes frequency, then compare two amplitude settings.",
+        "observe": "The vibration gets larger and its energy increases while frequency stays the same. Explain the difference between vibration size and vibration rate."
+      }
+    ],
+    "misconception": "A larger vibration is not the same as a higher pitch. Pitch depends mainly on frequency, not amplitude.",
+    "sources": [
+      {
+        "title": "OpenStax: Standing waves on strings",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/16-6-standing-waves-and-resonance"
+      }
+    ],
+    "duration_minutes": 12
+  },
+  "entry": "worker.js",
+  "assets": [
+    {
+      "path": "worker.js",
+      "mime_type": "text/javascript",
+      "sha256": "10c72db371e76aebf77ed1a70702393493fdeaad0a0b7f90f84039789b1e08d1"
+    },
+    {
+      "path": "THREE-LICENSE.txt",
+      "mime_type": "text/plain",
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    }
+  ]
+}

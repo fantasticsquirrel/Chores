@@ -2,7 +2,7 @@
 export type DiscoveryExploration = {
   package?: {
     version: string;
-    runtime: "declarative-v1" | "worker-v1";
+    runtime: "declarative-v1" | "worker-v1" | "worker-3d-v1" | "worker-rich-v1";
     checksum: string;
   };
   id: string;

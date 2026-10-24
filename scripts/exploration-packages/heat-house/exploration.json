@@ -1,0 +1,14 @@
+{
+  "experiments": [
+    {
+      "title": "Add wall insulation",
+      "instruction": "Choose Add wall insulation. Will adding wall insulation reduce the heat transfer through unchanged windows? Select your prediction, then Set baseline and Add 10 cm insulation. Keep brick walls, 8 m² of windows, 20°C inside and 0°C outside. Compare no added insulation with 10 cm. Both temperatures are held steady.",
+      "observe": "Wall transfer falls from 2066 W to 346 W. Window transfer stays 448 W. Combined transfer falls from 2514 W to 794 W. Why does extra wall insulation reduce only one heat-transfer path in this comparison? What else would need to change to reduce the window transfer?"
+    },
+    {
+      "title": "Change window area",
+      "instruction": "Choose Change window area. With insulated walls, what happens to heat loss if windows replace more of the wall area? Select your prediction, then Set baseline and Use 18 m² windows. Keep 10 cm of added insulation, brick, 20°C inside and 0°C outside. Increase windows from 2 to 18 m² within the same 60 m² wall envelope.",
+      "observe": "Opaque wall area falls from 58 to 42 m². Combined transfer rises from 498 W to 1288 W because these windows transfer more heat per square meter than these insulated walls. Why must window area replace wall area for a fair comparison? Would every real window and wall have this same result?"
+    }
+  ]
+}
