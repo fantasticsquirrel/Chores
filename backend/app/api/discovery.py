@@ -1,5 +1,17 @@
+from app.models.discovery import DiscoveryPackageVersion
+from app.schemas.discovery_packages import PackageUpload
+from app.services.discovery.packages import (
+    validate_archive,
+    store_package,
+    version_row,
+    summary,
+    publish,
+)
+import json
+from sqlalchemy.exc import IntegrityError
+
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -18,7 +30,7 @@ from app.schemas.discovery import (
 from app.security.audit import audit
 from app.services.discovery import (
     access_response,
-    catalog,
+    household_catalog,
     matches,
     overrides,
     scoped_child,
@@ -39,6 +51,9 @@ ChildId = Annotated[int, Path(gt=0)]
 class DiscoveryAccessUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     enabled: StrictBool
+    package_versions: dict[
+        Annotated[str, Field(max_length=80)], Annotated[str, Field(max_length=60)]
+    ] = Field(default_factory=dict, max_length=200)
     exploration_ids: list[str] | None = Field(
         default=None, min_length=1, max_length=200
     )
@@ -63,7 +78,11 @@ class DiscoveryAccessUpdate(BaseModel):
         return self
 
 
-@router.get("/explorations", response_model=list[DiscoveryExploration])
+@router.get(
+    "/explorations",
+    response_model=list[DiscoveryExploration],
+    response_model_exclude_unset=True,
+)
 def list_explorations(
     child_id: int | None = Query(default=None, gt=0),
     q: str | None = Query(default=None, max_length=100),
@@ -85,13 +104,17 @@ def list_explorations(
     )
     return [
         entry
-        for entry in catalog()
+        for entry in household_catalog(session, user.household_id)
         if values.get(entry["id"], True)
         and matches(entry, q=q, subject=subject, grade_band=grade_band, tag=tag)
     ]
 
 
-@router.get("/explorations/{exploration_id}", response_model=DiscoveryExploration)
+@router.get(
+    "/explorations/{exploration_id}",
+    response_model=DiscoveryExploration,
+    response_model_exclude_unset=True,
+)
 def get_exploration(
     exploration_id: str = Path(min_length=1, max_length=80),
     child_id: int | None = Query(default=None, gt=0),
@@ -108,7 +131,14 @@ def get_exploration(
         if target is not None
         else {}
     )
-    entry = next((entry for entry in catalog() if entry["id"] == exploration_id), None)
+    entry = next(
+        (
+            entry
+            for entry in household_catalog(session, user.household_id)
+            if entry["id"] == exploration_id
+        ),
+        None,
+    )
     if entry is None:
         raise HTTPException(status_code=404, detail="Exploration not found.")
     if not values.get(exploration_id, True):
@@ -132,7 +162,11 @@ def list_children(
     ]
 
 
-@router.get("/children/{child_id}/access", response_model=DiscoveryChildAccessResponse)
+@router.get(
+    "/children/{child_id}/access",
+    response_model=DiscoveryChildAccessResponse,
+    response_model_exclude_unset=True,
+)
 def get_access(
     child_id: ChildId,
     user: User = Depends(_parent_view),
@@ -141,7 +175,11 @@ def get_access(
     return access_response(session, scoped_child(session, user, child_id))
 
 
-@router.put("/children/{child_id}/access", response_model=DiscoveryChildAccessResponse)
+@router.put(
+    "/children/{child_id}/access",
+    response_model=DiscoveryChildAccessResponse,
+    response_model_exclude_unset=True,
+)
 def update_access(
     child_id: ChildId,
     payload: DiscoveryAccessUpdate,
@@ -151,11 +189,13 @@ def update_access(
 ):
     child = scoped_child(session, user, child_id)
     ids = set(payload.exploration_ids) if payload.exploration_ids is not None else None
-    if ids is not None and not ids.issubset({entry["id"] for entry in catalog()}):
+    if ids is not None and not ids.issubset(
+        {entry["id"] for entry in household_catalog(session, user.household_id)}
+    ):
         raise HTTPException(status_code=422, detail="Unknown exploration ID.")
     selected = [
         entry
-        for entry in catalog()
+        for entry in household_catalog(session, user.household_id)
         if (ids is None or entry["id"] in ids)
         and matches(
             entry,
@@ -168,6 +208,17 @@ def update_access(
         raise HTTPException(
             status_code=422, detail="No explorations match the selection."
         )
+    if payload.enabled:
+        for entry in selected:
+            if (
+                entry.get("package")
+                and payload.package_versions.get(entry["id"])
+                != entry["package"]["version"]
+            ):
+                raise HTTPException(
+                    status_code=409,
+                    detail="Review the current package version before enabling it for a child.",
+                )
     set_access(session, child, selected, payload.enabled)
     audit(
         session,
@@ -182,3 +233,113 @@ def update_access(
     )
     session.commit()
     return access_response(session, child)
+
+
+# Package management stays behind both the role and module-manage boundary.
+
+
+@router.get("/packages")
+def list_packages(
+    user: User = Depends(_manage), session: Session = Depends(get_db_session)
+):
+    return [
+        summary(session, row)
+        for row in session.scalars(
+            select(DiscoveryPackageVersion)
+            .where(DiscoveryPackageVersion.household_id == user.household_id)
+            .order_by(
+                DiscoveryPackageVersion.package_id,
+                DiscoveryPackageVersion.created_at.desc(),
+            )
+        )
+    ]
+
+
+@router.post("/packages", status_code=201)
+def upload_package(
+    payload: PackageUpload,
+    request: Request,
+    user: User = Depends(_manage),
+    session: Session = Depends(get_db_session),
+):
+    content = validate_archive(payload.archive_base64)
+    try:
+        row = store_package(session, user.household_id, content)
+        audit(
+            session,
+            "discovery.package.uploaded",
+            request=request,
+            actor=user,
+            details={
+                "package_id": row.package_id,
+                "version": row.version,
+                "checksum": row.checksum,
+            },
+        )
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(
+            status_code=409, detail="Package version already exists."
+        ) from exc
+    return summary(session, row)
+
+
+@router.get("/packages/{package_id}/versions/{version}")
+def preview_package(
+    response: Response,
+    package_id: str = Path(min_length=1, max_length=80),
+    version: str = Path(min_length=1, max_length=60),
+    user: User = Depends(_manage),
+    session: Session = Depends(get_db_session),
+):
+    row = version_row(session, user.household_id, package_id, version)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return json.loads(row.payload_json)
+
+
+@router.post("/packages/{package_id}/versions/{version}/publish")
+def publish_package(
+    request: Request,
+    package_id: str = Path(min_length=1, max_length=80),
+    version: str = Path(min_length=1, max_length=60),
+    user: User = Depends(_manage),
+    session: Session = Depends(get_db_session),
+):
+    row = version_row(session, user.household_id, package_id, version)
+    publish(session, row)
+    audit(
+        session,
+        "discovery.package.published",
+        request=request,
+        actor=user,
+        details={
+            "package_id": row.package_id,
+            "version": row.version,
+            "checksum": row.checksum,
+        },
+    )
+    session.commit()
+    return summary(session, row)
+
+
+@router.get("/explorations/{exploration_id}/package")
+def get_exploration_package(
+    response: Response,
+    exploration_id: str = Path(min_length=1, max_length=80),
+    child_id: int | None = Query(default=None, gt=0),
+    user: User = Depends(_view),
+    session: Session = Depends(get_db_session),
+):
+    entry = get_exploration(
+        exploration_id=exploration_id, child_id=child_id, user=user, session=session
+    )
+    if not entry.get("package"):
+        raise HTTPException(status_code=404, detail="Package not found.")
+    row = version_row(
+        session, user.household_id, exploration_id, entry["package"]["version"]
+    )
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return json.loads(row.payload_json)

@@ -56,9 +56,14 @@ const expectedMethodsByFile: Record<string, string[]> = {
   "discovery-lab.ts": [
     "getDiscoveryChildAccess",
     "getDiscoveryExploration",
+    "getDiscoveryPackage",
     "listDiscoveryChildren",
     "listDiscoveryExplorations",
+    "listDiscoveryPackages",
+    "previewDiscoveryPackage",
+    "publishDiscoveryPackage",
     "updateDiscoveryChildAccess",
+    "uploadDiscoveryPackage",
   ],
   "family-tree-core.ts": [
     "archiveFamilyTreePerson",

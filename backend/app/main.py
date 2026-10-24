@@ -22,6 +22,7 @@ from app.logging_config import configure_logging
 from app.startup import run_startup_checks
 from app.services.discovery import catalog as discovery_catalog
 from app.security.family_tree_limits import FamilyTreeBodyLimitMiddleware
+from app.security.discovery_limits import DiscoveryBodyLimitMiddleware
 
 API_PREFIX = "/chore-api"
 FRONTEND_BASE_PATH = "/chore"
@@ -81,11 +82,14 @@ def create_app(frontend_dist_dir: Path | None = None) -> FastAPI:
         if request.url.path.startswith(f"{API_PREFIX}/family-tree"):
             response.headers["Cache-Control"] = "no-store, private"
             response.headers["Referrer-Policy"] = "no-referrer"
+        if request.url.path.startswith(f"{API_PREFIX}/discovery"):
+            response.headers["Cache-Control"] = "no-store"
         # HSTS is owned by the HTTPS edge.  The ASGI app must not infer trusted
         # transport state from client-controlled forwarding headers.
         return response
 
     app.add_middleware(FamilyTreeBodyLimitMiddleware)
+    app.add_middleware(DiscoveryBodyLimitMiddleware)
     app.add_middleware(CsrfProtectionMiddleware)
     app.add_middleware(RequestLoggingMiddleware)
     # Added last so it wraps logging/CSRF/security while remaining inside

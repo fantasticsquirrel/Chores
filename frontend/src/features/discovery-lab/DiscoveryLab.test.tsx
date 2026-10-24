@@ -87,6 +87,7 @@ function show(path = "/discovery-lab", auth = context) {
 }
 describe("Discovery Lab", () => {
   beforeEach(() => {
+    vi.spyOn(apiClient, "listDiscoveryPackages").mockResolvedValue([]);
     vi.spyOn(apiClient, "listDiscoveryExplorations").mockResolvedValue([
       orbit,
       leaf,

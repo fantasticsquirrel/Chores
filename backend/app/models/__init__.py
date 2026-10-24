@@ -1,4 +1,9 @@
-from app.models.discovery import DiscoveryExplorationAccess
+from app.models.discovery import (
+    DiscoveryExplorationAccess,
+    DiscoveryPackage,
+    DiscoveryPackageVersion,
+    DiscoveryPackageGrant,
+)
 from app.models.billing import BillingAccount, BillingCustomerReference, BillingEvent, HouseholdEntitlement, Subscription
 from app.models.chores import (
     Chore,
@@ -63,6 +68,9 @@ from app.models.family_tree import (
 
 ALL_MODELS = (*FAMILY_TREE_MODELS,
     DiscoveryExplorationAccess,
+    DiscoveryPackage,
+    DiscoveryPackageVersion,
+    DiscoveryPackageGrant,
     Household,
     Child,
     User,

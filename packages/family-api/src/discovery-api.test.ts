@@ -12,8 +12,9 @@ class Harness extends FamilyDiscoveryApiEndpoints {
     this.calls.push(["PUT", path, body]);
     return Promise.resolve({} as T);
   }
-  protected post<T>(): Promise<T> {
-    throw new Error("unused");
+  protected post<T, B>(path: string, body: B): Promise<T> {
+    this.calls.push(["POST", path, body]);
+    return Promise.resolve({} as T);
   }
   protected patch<T>(): Promise<T> {
     throw new Error("unused");
@@ -63,4 +64,20 @@ describe("Discovery Lab shared endpoints", () => {
       ],
     ]);
   });
+});
+
+it("encodes immutable package IDs and versions across upload, preview, publish and runtime", async () => {
+  const api = new Harness();
+  await api.uploadDiscoveryPackage("zip");
+  await api.listDiscoveryPackages();
+  await api.previewDiscoveryPackage("x/y", "1/2");
+  await api.publishDiscoveryPackage("x/y", "1/2");
+  await api.getDiscoveryPackage("x/y");
+  expect(api.calls).toEqual([
+    ["POST", "/discovery/packages", { archive_base64: "zip" }],
+    ["GET", "/discovery/packages", undefined],
+    ["GET", "/discovery/packages/x%2Fy/versions/1%2F2", undefined],
+    ["POST", "/discovery/packages/x%2Fy/versions/1%2F2/publish", {}],
+    ["GET", "/discovery/explorations/x%2Fy/package", undefined],
+  ]);
 });

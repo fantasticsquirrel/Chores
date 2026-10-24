@@ -1,3 +1,5 @@
+import { AuthorizedPackage } from "../features/discovery-lab/packages/PackageRuntime";
+import { PackageAuthorPanel } from "../features/discovery-lab/packages/PackageAuthorPanel";
 import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiClient } from "../api";
@@ -192,10 +194,19 @@ export function DiscoveryExplorationPage() {
               className="discovery-experiment-stage"
               aria-label="Interactive experiment"
             >
-              <ExplorationSimulation
-                key={`${identity}:${item.id}`}
-                explorationId={item.id}
-              />
+              {item.package ? (
+                <AuthorizedPackage
+                  key={`${identity}:${item.id}:${item.package.version}`}
+                  id={item.id}
+                  expectedChecksum={item.package.checksum}
+                  identity={identity}
+                />
+              ) : (
+                <ExplorationSimulation
+                  key={`${identity}:${item.id}`}
+                  explorationId={item.id}
+                />
+              )}
             </section>
             <div className="discovery-learning-grid">
               <section className="discovery-explanation">
@@ -262,6 +273,7 @@ export function DiscoveryExplorationPage() {
 }
 
 export function DiscoveryAccessPage() {
+  const [packageRevision, setPackageRevision] = useState(0);
   const { identity, allowed, manage } = useDiscoveryIdentity();
   if (!allowed) return <DiscoveryUnavailable />;
   return (
@@ -277,7 +289,14 @@ export function DiscoveryAccessPage() {
         </p>
       </header>
       {manage ? (
-        <DiscoveryAccessPanel key={identity} />
+        <>
+          <PackageAuthorPanel
+            key={`packages:${identity}`}
+            identity={identity}
+            onPublished={() => setPackageRevision((value) => value + 1)}
+          />
+          <DiscoveryAccessPanel key={`${identity}:${packageRevision}`} />
+        </>
       ) : (
         <InlineNotice>
           Only parents with management access can change Explorations.

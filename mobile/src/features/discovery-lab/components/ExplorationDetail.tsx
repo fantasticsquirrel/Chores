@@ -8,6 +8,23 @@ export function ExplorationDetail({
 }: {
   detail: DiscoveryExploration;
 }) {
+  if (detail.package) {
+    return (
+      <SectionCard title={detail.title} subtitle="Web-only Exploration">
+        <Text
+          accessibilityRole="alert"
+          style={{ color: colors.text, lineHeight: 23 }}
+        >
+          This published Exploration runs in the web app. Open Discovery Lab in
+          your browser to use its interactive model.
+        </Text>
+        <Text style={{ color: colors.textMuted, lineHeight: 23 }}>
+          This app does not load downloaded simulation code. The bundled
+          Explorations remain available here.
+        </Text>
+      </SectionCard>
+    );
+  }
   return (
     <>
       <SectionCard
