@@ -1,0 +1,390 @@
+{
+  "$defs": {
+    "DiscoveryExperiment": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "instruction": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Instruction",
+          "type": "string"
+        },
+        "observe": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Observe",
+          "type": "string"
+        }
+      },
+      "required": ["title", "instruction", "observe"],
+      "title": "DiscoveryExperiment",
+      "type": "object"
+    },
+    "DiscoveryExploration": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "package": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DiscoveryPackageReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "title": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "grade_bands": {
+          "items": {
+            "enum": ["K-2", "3-5", "6-8", "9-12"],
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Grade Bands",
+          "type": "array"
+        },
+        "tags": {
+          "items": {
+            "maxLength": 12000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "title": "Tags",
+          "type": "array"
+        },
+        "duration_minutes": {
+          "exclusiveMinimum": 0,
+          "maximum": 180,
+          "title": "Duration Minutes",
+          "type": "integer"
+        },
+        "question": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Question",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "experiments": {
+          "items": {
+            "$ref": "#/$defs/DiscoveryExperiment"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Experiments",
+          "type": "array"
+        },
+        "misconception": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Misconception",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/DiscoverySource"
+          },
+          "maxItems": 16,
+          "minItems": 1,
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "summary",
+        "subject",
+        "grade_bands",
+        "tags",
+        "duration_minutes",
+        "question",
+        "explanation",
+        "experiments",
+        "misconception",
+        "sources"
+      ],
+      "title": "DiscoveryExploration",
+      "type": "object"
+    },
+    "DiscoveryPackageReference": {
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "runtime": {
+          "enum": ["declarative-v1", "worker-v1"],
+          "title": "Runtime",
+          "type": "string"
+        },
+        "checksum": {
+          "title": "Checksum",
+          "type": "string"
+        }
+      },
+      "required": ["version", "runtime", "checksum"],
+      "title": "DiscoveryPackageReference",
+      "type": "object"
+    },
+    "DiscoverySource": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": ["title", "url"],
+      "title": "DiscoverySource",
+      "type": "object"
+    },
+    "PackageAsset": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "mime_type": {
+          "enum": [
+            "text/javascript",
+            "application/json",
+            "text/plain",
+            "image/png",
+            "image/jpeg",
+            "image/webp"
+          ],
+          "title": "Mime Type",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": ["path", "mime_type", "sha256"],
+      "title": "PackageAsset",
+      "type": "object"
+    },
+    "PackageControl": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 40,
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "min": {
+          "title": "Min",
+          "type": "number"
+        },
+        "max": {
+          "title": "Max",
+          "type": "number"
+        },
+        "step": {
+          "exclusiveMinimum": 0,
+          "title": "Step",
+          "type": "number"
+        },
+        "initial": {
+          "title": "Initial",
+          "type": "number"
+        },
+        "unit": {
+          "maxLength": 40,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": ["id", "label", "min", "max", "step", "initial", "unit"],
+      "title": "PackageControl",
+      "type": "object"
+    },
+    "PackageOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "unit": {
+          "maxLength": 40,
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": ["label", "unit"],
+      "title": "PackageOutput",
+      "type": "object"
+    },
+    "PackageScene": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": ["proportional", "inverse", "linear"],
+          "title": "Kind",
+          "type": "string"
+        },
+        "controls": {
+          "items": {
+            "$ref": "#/$defs/PackageControl"
+          },
+          "maxItems": 1,
+          "minItems": 1,
+          "title": "Controls",
+          "type": "array"
+        },
+        "output": {
+          "$ref": "#/$defs/PackageOutput"
+        },
+        "coefficient": {
+          "default": 1,
+          "maximum": 1000000.0,
+          "minimum": -1000000.0,
+          "title": "Coefficient",
+          "type": "number"
+        },
+        "intercept": {
+          "default": 0,
+          "maximum": 1000000.0,
+          "minimum": -1000000.0,
+          "title": "Intercept",
+          "type": "number"
+        }
+      },
+      "required": ["kind", "controls", "output"],
+      "title": "PackageScene",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "package_id": {
+      "maxLength": 80,
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "title": "Package Id",
+      "type": "string"
+    },
+    "version": {
+      "maxLength": 60,
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$",
+      "title": "Version",
+      "type": "string"
+    },
+    "runtime": {
+      "enum": ["declarative-v1", "worker-v1"],
+      "title": "Runtime",
+      "type": "string"
+    },
+    "exploration": {
+      "$ref": "#/$defs/DiscoveryExploration"
+    },
+    "scene": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PackageScene"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "entry": {
+      "anyOf": [
+        {
+          "maxLength": 160,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Entry"
+    },
+    "assets": {
+      "items": {
+        "$ref": "#/$defs/PackageAsset"
+      },
+      "maxItems": 31,
+      "title": "Assets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "package_id",
+    "version",
+    "runtime",
+    "exploration"
+  ],
+  "title": "PackageManifest",
+  "type": "object"
+}

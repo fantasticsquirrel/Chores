@@ -85,6 +85,44 @@ describe("native Discovery Lab", () => {
     );
     expect(await view.findByText("Enable Gravity lab")).toBeTruthy();
   });
+  it("binds published-package approval to the displayed version", async () => {
+    mocks();
+    const published = {
+      ...item,
+      package: {
+        version: "1.2.0",
+        runtime: "worker-v1" as const,
+        checksum: "a".repeat(64),
+      },
+    };
+    jest.spyOn(apiClient, "getDiscoveryChildAccess").mockResolvedValue({
+      child_id: 2,
+      default_enabled: true,
+      explorations: [{ ...published, enabled: false, override: null }],
+    });
+    const update = jest
+      .spyOn(apiClient, "updateDiscoveryChildAccess")
+      .mockResolvedValue({
+        child_id: 2,
+        default_enabled: true,
+        explorations: [{ ...published, enabled: true, override: true }],
+      });
+    const view = render(
+      <DiscoveryLabScreen session={session} modules={modules} />,
+    );
+    await view.findByText("Explore Gravity lab");
+    fireEvent.press(view.getByText("Manage child access"));
+    fireEvent.press(view.getByText("Alex"));
+    await view.findByText(/Web-only Exploration · Version 1.2.0/);
+    fireEvent.press(view.getByText("Enable Gravity lab"));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(2, {
+        enabled: true,
+        exploration_ids: ["gravity"],
+        package_versions: { gravity: "1.2.0" },
+      }),
+    );
+  });
   it("hides parent management from children and shows denied detail safely", async () => {
     mocks();
     jest

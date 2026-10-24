@@ -1,5 +1,10 @@
 /** Public educational content, never user-generated child data. */
 export type DiscoveryExploration = {
+  package?: {
+    version: string;
+    runtime: "declarative-v1" | "worker-v1";
+    checksum: string;
+  };
   id: string;
   title: string;
   summary: string;
@@ -31,6 +36,7 @@ export type DiscoveryChildAccess = {
 };
 export type DiscoveryAccessUpdate = {
   enabled: boolean;
+  package_versions?: Record<string, string>;
   exploration_ids?: string[];
   subject?: string;
   grade_band?: string;

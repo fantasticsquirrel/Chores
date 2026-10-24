@@ -11,3 +11,5 @@ export type * from "./modules";
 export type * from "./notifications";
 export type * from "./recipes";
 export type * from "./discovery-lab";
+
+export type * from "./discovery-packages";

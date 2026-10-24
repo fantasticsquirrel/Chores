@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.models import Child, User
-from app.models.discovery import DiscoveryExplorationAccess
+from app.models.discovery import DiscoveryExplorationAccess, DiscoveryPackageGrant
 from app.models.enums import UserRole
 from app.schemas.discovery import DiscoveryExploration
 from pydantic import ValidationError
@@ -27,13 +27,20 @@ def catalog() -> tuple[dict, ...]:
         if not isinstance(raw, list) or not raw:
             raise ValueError("Expected a nonempty exploration array.")
         entries = [
-            DiscoveryExploration.model_validate(entry).model_dump() for entry in raw
+            DiscoveryExploration.model_validate(entry).model_dump(exclude_none=True)
+            for entry in raw
         ]
         if len({entry["id"] for entry in entries}) != len(entries):
             raise ValueError("Exploration IDs must be unique.")
     except (OSError, ValueError, ValidationError) as exc:
         raise RuntimeError(f"Invalid Discovery Lab registry: {exc}") from exc
     return tuple(entries)
+
+
+def household_catalog(session: Session, household_id: int) -> tuple[dict, ...]:
+    from app.services.discovery.packages import published_catalog
+
+    return catalog() + published_catalog(session, household_id)
 
 
 def scoped_child(session: Session, user: User, child_id: int) -> Child:
@@ -58,7 +65,23 @@ def overrides(session: Session, child: Child) -> dict[str, bool]:
             DiscoveryExplorationAccess.child_id == child.id,
         )
     ).all()
-    return {row.exploration_id: row.enabled for row in rows}
+    values = {row.exploration_id: row.enabled for row in rows}
+    grants = {
+        row.package_id: row
+        for row in session.scalars(
+            select(DiscoveryPackageGrant).where(
+                DiscoveryPackageGrant.household_id == child.household_id,
+                DiscoveryPackageGrant.child_id == child.id,
+            )
+        )
+    }
+    for entry in household_catalog(session, child.household_id):
+        if entry.get("package"):
+            grant = grants.get(entry["id"])
+            values[entry["id"]] = bool(
+                grant and grant.enabled and grant.version == entry["package"]["version"]
+            )
+    return values
 
 
 def matches(
@@ -91,7 +114,7 @@ def access_response(session: Session, child: Child) -> dict:
                 "enabled": values.get(entry["id"], True),
                 "override": values.get(entry["id"]),
             }
-            for entry in catalog()
+            for entry in household_catalog(session, child.household_id)
         ],
     }
 
@@ -100,6 +123,23 @@ def set_access(
     session: Session, child: Child, entries: list[dict], enabled: bool
 ) -> None:
     for entry in entries:
+        if entry.get("package"):
+            key = {
+                "household_id": child.household_id,
+                "child_id": child.id,
+                "package_id": entry["id"],
+            }
+            row = session.get(DiscoveryPackageGrant, key)
+            if row is None:
+                session.add(
+                    DiscoveryPackageGrant(
+                        **key, version=entry["package"]["version"], enabled=enabled
+                    )
+                )
+            else:
+                row.version = entry["package"]["version"]
+                row.enabled = enabled
+            continue
         key = {
             "household_id": child.household_id,
             "child_id": child.id,

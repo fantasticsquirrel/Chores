@@ -53,6 +53,16 @@ export function DiscoveryAccessPanel() {
       const result = await apiClient.updateDiscoveryChildAccess(childId, {
         enabled,
         exploration_ids: ids,
+        ...(enabled &&
+        items.some((item) => ids.includes(item.id) && item.package)
+          ? {
+              package_versions: Object.fromEntries(
+                items
+                  .filter((item) => ids.includes(item.id) && item.package)
+                  .map((item) => [item.id, item.package!.version]),
+              ),
+            }
+          : {}),
       });
       if (activeKey.current === key) {
         access.replace(result);
@@ -124,12 +134,14 @@ export function DiscoveryAccessPanel() {
       <details className="discovery-policy">
         <summary>How individual and group choices work</summary>
         <p>
-          Explorations start enabled once Discovery Lab is enabled for the
-          household and child’s account. A group change updates only the pages
-          matching all current filters. It writes an individual choice for each
-          matched page, replacing earlier choices for those pages. Everything
-          else stays unchanged. Newly added Explorations start enabled; existing
-          choices are preserved.
+          Bundled Explorations start enabled once Discovery Lab is enabled for
+          the household and child’s account. A group change updates only the
+          pages matching all current filters. It writes an individual choice for
+          each matched page, replacing earlier choices for those pages.
+          Everything else stays unchanged. Newly added bundled Explorations
+          start enabled; existing choices are preserved. Uploaded packages are
+          off until you approve their exact published version. Publishing or
+          rolling back a package requires approval again.
         </p>
       </details>
       {access.loading ? (
@@ -213,6 +225,9 @@ export function DiscoveryAccessPanel() {
                     </span>
                     <h3>{item.title}</h3>
                     <p>{item.summary}</p>
+                    {item.package && (
+                      <p>Package version {item.package.version} · Web only</p>
+                    )}
                     <span className="discovery-choice-note">
                       {item.override === null
                         ? "Default choice"

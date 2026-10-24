@@ -12,7 +12,7 @@ from app.db import Base
 from app.models import ALL_MODELS
 
 ROOT = Path(__file__).resolve().parents[1]
-HEAD = "20261024_0030"
+HEAD = "20261024_0031"
 LEGACY = {"homeschool_courses", "homeschool_lessons",
           "homeschool_course_assignments", "homeschool_lesson_progress"}
 
@@ -29,9 +29,9 @@ def configuration(monkeypatch, path):
 def test_fresh_exact_retained_inventory_and_unfiltered_parity(monkeypatch, tmp_path):
     config = configuration(monkeypatch, tmp_path / "fresh.sqlite")
     command.upgrade(config, "head")
-    assert len(Base.metadata.tables) == 76
+    assert len(Base.metadata.tables) == 79
     assert LEGACY <= set(Base.metadata.tables)
-    assert len(ALL_MODELS) == 72  # Retention is Table-only, not a revived API.
+    assert len(ALL_MODELS) == 75  # Retention is Table-only, not a revived API.
     engine = create_engine(f"sqlite:///{tmp_path / 'fresh.sqlite'}")
     with engine.connect() as connection:
         assert set(inspect(connection).get_table_names()) == set(Base.metadata.tables) | {"alembic_version"}

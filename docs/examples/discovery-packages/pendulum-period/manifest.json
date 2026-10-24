@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "package_id": "pendulum-period",
+  "version": "1.0.0",
+  "runtime": "worker-v1",
+  "entry": "pendulum.js",
+  "exploration": {
+    "id": "pendulum-period",
+    "title": "Pendulum Period",
+    "summary": "Compare equal-time swings to test how length and mass affect a pendulum’s period.",
+    "subject": "Physics",
+    "grade_bands": [
+      "6-8",
+      "9-12"
+    ],
+    "tags": [
+      "motion",
+      "gravity",
+      "controlled comparisons"
+    ],
+    "duration_minutes": 15,
+    "question": "Which changes the time for a swing: the string’s length or the bob’s mass?",
+    "explanation": "Gravity returns a displaced pendulum toward its lowest point. Period means the time for one complete back-and-forth swing. This small-angle model uses a 10° release, a massless fixed-length string, a point bob and no friction. Gravity is fixed at 9.81 m/s². The diagram is schematic; the time and period outputs describe the model, not a measured clock.",
+    "experiments": [
+      {
+        "title": "Change only the length",
+        "instruction": "Predict how making the string four times longer affects period. Keep Mass at 1 kg. Compare Length at 0.5 m and 2 m, using the Time control to inspect each at the same elapsed time.",
+        "observe": "Compare the reported periods and the number of cycles in the same time. Explain why four times the length does not mean four times the period."
+      },
+      {
+        "title": "Change only the mass",
+        "instruction": "Predict whether a heavier bob swings faster. Keep Length at 1 m. Compare Mass at 0.5 kg and 2 kg at the same Time value, then inspect both at 1 second.",
+        "observe": "Compare the period, angle and cycle count. Explain why changing mass alone does not change this ideal pendulum’s motion."
+      }
+    ],
+    "misconception": "A heavy bob is not faster in this model. Gravity pulls harder on it, but its resistance to acceleration increases by the same factor. Large release angles and real friction are outside this model.",
+    "sources": [
+      {
+        "title": "OpenStax: Simple pendulum assumptions and period",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/15-4-pendulums"
+      }
+    ]
+  },
+  "assets": [
+    {
+      "path": "pendulum.js",
+      "mime_type": "text/javascript",
+      "sha256": "67cf8e18e603cda009d2eef43a9f66aabba951a8ac963bfe0fdbbbf3209dbc5a"
+    }
+  ]
+}

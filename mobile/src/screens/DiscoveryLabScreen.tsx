@@ -152,10 +152,18 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
     if (childId === null || !ids.length) return;
     const id = childId,
       ticket = ++epoch.current;
+    const packageVersions = Object.fromEntries(
+      (access?.explorations ?? [])
+        .filter((entry) => ids.includes(entry.id) && entry.package)
+        .map((entry) => [entry.id, entry.package!.version]),
+    );
     await run(async () => {
       const result = await apiClient.updateDiscoveryChildAccess(id, {
         enabled,
         exploration_ids: ids,
+        ...(enabled && Object.keys(packageVersions).length
+          ? { package_versions: packageVersions }
+          : {}),
       });
       if (alive.current && ticket === epoch.current) {
         setAccess(result);
@@ -230,9 +238,11 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
           {manage ? (
             <SectionCard title="Choose a child">
               <Text style={{ color: colors.textMuted }}>
-                Changes apply only to the selected child. New Explorations are
-                enabled by default within an enabled module. The latest
-                individual or group change wins; other pages stay unchanged.
+                Changes apply only to the selected child. Bundled Explorations
+                are enabled by default within an enabled module. Published
+                packages require approval for each version and run in the web
+                app. The latest individual or group change wins; other pages
+                stay unchanged.
               </Text>
               {children.length === 0 && !busy ? (
                 <Text style={{ color: colors.text }}>
@@ -310,6 +320,9 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
                   </Text>
                   <Text style={{ color: colors.textMuted }}>
                     {item.tags.join(" · ")}
+                    {item.package
+                      ? ` · Web-only Exploration · Version ${item.package.version}`
+                      : ""}
                   </Text>
                   {manage ? (
                     <ActionButton

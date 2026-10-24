@@ -176,7 +176,7 @@ def verify(directory, start):
     command.upgrade(cfg(), 'head')
     newest = snapshot()
     retained = {'homeschool_courses', 'homeschool_lessons', 'homeschool_course_assignments', 'homeschool_lesson_progress'}
-    assert set(newest) == set(after) | retained | {"discovery_exploration_access"}
+    assert set(newest) == set(after) | retained | {"discovery_exploration_access", "discovery_packages", "discovery_package_versions", "discovery_package_grants"}
     for table, old in after.items():
         if table in {"modules", "household_module_access"}:
             assert newest[table]['ddl'] == old['ddl'], table
@@ -194,7 +194,8 @@ def verify(directory, start):
                 assert all(row['key'] == 'discovery-lab' and row['enabled'] == 1 for row in records)
         else:
             assert newest[table] == old, table
-    assert newest['discovery_exploration_access']['rows'] == []
+    for table in ('discovery_exploration_access', 'discovery_packages', 'discovery_package_versions', 'discovery_package_grants'):
+        assert newest[table]['rows'] == []
     for table in retained:
         assert newest[table]['rows'] == []
     command.check(cfg())  # Real UNFILTERED schema check, on both upgrade paths.

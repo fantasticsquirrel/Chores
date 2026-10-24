@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "package_id": "spring-force",
+  "version": "1.0.0",
+  "runtime": "declarative-v1",
+  "exploration": {
+    "id": "spring-force",
+    "title": "Spring Force",
+    "summary": "Compare spring stretch with the force pulling it back.",
+    "subject": "Physics",
+    "grade_bands": ["6-8", "9-12"],
+    "tags": ["forces", "proportional relationships"],
+    "duration_minutes": 10,
+    "question": "How does doubling the stretch change an ideal spring’s restoring force?",
+    "explanation": "A stretched spring pulls toward its resting length. This model reports the size of that restoring force, not its direction. With stiffness fixed at 20 N/m, each extra 0.01 m of stretch adds 0.20 N. The chosen stiffness describes an illustrative ideal spring. Real springs follow this relationship only within their elastic range; this is not a safe-load calculator.",
+    "experiments": [
+      {
+        "title": "Double the stretch",
+        "instruction": "Predict whether doubling stretch doubles the force. Set Stretch to 0.05 m, record the force, then set 0.10 m. The stiffness stays fixed.",
+        "observe": "Compare the two forces. What happened to their ratio, and how does that support or challenge your prediction?"
+      },
+      {
+        "title": "Equal steps, equal changes",
+        "instruction": "Predict what equal increases in stretch will do to force. Compare Stretch at 0.02 m, 0.04 m and 0.06 m. Keep the same ideal spring.",
+        "observe": "Calculate the force increase between each pair. Explain why equal stretch steps produce equal force steps; then test the zero-stretch boundary."
+      }
+    ],
+    "misconception": "A larger restoring force does not mean the spring pushes farther away. Its force acts back toward the resting length; the output shows magnitude only.",
+    "sources": [
+      {
+        "title": "OpenStax: Hooke’s law and restoring force",
+        "url": "https://openstax.org/books/college-physics-2e/pages/16-1-hookes-law-stress-and-strain-revisited"
+      }
+    ]
+  },
+  "scene": {
+    "kind": "proportional",
+    "controls": [
+      {
+        "id": "stretch",
+        "label": "Stretch",
+        "min": 0,
+        "max": 0.2,
+        "step": 0.01,
+        "initial": 0.05,
+        "unit": "m"
+      }
+    ],
+    "output": {
+      "label": "Restoring force magnitude",
+      "unit": "N"
+    },
+    "coefficient": 20
+  },
+  "assets": []
+}

@@ -55,7 +55,7 @@ def test_create_all_exact_legacy_schema_against_independent_ddl(tmp_path):
     Base.metadata.create_all(engine)
     with engine.connect() as connection, sqlite3.connect(":memory:") as golden:
         assert set(inspect(connection).get_table_names()) == set(Base.metadata.tables)
-        assert len(inspect(connection).get_table_names()) == 76
+        assert len(inspect(connection).get_table_names()) == 79
         assert compare_metadata(MigrationContext.configure(connection), Base.metadata) == []
         raw = connection.connection.driver_connection
         for name, ddl in LEGACY_DDL.items():

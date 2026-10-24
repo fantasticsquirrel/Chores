@@ -134,9 +134,9 @@ def verify(directory, start):
     command.upgrade(cfg(), '20261013_0028')
     after = snapshot()
     # The current test API creates all registered metadata at its 0026 setup,
-    # including the four retained tables and Discovery Lab. Preserve the 76-table
+    # including the four retained tables and Discovery Lab. Preserve the 79-table
     # snapshot at the historical 0028 repair boundary, not a stale 71 count.
-    assert len(before) == 76 and before.keys() == after.keys()
+    assert len(before) == 79 and before.keys() == after.keys()
     for table, old in before.items():
         if table != 'family_tree_other_names':
             assert old == after[table], table
@@ -147,7 +147,7 @@ def verify(directory, start):
     command.upgrade(cfg(), 'head')
     newest = snapshot()
     retained = {'homeschool_courses', 'homeschool_lessons', 'homeschool_course_assignments', 'homeschool_lesson_progress'}
-    assert set(newest) == set(after) | retained | {"discovery_exploration_access"}
+    assert set(newest) == set(after) | retained | {"discovery_exploration_access", "discovery_packages", "discovery_package_versions", "discovery_package_grants"}
     for table, old in after.items():
         if table in {"modules", "household_module_access"}:
             assert newest[table]['ddl'] == old['ddl'], table
@@ -165,7 +165,8 @@ def verify(directory, start):
                 assert all(row['key'] == 'discovery-lab' and row['enabled'] == 1 for row in records)
         else:
             assert newest[table] == old, table
-    assert newest['discovery_exploration_access']['rows'] == []
+    for table in ('discovery_exploration_access', 'discovery_packages', 'discovery_package_versions', 'discovery_package_grants'):
+        assert newest[table]['rows'] == []
     for table in retained:
         assert newest[table]['rows'] == []
     command.check(cfg())
