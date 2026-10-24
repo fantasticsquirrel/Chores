@@ -85,6 +85,7 @@ describe("FT2 directory, bounded graph and typed comparison", () => {
       }),
     );
     mount();
+    fireEvent.click(await screen.findByRole("button", { name: "People" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Load more people" }),
     );
@@ -138,6 +139,7 @@ describe("FT2 directory, bounded graph and typed comparison", () => {
       }),
     );
     mount();
+    fireEvent.click(await screen.findByRole("button", { name: "People" }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Load more people" }),
     );
@@ -289,6 +291,7 @@ describe("FT2 directory, bounded graph and typed comparison", () => {
         },
       });
     mount();
+    fireEvent.click(await screen.findByRole("button", { name: "People" }));
     await screen.findByRole("link", { name: "Disconnected" });
     fireEvent.change(screen.getByLabelText("First comparison person"), {
       target: { value: "1" },
@@ -351,4 +354,20 @@ describe("FT2 directory, bounded graph and typed comparison", () => {
       ),
     ).toBeInTheDocument();
   });
+  it("keeps Tree visual, searches disconnected people, and reveals the focused graph", async () => {
+    mount();
+    await screen.findByRole("region", { name: "Family tree" });
+    expect(screen.getByRole("button", { name: "Tree" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("list", { name: "Recorded people" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Search names and aliases"), { target: { value: "Disconnected" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Show Disconnected in tree" }));
+    expect(screen.getByRole("region", { name: "Tree workspace" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Tree" })).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() => expect(apiClient.getFamilyTreeGraph).toHaveBeenLastCalledWith(expect.objectContaining({ focus_person_id: 2 }), expect.anything()));
+    fireEvent.click(screen.getByRole("button", { name: "People" }));
+    expect(screen.getByLabelText("Search names and aliases")).toHaveValue("Disconnected");
+    fireEvent.click(screen.getByRole("button", { name: "Tree" }));
+    expect(screen.getByRole("region", { name: "Family tree" })).toBeVisible();
+  });
+
 });

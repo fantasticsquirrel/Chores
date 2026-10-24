@@ -13,6 +13,7 @@ const settings: NotificationSettings = { in_app_enabled: true, push_enabled: tru
 const unread: NotificationItem = { id: 7, module_key: "chores", title: "Approval waiting", body: "Mia completed dishes", category: "submission", severity: "info", link_url: "/chore/board", read_at: null, created_at: "2026-10-04T10:00:00Z", expires_at: null };
 const read: NotificationItem = { ...unread, id: 8, title: "Earlier reminder", link_url: "https://evil.example/board", read_at: "2026-10-04T11:00:00Z" };
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>((done) => { resolve = done; }); return { promise, resolve }; }
+function openSettings() { fireEvent.press(screen.getByRole("button", { name: "Settings" })); }
 function mount(modules = [chores], currentSession = session) { const navigate = jest.fn(); const view = render(<NotificationsScreen modules={modules} session={currentSession} onNavigate={navigate} />); return { ...view, navigate }; }
 
 describe("NotificationsScreen", () => {
@@ -29,7 +30,7 @@ describe("NotificationsScreen", () => {
     const disable=jest.fn();const enable=jest.fn();
     const nativePush={state:{status,busy:false,hasRegistration:true,message:"Permission is blocked; device remains registered."},refresh:jest.fn(),enable,disable};
     render(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={nativePush} />);
-    await screen.findByText("Approval waiting");
+    await screen.findByText("Approval waiting"); openSettings();
     expect(screen.getByRole("button",{name:"Disable device notifications"}).props.accessibilityState.disabled).toBe(false);
     fireEvent.press(screen.getByRole("button",{name:"Disable device notifications"}));expect(disable).toHaveBeenCalledTimes(1);
     fireEvent.press(screen.getByRole("button",{name:"Enable device notifications"}));expect(enable).toHaveBeenCalledTimes(1);
@@ -39,7 +40,7 @@ describe("NotificationsScreen", () => {
   ] as const)("keeps Save reminder settings the only enabled primary in composed device state %j",async state=>{
     const nativePush={state:{...state,hasRegistration:state.status==="enabled",message:"Device status"},refresh:jest.fn(),enable:jest.fn(),disable:jest.fn()};
     const view=render(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={nativePush} />);
-    await screen.findByText("Approval waiting");
+    await screen.findByText("Approval waiting"); openSettings();
     const primary=view.UNSAFE_getAllByType(ActionButton).filter(button=>!button.props.disabled&&(button.props.variant??"primary")==="primary");
     expect(primary.map(button=>button.props.label)).toEqual(["Save reminder settings"]);
     expect(view.UNSAFE_getAllByType(ActionButton).find(button=>button.props.label==="Enable device notifications")?.props.variant).toBe("secondary");
@@ -48,7 +49,7 @@ describe("NotificationsScreen", () => {
     const refresh=jest.fn();const enable=jest.fn();const disable=jest.fn();
     const nativePush={state:{status,busy:false,hasRegistration:false,message:"Could not check device notifications. Try again."},refresh,enable,disable};
     const view=render(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={nativePush} />);
-    await screen.findByText("Approval waiting");
+    await screen.findByText("Approval waiting"); openSettings();
     fireEvent.press(screen.getByRole("button",{name:"Retry device notifications"}));expect(refresh).toHaveBeenCalledTimes(1);expect(enable).not.toHaveBeenCalled();expect(disable).not.toHaveBeenCalled();
     view.rerender(<NotificationsScreen modules={[chores]} session={session} onNavigate={jest.fn()} nativePush={{...nativePush,state:{...nativePush.state,busy:true}}} />);
     expect(screen.getByRole("button",{name:"Retry device notifications"}).props.accessibilityState.disabled).toBe(true);
@@ -60,6 +61,7 @@ describe("NotificationsScreen", () => {
     expect(screen.getAllByText("Mia completed dishes")).toHaveLength(2);
     expect(screen.getByText("Earlier reminder")).toBeTruthy(); expect(screen.getByText("1 unread")).toBeTruthy();
     expect(apiClient.listNotifications).toHaveBeenCalledWith({ unread: 0, limit: 200 });
+    openSettings();
     expect(screen.getByLabelText("Daily digest time").props.value).toBe("08:00");
     expect(screen.getByLabelText("Due soon hours").props.value).toBe("24");
     expect(apiClient.markNotificationRead).not.toHaveBeenCalled(); expect(apiClient.markAllNotificationsRead).not.toHaveBeenCalled(); expect(apiClient.updateNotificationSettings).not.toHaveBeenCalled();
@@ -102,25 +104,25 @@ describe("NotificationsScreen", () => {
     jest.mocked(apiClient.listNotifications).mockResolvedValue({ items: [], unread_count: 0 });
     fireEvent.press(screen.getByRole("button", { name: "Refresh" })); await screen.findByText("No notifications yet.");
   });
-  it("saves every reminder field while preserving the server's browser push value and reads settings back", async () => {
-    mount(); await screen.findByText("Approval waiting");
+  it("saves every reminder field while preserving the server's browser push value and uses the authoritative save response", async () => {
+    mount(); await screen.findByText("Approval waiting"); openSettings();
     const changed = { ...settings, in_app_enabled: false, daily_digest_enabled: false, daily_digest_time: "09:45", due_soon_enabled: false, due_soon_hours: 48, approval_notifications_enabled: false, quiet_hours_start: "22:15", quiet_hours_end: "06:30" };
     for (const label of ["In-app notifications", "Daily chore digest", "Upcoming chore reminders", "Submission and approval alerts"]) fireEvent(screen.getByLabelText(label), "valueChange", false);
     for (const [label, value] of [["Daily digest time", "09:45"], ["Due soon hours", "48"], ["Quiet hours start", "22:15"], ["Quiet hours end", "06:30"]]) fireEvent.changeText(screen.getByLabelText(label), value);
-    jest.mocked(apiClient.getNotificationSettings).mockResolvedValue({ chores: changed });
+    jest.mocked(apiClient.updateNotificationSettings).mockResolvedValue({ module_key: "chores", settings: changed });
     fireEvent.press(screen.getByRole("button", { name: "Save reminder settings" }));
     await screen.findByText("Reminder settings saved.");
     const {push_enabled: _push, ...preferences} = changed;
-    expect(apiClient.updateNotificationSettings).toHaveBeenCalledWith("chores", preferences); expect(apiClient.getNotificationSettings).toHaveBeenCalledTimes(2);
+    expect(apiClient.updateNotificationSettings).toHaveBeenCalledWith("chores", preferences); expect(apiClient.getNotificationSettings).toHaveBeenCalledTimes(1);
   });
   it.each([["Due soon hours", "0"], ["Due soon hours", "169"], ["Due soon hours", "1.5"], ["Due soon hours", ""], ["Daily digest time", "24:00"], ["Quiet hours start", "9:00"], ["Quiet hours end", "07:60"]])("rejects invalid %s = %s before writing", async (label, value) => {
-    mount(); await screen.findByText("Approval waiting"); fireEvent.changeText(screen.getByLabelText(label), value);
+    mount(); await screen.findByText("Approval waiting"); openSettings(); fireEvent.changeText(screen.getByLabelText(label), value);
     fireEvent.press(screen.getByRole("button", { name: "Save reminder settings" }));
     expect(screen.getByText(/Use HH:MM times and whole due soon hours from 1 to 168/)).toBeTruthy(); expect(apiClient.updateNotificationSettings).not.toHaveBeenCalled();
   });
   it("keeps edits after a save failure", async () => {
     jest.mocked(apiClient.updateNotificationSettings).mockRejectedValueOnce(new Error("save unavailable"));
-    mount(); await screen.findByText("Approval waiting"); fireEvent.changeText(screen.getByLabelText("Daily digest time"), "09:45");
+    mount(); await screen.findByText("Approval waiting"); openSettings(); fireEvent.changeText(screen.getByLabelText("Daily digest time"), "09:45");
     fireEvent.press(screen.getByRole("button", { name: "Save reminder settings" })); await screen.findByText(/save unavailable/);
     expect(screen.getByLabelText("Daily digest time").props.value).toBe("09:45");
   });
@@ -131,25 +133,26 @@ describe("NotificationsScreen", () => {
   });
   it("labels push as browser settings, opens the exact URL and never registers native push", async () => {
     const register = jest.spyOn(apiClient, "createPushSubscription"); const config = jest.spyOn(apiClient, "getPushConfig");
-    mount(); await screen.findByText("Approval waiting"); expect(screen.getByText(/Native push notifications are not available/)).toBeTruthy();
+    mount(); await screen.findByText("Approval waiting"); openSettings(); expect(screen.getByText(/Native push notifications are not available/)).toBeTruthy();
     fireEvent.press(screen.getByRole("button", { name: "Manage browser push" })); await waitFor(() => expect(Linking.openURL).toHaveBeenCalledWith("https://family.multihost.ing/chore/notifications"));
     expect(register).not.toHaveBeenCalled(); expect(config).not.toHaveBeenCalled(); expect(apiClient.updateNotificationSettings).not.toHaveBeenCalled();
   });
   it("reports browser opening failure", async () => {
-    jest.mocked(Linking.openURL).mockRejectedValueOnce(new Error("browser unavailable")); mount(); await screen.findByText("Approval waiting");
+    jest.mocked(Linking.openURL).mockRejectedValueOnce(new Error("browser unavailable")); mount(); await screen.findByText("Approval waiting"); openSettings();
     fireEvent.press(screen.getByRole("button", { name: "Manage browser push" })); await screen.findByText(/browser unavailable/);
   });
   it("keeps personal preferences available without granting related module destinations", async () => {
     mount([]); await screen.findByText("Approval waiting"); expect(apiClient.getNotificationSettings).toHaveBeenCalled();
     expect(screen.queryByRole("button", {name:"Open related page"})).toBeNull();
-    for(const label of ["Save reminder settings","Mark all read","Mark read: Approval waiting"]) expect(screen.getByRole("button",{name:label})).toBeTruthy();
+    for(const label of ["Mark all read","Mark read: Approval waiting"]) expect(screen.getByRole("button",{name:label})).toBeTruthy();
+    openSettings(); expect(screen.getByRole("button", {name:"Save reminder settings"})).toBeTruthy();
   });
   it("lets a view-only child manage their own inbox and personal reminder preferences",async()=>{
     mount([{...chores,can_manage:false}],{...session,user:{...session.user,role:"CHILD",child_id:3}});await screen.findByText("Approval waiting");
-    expect(screen.getByLabelText("Daily digest time").props.editable).toBe(true);
     fireEvent.press(screen.getByRole("button",{name:"Mark read: Approval waiting"}));
     await waitFor(()=>expect(apiClient.markNotificationRead).toHaveBeenCalledWith(7));
     expect(screen.queryByRole("button",{name:"Open related page"})).toBeNull();
+    openSettings(); expect(screen.getByLabelText("Daily digest time").props.editable).toBe(true);
     expect(apiClient.updateNotificationSettings).not.toHaveBeenCalled();
   });
   it("drops stale load results after a session change", async () => {
@@ -164,4 +167,20 @@ describe("NotificationsScreen", () => {
     const view = mount(); await screen.findByText("Approval waiting"); fireEvent.press(screen.getByRole("button", { name: "Mark read: Approval waiting" }));
     view.unmount(); await act(async () => pending.resolve()); expect(apiClient.listNotifications).toHaveBeenCalledTimes(1); expect(view.navigate).not.toHaveBeenCalled();
   });
+  it("isolates a dirty settings draft from inbox filters and refresh", async () => {
+    mount(); await screen.findByText("Approval waiting");
+    expect(screen.queryByRole("button", { name: "Save reminder settings" })).toBeNull();
+    fireEvent.press(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.changeText(await screen.findByLabelText("Daily digest time"), "09:15");
+    fireEvent.press(screen.getByRole("button", { name: "Inbox" }));
+    fireEvent.press(screen.getByRole("button", { name: "Unread" }));
+    await waitFor(() => expect(apiClient.listNotifications).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole("button", { name: "Unread" }).props.accessibilityState.selected).toBe(true);
+    fireEvent.press(screen.getByRole("button", { name: "Refresh" }));
+    await waitFor(() => expect(apiClient.listNotifications).toHaveBeenCalledTimes(3));
+    fireEvent.press(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByLabelText("Daily digest time").props.value).toBe("09:15");
+    expect(apiClient.getNotificationSettings).toHaveBeenCalledTimes(1);
+  });
+
 });

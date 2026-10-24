@@ -1,5 +1,5 @@
 import { createRef, useEffect, useRef, useState, type RefObject } from "react";
-import { Text, View } from "react-native";
+import { AccessibilityInfo, findNodeHandle, Text, View } from "react-native";
 import type { LayoutOptions } from "@family-manager/family-tree-core";
 import type {
   AuthSessionResponse,
@@ -46,6 +46,7 @@ type Props = {
   session: AuthSessionResponse;
   modules: FamilyModule[];
   onModulesLoaded: (modules: FamilyModule[]) => void;
+  onViewChanged?: () => void;
 };
 export function FamilyTreeScreen(props: Props) {
   return (
@@ -58,7 +59,25 @@ export function FamilyTreeScreen(props: Props) {
     </DraftMemory>
   );
 }
-function TreeScreen({ session, onModulesLoaded }: Props) {
+function TreeScreen({ session, onModulesLoaded, onViewChanged }: Props) {
+  const [mode, setMode] = useState<"tree" | "people">("tree");
+  const graphRegion = useRef<View>(null);
+  const revealGraph = useRef(false);
+  function changeMode(next: "tree" | "people") {
+    setMode(next);
+    onViewChanged?.();
+  }
+  function showInTree(id: number) {
+    revealGraph.current = true;
+    changeMode("tree");
+    void workflow.focus(id);
+  }
+  function focusGraph() {
+    if (!revealGraph.current || mode !== "tree") return;
+    const target = findNodeHandle(graphRegion.current);
+    if (target) AccessibilityInfo.setAccessibilityFocus(target);
+    revealGraph.current = false;
+  }
   const { state, workflow } = useFamilyTree(session, onModulesLoaded);
   const tools = useTreeTools(workflow, state);
   const drafts = useDraftMemory();
@@ -97,6 +116,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
   const discardAction = useRef<(() => void) | null>(null);
   const allowed = state.access === "view" || state.access === "manage";
   useEffect(() => {
+    setMode("tree");
     setCreating(false);
     setDirty(false);
     setDiscardOpen(false);
@@ -237,6 +257,16 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
           setDirty(false);
         }}
       />
+      <View style={formStyles.inlineButtons}>
+        <FamilyTreeButton label="Tree" selected={mode === "tree"} onPress={() => changeMode("tree")} />
+        <FamilyTreeButton label="People" selected={mode === "people"} onPress={() => changeMode("people")} />
+      </View>
+      <TreeTextField label="Search people" value={query} onChange={setQuery} disabled={state.busy} />
+      <ActionButton label="Search directory" disabled={state.loading || state.busy} variant="secondary" onPress={() => {
+        changeMode("people");
+        void workflow.search({ query, tag: tag || null, living_status: living === "all" ? null : living as FamilyTreeLivingStatus, archived });
+      }} />
+      <View ref={graphRegion} accessibilityLabel="Tree workspace" onLayout={focusGraph} style={mode !== "tree" ? { display: "none" } : undefined} accessibilityElementsHidden={mode !== "tree"} importantForAccessibility={mode !== "tree" ? "no-hide-descendants" : "auto"}>
       {state.graph ? (
         <SectionCard title="Family graph">
           <FamilyTreeGraph
@@ -245,7 +275,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
             graphRevision={state.graph.graph_revision}
             onSelectPerson={select}
             onPersonTrigger={setTrigger}
-            onFocusPerson={(id) => void workflow.focus(id)}
+            onFocusPerson={showInTree}
             options={{
               ...options,
               limits: {
@@ -269,13 +299,8 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
           ))}
         </SectionCard>
       ) : null}
-      <SectionCard title="People directory">
-        <TreeTextField
-          label="Search people"
-          value={query}
-          onChange={setQuery}
-          disabled={state.busy}
-        />
+      </View>
+      {mode === "people" ? <SectionCard title="People directory" subtitle="Find any recorded person, including disconnected branches.">
         <TreeTextField
           label="Filter tag"
           value={tag}
@@ -296,7 +321,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
           disabled={state.busy}
         />
         <ActionButton
-          label="Search directory"
+          label="Apply people filters"
           disabled={state.loading || state.busy}
           variant="secondary"
           onPress={() =>
@@ -332,7 +357,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
                 : ""}
             </Text>
             <ActionButton
-              label={`Focus ${personName(p)} (#${p.id})`}
+              label={`Show ${personName(p)} (#${p.id}) in tree`}
               disabled={
                 state.busy ||
                 state.loading ||
@@ -340,7 +365,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
                 !!p.merged_into_person_id
               }
               variant="secondary"
-              onPress={() => void workflow.focus(p.id)}
+              onPress={() => showInTree(p.id)}
             />
           </View>
         ))}
@@ -357,7 +382,7 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
             ? `${state.people.items.length} shown of ${state.people.total}`
             : ""}
         </Text>
-      </SectionCard>
+      </SectionCard> : null}
       <TransferTools tools={tools} state={state} />
       <FamilyTreeDialog
         visible={modal}
@@ -437,6 +462,12 @@ function TreeScreen({ session, onModulesLoaded }: Props) {
                 workflow={workflow}
                 onDirty={setDirty}
                 requestDiscard={requestDiscard}
+                onShowInTree={(id) => requestDiscard(() => {
+                  setDirty(false);
+                  workflow.discardPending();
+                  workflow.closeDetail();
+                  showInTree(id);
+                })}
               />
               <PersonAdvanced
                 key={`advanced:${state.selectedId}:${state.draftEpoch}`}

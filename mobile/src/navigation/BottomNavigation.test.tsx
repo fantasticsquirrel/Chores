@@ -111,6 +111,8 @@ describe("OverflowMenu", () => {
       view.getByTestId("overflow-menu-sheet").props.style,
     );
     expect(sheetStyle.paddingBottom).toBe(58);
+    expect(sheetStyle.maxHeight).toBe("90%");
+    expect(view.getByTestId("overflow-menu-scroll")).toBeTruthy();
     expect(
       view
         .getAllByRole("button")

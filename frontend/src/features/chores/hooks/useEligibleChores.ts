@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { apiClient, type Child, type EligibleChore } from "../../../api";
 import { formatApiError } from "../../../lib/errors";
@@ -26,10 +26,16 @@ const EMPTY_ELIGIBLE_STATE: EligibleChildState = {
 };
 
 function buildTodayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 }
 
 type UseEligibleChoresResult = {
+  canSubmitChores: (
+    childId: number,
+    choreIds: number[],
+    date: string,
+  ) => boolean;
   activeChildren: Child[];
   changeSelectedChild: (childId: string) => void;
   changeTargetDate: (date: string) => void;
@@ -56,8 +62,11 @@ type UseEligibleChoresResult = {
 
 export function useEligibleChores(
   householdId: number | null,
+  initial: { childId?: string; date?: string } = {},
 ): UseEligibleChoresResult {
-  const [targetDate, setTargetDate] = useState(buildTodayIsoDate);
+  const [targetDate, setTargetDate] = useState(
+    () => initial.date || buildTodayIsoDate(),
+  );
   const [childrenState, setChildrenState] = useState<ChildrenState>({
     children: [],
     loading: true,
@@ -66,8 +75,36 @@ export function useEligibleChores(
   const [eligibleByChildId, setEligibleByChildId] = useState<
     Record<number, EligibleChildState>
   >({});
-  const [selectedChildId, setSelectedChildId] = useState("");
+  const [selectedChildId, setSelectedChildId] = useState(initial.childId ?? "");
   const [selectedChoreIds, setSelectedChoreIds] = useState<number[]>([]);
+
+  // Eligibility belongs to one household/date, never to whichever date is currently displayed.
+  const eligibilityScope = `${householdId}:${targetDate}`;
+  const [loadedScope, setLoadedScope] = useState<string | null>(null);
+  const boardLoading =
+    childrenState.loading || loadedScope !== eligibilityScope;
+
+  const scope = useRef({ householdId, targetDate });
+  scope.current = { householdId, targetDate };
+  const selectedId = useRef(selectedChildId);
+  selectedId.current = selectedChildId;
+  const generation = useRef(0);
+  const eligibleRequests = useRef<Record<number, number>>({});
+
+  useEffect(() => {
+    if (initial.childId) {
+      setSelectedChildId(initial.childId);
+      setSelectedChoreIds([]);
+    }
+  }, [initial.childId]);
+  useEffect(() => {
+    if (initial.date) {
+      if (initial.date !== scope.current.targetDate)
+        submissionState.current.boardLoading = true;
+      setTargetDate(initial.date);
+      setSelectedChoreIds([]);
+    }
+  }, [initial.date]);
 
   const activeChildren = useMemo(
     () => childrenState.children.filter((child) => child.active),
@@ -76,10 +113,33 @@ export function useEligibleChores(
   const selectedChild =
     activeChildren.find((child) => child.id.toString() === selectedChildId) ??
     null;
-  const selectedEligibleState =
+  const rawSelectedEligibleState =
     selectedChild === null
       ? EMPTY_ELIGIBLE_STATE
       : (eligibleByChildId[selectedChild.id] ?? EMPTY_ELIGIBLE_STATE);
+  const selectedEligibleState = boardLoading
+    ? { ...EMPTY_ELIGIBLE_STATE, loading: true }
+    : rawSelectedEligibleState;
+  const submissionState = useRef({ boardLoading, eligibleByChildId });
+  submissionState.current = { boardLoading, eligibleByChildId };
+  const canSubmitChores = useCallback(
+    (childId: number, choreIds: number[], date: string): boolean => {
+      const current = submissionState.current;
+      const eligible = current.eligibleByChildId[childId];
+      return (
+        !current.boardLoading &&
+        scope.current.targetDate === date &&
+        !!eligible &&
+        !eligible.loading &&
+        eligible.error === null &&
+        choreIds.length > 0 &&
+        choreIds.every((id) =>
+          eligible.chores.some((chore) => chore.chore_id === id),
+        )
+      );
+    },
+    [],
+  );
 
   const patchEligibleChildState = useCallback(
     (childId: number, patch: Partial<EligibleChildState>): void => {
@@ -99,6 +159,22 @@ export function useEligibleChores(
       childId: number,
       options: { preserveMessage?: boolean } = {},
     ): Promise<void> => {
+      if (
+        scope.current.householdId !== householdId ||
+        scope.current.targetDate !== targetDate
+      )
+        return;
+      submissionState.current.eligibleByChildId = {
+        ...submissionState.current.eligibleByChildId,
+        [childId]: {
+          ...(submissionState.current.eligibleByChildId[childId] ??
+            EMPTY_ELIGIBLE_STATE),
+          loading: true,
+        },
+      };
+      const ticket = (eligibleRequests.current[childId] ?? 0) + 1;
+      eligibleRequests.current[childId] = ticket;
+      const loadGeneration = generation.current;
       setEligibleByChildId((previous) => ({
         ...previous,
         [childId]: {
@@ -116,6 +192,13 @@ export function useEligibleChores(
           date: targetDate,
           child_id: childId,
         });
+        if (
+          scope.current.targetDate !== targetDate ||
+          scope.current.householdId !== householdId ||
+          ticket !== eligibleRequests.current[childId] ||
+          loadGeneration !== generation.current
+        )
+          return;
         setEligibleByChildId((previous) => ({
           ...previous,
           [childId]: {
@@ -129,12 +212,20 @@ export function useEligibleChores(
             submittingChoreId: null,
           },
         }));
-        setSelectedChoreIds((previous) =>
-          previous.filter((choreId) =>
-            chores.some((chore) => chore.chore_id === choreId),
-          ),
-        );
+        if (selectedId.current === String(childId))
+          setSelectedChoreIds((previous) =>
+            previous.filter((choreId) =>
+              chores.some((chore) => chore.chore_id === choreId),
+            ),
+          );
       } catch (error: unknown) {
+        if (
+          scope.current.targetDate !== targetDate ||
+          scope.current.householdId !== householdId ||
+          ticket !== eligibleRequests.current[childId] ||
+          loadGeneration !== generation.current
+        )
+          return;
         setEligibleByChildId((previous) => ({
           ...previous,
           [childId]: {
@@ -146,13 +237,21 @@ export function useEligibleChores(
             submittingChoreId: null,
           },
         }));
-        setSelectedChoreIds([]);
+        if (selectedId.current === String(childId)) setSelectedChoreIds([]);
       }
     },
-    [targetDate],
+    [householdId, targetDate],
   );
 
   const loadChildrenAndEligible = useCallback(async (): Promise<void> => {
+    if (
+      scope.current.householdId !== householdId ||
+      scope.current.targetDate !== targetDate
+    )
+      return;
+    const request = ++generation.current;
+    submissionState.current.boardLoading = true;
+    setLoadedScope(null);
     if (householdId === null) {
       setChildrenState({
         children: [],
@@ -174,8 +273,15 @@ export function useEligibleChores(
       const children = await apiClient.listChildren({
         household_id: householdId,
       });
+      if (
+        request !== generation.current ||
+        scope.current.householdId !== householdId ||
+        scope.current.targetDate !== targetDate
+      )
+        return;
       const active = children.filter((child) => child.active);
       setChildrenState({ children, loading: false, error: null });
+      setLoadedScope(`${householdId}:${targetDate}`);
       setSelectedChildId((previous) =>
         previous.length > 0 &&
         active.some((child) => child.id.toString() === previous)
@@ -191,6 +297,13 @@ export function useEligibleChores(
         ),
       );
 
+      const tickets = new Map(
+        active.map((child) => {
+          const ticket = (eligibleRequests.current[child.id] ?? 0) + 1;
+          eligibleRequests.current[child.id] = ticket;
+          return [child.id, ticket] as const;
+        }),
+      );
       const results = await Promise.all(
         active.map(async (child) => {
           try {
@@ -208,8 +321,25 @@ export function useEligibleChores(
         }),
       );
 
-      setEligibleByChildId(Object.fromEntries(results));
+      if (
+        request === generation.current &&
+        scope.current.targetDate === targetDate
+      )
+        setEligibleByChildId((previous) => ({
+          ...previous,
+          ...Object.fromEntries(
+            results.filter(
+              ([childId]) =>
+                eligibleRequests.current[childId] === tickets.get(childId),
+            ),
+          ),
+        }));
     } catch (error: unknown) {
+      if (
+        request !== generation.current ||
+        scope.current.targetDate !== targetDate
+      )
+        return;
       setChildrenState({
         children: [],
         loading: false,
@@ -224,39 +354,55 @@ export function useEligibleChores(
   }, [loadChildrenAndEligible]);
 
   const changeTargetDate = useCallback((date: string): void => {
+    if (date !== scope.current.targetDate)
+      submissionState.current.boardLoading = true;
     setTargetDate(date);
     setSelectedChoreIds([]);
   }, []);
 
   const changeSelectedChild = useCallback((childId: string): void => {
+    if (submissionState.current.boardLoading) return;
     setSelectedChildId(childId);
     setSelectedChoreIds([]);
   }, []);
 
   const selectToday = useCallback((): void => {
-    setTargetDate(buildTodayIsoDate());
-    setSelectedChoreIds([]);
-  }, []);
+    changeTargetDate(buildTodayIsoDate());
+  }, [changeTargetDate]);
 
   const clearSelectedChores = useCallback((): void => {
     setSelectedChoreIds([]);
   }, []);
 
-  const toggleSelectedChore = useCallback((choreId: number): void => {
-    setSelectedChoreIds((previous) =>
-      previous.includes(choreId)
-        ? previous.filter((id) => id !== choreId)
-        : [...previous, choreId],
-    );
-  }, []);
+  const toggleSelectedChore = useCallback(
+    (choreId: number): void => {
+      if (
+        !canSubmitChores(
+          Number(selectedId.current),
+          [choreId],
+          scope.current.targetDate,
+        )
+      )
+        return;
+      setSelectedChoreIds((previous) =>
+        previous.includes(choreId)
+          ? previous.filter((id) => id !== choreId)
+          : [...previous, choreId],
+      );
+    },
+    [canSubmitChores],
+  );
 
   const getEligibleState = useCallback(
     (childId: number): EligibleChildState =>
-      eligibleByChildId[childId] ?? EMPTY_ELIGIBLE_STATE,
-    [eligibleByChildId],
+      boardLoading
+        ? { ...EMPTY_ELIGIBLE_STATE, loading: true }
+        : (eligibleByChildId[childId] ?? EMPTY_ELIGIBLE_STATE),
+    [boardLoading, eligibleByChildId],
   );
 
   return {
+    canSubmitChores,
     activeChildren,
     changeSelectedChild,
     changeTargetDate,

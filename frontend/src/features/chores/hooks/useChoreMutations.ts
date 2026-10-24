@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   apiClient,
@@ -17,6 +17,13 @@ import {
 import type { EligibleChildState } from "./useEligibleChores";
 
 type UseChoreMutationsOptions = {
+  canSubmitChores: (
+    childId: number,
+    choreIds: number[],
+    date: string,
+  ) => boolean;
+  onFormSaved?: () => void;
+  canManage?: boolean;
   clearSelectedChores: () => void;
   householdId: number | null;
   loadChildrenAndEligible: () => Promise<void>;
@@ -38,19 +45,29 @@ type UseChoreMutationsOptions = {
 };
 
 export function useChoreMutations({
+  canSubmitChores,
+  onFormSaved,
+  canManage = true,
   clearSelectedChores,
   householdId,
   loadChildrenAndEligible,
   loadChores,
   loadMyTasks,
   patchEligibleChildState,
-  refreshEligibleForChild,
   selectedChild,
   selectedChoreIds,
   setChoresError,
   targetDate,
   userId,
 }: UseChoreMutationsOptions) {
+  const canManageRef = useRef(canManage);
+  canManageRef.current = canManage;
+  useEffect(() => {
+    canManageRef.current = canManage;
+    return () => {
+      canManageRef.current = false;
+    };
+  }, [canManage]);
   const [form, setForm] = useState<ChoreFormState>(buildDefaultChoreForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -65,6 +82,30 @@ export function useChoreMutations({
   >(null);
   const [selectedSubmitting, setSelectedSubmitting] = useState(false);
 
+  const canSubmitChoresRef = useRef(canSubmitChores);
+  canSubmitChoresRef.current = canSubmitChores;
+  const currentContext = useRef({
+    householdId,
+    targetDate,
+    childId: selectedChild?.id,
+  });
+  currentContext.current = {
+    householdId,
+    targetDate,
+    childId: selectedChild?.id,
+  };
+  const [quickSubmitting, setQuickSubmitting] = useState(false);
+  const savedCallback = useRef(onFormSaved);
+  savedCallback.current = onFormSaved;
+  const formBusy = useRef(false);
+  const submitBusy = useRef(false);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  useEffect(() => {
+    if (!saveSuccess) return;
+    const timer = setTimeout(() => setSaveSuccess(null), 5000);
+    return () => clearTimeout(timer);
+  }, [saveSuccess]);
+
   const showInterval =
     form.schedule_mode === "EVERY" || form.schedule_mode === "AFTER_COMPLETION";
 
@@ -74,6 +115,7 @@ export function useChoreMutations({
   }
 
   function openCreateForm(): void {
+    if (!canManageRef.current || formBusy.current) return;
     setEditingId(null);
     setForm(buildDefaultChoreForm());
     setSubmitError(null);
@@ -81,6 +123,7 @@ export function useChoreMutations({
   }
 
   function openEditForm(chore: Chore): void {
+    if (!canManageRef.current || formBusy.current) return;
     setEditingId(chore.id);
     setForm({
       name: chore.name,
@@ -103,8 +146,9 @@ export function useChoreMutations({
 
   function cancelForm(): void {
     setShowForm(false);
-    setEditingId(null);
-    setSubmitError(null);
+  }
+  function resumeForm(): void {
+    setShowForm(true);
   }
 
   function setField<K extends keyof ChoreFormState>(
@@ -118,7 +162,8 @@ export function useChoreMutations({
     event: FormEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
-    if (householdId === null) return;
+    if (!canManageRef.current || householdId === null || formBusy.current)
+      return;
 
     let command:
       | { kind: "create"; payload: ReturnType<typeof buildCreateChorePayload> }
@@ -144,6 +189,7 @@ export function useChoreMutations({
       return;
     }
 
+    formBusy.current = true;
     setSubmittingForm(true);
     setSubmitError(null);
 
@@ -154,6 +200,10 @@ export function useChoreMutations({
         await apiClient.createChore(command.payload);
       }
 
+      savedCallback.current?.();
+      setSaveSuccess(
+        command.kind === "create" ? "Chore created." : "Chore updated.",
+      );
       setShowForm(false);
       setEditingId(null);
       clearSelectedSubmitFeedback();
@@ -163,11 +213,13 @@ export function useChoreMutations({
     } catch (error: unknown) {
       setSubmitError(formatApiError(error));
     } finally {
+      formBusy.current = false;
       setSubmittingForm(false);
     }
   }
 
   async function handleArchive(chore: Chore): Promise<void> {
+    if (!canManageRef.current) return;
     if (householdId === null) return;
     if (
       !window.confirm(
@@ -194,12 +246,20 @@ export function useChoreMutations({
     chore: EligibleChore,
   ): Promise<void> {
     if (
+      !canManageRef.current ||
+      submitBusy.current ||
+      !canSubmitChoresRef.current(child.id, [chore.chore_id], targetDate)
+    )
+      return;
+    if (
       !window.confirm(
         `Submit "${chore.name}" for ${child.name} on ${targetDate}?`,
       )
     )
       return;
 
+    submitBusy.current = true;
+    setQuickSubmitting(true);
     patchEligibleChildState(child.id, {
       submittingChoreId: chore.chore_id,
       error: null,
@@ -211,21 +271,43 @@ export function useChoreMutations({
         { for_date: targetDate, chore_ids: [chore.chore_id] },
         { child_id: child.id },
       );
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate
+      )
+        return;
       patchEligibleChildState(child.id, {
         message: `Submitted ${chore.name} for review.`,
         submittingChoreId: null,
       });
-      await refreshEligibleForChild(child.id, { preserveMessage: true });
+      await loadChildrenAndEligible();
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate
+      )
+        return;
+      patchEligibleChildState(child.id, {
+        message: `Submitted ${chore.name} for review.`,
+      });
     } catch (error: unknown) {
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate
+      )
+        return;
       patchEligibleChildState(child.id, {
         error: formatApiError(error),
         submittingChoreId: null,
         message: null,
       });
+    } finally {
+      submitBusy.current = false;
+      setQuickSubmitting(false);
     }
   }
 
   async function handleSelectedSubmit(): Promise<void> {
+    if (!canManageRef.current || submitBusy.current) return;
     if (selectedChild === null) {
       setSelectedSubmitError("Select a child first.");
       return;
@@ -235,6 +317,15 @@ export function useChoreMutations({
       return;
     }
 
+    if (
+      !canSubmitChoresRef.current(
+        selectedChild.id,
+        selectedChoreIds,
+        targetDate,
+      )
+    )
+      return;
+    submitBusy.current = true;
     setSelectedSubmitting(true);
     setSelectedSubmitError(null);
     setSelectedSubmitSuccess(null);
@@ -244,19 +335,33 @@ export function useChoreMutations({
         { for_date: targetDate, chore_ids: selectedChoreIds },
         { child_id: selectedChild.id },
       );
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate ||
+        currentContext.current.childId !== selectedChild.id
+      )
+        return;
       setSelectedSubmitSuccess(
         `Submitted ${selectedChoreIds.length} chore(s) for ${selectedChild.name}.`,
       );
       clearSelectedChores();
-      await refreshEligibleForChild(selectedChild.id);
+      await loadChildrenAndEligible();
     } catch (error: unknown) {
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate ||
+        currentContext.current.childId !== selectedChild.id
+      )
+        return;
       setSelectedSubmitError(formatApiError(error));
     } finally {
+      submitBusy.current = false;
       setSelectedSubmitting(false);
     }
   }
 
   async function completeParentTask(choreId: number): Promise<void> {
+    if (!canManageRef.current) return;
     await apiClient.completeParentTask(choreId, targetDate);
     await loadMyTasks();
   }
@@ -264,6 +369,7 @@ export function useChoreMutations({
   return {
     archivingId,
     cancelForm,
+    resumeForm,
     clearSelectedSubmitFeedback,
     completeParentTask,
     editingId,
@@ -274,8 +380,10 @@ export function useChoreMutations({
     handleSubmit,
     openCreateForm,
     openEditForm,
+    saveSuccess,
     selectedSubmitError,
     selectedSubmitSuccess,
+    quickSubmitting,
     selectedSubmitting,
     setField,
     showForm,

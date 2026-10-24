@@ -55,6 +55,16 @@ async function upload(
   id: string,
   version = "1.0.0",
 ) {
+  if (!(await page.getByLabel("Upload package ZIP").isVisible())) {
+    await page
+      .getByRole("button", { name: "Package authoring", exact: true })
+      .click();
+  }
+  const refreshed = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/discovery/packages") &&
+      response.request().method() === "GET",
+  );
   await page.getByLabel("Upload package ZIP").setInputFiles({
     name: `${id}.zip`,
     mimeType: "application/zip",
@@ -65,15 +75,23 @@ async function upload(
       .getByRole("status")
       .filter({ hasText: `Uploaded ${id} version ${version}` }),
   ).toBeVisible();
-  return page
-    .locator(".discovery-package-author > ul > li")
-    .filter({ hasText: id })
-    .filter({
-      has: page.getByRole("button", {
-        name: `Preview ${version}`,
-        exact: true,
-      }),
-    });
+  await refreshed;
+  await page.getByLabel("Search packages").fill(id);
+  const group = page
+    .locator(".discovery-package-group")
+    .filter({ has: page.getByRole("heading", { name: id, exact: true }) });
+  await expect(group).toBeVisible();
+  if (
+    !(await group
+      .getByRole("button", { name: `Preview ${version}`, exact: true })
+      .isVisible())
+  ) {
+    await group.getByRole("button", { name: /^Other versions/ }).click();
+  }
+  await expect(
+    group.getByRole("button", { name: `Preview ${version}`, exact: true }),
+  ).toBeVisible();
+  return group;
 }
 for (const viewport of [
   { name: "desktop", width: 1440, height: 1000 },
@@ -297,11 +315,19 @@ for (const viewport of [
         .filter({ hasText: `Published ${workerId} version 1.1.0` }),
     ).toBeVisible();
     const old = page
-      .locator(".discovery-package-author > ul > li")
-      .filter({ hasText: workerId })
+      .locator(".discovery-package-group")
       .filter({
-        has: page.getByRole("button", { name: "Preview 1.0.0", exact: true }),
+        has: page.getByRole("heading", { name: workerId, exact: true }),
       });
+    await expect(
+      old.getByText("Current version: 1.1.0", { exact: true }),
+    ).toBeVisible();
+    if (
+      !(await old
+        .getByRole("button", { name: "Preview 1.0.0", exact: true })
+        .isVisible())
+    )
+      await old.getByRole("button", { name: /^Other versions/ }).click();
     await old
       .getByRole("button", { name: "Publish 1.0.0", exact: true })
       .click();

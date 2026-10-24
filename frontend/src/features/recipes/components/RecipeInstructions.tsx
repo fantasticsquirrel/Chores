@@ -29,21 +29,23 @@ export function RecipeInstructions({
 }: RecipeInstructionsProps): ReactElement {
   return (
     <>
-      <FormField label="Scaled Servings">
-        <TextInput
-          type="number"
-          value={targetServings}
-          onChange={(event) => void onScaleServings(event.target.value)}
-        />
-      </FormField>
-      <FormField label="Scale Multiplier">
-        <TextInput
-          type="number"
-          step="0.25"
-          value={scaleMultiplier}
-          onChange={(event) => void onScaleMultiplier(event.target.value)}
-        />
-      </FormField>
+      <div className="recipe-scale-controls">
+        <FormField label="Scaled Servings">
+          <TextInput
+            type="number"
+            value={targetServings}
+            onChange={(event) => void onScaleServings(event.target.value)}
+          />
+        </FormField>
+        <FormField label="Scale Multiplier">
+          <TextInput
+            type="number"
+            step="0.25"
+            value={scaleMultiplier}
+            onChange={(event) => void onScaleMultiplier(event.target.value)}
+          />
+        </FormField>
+      </div>
       <h2>Ingredients</h2>
       <ul>
         {displayedIngredients.map((row) => (

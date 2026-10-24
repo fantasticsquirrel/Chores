@@ -6,7 +6,7 @@ import { typography } from "./typography";
 function createFormStyles() {
   return StyleSheet.create({
     fieldLabel: {
-      color: "#334155",
+      color: colors.text,
       fontSize: 13,
       fontWeight: "800",
       marginBottom: 6,
@@ -17,7 +17,7 @@ function createFormStyles() {
       borderColor: colors.borderStrong,
       borderRadius: 8,
       borderWidth: 1,
-      color: "#0f172a",
+      color: colors.text,
       fontSize: 16,
       minHeight: 48,
       paddingHorizontal: 12,
@@ -35,7 +35,7 @@ function createFormStyles() {
     },
     selectableRow: {
       alignItems: "center",
-      borderColor: "#e2e8f0",
+      borderColor: colors.border,
       borderRadius: 8,
       borderWidth: 1,
       flexDirection: "row",
@@ -45,7 +45,7 @@ function createFormStyles() {
       padding: 12,
     },
     selectableRowSelected: {
-      backgroundColor: "#f0fdfa",
+      backgroundColor: colors.primarySoft,
       borderColor: colors.primaryBorder,
     },
     rowMain: {
@@ -69,7 +69,7 @@ function createFormStyles() {
       fontWeight: "800",
     },
     selectionMarkSelected: {
-      color: colors.primary,
+      color: colors.text,
     },
     button: {
       alignItems: "center",
@@ -87,7 +87,7 @@ function createFormStyles() {
     },
     buttonSecondary: {
       backgroundColor: colors.surfaceSoft,
-      borderColor: "#b8d8ca",
+      borderColor: colors.borderStrong,
       borderWidth: 1,
     },
     buttonDanger: {
@@ -97,8 +97,8 @@ function createFormStyles() {
       opacity: 0.82,
     },
     buttonDisabled: {
-      backgroundColor: "#cbd5e1",
-      borderColor: "#cbd5e1",
+      backgroundColor: colors.surfaceSoft,
+      borderColor: colors.border,
     },
     buttonText: {
       color: colors.surface,
@@ -107,10 +107,10 @@ function createFormStyles() {
       letterSpacing: 0,
     },
     buttonSecondaryText: {
-      color: colors.primary,
+      color: colors.text,
     },
     buttonTextDisabled: {
-      color: colors.surfaceMuted,
+      color: colors.textMuted,
     },
     choiceGrid: {
       flexDirection: "row",
@@ -136,7 +136,7 @@ function createFormStyles() {
       fontWeight: "800",
     },
     choiceButtonTextSelected: {
-      color: colors.primary,
+      color: colors.text,
     },
     formSection: {
       marginTop: 6,

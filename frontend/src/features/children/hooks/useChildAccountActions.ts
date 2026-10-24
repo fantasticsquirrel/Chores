@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { apiClient, type Child } from "../../../api";
 import { formatApiError } from "../../../lib/errors";
 
 type UseChildAccountActionsOptions = {
+  canManage?: boolean;
+  onAccountChanged?: () => Promise<void>;
   children: Child[];
   householdId: number | null;
   selectedChildId: number | null;
@@ -47,10 +49,20 @@ export type UseChildAccountActionsResult = {
 };
 
 export function useChildAccountActions({
+  canManage = true,
   children,
+  onAccountChanged,
   householdId,
   selectedChildId,
 }: UseChildAccountActionsOptions): UseChildAccountActionsResult {
+  const canManageRef = useRef(canManage);
+  canManageRef.current = canManage;
+  useEffect(() => {
+    canManageRef.current = canManage;
+    return () => {
+      canManageRef.current = false;
+    };
+  }, [canManage]);
   const [childEmail, setChildEmail] = useState("");
   const [childPassword, setChildPassword] = useState("");
   const [linkingAccount, setLinkingAccount] = useState(false);
@@ -81,6 +93,7 @@ export function useChildAccountActions({
   }
 
   async function createChildAccount(): Promise<void> {
+    if (!canManageRef.current) return;
     setLinkAccountError(null);
     setLinkAccountSuccess(null);
 
@@ -115,6 +128,7 @@ export function useChildAccountActions({
       );
       setChildEmail("");
       setChildPassword("");
+      await onAccountChanged?.();
     } catch (error: unknown) {
       setLinkAccountError(formatApiError(error));
     } finally {
@@ -123,6 +137,7 @@ export function useChildAccountActions({
   }
 
   async function resetChildEmail(): Promise<void> {
+    if (!canManageRef.current) return;
     setResetEmailError(null);
     setResetEmailSuccess(null);
 
@@ -155,6 +170,7 @@ export function useChildAccountActions({
   }
 
   async function resetChildPassword(): Promise<void> {
+    if (!canManageRef.current) return;
     setResetPasswordError(null);
     setResetPasswordSuccess(null);
 

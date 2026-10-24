@@ -114,6 +114,7 @@ test("deployed chore smoke flow enforces login and supports parent/child/board a
   await expect(page).toHaveURL(/\/chore\/parent\/dashboard$/);
   await page.getByRole("link", { name: "Manage Children" }).click();
   await expect(page).toHaveURL(/\/chore\/parent\/children$/);
+  await page.getByRole("button", { name: "Add Child", exact: true }).click();
   await page.getByLabel("Name").fill(fixture.create_child_name);
   await page.getByRole("button", { name: "Create Child" }).click();
   await expect(
@@ -140,7 +141,7 @@ test("deployed chore smoke flow enforces login and supports parent/child/board a
 
   await signIn(page, fixture.parent_email, fixture.parent_password);
   await expect(page).toHaveURL(/\/chore\/parent\/dashboard$/);
-  await page.getByRole("link", { name: "Open Board" }).click();
+  await page.getByRole("link", { name: "Open Review" }).click();
   await expect(page).toHaveURL(/\/chore\/board$/);
   await expect(submissionRow(page, fixture.child_name)).toBeVisible();
   await submissionRow(page, fixture.child_name)

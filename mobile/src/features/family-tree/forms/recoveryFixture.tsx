@@ -230,6 +230,7 @@ function mount() {
 }
 async function open() {
   mount();
+  fireEvent.press(await screen.findByRole("button", { name: "People" }));
   fireEvent.press(
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 }),
   );

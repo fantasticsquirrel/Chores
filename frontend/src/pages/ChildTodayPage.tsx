@@ -1,5 +1,5 @@
 import type { ChangeEvent, ReactElement } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { apiClient, type EligibleChore } from "../api";
 import { formatApiError } from "../lib/errors";
@@ -17,6 +17,10 @@ function buildTodayIsoDate(): string {
 
 export function ChildTodayPage(): ReactElement {
   const [targetDate, setTargetDate] = useState(buildTodayIsoDate);
+  const dateRef = useRef(targetDate);
+  const requestId = useRef(0);
+  const mounted = useRef(false);
+  const submitLock = useRef(false);
   const [state, setState] = useState<PageState>({
     chores: [],
     loading: true,
@@ -27,21 +31,27 @@ export function ChildTodayPage(): ReactElement {
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  async function loadChores(date: string): Promise<void> {
+  async function loadChores(date: string, afterSave = false): Promise<void> {
+    const request = ++requestId.current;
     setState((previous) => ({ ...previous, loading: true, error: null }));
 
     try {
       const chores = await apiClient.listEligibleChores({ date });
+      if (request !== requestId.current || date !== dateRef.current) return;
       setState({ chores, loading: false, error: null });
       setSelectedChoreIds((previous) => previous.filter((choreId) => chores.some((chore) => chore.chore_id === choreId)));
     } catch (error: unknown) {
-      setState({ chores: [], loading: false, error: formatApiError(error) });
+      if (request !== requestId.current || date !== dateRef.current) return;
+      setState({ chores: [], loading: false, error: `${afterSave ? "Submitted, but chores could not refresh. Try Refresh. " : ""}${formatApiError(error)}` });
       setSelectedChoreIds([]);
     }
   }
 
   useEffect(() => {
+    mounted.current = true;
     void loadChores(targetDate);
+    const requests = requestId;
+    return () => { mounted.current = false; requests.current += 1; };
   }, [targetDate]);
 
   function toggleSelection(choreId: number): void {
@@ -53,11 +63,14 @@ export function ChildTodayPage(): ReactElement {
   }
 
   async function handleSubmit(): Promise<void> {
+    if (submitLock.current || state.loading) return;
     if (selectedChoreIds.length === 0) {
       setSubmitError("Select at least one chore to submit.");
       return;
     }
 
+    submitLock.current = true;
+    const submittedDate = targetDate;
     setSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -67,17 +80,23 @@ export function ChildTodayPage(): ReactElement {
         for_date: targetDate,
         chore_ids: selectedChoreIds,
       });
-      setSubmitSuccess(`Submitted ${selectedChoreIds.length} chore(s) for review.`);
-      setSelectedChoreIds([]);
-      await loadChores(targetDate);
+      if (mounted.current && submittedDate === dateRef.current) {
+        setSubmitSuccess(`Submitted ${selectedChoreIds.length} chore(s) for review.`);
+        setSelectedChoreIds([]);
+        await loadChores(submittedDate, true);
+      }
     } catch (error: unknown) {
-      setSubmitError(formatApiError(error));
+      if (mounted.current && submittedDate === dateRef.current) setSubmitError(formatApiError(error));
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   }
 
   function handleDateChange(event: ChangeEvent<HTMLInputElement>): void {
+    dateRef.current = event.target.value;
+    requestId.current++;
+    setSelectedChoreIds([]);
     setTargetDate(event.target.value);
     setSubmitError(null);
     setSubmitSuccess(null);
@@ -100,12 +119,13 @@ export function ChildTodayPage(): ReactElement {
         <form className="children-form today-controls" onSubmit={(event) => event.preventDefault()}>
           <FormField label="Date">
             <DateInput
+              disabled={submitting}
               value={targetDate}
               onChange={handleDateChange}
               max="9999-12-31"
             />
           </FormField>
-          <Button onClick={() => void loadChores(targetDate)} disabled={state.loading}>
+          <Button onClick={() => void loadChores(targetDate)} disabled={state.loading || submitting}>
             {state.loading ? "Refreshing..." : "Refresh"}
           </Button>
         </form>

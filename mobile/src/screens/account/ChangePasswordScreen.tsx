@@ -1,3 +1,4 @@
+import { colors } from "../../styles/colors";
 import { useEffect, useRef, useState } from "react";
 import { TextInput, View } from "react-native";
 
@@ -101,7 +102,7 @@ export function ChangePasswordScreen({ onPasswordChanged }: { onPasswordChanged:
             clearNotices();
           }}
           placeholder="Current password"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           secureTextEntry
           style={formStyles.input}
           textContentType="password"
@@ -115,7 +116,7 @@ export function ChangePasswordScreen({ onPasswordChanged }: { onPasswordChanged:
             clearNotices();
           }}
           placeholder="At least 15 characters"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           secureTextEntry
           style={formStyles.input}
           textContentType="newPassword"
@@ -129,7 +130,7 @@ export function ChangePasswordScreen({ onPasswordChanged }: { onPasswordChanged:
             clearNotices();
           }}
           placeholder="Repeat new password"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           secureTextEntry
           style={formStyles.input}
           textContentType="newPassword"

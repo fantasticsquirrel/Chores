@@ -1,3 +1,4 @@
+import { colors } from "../../styles/colors";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -169,7 +170,7 @@ export function LoginScreen({
                   setError(null);
                 }}
                 placeholder="Email or legacy username"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textSubtle}
                 style={formStyles.input}
                 textContentType="username"
                 value={email}
@@ -182,7 +183,7 @@ export function LoginScreen({
                   setError(null);
                 }}
                 placeholder="Password"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textSubtle}
                 secureTextEntry
                 style={formStyles.input}
                 textContentType="password"
@@ -225,7 +226,7 @@ export function LoginScreen({
                   setError(null);
                 }}
                 placeholder="Parent email or legacy username"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textSubtle}
                 style={formStyles.input}
                 textContentType="username"
                 value={childParentEmail}
@@ -240,7 +241,7 @@ export function LoginScreen({
                   setError(null);
                 }}
                 placeholder="Enter child name"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textSubtle}
                 style={formStyles.input}
                 textContentType="username"
                 value={childName}
@@ -256,7 +257,7 @@ export function LoginScreen({
                   setError(null);
                 }}
                 placeholder="Password"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={colors.textSubtle}
                 secureTextEntry
                 style={formStyles.input}
                 textContentType="password"

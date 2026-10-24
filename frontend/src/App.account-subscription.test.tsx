@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -37,6 +37,7 @@ describe("household account subscription", () => {
     });
 
     renderAccount();
+    fireEvent.click(await screen.findByRole("button", { name: "Subscription" }));
 
     expect(
       await screen.findByRole("heading", { name: "Subscription" }),
@@ -101,6 +102,7 @@ describe("household account subscription", () => {
       ],
     });
     renderAccount();
+    fireEvent.click(await screen.findByRole("button", { name: "Subscription" }));
     const action = await screen.findByRole("button", { name: "Choose a plan" });
     expect(action).toBeDisabled();
     expect(

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -119,6 +119,7 @@ describe("Notifications page", () => {
       </MemoryRouter>,
     );
 
+    fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
     expect(await screen.findByLabelText("Daily digest time")).toHaveValue(
       "08:00",
     );
@@ -166,6 +167,7 @@ describe("Notifications page", () => {
       </MemoryRouter>,
     );
 
+    fireEvent.click(await screen.findByRole("button", { name: "Settings" }));
     const disable = await screen.findByRole("button", {
       name: "Disable app push notifications",
     });
@@ -184,4 +186,37 @@ describe("Notifications page", () => {
       ),
     ).toBeVisible();
   });
+  it("keeps a settings draft across Inbox filters and a failed save", async () => {
+    vi.mocked(apiClient.updateNotificationSettings).mockRejectedValueOnce(new Error("Try again"));
+    render(<MemoryRouter initialEntries={["/notifications"]}><App /></MemoryRouter>);
+    await screen.findByText("Chore ready for review");
+    expect(screen.queryByRole("button", { name: "Save reminder settings" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    fireEvent.change(await screen.findByLabelText("Daily digest time"), { target: { value: "09:15" } });
+    fireEvent.click(screen.getByRole("button", { name: "Inbox" }));
+    fireEvent.click(screen.getByRole("button", { name: "Unread" }));
+    expect(screen.getByRole("button", { name: "Unread" })).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByLabelText("Daily digest time")).toHaveValue("09:15");
+    expect(apiClient.getNotificationSettings).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Save reminder settings" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Try again");
+    expect(screen.getByLabelText("Daily digest time")).toHaveValue("09:15");
+  });
+
+  it("locks repeated mark-read actions and refreshes the filter selected during a delayed write", async () => {
+    let complete!: () => void;
+    vi.mocked(apiClient.markNotificationRead).mockReturnValueOnce(new Promise<void>((resolve) => { complete = resolve; }));
+    render(<MemoryRouter initialEntries={["/notifications"]}><App /></MemoryRouter>);
+    const mark = await screen.findByRole("button", { name: "Mark read" });
+    fireEvent.click(mark); fireEvent.click(mark);
+    expect(apiClient.markNotificationRead).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Unread" }));
+    await waitFor(() => expect(apiClient.listNotifications).toHaveBeenLastCalledWith({ unread: 1, limit: 100 }));
+    vi.mocked(apiClient.listNotifications).mockResolvedValue({ items: [], unread_count: 0 });
+    await act(async () => complete());
+    expect(await screen.findByText("No unread notifications.")).toBeVisible();
+    expect(apiClient.listNotifications).toHaveBeenLastCalledWith({ unread: 1, limit: 100 });
+  });
+
 });

@@ -1,3 +1,4 @@
+import { useId, useState } from "react";
 import { Button } from "../../../ui";
 import {
   discoveryFilterOptions,
@@ -19,6 +20,9 @@ export function DiscoveryFilters({
   disabled = false,
 }: Props) {
   const options = discoveryFilterOptions(items);
+  const [advanced, setAdvanced] = useState(false);
+  const advancedId = useId();
+  const count = [filters.grade, filters.tag].filter(Boolean).length;
   const update = (key: keyof Filters, value: string) =>
     onChange({ ...filters, [key]: value });
   return (
@@ -45,38 +49,60 @@ export function DiscoveryFilters({
           ))}
         </select>
       </label>
-      <label>
-        Grade band
-        <select
-          value={filters.grade}
-          onChange={(event) => update("grade", event.target.value)}
-        >
-          <option value="">All grades</option>
-          {options.grades.map((value) => (
-            <option key={value} value={value}>
-              Grades {value}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Tag
-        <select
-          value={filters.tag}
-          onChange={(event) => update("tag", event.target.value)}
-        >
-          <option value="">All tags</option>
-          {options.tags.map((value) => (
-            <option key={value}>{value}</option>
-          ))}
-        </select>
-      </label>
+      <Button
+        className="discovery-secondary"
+        aria-expanded={advanced}
+        aria-controls={advancedId}
+        onClick={() => setAdvanced((value) => !value)}
+      >
+        Filters ({count})
+      </Button>
       <Button
         className="discovery-secondary"
         onClick={() => onChange(EMPTY_DISCOVERY_FILTERS)}
       >
         Clear filters
       </Button>
+      {count > 0 && (
+        <p className="discovery-active-filters" aria-live="polite">
+          {[
+            filters.grade && `Grades: ${filters.grade}`,
+            filters.tag && `Tag: ${filters.tag}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
+      {advanced && (
+        <div id={advancedId} className="discovery-advanced-filters">
+          <label>
+            Grade band
+            <select
+              value={filters.grade}
+              onChange={(event) => update("grade", event.target.value)}
+            >
+              <option value="">All grades</option>
+              {options.grades.map((value) => (
+                <option key={value} value={value}>
+                  Grades {value}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Tag
+            <select
+              value={filters.tag}
+              onChange={(event) => update("tag", event.target.value)}
+            >
+              <option value="">All tags</option>
+              {options.tags.map((value) => (
+                <option key={value}>{value}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
     </fieldset>
   );
 }

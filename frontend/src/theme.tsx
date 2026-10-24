@@ -50,6 +50,7 @@ export function ThemePicker({ compact = false }: { compact?: boolean }): ReactEl
       <div className="theme-picker-options">
         {themeIds.map((id) => (
           <button
+            aria-label={themes[id].label}
             aria-pressed={theme === id}
             className={`theme-option theme-option--${id}${theme === id ? " active" : ""}`}
             key={id}

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { apiClient, type Child } from "../../../api";
 import { formatApiError } from "../../../lib/errors";
 
 type UseChildMutationsOptions = {
+  canManage?: boolean;
   householdId: number | null;
   loadChildren: () => Promise<void>;
 };
@@ -21,9 +22,18 @@ export type UseChildMutationsResult = {
 };
 
 export function useChildMutations({
+  canManage = true,
   householdId,
   loadChildren,
 }: UseChildMutationsOptions): UseChildMutationsResult {
+  const canManageRef = useRef(canManage);
+  canManageRef.current = canManage;
+  useEffect(() => {
+    canManageRef.current = canManage;
+    return () => {
+      canManageRef.current = false;
+    };
+  }, [canManage]);
   const [nameInput, setNameInput] = useState("");
   const [activeOnCreate, setActiveOnCreate] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -31,6 +41,7 @@ export function useChildMutations({
   const [updatingChildId, setUpdatingChildId] = useState<number | null>(null);
 
   async function createChild(): Promise<void> {
+    if (!canManageRef.current) return;
     const trimmedName = nameInput.trim();
     if (trimmedName.length === 0) {
       setSubmitError("Child name is required.");
@@ -61,6 +72,7 @@ export function useChildMutations({
   }
 
   async function toggleActive(child: Child): Promise<void> {
+    if (!canManageRef.current) return;
     if (householdId === null) {
       setSubmitError("Could not determine household scope.");
       return;

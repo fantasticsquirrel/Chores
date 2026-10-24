@@ -41,7 +41,8 @@ test("parent can link a child account without email, reset email, and child can 
   await page.getByRole("link", { name: "Manage Children" }).click();
   await expect(page).toHaveURL(/\/chore\/parent\/children$/);
 
-  // Create child profile first
+  // The roster leads; creating a profile is a focused header action.
+  await page.getByRole("button", { name: "Add Child", exact: true }).click();
   await page
     .getByRole("heading", { name: "Add Child" })
     .scrollIntoViewIfNeeded();
@@ -56,10 +57,14 @@ test("parent can link a child account without email, reset email, and child can 
 
   // Link account without providing email (auto-generated)
   await page
-    .getByRole("combobox", { name: "Child" })
-    .first()
-    .selectOption({ label: newChildName });
-  await page.getByRole("textbox", { name: "Temporary Password", exact: true }).fill(childPassword);
+    .getByRole("button", {
+      name: `Manage login for ${newChildName}`,
+      exact: true,
+    })
+    .click();
+  await page
+    .getByLabel("Temporary Password", { exact: true })
+    .fill(childPassword);
   await page.getByRole("button", { name: "Create Linked Child Login" }).click();
 
   const successLink = page.getByText(
@@ -71,18 +76,26 @@ test("parent can link a child account without email, reset email, and child can 
 
   // Reset email to explicit address
   await page
-    .getByRole("combobox", { name: "Child" })
-    .nth(1)
-    .selectOption({ label: newChildName });
+    .getByRole("button", { name: "Advanced account tools", exact: true })
+    .click();
   await page
     .getByRole("textbox", { name: /New Legacy Login Email/i })
     .fill(resetEmail);
-  await page.getByRole("button", { name: "Reset Child Email" }).click();
+  await page
+    .getByRole("button", {
+      name: `Reset Child Email for ${newChildName}`,
+      exact: true,
+    })
+    .click();
   await expect(
     page.getByText(
       `Updated legacy login email for ${newChildName}. Parent email + child name + child password is recommended; ${resetEmail} still works for email/password sign-in.`,
     ),
   ).toBeVisible();
+
+  // Dismiss the focused tools before returning to global navigation.
+  await page.getByRole("button", { name: "Close account tools", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Child account tools" })).not.toBeVisible();
 
   // Child can log in with reset email + same password
   await page.getByRole("button", { name: "Log Out" }).click();

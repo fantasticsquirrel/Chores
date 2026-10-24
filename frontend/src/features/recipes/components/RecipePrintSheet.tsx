@@ -15,12 +15,16 @@ type RecipePrintSheetProps = {
   displayedIngredients: DisplayedRecipeIngredient[];
   displayedSteps: DisplayedRecipeStep[];
   recipe: RecipeDetail;
+  targetServings: string;
+  scaleMultiplier: string;
 };
 
 export function RecipePrintSheet({
   displayedIngredients,
   displayedSteps,
   recipe,
+  targetServings,
+  scaleMultiplier,
 }: RecipePrintSheetProps): ReactElement {
   return (
     <article
@@ -32,9 +36,10 @@ export function RecipePrintSheet({
         <p className="recipe-pdf-kicker">Family Manager Recipe</p>
         <h1>{recipe.title}</h1>
         <p className="recipe-pdf-meta">
-          {recipe.servings !== null
-            ? `Serves ${formatQuantity(recipe.servings)}`
-            : "Servings not set"}
+          {targetServings
+            ? `Serves ${formatQuantity(Number(targetServings))}`
+            : "Servings not set"}{" "}
+          · Scale {scaleMultiplier}×
           {recipe.categories.length > 0
             ? ` · ${recipe.categories.map((row) => row.name).join(", ")}`
             : ""}
@@ -45,7 +50,7 @@ export function RecipePrintSheet({
         {recipe.description.trim().length > 0 ? (
           <p>{recipe.description}</p>
         ) : null}
-        {recipe.source_url !== null ? (
+        {recipe.source_url !== null || recipe.source_name ? (
           <p className="recipe-pdf-source">
             Source: {recipe.source_name || recipe.source_url}
           </p>

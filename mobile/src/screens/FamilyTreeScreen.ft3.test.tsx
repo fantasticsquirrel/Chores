@@ -228,6 +228,7 @@ function mount() {
 }
 async function open() {
   mount();
+  fireEvent.press(await screen.findByRole("button", { name: "People" }));
   fireEvent.press(
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 }),
   );
@@ -733,6 +734,7 @@ describe("FT3 actual native screen composition", () => {
         onModulesLoaded={() => {}}
       />,
     );
+    fireEvent.press(await screen.findByRole("button", { name: "People" }));
     fireEvent.press(
       await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 }),
     );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 
 import { apiClient } from "../../../api/client";
@@ -23,6 +23,11 @@ import {
 import type { EligibleChildState } from "./useChoreData";
 
 type UseChoreMutationsOptions = {
+  canSubmitChores: (
+    childId: number,
+    choreIds: number[],
+    date: string,
+  ) => boolean;
   clearMyTasksError: () => void;
   clearSelectedChores: () => void;
   householdId: number;
@@ -52,6 +57,7 @@ type ChoreFormOperation =
   | { choreId: number; kind: "update"; payload: UpdateChoreRequest };
 
 export function useChoreMutations({
+  canSubmitChores,
   clearMyTasksError,
   clearSelectedChores,
   householdId,
@@ -60,7 +66,6 @@ export function useChoreMutations({
   loadMyTasks,
   myTasksError,
   patchEligibleChildState,
-  refreshEligibleForChild,
   selectedChild,
   selectedChoreIds,
   setChoresError,
@@ -79,6 +84,28 @@ export function useChoreMutations({
   const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
   const [archivingId, setArchivingId] = useState<number | null>(null);
   const [selectedSubmitting, setSelectedSubmitting] = useState(false);
+
+  const canSubmitChoresRef = useRef(canSubmitChores);
+  canSubmitChoresRef.current = canSubmitChores;
+  const currentContext = useRef({
+    householdId,
+    targetDate,
+    childId: selectedChild?.id,
+  });
+  currentContext.current = {
+    householdId,
+    targetDate,
+    childId: selectedChild?.id,
+  };
+  const [quickSubmitting, setQuickSubmitting] = useState(false);
+  const formBusy = useRef(false);
+  const submitBusy = useRef(false);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
+  useEffect(() => {
+    if (!saveSuccess) return;
+    const timer = setTimeout(() => setSaveSuccess(null), 5000);
+    return () => clearTimeout(timer);
+  }, [saveSuccess]);
 
   const showInterval = showScheduleInterval(form);
   const submitError = formSubmitError ?? myTasksError;
@@ -105,6 +132,7 @@ export function useChoreMutations({
   }
 
   function cancelForm(): void {
+    if (formBusy.current) return;
     setShowForm(false);
     setEditingId(null);
     clearSubmitError();
@@ -118,7 +146,7 @@ export function useChoreMutations({
   }
 
   async function submitChoreForm(): Promise<void> {
-    if (!canManageRef.current) return;
+    if (!canManageRef.current || formBusy.current) return;
     let operation: ChoreFormOperation;
     try {
       operation =
@@ -137,6 +165,7 @@ export function useChoreMutations({
       return;
     }
 
+    formBusy.current = true;
     setSubmittingForm(true);
     clearSubmitError();
     try {
@@ -146,6 +175,9 @@ export function useChoreMutations({
         await apiClient.createChore(operation.payload);
       }
 
+      setSaveSuccess(
+        operation.kind === "create" ? "Chore created." : "Chore updated.",
+      );
       setShowForm(false);
       setEditingId(null);
       await loadChores();
@@ -154,6 +186,7 @@ export function useChoreMutations({
     } catch (error) {
       setFormSubmitError(formatError(error));
     } finally {
+      formBusy.current = false;
       setSubmittingForm(false);
     }
   }
@@ -196,6 +229,13 @@ export function useChoreMutations({
     chore: EligibleChore,
   ): Promise<void> {
     if (!canManageRef.current) return;
+    if (
+      submitBusy.current ||
+      !canSubmitChoresRef.current(child.id, [chore.chore_id], targetDate)
+    )
+      return;
+    submitBusy.current = true;
+    setQuickSubmitting(true);
     patchEligibleChildState(child.id, {
       submittingChoreId: chore.chore_id,
       error: null,
@@ -207,22 +247,43 @@ export function useChoreMutations({
         { for_date: targetDate, chore_ids: [chore.chore_id] },
         { child_id: child.id },
       );
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate
+      )
+        return;
       patchEligibleChildState(child.id, {
         message: `Submitted ${chore.name} for review.`,
         submittingChoreId: null,
       });
-      await refreshEligibleForChild(child.id, { preserveMessage: true });
+      await loadChildrenAndEligible();
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate
+      )
+        return;
+      patchEligibleChildState(child.id, {
+        message: `Submitted ${chore.name} for review.`,
+      });
     } catch (error) {
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate
+      )
+        return;
       patchEligibleChildState(child.id, {
         error: formatError(error),
         submittingChoreId: null,
         message: null,
       });
+    } finally {
+      submitBusy.current = false;
+      setQuickSubmitting(false);
     }
   }
 
   async function submitSelected(): Promise<void> {
-    if (!canManageRef.current) return;
+    if (!canManageRef.current || submitBusy.current) return;
     if (selectedChild === null) {
       setSelectedSubmitError("Select a child first.");
       return;
@@ -232,6 +293,15 @@ export function useChoreMutations({
       return;
     }
 
+    if (
+      !canSubmitChoresRef.current(
+        selectedChild.id,
+        selectedChoreIds,
+        targetDate,
+      )
+    )
+      return;
+    submitBusy.current = true;
     setSelectedSubmitting(true);
     setSelectedSubmitError(null);
     setSelectedSubmitSuccess(null);
@@ -240,14 +310,33 @@ export function useChoreMutations({
         { for_date: targetDate, chore_ids: selectedChoreIds },
         { child_id: selectedChild.id },
       );
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate ||
+        currentContext.current.childId !== selectedChild.id
+      )
+        return;
+      clearSelectedChores();
+      await loadChildrenAndEligible();
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate ||
+        currentContext.current.childId !== selectedChild.id
+      )
+        return;
       setSelectedSubmitSuccess(
         `Submitted ${selectedChoreIds.length} chore(s) for ${selectedChild.name}.`,
       );
-      clearSelectedChores();
-      await refreshEligibleForChild(selectedChild.id);
     } catch (error) {
+      if (
+        currentContext.current.householdId !== householdId ||
+        currentContext.current.targetDate !== targetDate ||
+        currentContext.current.childId !== selectedChild.id
+      )
+        return;
       setSelectedSubmitError(formatError(error));
     } finally {
+      submitBusy.current = false;
       setSelectedSubmitting(false);
     }
   }
@@ -268,6 +357,8 @@ export function useChoreMutations({
     openCreateForm,
     openEditForm,
     quickSubmit,
+    saveSuccess,
+    quickSubmitting,
     selectedSubmitting,
     setField,
     setForm,

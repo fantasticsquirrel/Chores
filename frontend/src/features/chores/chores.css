@@ -1,0 +1,25 @@
+.chore-editor-dialog {
+  width: min(48rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  margin: auto;
+  border: 1px solid var(--surface-border);
+  border-radius: 1.2rem;
+  padding: 0;
+  color: var(--text-main);
+  background: var(--surface-solid);
+}
+.chore-editor-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+.chore-editor-dialog .dashboard-panel {
+  margin: 0;
+}
+.chore-management-disclosure {
+  grid-column: 1 / -1;
+}
+.chore-management-disclosure > summary {
+  cursor: pointer;
+  padding: 1rem;
+  font-weight: 700;
+}

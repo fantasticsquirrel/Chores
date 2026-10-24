@@ -60,4 +60,13 @@ describe("AccountScreen subscription mode", () => {
     expect(screen.queryByText("Subscription")).toBeNull();
     await waitFor(() => expect(billing).not.toHaveBeenCalled());
   });
+  it("shows only the chosen account section", () => {
+    render(<AccountScreen modules={[]} onLogout={noopLogout} onPasswordChanged={() => undefined} session={ownerSession} />);
+    expect(screen.queryByText("Saved on this device")).toBeNull();
+    fireEvent.press(screen.getByRole("button", { name: "Security" }));
+    expect(screen.queryByText("Saved on this device")).toBeNull();
+    fireEvent.press(screen.getByRole("button", { name: "Appearance" }));
+    expect(screen.getByText("Saved on this device")).toBeTruthy();
+  });
+
 });

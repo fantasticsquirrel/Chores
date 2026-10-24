@@ -12,6 +12,7 @@ class ChildResponse(BaseModel):
     household_id: int
     name: str
     active: bool
+    has_login: bool = False
 
 
 class CreateChildRequest(BaseModel):

@@ -94,6 +94,15 @@ sys.stdout.buffer.write(b.getvalue())
   ]);
 }
 async function upload(page: Page, id: string, version: string, attack = "") {
+  if (!(await page.getByLabel("Upload package ZIP").isVisible()))
+    await page
+      .getByRole("button", { name: "Package authoring", exact: true })
+      .click();
+  const refreshed = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/discovery/packages") &&
+      response.request().method() === "GET",
+  );
   await page.getByLabel("Upload package ZIP").setInputFiles({
     name: `${id}-${version}.zip`,
     mimeType: "application/zip",
@@ -104,15 +113,22 @@ async function upload(page: Page, id: string, version: string, attack = "") {
       .getByRole("status")
       .filter({ hasText: `Uploaded ${id} version ${version}` }),
   ).toBeVisible();
-  return page
-    .locator(".discovery-package-author > ul > li")
-    .filter({ hasText: id })
-    .filter({
-      has: page.getByRole("button", {
-        name: `Preview ${version}`,
-        exact: true,
-      }),
-    });
+  await refreshed;
+  await page.getByLabel("Search packages").fill(id);
+  const group = page
+    .locator(".discovery-package-group")
+    .filter({ has: page.getByRole("heading", { name: id, exact: true }) });
+  await expect(group).toBeVisible();
+  if (
+    !(await group
+      .getByRole("button", { name: `Preview ${version}`, exact: true })
+      .isVisible())
+  )
+    await group.getByRole("button", { name: /^Other versions/ }).click();
+  await expect(
+    group.getByRole("button", { name: `Preview ${version}`, exact: true }),
+  ).toBeVisible();
+  return group;
 }
 async function captures(page: Page, prefix: string, packaged: boolean) {
   const visual = page.locator(

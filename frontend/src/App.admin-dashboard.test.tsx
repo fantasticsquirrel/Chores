@@ -368,6 +368,7 @@ describe("Admin dashboard module access", () => {
     expect(
       await screen.findByRole("heading", { name: "Admin Dashboard" }),
     ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Add Parent" }));
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: " Second.Parent@Example.com " },
     });
@@ -471,4 +472,20 @@ describe("Admin dashboard module access", () => {
       within(parentControls).getByRole("button", { name: "— Homeschool" }),
     ).toBeVisible();
   });
+  it("starts with scoped module management and opens a focused Add Parent action", async () => {
+    mockAdminSession();
+    vi.spyOn(apiClient, "listUserModuleAccess").mockResolvedValue([]);
+    render(<MemoryRouter initialEntries={["/admin/dashboard"]}><App /></MemoryRouter>);
+    const add = await screen.findByRole("button", { name: "Add Parent" });
+    expect(screen.queryByLabelText("Email")).not.toBeInTheDocument();
+    expect(screen.getByText(/Individual user access/)).toBeVisible();
+    add.focus(); fireEvent.click(add);
+    expect(screen.getByLabelText("Email")).toHaveFocus();
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "draft@example.test" } });
+    fireEvent.click(screen.getByRole("button", { name: "Back to module management" }));
+    expect(add).toHaveFocus();
+    fireEvent.click(add);
+    expect(screen.getByLabelText("Email")).toHaveValue("draft@example.test");
+  });
+
 });

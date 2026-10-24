@@ -1,3 +1,4 @@
+import { colors } from "../../../styles/colors";
 import type { Dispatch, SetStateAction } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
@@ -89,10 +90,13 @@ export function ChoreForm({
         />
         <FieldLabel label="Name" />
         <TextInput
+          autoFocus
+          accessibilityLabel="Chore name"
+          editable={!submitting}
           maxLength={255}
           onChangeText={(value) => setField("name", value)}
           placeholder="Take out trash"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           style={formStyles.input}
           value={form.name}
         />
@@ -117,7 +121,7 @@ export function ChoreForm({
           autoCapitalize="none"
           onChangeText={(value) => setField("start_date", value)}
           placeholder="YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           style={formStyles.input}
           value={form.start_date}
         />
@@ -126,7 +130,7 @@ export function ChoreForm({
           autoCapitalize="none"
           onChangeText={(value) => setField("expires_at", value)}
           placeholder="Optional YYYY-MM-DD"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           style={formStyles.input}
           value={form.expires_at}
         />
@@ -135,7 +139,7 @@ export function ChoreForm({
           keyboardType="number-pad"
           onChangeText={(value) => setField("timeout_days", value)}
           placeholder="Optional"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           style={formStyles.input}
           value={form.timeout_days}
         />
@@ -162,7 +166,7 @@ export function ChoreForm({
               keyboardType="number-pad"
               onChangeText={(value) => setField("schedule_interval", value)}
               placeholder="1"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={colors.textSubtle}
               style={formStyles.input}
               value={form.schedule_interval}
             />

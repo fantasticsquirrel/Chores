@@ -752,3 +752,31 @@
 .discovery-card-primary { display: block; color: inherit; text-decoration: none; }
 .discovery-package-alternative { display: block; margin: 0 1rem 1rem; padding: .7rem; border-top: 1px solid currentColor; }
 .discovery-version-label { font-size: .875rem; }
+
+/* Browsing begins with the catalog, not introductory artwork or configuration. */
+.discovery-hero.discovery-hero--compact {
+  display: block;
+  padding: 1.1rem 1.25rem;
+}
+.discovery-hero--compact h1 { margin: 0 0 0.4rem; color: #fff7eb; font-size: 1.5rem; }
+.discovery-hero--compact .discovery-manage-link { margin-top: 0.5rem; }
+.discovery-advanced-filters { display: flex; flex-wrap: wrap; gap: 0.8rem; width: 100%; }
+.discovery-active-filters { flex-basis: 100%; font-size: 0.85rem; color: var(--text-main); }
+.discovery-package-groups { display: grid; gap: 1rem; padding: 0; list-style: none; }
+.discovery-package-group { padding: 1rem; border: 1px solid var(--surface-border); border-radius: var(--radius-card); background: var(--surface-solid); }
+.discovery-package-group details { margin-top: 0.75rem; }
+.discovery-package-group summary { cursor: pointer; }
+.discovery-package-group li { margin-top: 0.75rem; }
+.discovery-package-search { display: grid; gap: 0.4rem; margin: 1rem 0; }
+.discovery-package-search input { padding: 0.75rem; border: 1px solid var(--surface-border); border-radius: var(--radius-button); background: var(--surface-solid); color: var(--text-main); }
+@media (max-width: 470px) {
+  .discovery-lab { gap: 1rem; }
+  .discovery-section-heading { flex-direction: row; align-items: center; }
+  .discovery-section-heading h2 { font-size: 1.4rem; }
+  .discovery-filters label { flex: 1 1 8rem; }
+  .discovery-filters .discovery-search { flex-basis: 100%; }
+  .discovery-filters .discovery-secondary { flex: 0 1 auto; }
+  .discovery-card-primary { display: flex; flex-direction: column; }
+  .discovery-card-primary .discovery-card-copy { order: -1; padding: 1rem; }
+  .discovery-card-art .discovery-artwork { max-height: 10rem; object-fit: cover; }
+}

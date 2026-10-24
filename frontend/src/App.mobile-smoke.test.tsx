@@ -59,6 +59,7 @@ describe("Mobile browser smoke flows", () => {
       screen.queryByRole("link", { name: "Child Today" }),
     ).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: "Add Child" }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Leo" },
     });

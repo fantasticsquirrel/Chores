@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, BackHandler, findNodeHandle, Pressable, Text, View } from "react-native";
 
 import { apiClient } from "../../api/client";
 import type {
@@ -8,14 +8,13 @@ import type {
   UserRole,
 } from "../../api/models";
 import { ActionButton } from "../../components/ActionButton";
-import { ChoiceGroup } from "../../components/ChoiceGroup";
-import { FieldLabel } from "../../components/FieldLabel";
 import { InlineNotice } from "../../components/InlineNotice";
 import { LoadingRow } from "../../components/LoadingRow";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { SectionCard } from "../../components/SectionCard";
 import { useModuleAccess } from "../../modules/ModuleAccessContext";
 import { familyModules, type FamilyModuleKey } from "../../modules/registry";
+import { CreateParentPanel } from "../../features/admin/components/CreateParentPanel";
 import { adminStyles } from "../../features/admin/styles";
 import { cardStyles } from "../../styles/cards";
 import { formStyles } from "../../styles/forms";
@@ -58,6 +57,14 @@ export function AdminScreen({
 }: {
   onModulesChanged?: () => void | Promise<void>;
 }) {
+  const [addingParent, setAddingParent] = useState(false);
+  const addTrigger = useRef<View>(null);
+  function closeParent() {
+    if (creatingParent) return;
+    setAddingParent(false);
+    const target = findNodeHandle(addTrigger.current);
+    if (target) AccessibilityInfo.setAccessibilityFocus(target);
+  }
   const { canManage, canManageRef } = useModuleAccess();
   const [state, setState] = useState<AdminState>({
     users: [],
@@ -87,6 +94,12 @@ export function AdminScreen({
   const [householdActionMessage, setHouseholdActionMessage] = useState<
     string | null
   >(null);
+
+  useEffect(() => {
+    if (!addingParent) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => { closeParent(); return true; });
+    return () => subscription.remove();
+  }, [addingParent, creatingParent]);
 
   const refresh = useCallback(async () => {
     setState((previous) => ({ ...previous, loading: true, error: null }));
@@ -193,6 +206,7 @@ export function AdminScreen({
       setNewParentEmail("");
       setNewParentPassword("");
       setNewParentRole("PARENT");
+      setAddingParent(false);
       setActionMessage(
         `Created ${created.role === "PARENT_ADMIN" ? "admin" : "parent"} login for ${created.email}.`,
       );
@@ -252,6 +266,24 @@ export function AdminScreen({
           />
         }
       />
+      <View ref={addTrigger}>
+        <ActionButton label="Add Parent" requiresManage disabled={creatingParent} onPress={() => setAddingParent(true)} />
+      </View>
+      {addingParent ? (
+        <CreateParentPanel
+          email={newParentEmail}
+          password={newParentPassword}
+          role={newParentRole}
+          creating={creatingParent}
+          error={actionError}
+          onClose={closeParent}
+          onEmailChange={(value) => { setNewParentEmail(value); setActionError(null); setActionMessage(null); }}
+          onPasswordChange={(value) => { setNewParentPassword(value); setActionError(null); setActionMessage(null); }}
+          onRoleChange={setNewParentRole}
+          onSubmit={createParent}
+        />
+      ) : null}
+      <View style={addingParent ? { display: "none" } : undefined} accessibilityElementsHidden={addingParent} importantForAccessibility={addingParent ? "no-hide-descendants" : "auto"}>
       <SectionCard
         title="Household Modules"
         subtitle="These settings apply to everyone in your household. Individual access can still be managed below."
@@ -347,51 +379,7 @@ export function AdminScreen({
       {householdActionMessage !== null ? (
         <InlineNotice tone="success" message={householdActionMessage} />
       ) : null}
-      <SectionCard title="Add Parent Login">
-        <FieldLabel label="Email" />
-        <TextInput
-          autoCapitalize="none"
-          keyboardType="email-address"
-          onChangeText={(value) => {
-            setNewParentEmail(value);
-            setActionError(null);
-            setActionMessage(null);
-          }}
-          placeholder="other.parent@example.com"
-          placeholderTextColor="#94a3b8"
-          style={formStyles.input}
-          value={newParentEmail}
-        />
-        <FieldLabel label="Temporary Password" />
-        <TextInput
-          onChangeText={(value) => {
-            setNewParentPassword(value);
-            setActionError(null);
-            setActionMessage(null);
-          }}
-          placeholder="At least 8 characters"
-          placeholderTextColor="#94a3b8"
-          secureTextEntry
-          style={formStyles.input}
-          value={newParentPassword}
-        />
-        <FieldLabel label="Role" />
-        <ChoiceGroup
-          disabled={creatingParent}
-          onChange={setNewParentRole}
-          options={[
-            { label: "Parent", value: "PARENT" },
-            { label: "Parent Admin", value: "PARENT_ADMIN" },
-          ]}
-          value={newParentRole}
-        />
-        <ActionButton
-          disabled={creatingParent}
-          label={creatingParent ? "Creating..." : "Create Parent Login"}
-          onPress={createParent}
-          requiresManage
-        />
-      </SectionCard>
+
 
       {state.error !== null ? (
         <InlineNotice
@@ -409,7 +397,7 @@ export function AdminScreen({
         <InlineNotice tone="success" message={actionMessage} />
       ) : null}
 
-      <SectionCard title="Module Access">
+      <SectionCard title="Module Access" subtitle="Individual user access: each control affects only the named person. Household module settings take priority.">
         {state.loading ? <LoadingRow label="Loading module access" /> : null}
         {!state.loading && state.users.length === 0 ? (
           <Text style={shellStyles.mutedText}>No users found.</Text>
@@ -439,7 +427,7 @@ export function AdminScreen({
                   <Pressable
                     accessibilityLabel={`${householdStateUnavailable ? "Household State Unavailable" : globallyDisabled ? "Globally Off" : enabled ? "On" : "Off"} ${module.label}`}
                     accessibilityRole="button"
-                    accessibilityState={{ disabled }}
+                    accessibilityState={{ disabled, selected: enabled }}
                     disabled={disabled}
                     key={module.key}
                     onPress={() => toggleAccess(user, module.key)}
@@ -470,6 +458,7 @@ export function AdminScreen({
           </View>
         ))}
       </SectionCard>
+      </View>
     </View>
   );
 }

@@ -40,6 +40,7 @@ describe("native recovery ownership retirement", () => {
     await screen.findByText("Discovery outage");
     expect(screen.queryByText("Choose photograph")).toBeNull();
     fireEvent.press(screen.getByText("Retry Family Tree"));
+    fireEvent.press(await screen.findByRole("button", { name: "People" }));
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
     await waitFor(() =>
       expect(
@@ -214,6 +215,7 @@ describe("native recovery ownership retirement", () => {
       const refresh =
         screen.queryByText("Retry Family Tree") ?? screen.getByText("Refresh");
       fireEvent.press(refresh);
+      fireEvent.press(await screen.findByRole("button", { name: "People" }));
       await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
       expect(
         screen.queryByText("Retry original photograph attachment"),
@@ -256,6 +258,7 @@ describe("native recovery ownership retirement", () => {
             onModulesLoaded={() => {}}
           />,
         );
+      fireEvent.press(await screen.findByRole("button", { name: "People" }));
       await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
       expect(
         screen.queryByText("Retry original photograph attachment"),
@@ -355,6 +358,7 @@ describe("native recovery ownership retirement", () => {
     await screen.findByText("ACK discovery outage");
     expect(post).toHaveBeenCalledTimes(2);
     fireEvent.press(screen.getByText("Retry Family Tree"));
+    fireEvent.press(await screen.findByRole("button", { name: "People" }));
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
     await waitFor(() =>
       expect(

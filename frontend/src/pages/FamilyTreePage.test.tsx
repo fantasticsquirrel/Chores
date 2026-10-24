@@ -156,6 +156,7 @@ describe("Family Tree protected web workflows", () => {
       new Promise((done) => (resolve = done)),
     );
     renderTree();
+    fireEvent.click(await screen.findByRole("button", { name: "People" }));
     const dialog = await edit();
     fireEvent.change(within(dialog).getByLabelText("Display name"), {
       target: { value: "Newest name" },

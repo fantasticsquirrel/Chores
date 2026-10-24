@@ -37,14 +37,14 @@ function seedChoreFixture(): ChoreFixture {
       "Chore management E2E requires an explicitly isolated database and configured backend Python.",
     );
   }
-  const output = execFileSync(
-    pythonBin,
-    [seedScript],
-    {
-      encoding: "utf-8",
-      env: { ...process.env, DATABASE_URL: databaseUrl, PLAYWRIGHT_ISOLATED_DB: "1" },
+  const output = execFileSync(pythonBin, [seedScript], {
+    encoding: "utf-8",
+    env: {
+      ...process.env,
+      DATABASE_URL: databaseUrl,
+      PLAYWRIGHT_ISOLATED_DB: "1",
     },
-  );
+  });
   const fixture = JSON.parse(output.trim()) as ChoreFixture;
   return fixture;
 }
@@ -71,11 +71,13 @@ async function goToChores(page: Page): Promise<void> {
     .getByRole("link", { name: "Chores", exact: true })
     .click();
   await expect(page).toHaveURL(/\/chore\/parent\/chores$/);
+  await page.getByText("Manage chores", { exact: true }).click();
 }
 
 async function openNewChoreForm(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Add Chore" }).first().click();
-  await expect(page.getByRole("heading", { name: "New Chore" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "New Chore" })).toBeVisible();
+  await expect(page.getByLabel("Name", { exact: true })).toBeFocused();
 }
 
 function choreManagementRow(page: Page, choreName: string): Locator {
@@ -251,11 +253,46 @@ test.describe("Chore management UI", () => {
       .getByRole("button", { name: "Archive" })
       .click();
 
+    // Active is the default. Archived records remain findable explicitly.
+    await expect(
+      choreManagementRow(page, "Temporary chore to archive"),
+    ).not.toBeVisible();
+    await page.getByLabel("Chore status").selectOption("archived");
     // Should show archived label (span with text "archived")
     await expect(
       choreManagementRow(page, "Temporary chore to archive")
         .locator("span")
         .filter({ hasText: "archived" }),
     ).toBeVisible();
+  });
+  test("editor Cancel, Escape and browser Back restore the board and trigger focus", async ({
+    page,
+  }) => {
+    await signIn(page, fixture.parent_email, fixture.parent_password);
+    await goToChores(page);
+    await page.getByLabel("Date", { exact: true }).fill("2026-10-20");
+    await page
+      .getByRole("combobox", { name: "Child", exact: true })
+      .selectOption({ label: fixture.child_two_name });
+    const add = page.getByRole("button", { name: "Add Chore", exact: true });
+    await openNewChoreForm(page);
+    await page.getByLabel("Name", { exact: true }).fill("Unsaved draft");
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(add).toBeFocused();
+    await openNewChoreForm(page);
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(add).toBeFocused();
+    await openNewChoreForm(page);
+    await page.goBack();
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+    await expect(add).toBeFocused();
+    await expect(page.getByLabel("Date", { exact: true })).toHaveValue(
+      "2026-10-20",
+    );
+    await expect(
+      page.getByRole("combobox", { name: "Child", exact: true }).locator("option:checked"),
+    ).toHaveText(fixture.child_two_name);
   });
 });

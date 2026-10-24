@@ -11,6 +11,7 @@ import {
 import type { ChildrenState } from "../hooks/useEligibleChores";
 
 type DailyChoreBoardPanelProps = {
+  busy?: boolean;
   activeChildCount: number;
   childrenState: ChildrenState;
   onDateChange: (date: string) => void;
@@ -19,6 +20,7 @@ type DailyChoreBoardPanelProps = {
 };
 
 export function DailyChoreBoardPanel({
+  busy = false,
   activeChildCount,
   childrenState,
   onDateChange,
@@ -37,12 +39,13 @@ export function DailyChoreBoardPanel({
       >
         <FormField label="Date">
           <DateInput
+            disabled={busy}
             value={targetDate}
             onChange={(event) => onDateChange(event.target.value)}
             max="9999-12-31"
           />
         </FormField>
-        <Button type="button" onClick={onToday}>
+        <Button type="button" onClick={onToday} disabled={busy}>
           Today
         </Button>
       </form>

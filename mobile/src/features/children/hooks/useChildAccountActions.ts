@@ -6,6 +6,7 @@ import { useModuleAccess } from "../../../modules/ModuleAccessContext";
 import { formatError } from "../../../utils/format";
 
 type UseChildAccountActionsOptions = {
+  onAccountChanged?: () => Promise<void>;
   children: Child[];
   householdId: number;
   selectedChildId: number | null;
@@ -50,6 +51,7 @@ export type UseChildAccountActionsResult = {
 
 export function useChildAccountActions({
   children,
+  onAccountChanged,
   householdId,
   selectedChildId,
 }: UseChildAccountActionsOptions): UseChildAccountActionsResult {
@@ -144,6 +146,7 @@ export function useChildAccountActions({
       );
       setChildEmailState("");
       setChildPasswordState("");
+      await onAccountChanged?.();
     } catch (error) {
       setLinkAccountError(`Could not link child login: ${formatError(error)}`);
     } finally {
@@ -173,9 +176,7 @@ export function useChildAccountActions({
       );
       setResetEmailInputState("");
     } catch (error) {
-      setResetEmailError(
-        `Could not reset child email: ${formatError(error)}`,
-      );
+      setResetEmailError(`Could not reset child email: ${formatError(error)}`);
     } finally {
       setResettingEmail(false);
     }

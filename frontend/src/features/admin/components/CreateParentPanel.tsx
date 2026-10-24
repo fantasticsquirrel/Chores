@@ -1,9 +1,11 @@
-import type { FormEvent, ReactElement } from "react";
+import { useEffect, useRef, type FormEvent, type ReactElement } from "react";
 
-import { Button, Card, FormField, TextInput } from "../../../ui";
+import { Button, Card, FormField, InlineNotice, TextInput } from "../../../ui";
 import type { ParentRole } from "../hooks/useAdminUsers";
 
 type CreateParentPanelProps = {
+  error: string | null;
+  onClose: () => void;
   createParent: () => Promise<void>;
   creating: boolean;
   email: string;
@@ -15,6 +17,8 @@ type CreateParentPanelProps = {
 };
 
 export function CreateParentPanel({
+  error,
+  onClose,
   createParent,
   creating,
   email,
@@ -24,6 +28,8 @@ export function CreateParentPanel({
   setPassword,
   setRole,
 }: CreateParentPanelProps): ReactElement {
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => { form.current?.querySelector<HTMLInputElement>("input")?.focus(); }, []);
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     void createParent();
@@ -36,7 +42,8 @@ export function CreateParentPanel({
         Create another parent login in this household. Parent admins can also
         manage module access.
       </p>
-      <form className="children-form" onSubmit={handleSubmit}>
+      {error ? <InlineNotice variant="error">Could not create parent login: {error}</InlineNotice> : null}
+      <form ref={form} className="children-form" onSubmit={handleSubmit}>
         <FormField label="Email">
           <TextInput
             type="email"
@@ -67,6 +74,7 @@ export function CreateParentPanel({
           </select>
         </FormField>
         <div className="quick-actions">
+          <Button disabled={creating} onClick={onClose}>Back to module management</Button>
           <Button type="submit" disabled={creating}>
             {creating ? "Creating..." : "Create Parent Login"}
           </Button>

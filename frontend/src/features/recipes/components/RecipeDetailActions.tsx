@@ -22,7 +22,6 @@ type RecipeDetailActionsProps = {
   onDelete: () => Promise<void>;
   onUpdate: () => Promise<void>;
   recipe: RecipeDetail;
-  setCookingMode: (value: boolean) => void;
   setDeleteConfirmText: (value: string) => void;
   setDeleteModalOpen: (value: boolean) => void;
   setEditing: (value: boolean | ((previous: boolean) => boolean)) => void;
@@ -46,7 +45,6 @@ export function RecipeDetailActions({
   onDelete,
   onUpdate,
   recipe,
-  setCookingMode,
   setDeleteConfirmText,
   setDeleteModalOpen,
   setEditing,
@@ -61,17 +59,11 @@ export function RecipeDetailActions({
   return (
     <>
       <div className="recipe-print-actions">
-        <Button type="button" onClick={() => window.print()}>
-          Export PDF
-        </Button>
         {canEditRecipe ? (
           <Button type="button" onClick={() => setEditing((value) => !value)}>
             {editing ? "Close Editor" : "Edit Recipe"}
           </Button>
         ) : null}
-        <Button type="button" onClick={() => setCookingMode(true)}>
-          Cooking Mode
-        </Button>
         {canEditRecipe ? (
           <Button
             type="button"
@@ -86,8 +78,8 @@ export function RecipeDetailActions({
         ) : null}
         <span>
           {canEditRecipe
-            ? "Export, edit, cook step-by-step, or delete with typed confirmation."
-            : "Export or cook step-by-step. Only the creator or a household admin can edit this recipe."}
+            ? "Edit or delete with typed confirmation."
+            : "Only the creator or a household admin can edit this recipe."}
         </span>
       </div>
       {deleteModalOpen && canEditRecipe ? (
@@ -100,9 +92,9 @@ export function RecipeDetailActions({
           <div className="glass-card">
             <h2>Delete {recipe.title}?</h2>
             <p>
-              This permanently removes the recipe, ingredients, steps,
-              variants, sub-recipes, and family feedback. Type the recipe title
-              to confirm.
+              This permanently removes the recipe, ingredients, steps, variants,
+              sub-recipes, and family feedback. Type the recipe title to
+              confirm.
             </p>
             <FormField label="Type recipe title to delete">
               <TextInput
@@ -117,9 +109,7 @@ export function RecipeDetailActions({
               <Button
                 type="button"
                 variant="danger"
-                disabled={
-                  deleteConfirmText !== recipe.title || deletingRecipe
-                }
+                disabled={deleteConfirmText !== recipe.title || deletingRecipe}
                 onClick={() => void onDelete()}
               >
                 {deletingRecipe ? "Deleting..." : "Permanently Delete"}

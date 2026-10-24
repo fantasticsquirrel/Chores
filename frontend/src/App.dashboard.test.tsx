@@ -1,4 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
@@ -11,6 +17,90 @@ describe("Parent dashboard", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
+
+  it("shows approvals before eligibility completes and retries only a failed child", async () => {
+    let reject!: (error: Error) => void;
+    vi.spyOn(apiClient, "listChildren").mockResolvedValue([
+      { id: 1, household_id: 1, name: "Maya", active: true },
+    ]);
+    vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([
+      {
+        id: 9,
+        child_id: 1,
+        child_name: "Maya",
+        for_date: "2026-02-23",
+        status: "PENDING",
+        items: [],
+      },
+    ]);
+    vi.mocked(apiClient.listChildBalances).mockResolvedValue([
+      { child_id: 1, child_name: "Maya", balance_cents: 1500 },
+    ]);
+    const eligible = vi
+      .spyOn(apiClient, "listEligibleChores")
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, fail) => {
+            reject = fail;
+          }),
+      )
+      .mockResolvedValue([]);
+    render(
+      <MemoryRouter initialEntries={["/parent/dashboard"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(
+      await screen.findByRole("link", { name: "Review 1 submission" }),
+    ).toBeVisible();
+    expect(screen.getByText("$15.00")).toBeVisible();
+    await act(async () => reject(new Error("Eligibility offline")));
+    expect(await screen.findByText(/Maya.*unavailable/)).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Retry Maya’s chores" }),
+    );
+    await waitFor(() => expect(eligible).toHaveBeenCalledTimes(2));
+    expect(apiClient.listSubmissions).toHaveBeenCalledTimes(1);
+    expect(apiClient.listChildBalances).toHaveBeenCalledTimes(1);
+    expect(apiClient.listChildren).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(["listChildren", "listSubmissions", "listChildBalances"] as const)(
+    "isolates %s failure with a targeted retry",
+    async (method) => {
+      vi.spyOn(apiClient, "listChildren").mockResolvedValue([]);
+      vi.spyOn(apiClient, "listSubmissions").mockResolvedValue([]);
+      vi.mocked(apiClient.listChildBalances).mockResolvedValue([]);
+      vi.mocked(apiClient[method]).mockRejectedValueOnce(
+        new Error("Unavailable service"),
+      );
+      render(
+        <MemoryRouter initialEntries={["/parent/dashboard"]}>
+          <App />
+        </MemoryRouter>,
+      );
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Unavailable service",
+      );
+      const labels = {
+        listChildren: "Retry children",
+        listSubmissions: "Retry approvals",
+        listChildBalances: "Retry balances",
+      };
+      fireEvent.click(screen.getByRole("button", { name: labels[method] }));
+      await waitFor(() =>
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+      );
+      for (const request of [
+        "listChildren",
+        "listSubmissions",
+        "listChildBalances",
+      ] as const)
+        expect(apiClient[request]).toHaveBeenCalledTimes(
+          request === method ? 2 : 1,
+        );
+    },
+  );
 
   it("renders Today chores and allowance totals", async () => {
     const listChildrenSpy = vi.spyOn(apiClient, "listChildren");
@@ -55,11 +145,25 @@ describe("Parent dashboard", () => {
     expect(
       screen.getByRole("link", { name: "Manage Children" }),
     ).toHaveAttribute("href", "/parent/children");
-    expect(screen.getByRole("link", { name: "Open Board" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Open Review" })).toHaveAttribute(
       "href",
       "/board",
     );
     expect(screen.getByText("Total Amount Owed")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Open Maya’s chores" }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringMatching(
+        /^\/parent\/chores\?childId=1&date=\d{4}-\d{2}-\d{2}$/,
+      ),
+    );
+    const today = screen.getByRole("heading", { name: "Today" });
+    expect(
+      today.compareDocumentPosition(
+        screen.getByRole("heading", { name: "Household summary" }),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.getByRole("link", { name: "Money & History" })).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 1 });
     expect(listSubmissionsSpy).toHaveBeenCalledWith({ status: "PENDING" });
@@ -110,6 +214,8 @@ describe("Parent dashboard", () => {
       </MemoryRouter>,
     );
 
+    expect(await screen.findByText(/All caught up/)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Show all 1 child" }));
     expect(await screen.findByText(/Ari · 0 chores due/u)).toBeVisible();
     expect(listChildrenSpy).toHaveBeenCalledWith({ household_id: 42 });
   });
@@ -138,7 +244,7 @@ describe("Parent dashboard", () => {
     ).toBeVisible();
     expect(screen.queryByText("Pending Submissions")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: "Open Board" }),
+      screen.queryByRole("link", { name: "Open Review" }),
     ).not.toBeInTheDocument();
     expect(listChildrenSpy).not.toHaveBeenCalled();
     expect(listSubmissionsSpy).not.toHaveBeenCalled();

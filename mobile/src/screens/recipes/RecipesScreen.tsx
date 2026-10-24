@@ -31,6 +31,11 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
   const locked = useRef(false);
   const retry = useRef<(() => void) | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [scaleOpen, setScaleOpen] = useState(false);
+  const [taxonomyError, setTaxonomyError] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
@@ -84,33 +89,39 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
   async function refreshRecipes(current: Current, params = applied) {
     const rows = await apiClient.listRecipes(params);
     if (!current()) return;
-    setRecipes(rows);
+    setRecipes(rows); setLoaded(true);
     // The component picker is not restricted to the current cookbook filter.
     if (!params.query && !params.category_id && !params.tag_id && !params.favorite && params.min_rating == null && !params.ingredient) setAvailable(rows);
   }
 
   function load() {
-    void run(async current => {
-      const [rows, cats, labels, reviewers] = await Promise.all([
-        apiClient.listRecipes(applied), apiClient.listRecipeCategories(), apiClient.listRecipeTags(),
-        canManage && canReadChildren ? apiClient.listChildren({ household_id: session.user.household_id, active_only: true }) : Promise.resolve([] as Child[]),
-      ]);
-      if (!current()) return;
-      setRecipes(rows); setAvailable(rows); setCategories(cats); setTags(labels);
-      setChildren(reviewers.filter(child => child.active && child.household_id === session.user.household_id));
-    }, load);
+    void run(current => refreshRecipes(current), load);
+  }
+
+  async function loadTaxonomy() {
+    setTaxonomyError('');
+    const [cats, labels, reviewers] = await Promise.allSettled([
+      apiClient.listRecipeCategories(), apiClient.listRecipeTags(),
+      canManage && canReadChildren ? apiClient.listChildren({ household_id: session.user.household_id, active_only: true }) : Promise.resolve([] as Child[]),
+    ]);
+    if (!mounted.current) return;
+    if (cats.status === 'fulfilled') setCategories(cats.value);
+    if (labels.status === 'fulfilled') setTags(labels.value);
+    if (reviewers.status === 'fulfilled') setChildren(reviewers.value.filter(child => child.active && child.household_id === session.user.household_id));
+    if ([cats, labels, reviewers].some(result => result.status === 'rejected')) setTaxonomyError('Some categories, tags or reviewers could not load. You can still browse and cook.');
   }
 
   useEffect(() => {
     mounted.current = true;
     load();
+    void loadTaxonomy();
     return () => { mounted.current = false; };
     // This component is keyed by the current grant and session in RecipesScreen.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function showDetail(recipe: RecipeDetail) {
-    setDetail(recipe); setEditor(null); setBackup(false); setDeleting(false); setTypedTitle('');
+    setDetail(recipe); setImporting(false); setToolsOpen(false); setScaleOpen(false); setEditor(null); setBackup(false); setDeleting(false); setTypedTitle('');
     setScaled(null); setServings(recipe.servings == null ? '' : String(recipe.servings)); setMultiplier('1');
     setChecked([]); setCooking(null); setReviewer('PARENT'); setChildId(null);
     const ownFeedback = recipe.feedback.find(row => row.reviewer_type === 'PARENT' && row.parent_user_id === session.user.id);
@@ -129,7 +140,10 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
     if (locked.current) return true;
     if (deleting) { setDeleting(false); setTypedTitle(''); }
     else if (editor) setEditor(null);
+    else if (importing) setImporting(false);
     else if (cooking !== null) setCooking(null);
+    else if (toolsOpen) setToolsOpen(false);
+    else if (scaleOpen) setScaleOpen(false);
     else if (detail) { setDetail(null); setScaled(null); }
     else if (backup) setBackup(false);
     else if (advanced) setAdvanced(false);
@@ -144,7 +158,7 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
   function startEditor(mode: EditorMode) {
     if (!canManage || locked.current || (mode === 'edit' && !canEditDetail) || (mode === 'variant' && !canWriteDetail)) return;
     setPayload(mode === 'new' ? emptyPayload() : { ...payloadFromRecipe(detail!), ...(mode === 'variant' ? { title: `${detail!.title} variant`, parent_recipe_id: detail!.id } : {}) });
-    setEditor(mode); setError(''); setNotice('');
+    setEditor(mode); setToolsOpen(false); setError(''); setNotice('');
     if (applied.query || applied.category_id || applied.tag_id || applied.favorite || applied.min_rating != null || applied.ingredient) {
       void run(async current => {
         const all = await apiClient.listRecipes({ active_only: true });
@@ -169,8 +183,17 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
   }
 
   function applyFilters() {
+    if (locked.current) return;
     if (minRating.trim() && (!Number.isFinite(Number(minRating)) || Number(minRating) < 0 || Number(minRating) > 5)) { setError('Minimum rating must be between 0 and 5.'); return; }
     const params: ListRecipesParams = { active_only: true, query: query.trim() || undefined, category_id: categoryId, tag_id: tagId, favorite: favorite || undefined, min_rating: minRating.trim() ? Number(minRating) : undefined, ingredient: ingredient.trim() || undefined };
+    setApplied(params);
+    void run(current => refreshRecipes(current, params), () => { void run(current => refreshRecipes(current, params)); });
+  }
+
+  function resetFilters() {
+    if (locked.current) return;
+    setQuery(''); setCategoryId(undefined); setTagId(undefined); setFavorite(false); setMinRating(''); setIngredient('');
+    const params = { active_only: true };
     setApplied(params);
     void run(current => refreshRecipes(current, params), () => { void run(current => refreshRecipes(current, params)); });
   }
@@ -271,14 +294,20 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
     </View>;
   }
 
-  useEffect(() => { onViewChanged?.(); }, [detail?.id, editor, cooking, backup, deleting, onViewChanged]);
+  useEffect(() => { onViewChanged?.(); }, [detail?.id, editor, importing, cooking, backup, deleting, onViewChanged]);
 
   return <View style={{ gap: 12 }}>
     {busy && <Text accessibilityLiveRegion="polite">Loading recipes…</Text>}
     {!!error && <View><Text accessibilityRole="alert">{error}</Text>{retry.current && <ActionButton label="Retry" disabled={busy} onPress={() => retry.current?.()} />}</View>}
     {!!notice && <Text accessibilityRole="alert">{notice}</Text>}
+    {!!taxonomyError && <View><Text accessibilityRole="alert">{taxonomyError}</Text><ActionButton label="Retry categories and tags" variant="secondary" onPress={() => void loadTaxonomy()} /></View>}
     {editor ? <RecipeEditor payload={payload} setPayload={setPayload} categories={categories} tags={tags} available={available} recipeId={editor === 'new' ? undefined : detail?.id} busy={busy} submitLabel={editor === 'edit' ? 'Save Changes' : editor === 'variant' ? 'Save Variant' : 'Save Recipe'} onSave={saveRecipe} onCancel={() => { back(); }} />
-      : detail ? <>
+      : importing ? <SectionCard title="Import Recipe">
+        <Text>Paste a recipe website URL to import ingredients, instructions and source attribution.</Text>
+        <Field label="Recipe URL" value={url} onChange={setUrl} disabled={busy} />
+        <ActionButton label="Import URL" disabled={busy || !url.trim()} onPress={importUrl} />
+        <ActionButton label="Cancel Import" variant="secondary" disabled={busy} onPress={() => setImporting(false)} />
+      </SectionCard> : detail ? <>
         <ActionButton label="Back to Recipes" variant="secondary" disabled={busy} onPress={() => { setCooking(null); setDeleting(false); setDetail(null); setError(''); setNotice(''); }} />
         {deleting ? <SectionCard title="Permanently delete recipe">
           <Text>This cannot be undone. Type the exact title: {detail.title}</Text>
@@ -293,9 +322,34 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
           <ActionButton label="Exit Cooking" variant="secondary" disabled={busy} onPress={() => setCooking(null)} />
         </SectionCard> : <>
           <SectionCard title={detail.title}>
+            <Text>Default Servings: {detail.servings ?? 'not specified'}</Text>
+            <Text>Cooking: {scaled?.target_servings ?? detail.servings ?? '—'} servings · {scaled?.factor ?? 1}×</Text>
+            <ActionButton label="Start Cooking" disabled={busy || !steps.length} onPress={() => { setToolsOpen(false); setScaleOpen(false); setCooking(0); }} />
+            <ActionButton label="Print / PDF" variant="secondary" disabled={busy} onPress={() => { void run(async () => { await printRecipe(detail, scaled); }); }} />
+            <ActionButton label={scaleOpen ? 'Hide scaling' : 'Adjust servings'} variant="secondary" disabled={busy} onPress={() => setScaleOpen(value => !value)} />
+          </SectionCard>
+          {scaleOpen && <>
+          <SectionCard title="Scale recipe">
+            <Field label="Target servings" numeric value={servings} onChange={setServings} disabled={busy} />
+            <ActionButton label="Scale servings" variant="secondary" disabled={busy} onPress={() => scale('servings')} />
+            <Field label="Multiplier" numeric value={multiplier} onChange={setMultiplier} disabled={busy} />
+            <ActionButton label="Scale multiplier" variant="secondary" disabled={busy} onPress={() => scale('multiplier')} />
+            {scaled?.warnings.map((warning, index) => <Text key={index} accessibilityRole="alert">{warning}</Text>)}
+          </SectionCard>
+          </>}
+          <SectionCard title="Ingredients">
+            {ingredients.map(item => <View key={item.id}>
+              {!!item.group_name && <Text>{item.group_name}</Text>}
+              <Toggle label={`Ingredient ${item.position}: ${ingredientText(item)}`} checked={checked.includes(item.position)} disabled={busy} onPress={() => setChecked(prev => prev.includes(item.position) ? prev.filter(position => position !== item.position) : [...prev, item.position])} />
+              {(item.is_optional || item.note) && <Text>{[item.is_optional ? 'Optional' : '', item.note].filter(Boolean).join(' · ')}</Text>}
+            </View>)}
+          </SectionCard>
+          <SectionCard title="Steps">
+            {steps.map(renderStep)}
+          </SectionCard>
+          <SectionCard title="About this recipe">
             {!!detail.photo_url && /^https?:\/\//i.test(detail.photo_url) && <Image source={{ uri: detail.photo_url }} accessibilityLabel={`Photo of ${detail.title}`} style={{ height: 180, width: '100%', borderRadius: 12 }} />}
             <Copy text={detail.description} />
-            <Text>Default Servings: {detail.servings ?? 'not specified'}</Text>
             {detail.yield_quantity !== null && <Text>Yield: {detail.yield_quantity} {detail.yield_unit}</Text>}
             <Text>Prep: {detail.prep_minutes ?? '—'} min · Cook: {detail.cook_minutes ?? '—'} min</Text>
             <Text>Rating: {detail.rating ?? 'unrated'}{detail.favorite ? ' · Favorite' : ''}</Text>
@@ -306,32 +360,16 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
               void run(async () => { if (!/^https?:\/\//i.test(detail.source_url!)) throw new Error('Only http and https source links can be opened.'); await Linking.openURL(detail.source_url!); });
             }} />}
             {!detail.source_url && !!detail.source_name && <Text>Source: {detail.source_name}</Text>}
-            <ActionButton label="Print / PDF" variant="secondary" disabled={busy} onPress={() => { void run(async () => { await printRecipe(detail, scaled); }); }} />
+          </SectionCard>
+          {canWriteDetail && <ActionButton label="Recipe tools" variant="secondary" disabled={busy} onPress={() => setToolsOpen(value => !value)} />}
+          {toolsOpen && <SectionCard title="Recipe tools">
             {canEditDetail && <ActionButton label="Edit Recipe" variant="secondary" disabled={busy} onPress={() => startEditor('edit')} />}
             {canWriteDetail && <>
               <ActionButton label="Duplicate Recipe" variant="secondary" disabled={busy} onPress={duplicate} />
               <ActionButton label="Add Variant" variant="secondary" disabled={busy} onPress={() => startEditor('variant')} />
             </>}
-            {canEditDetail && <ActionButton label="Delete Recipe" variant="danger" disabled={busy} onPress={() => { setTypedTitle(''); setDeleting(true); }} />}
-          </SectionCard>
-          <SectionCard title="Scale recipe">
-            <Field label="Target servings" numeric value={servings} onChange={setServings} disabled={busy} />
-            <ActionButton label="Scale servings" variant="secondary" disabled={busy} onPress={() => scale('servings')} />
-            <Field label="Multiplier" numeric value={multiplier} onChange={setMultiplier} disabled={busy} />
-            <ActionButton label="Scale multiplier" variant="secondary" disabled={busy} onPress={() => scale('multiplier')} />
-            {scaled?.warnings.map((warning, index) => <Text key={index} accessibilityRole="alert">{warning}</Text>)}
-          </SectionCard>
-          <SectionCard title="Ingredients">
-            {ingredients.map(item => <View key={item.id}>
-              {!!item.group_name && <Text>{item.group_name}</Text>}
-              <Toggle label={`Ingredient ${item.position}: ${ingredientText(item)}`} checked={checked.includes(item.position)} disabled={busy} onPress={() => setChecked(prev => prev.includes(item.position) ? prev.filter(position => position !== item.position) : [...prev, item.position])} />
-              {(item.is_optional || item.note) && <Text>{[item.is_optional ? 'Optional' : '', item.note].filter(Boolean).join(' · ')}</Text>}
-            </View>)}
-          </SectionCard>
-          <SectionCard title="Steps">
-            {steps.map(renderStep)}
-            <ActionButton label="Start Cooking" disabled={busy || !steps.length} onPress={() => setCooking(0)} />
-          </SectionCard>
+            {canEditDetail && <ActionButton label="Delete Recipe" variant="danger" disabled={busy} onPress={() => { setToolsOpen(false); setTypedTitle(''); setDeleting(true); }} />}
+          </SectionCard>}
           {!!detail.components.length && <SectionCard title="Sub-recipes / Components">
             {detail.components.map(component => <View key={component.component_recipe_id}>
               <Text>{component.label || component.component_recipe.title} · {component.quantity ?? ''} {component.unit}</Text>
@@ -359,22 +397,29 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
       </> : <>
         <SectionCard title="Recipes">
           <Field label="Search recipes" value={query} onChange={setQuery} disabled={busy} />
+          <Toggle label="Favorites only" checked={favorite} disabled={busy} onPress={() => setFavorite(value => !value)} />
           <ActionButton label="Advanced Filters" variant="secondary" disabled={busy} onPress={() => setAdvanced(value => !value)} />
           {advanced && <>
             {categories.map(category => <Toggle key={category.id} label={`Category ${category.name}`} checked={categoryId === category.id} disabled={busy} onPress={() => setCategoryId(value => value === category.id ? undefined : category.id)} />)}
             {tags.map(tag => <Toggle key={tag.id} label={`Tag ${tag.name}`} checked={tagId === tag.id} disabled={busy} onPress={() => setTagId(value => value === tag.id ? undefined : tag.id)} />)}
-            <Toggle label="Favorites only" checked={favorite} disabled={busy} onPress={() => setFavorite(value => !value)} />
             <Field label="Minimum rating" numeric value={minRating} onChange={setMinRating} disabled={busy} />
             <Field label="Ingredient filter" value={ingredient} onChange={setIngredient} disabled={busy} />
           </>}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           <ActionButton label="Apply filters" variant="secondary" disabled={busy} onPress={applyFilters} />
-          {canManage && <>
+          <ActionButton label="Reset filters" variant="secondary" disabled={busy} onPress={resetFilters} />
+          </View>
+          {canManage && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <ActionButton label="New Recipe" disabled={busy} onPress={() => startEditor('new')} />
-            <Field label="Recipe URL" value={url} onChange={setUrl} disabled={busy} />
-            <ActionButton label="Import URL" variant="secondary" disabled={busy || !url.trim()} onPress={importUrl} />
-          </>}
-          <ActionButton label="Backup & Restore" variant="secondary" disabled={busy} onPress={() => setBackup(value => !value)} />
+            <ActionButton label="Import Recipe" variant="secondary" disabled={busy} onPress={() => setImporting(true)} />
+          </View>}
         </SectionCard>
+        {loaded && !busy && !error && !recipes.length && <Text>{applied.query || applied.category_id || applied.tag_id || applied.favorite || applied.min_rating != null || applied.ingredient ? 'No recipes match these filters. Clear filters to browse your cookbook.' : canManage ? 'Your cookbook is empty. Add or import your first recipe.' : 'Your cookbook is empty. Ask a parent with management access to add a recipe.'}</Text>}
+        {recipes.map(recipe => <SectionCard key={recipe.id} title={recipe.title} subtitle={recipe.description}>
+          <Text>{recipe.ingredient_count} ingredients · {recipe.servings ?? '—'} servings</Text>
+          <ActionButton label={`Open ${recipe.title}`} variant="secondary" disabled={busy} onPress={() => openRecipe(recipe.id)} />
+        </SectionCard>)}
+        <ActionButton label="Backup & Restore" variant="secondary" disabled={busy} onPress={() => setBackup(value => !value)} />
         {backup && <SectionCard title="Backup & Restore">
           <Text>Export and share a portable JSON backup. This is not a PDF.</Text>
           <ActionButton label="Export JSON" variant="secondary" disabled={busy} onPress={exportBackup} />
@@ -388,11 +433,7 @@ function Cookbook({ session, canManage, canReadChildren, onViewChanged }: { sess
             <ActionButton label="Restore backup" variant="secondary" disabled={busy || !restore.trim()} onPress={restoreBackup} />
           </>}
         </SectionCard>}
-        {!busy && !error && !recipes.length && <Text>No recipes match these filters.</Text>}
-        {recipes.map(recipe => <SectionCard key={recipe.id} title={recipe.title} subtitle={recipe.description}>
-          <Text>{recipe.ingredient_count} ingredients · {recipe.servings ?? '—'} servings</Text>
-          <ActionButton label={`Open ${recipe.title}`} variant="secondary" disabled={busy} onPress={() => openRecipe(recipe.id)} />
-        </SectionCard>)}
+
       </>}
   </View>;
 }

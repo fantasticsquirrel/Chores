@@ -14,7 +14,7 @@ import { ChangePasswordScreen } from "./ChangePasswordScreen";
 import { SubscriptionScreen } from "./SubscriptionScreen";
 import { ThemePicker } from "../../theme/ThemePicker";
 
-type AccountMode = "profile" | "security" | "subscription";
+type AccountMode = "profile" | "security" | "appearance" | "subscription";
 
 export function AccountScreen({
   modules,
@@ -52,6 +52,7 @@ export function AccountScreen({
           options={[
             { label: "Profile", value: "profile" },
             { label: "Security", value: "security" },
+            { label: "Appearance", value: "appearance" },
             ...(session.user.is_household_owner
               ? [{ label: "Subscription", value: "subscription" as const }]
               : []),
@@ -59,9 +60,9 @@ export function AccountScreen({
           value={mode}
         />
       </SectionCard>
-      <SectionCard title="Appearance" subtitle="Saved on this device">
+      {mode === "appearance" ? <SectionCard title="Appearance" subtitle="Saved on this device">
         <ThemePicker />
-      </SectionCard>
+      </SectionCard> : null}
       {mode === "security" ? <ChangePasswordScreen onPasswordChanged={onPasswordChanged} /> : null}
       {mode === "subscription" && session.user.is_household_owner ? <SubscriptionScreen /> : null}
       {mode === "profile" ? (

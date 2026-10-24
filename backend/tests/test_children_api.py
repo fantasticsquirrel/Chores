@@ -427,3 +427,22 @@ def test_reset_child_account_password_requires_minimum_length(tmp_path: Path, mo
     assert response.status_code == 422
     details = response.json()["detail"]
     assert any(detail["loc"][-1] == "new_password" for detail in details)
+
+
+def test_roster_reports_authoritative_household_scoped_login_state(tmp_path: Path, monkeypatch) -> None:
+    _configure_test_settings(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        household_id = _create_household()
+        _create_parent_user(household_id)
+        csrf_token = _login_parent(client)
+        headers = {CSRF_HEADER_NAME: csrf_token}
+        child = client.post("/chore-api/children", json={"household_id": household_id, "name": "Robin"}, headers=headers).json()
+        assert child["has_login"] is False
+        client.post(f"/chore-api/children/{child['id']}/account", json={"household_id": household_id, "password": "temporary-password"}, headers=headers)
+        roster = client.get(f"/chore-api/children?household_id={household_id}")
+        assert roster.status_code == 200
+        assert roster.json()[0]["has_login"] is True
+        assert "email" not in roster.json()[0]
+        updated = client.patch(f"/chore-api/children/{child['id']}", json={"household_id": household_id, "active": False}, headers=headers)
+        assert updated.json()["has_login"] is True
+        assert client.get(f"/chore-api/children?household_id={household_id + 1}").status_code == 403

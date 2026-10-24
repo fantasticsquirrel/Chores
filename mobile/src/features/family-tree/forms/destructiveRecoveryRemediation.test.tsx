@@ -41,6 +41,7 @@ describe("native destructive recovery remediation composition", () => {
     fireEvent.press(screen.getByText("Refresh"));
     await screen.findByText("Discovery outage");
     fireEvent.press(screen.getByText("Retry Family Tree"));
+    fireEvent.press(await screen.findByRole("button", { name: "People" }));
     await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
     await waitFor(() =>
       expect(apiClient.getFamilyTreeCollection).toHaveBeenCalledTimes(
@@ -232,6 +233,7 @@ describe("native destructive recovery remediation composition", () => {
       await screen.findByText("ACK discovery outage");
       expect(post).toHaveBeenCalledTimes(1);
       fireEvent.press(screen.getByText("Retry Family Tree"));
+      fireEvent.press(await screen.findByRole("button", { name: "People" }));
       await screen.findByLabelText("Open Ada (#3)", {}, { timeout: 5000 });
       await waitFor(() =>
         expect(

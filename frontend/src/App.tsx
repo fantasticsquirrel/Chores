@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ReactElement } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactElement } from "react";
 import {
   Navigate,
   NavLink,
@@ -254,6 +254,15 @@ function ModuleProtectedRoute({
 
 function AppShell(): ReactElement {
   const navigate = useNavigate();
+  const location = useLocation();
+  const moreRef = useRef<HTMLDetailsElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (moreRef.current?.open) {
+      moreRef.current.open = false;
+      mainRef.current?.focus();
+    }
+  }, [location.key]);
   const { status, user, moduleKeys, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -348,7 +357,13 @@ function AppShell(): ReactElement {
                   {loggingOut ? "Logging Out..." : "Log Out"}
                 </Button>
               ) : null}
-              <details className="mobile-more">
+              <details className="mobile-more" ref={moreRef} onKeyDown={(event) => {
+                if (event.key === "Escape" && moreRef.current?.open) {
+                  event.preventDefault();
+                  moreRef.current.open = false;
+                  moreRef.current.querySelector("summary")?.focus();
+                }
+              }}>
                 <summary>More</summary>
                 <div className="mobile-more-panel">
                   {visibleNavItems.slice(3).map((item) => (
@@ -380,8 +395,8 @@ function AppShell(): ReactElement {
               Could not sign out: {logoutError}
             </InlineNotice>
           ) : null}
-          <main className="content-grid">
-            <Outlet />
+          <main className="content-grid" ref={mainRef} tabIndex={-1}>
+            <Outlet key={`${user?.household_id ?? "none"}:${user?.id ?? "none"}`} />
           </main>
         </div>
       </div>
@@ -498,7 +513,7 @@ function HouseholdApp(): ReactElement {
                     element={<HomeschoolPage />}
                   />
                 </Route>
-                <Route element={<ModuleProtectedRoute moduleKey="recipes" />}>
+                <Route element={<ModuleProtectedRoute moduleKey="recipes" interactiveView />}>
                   <Route
                     path={getWebModuleDestination("recipes")}
                     element={<RecipeOrganizerPage />}

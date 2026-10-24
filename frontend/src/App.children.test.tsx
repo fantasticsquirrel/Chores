@@ -59,6 +59,7 @@ describe("Parent children page", () => {
     );
 
     await screen.findByRole("list", { name: "Children list" });
+    fireEvent.click(screen.getByRole("button", { name: "Add Child" }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Leo" },
     });
@@ -135,6 +136,7 @@ describe("Parent children page", () => {
     );
 
     await screen.findByRole("list", { name: "Children list" });
+    fireEvent.click(screen.getByRole("button", { name: "Add Child" }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Maya" },
     });
@@ -239,6 +241,7 @@ describe("Parent children page", () => {
     expect(within(childrenList).getByText("Ari")).toBeVisible();
     expect(listChildrenSpy).toHaveBeenNthCalledWith(1, { household_id: 42 });
 
+    fireEvent.click(screen.getByRole("button", { name: "Add Child" }));
     fireEvent.change(screen.getByLabelText("Name"), {
       target: { value: "Nova" },
     });
@@ -292,6 +295,10 @@ describe("Parent children page", () => {
     );
 
     await screen.findByRole("list", { name: "Children list" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Manage login for Jordan" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
     fireEvent.change(screen.getByLabelText("New Temporary Password"), {
       target: { value: "new-password-456" },
     });
@@ -299,7 +306,7 @@ describe("Parent children page", () => {
       target: { value: "new-password-456" },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Reset Child Password" }),
+      screen.getByRole("button", { name: "Reset Child Password for Jordan" }),
     );
 
     await waitFor(() =>
@@ -328,6 +335,10 @@ describe("Parent children page", () => {
     );
 
     await screen.findByRole("list", { name: "Children list" });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Manage login for Jordan" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reset Password" }));
     fireEvent.change(screen.getByLabelText("New Temporary Password"), {
       target: { value: "new-password-456" },
     });
@@ -335,7 +346,7 @@ describe("Parent children page", () => {
       target: { value: "different-password" },
     });
     fireEvent.click(
-      screen.getByRole("button", { name: "Reset Child Password" }),
+      screen.getByRole("button", { name: "Reset Child Password for Jordan" }),
     );
 
     expect(await screen.findByRole("alert")).toHaveTextContent(

@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -228,6 +229,7 @@ describe("Recipe organizer page", () => {
         "Cook with flour on a hot griddle. Uses: 4 cup flour.",
       ).length,
     ).toBeGreaterThan(0);
+    fireEvent.click(screen.getByText("Recipe tools", { selector: "summary" }));
     expect(
       screen.getByRole("heading", { name: "Recipe Variants" }),
     ).toBeVisible();
@@ -283,6 +285,15 @@ describe("Recipe organizer page", () => {
       }),
     );
 
+    vi.mocked(apiClient.scaleRecipe).mockResolvedValueOnce({
+      recipe_id: 10,
+      base_servings: 4,
+      target_servings: 6,
+      factor: 1.5,
+      warnings: [],
+      ingredients: [{ ...recipe.ingredients[0], scaled_quantity: 3 }],
+      steps: [],
+    });
     fireEvent.change(screen.getByLabelText("Scale Multiplier"), {
       target: { value: "1.5" },
     });
@@ -291,7 +302,55 @@ describe("Recipe organizer page", () => {
         scaleFactor: 1.5,
       }),
     );
-    expect(screen.getByLabelText("Scaled Servings")).toHaveValue(6);
+    await waitFor(() =>
+      expect(screen.getByLabelText("Scaled Servings")).toHaveValue(6),
+    );
+  });
+
+  it("starts with search and favorites and keeps import and editing focused", async () => {
+    mockRecipeApi([]);
+    render(
+      <MemoryRouter initialEntries={["/recipes"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await screen.findByRole("heading", { name: "Your cookbook is empty" });
+    expect(screen.getByLabelText("Favorites only")).toBeVisible();
+    expect(
+      screen.queryByLabelText("Import Recipe URL"),
+    ).not.toBeInTheDocument();
+    const trigger = screen.getByRole("button", { name: "Import Recipe" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog", { name: "Import Recipe" });
+    expect(within(dialog).getByLabelText("Import Recipe URL")).toBeVisible();
+    fireEvent.change(within(dialog).getByLabelText("Import Recipe URL"), {
+      target: { value: "https://example.test/soup" },
+    });
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    fireEvent.click(trigger);
+    expect(screen.getByLabelText("Import Recipe URL")).toHaveValue(
+      "https://example.test/soup",
+    );
+  });
+
+  it("never shows an empty cookbook while the initial recipes are pending", async () => {
+    mockRecipeApi([]);
+    vi.mocked(apiClient.listRecipes).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    render(
+      <MemoryRouter initialEntries={["/recipes"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await screen.findByText("Loading your cookbook…");
+    expect(
+      screen.queryByText("Your cookbook is empty"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("No recipes match")).not.toBeInTheDocument();
   });
 
   it("loads recipe cooking detail directly from its own route", async () => {
@@ -327,6 +386,7 @@ describe("Recipe organizer page", () => {
       await screen.findByRole("heading", { name: "Pancakes" }),
     ).toBeVisible();
     expect(screen.getByText("Added by parent@example.com.")).toBeVisible();
+    fireEvent.click(screen.getByText("Recipe tools", { selector: "summary" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete Recipe" }));
     expect(
       screen.getByRole("dialog", { name: "Delete recipe confirmation" }),
@@ -377,12 +437,128 @@ describe("Recipe organizer page", () => {
     expect(
       screen.queryByRole("button", { name: "Delete Recipe" }),
     ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Recipe tools", { selector: "summary" }));
     expect(
       screen.getByText(
         /Only the creator or a household admin can edit this recipe/u,
       ),
     ).toBeVisible();
   });
+
+  it("lets a view-only parent search and cook without mounting direct-link mutation dialogs", async () => {
+    mockRecipeApi();
+    vi.mocked(apiClient.getMyModules).mockResolvedValue({
+      modules: [
+        { key: "recipes", name: "Recipes", description: "", can_manage: false },
+      ],
+    });
+    render(
+      <MemoryRouter initialEntries={["/recipes?recipeTask=new"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    await screen.findByRole("heading", { name: "Recipe Organizer" });
+    expect(screen.getByLabelText("Search")).toBeVisible();
+    expect(
+      screen.queryByRole("dialog", { name: "Recipe Editor" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "New Recipe" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Import Recipe" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("link", { name: "View Recipe" }));
+    expect(
+      await screen.findByRole("button", { name: "Start Cooking" }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Export PDF" })).toBeVisible();
+    fireEvent.click(screen.getByText("Recipe tools", { selector: "summary" }));
+    for (const name of [
+      "Edit Recipe",
+      "Delete Recipe",
+      "Add Variant",
+      "Save Feedback",
+    ])
+      expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+    expect(apiClient.listChildren).not.toHaveBeenCalled();
+  });
+
+  it.each(["save", "refresh"])(
+    "keeps newer editor changes when the submitted recipe's %s is pending",
+    async (pendingPhase) => {
+      mockRecipeApi([]);
+      let finishSave!: (saved: RecipeDetail) => void;
+      vi.spyOn(apiClient, "createRecipe").mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finishSave = resolve;
+          }),
+      );
+      render(
+        <MemoryRouter initialEntries={["/recipes"]}>
+          <App />
+        </MemoryRouter>,
+      );
+      await screen.findByRole("heading", { name: "Your cookbook is empty" });
+      let finishRefresh!: (rows: RecipeSummary[]) => void;
+      vi.mocked(apiClient.listRecipes).mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finishRefresh = resolve;
+          }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "New Recipe" }));
+      const editor = within(
+        screen.getByRole("dialog", { name: "Recipe Editor" }),
+      );
+      fireEvent.change(editor.getByLabelText("Title"), {
+        target: { value: "Pancakes" },
+      });
+      fireEvent.change(editor.getByLabelText("Ingredient Item"), {
+        target: { value: "flour" },
+      });
+      fireEvent.change(editor.getByLabelText("Step Instruction"), {
+        target: { value: "Cook on a hot griddle." },
+      });
+      fireEvent.click(editor.getByRole("button", { name: "Save Recipe" }));
+      expect(apiClient.createRecipe).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Pancakes",
+          ingredients: [expect.objectContaining({ item: "flour" })],
+        }),
+      );
+      if (pendingPhase === "refresh") {
+        await act(async () => {
+          finishSave(recipe);
+        });
+        expect(apiClient.listRecipes).toHaveBeenCalledTimes(2);
+      }
+      fireEvent.change(editor.getByLabelText("Title"), {
+        target: { value: "Oat Pancakes" },
+      });
+      fireEvent.change(editor.getByLabelText("Ingredient Item"), {
+        target: { value: "oats" },
+      });
+      if (pendingPhase === "save") {
+        await act(async () => {
+          finishSave(recipe);
+        });
+      }
+      await act(async () => {
+        finishRefresh([recipe]);
+      });
+
+      expect(
+        screen.getByRole("dialog", { name: "Recipe Editor" }),
+      ).toBeVisible();
+      expect(editor.getByLabelText("Title")).toHaveValue("Oat Pancakes");
+      expect(editor.getByLabelText("Ingredient Item")).toHaveValue("oats");
+      expect(editor.getByRole("button", { name: "Save Recipe" })).toBeEnabled();
+      expect(apiClient.createRecipe).toHaveBeenCalledTimes(1);
+      expect(apiClient.getRecipe).not.toHaveBeenCalled();
+    },
+  );
 
   it("creates a recipe for the household cookbook", async () => {
     mockRecipeApi([]);
@@ -398,9 +574,7 @@ describe("Recipe organizer page", () => {
 
     await screen.findByRole("heading", { name: "Recipe Organizer" });
     fireEvent.click(screen.getByRole("button", { name: "New Recipe" }));
-    const editor = screen
-      .getByRole("heading", { name: "Recipe Editor" })
-      .closest("article");
+    const editor = screen.getByRole("dialog", { name: "Recipe Editor" });
     expect(editor).not.toBeNull();
     fireEvent.change(within(editor as HTMLElement).getByLabelText("Title"), {
       target: { value: "Pancakes" },
@@ -457,5 +631,9 @@ describe("Recipe organizer page", () => {
         }),
       ),
     );
+    expect(
+      await screen.findByRole("heading", { name: "Pancakes" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

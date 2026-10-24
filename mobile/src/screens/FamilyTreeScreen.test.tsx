@@ -226,6 +226,7 @@ function mount() {
 async function detail() {
   rows = [record];
   const view = mount();
+  fireEvent.press(await screen.findByRole("button", { name: "People" }));
   fireEvent.press(await screen.findByRole("button", { name: "Open Ada (#3)" }, {timeout:5000}));
   await screen.findByRole("button", { name: "Edit person" });
   return view;
@@ -1100,4 +1101,20 @@ describe("native family tree screen real core workflows", () => {
       "Private draft",
     );
   });
+  it("reveals Tree from People without losing the directory search", async () => {
+    rows = [record];
+    const changed = jest.fn();
+    render(<FamilyTreeScreen session={session} modules={[grant]} onModulesLoaded={jest.fn()} onViewChanged={changed} />);
+    await screen.findByText("Explore household family history");
+    expect(screen.queryByRole("button", { name: "Open Ada (#3)" })).toBeNull();
+    fireEvent.changeText(screen.getByLabelText("Search people"), "Ada");
+    fireEvent.press(screen.getByRole("button", { name: "Search directory" }));
+    fireEvent.press(await screen.findByRole("button", { name: "Show Ada (#3) in tree" }));
+    await waitFor(() => expect(apiClient.getFamilyTreeGraph).toHaveBeenLastCalledWith(expect.objectContaining({ focus_person_id: 3 }), expect.anything()));
+    expect(screen.getByRole("button", { name: "Tree" }).props.accessibilityState.selected).toBe(true);
+    fireEvent.press(screen.getByRole("button", { name: "People" }));
+    expect(screen.getByLabelText("Search people").props.value).toBe("Ada");
+    expect(changed).toHaveBeenCalled();
+  });
+
 });

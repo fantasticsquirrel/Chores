@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   apiClient,
@@ -21,28 +21,42 @@ export function ParentSubmissionReviewPage(): ReactElement {
     loading: true,
     error: null,
   });
+  const actionLock = useRef(false);
+  const refreshing = useRef(false);
+  const requestId = useRef(0);
+  const mounted = useRef(false);
+  const [saved, setSaved] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submittingKey, setSubmittingKey] = useState<string | null>(null);
 
-  async function loadSubmissions(): Promise<void> {
+  async function loadSubmissions(afterSave = false): Promise<void> {
+    const request = ++requestId.current;
+    refreshing.current = true;
     setState((previous) => ({ ...previous, loading: true, error: null }));
 
     try {
       const submissions = await apiClient.listSubmissions({
         status: "PENDING",
       });
+      if (request !== requestId.current) return;
       setState({ submissions, loading: false, error: null });
     } catch (error: unknown) {
-      setState({
-        submissions: [],
+      if (request !== requestId.current) return;
+      setState((previous) => ({
+        ...previous,
         loading: false,
-        error: formatApiError(error),
-      });
+        error: `${afterSave ? "Decision saved, but refresh failed. Retry to update the remaining queue. " : ""}${formatApiError(error)}`,
+      }));
+    } finally {
+      if (request === requestId.current) refreshing.current = false;
     }
   }
 
   useEffect(() => {
+    mounted.current = true;
     void loadSubmissions();
+    const requests = requestId;
+    return () => { mounted.current = false; requests.current += 1; };
   }, []);
 
   const pendingItemsCount = useMemo(
@@ -57,15 +71,22 @@ export function ParentSubmissionReviewPage(): ReactElement {
   );
 
   async function handleApproveAll(submissionId: number): Promise<void> {
+    if (actionLock.current || refreshing.current) return;
+    actionLock.current = true;
+    setSaved(false);
     setSubmittingKey(`approve-all-${submissionId}`);
     setActionError(null);
 
     try {
       await apiClient.approveSubmission(submissionId);
-      await loadSubmissions();
+      if (!mounted.current) return;
+      setSaved(true);
+      setState((previous) => ({ ...previous, submissions: previous.submissions.filter((row) => row.id !== submissionId) }));
+      await loadSubmissions(true);
     } catch (error: unknown) {
       setActionError(formatApiError(error));
     } finally {
+      actionLock.current = false;
       setSubmittingKey(null);
     }
   }
@@ -75,15 +96,24 @@ export function ParentSubmissionReviewPage(): ReactElement {
     itemId: number,
     payload: SubmissionItemDecisionRequest,
   ): Promise<void> {
+    if (actionLock.current || refreshing.current) return;
+    actionLock.current = true;
+    setSaved(false);
     setSubmittingKey(`item-${itemId}`);
     setActionError(null);
 
     try {
-      await apiClient.decideSubmissionItem(submissionId, itemId, payload);
-      await loadSubmissions();
+      const updated = await apiClient.decideSubmissionItem(submissionId, itemId, payload);
+      if (!mounted.current) return;
+      setSaved(true);
+      setState((previous) => ({ ...previous, submissions: previous.submissions
+        .map((row) => row.id === submissionId ? updated : row)
+        .filter((row) => row.status === "PENDING") }));
+      await loadSubmissions(true);
     } catch (error: unknown) {
       setActionError(formatApiError(error));
     } finally {
+      actionLock.current = false;
       setSubmittingKey(null);
     }
   }
@@ -92,7 +122,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
     <section className="dashboard-grid" aria-label="Parent submission review">
       <Card className="dashboard-panel">
         <div className="panel-header-row">
-          <h1>Submission Review</h1>
+          <h1>Review</h1>
           <Badge>{pendingItemsCount} pending item(s)</Badge>
         </div>
         <p>
@@ -109,6 +139,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
         {!state.loading && state.error !== null ? (
           <InlineNotice variant="error">
             Could not load submissions: {state.error}
+            <Button onClick={() => void loadSubmissions(saved)} disabled={state.loading || submittingKey !== null}>Retry</Button>
           </InlineNotice>
         ) : null}
 
@@ -118,9 +149,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
           <p>No pending submissions right now.</p>
         ) : null}
 
-        {!state.loading &&
-        state.error === null &&
-        state.submissions.length > 0 ? (
+        {state.submissions.length > 0 ? (
           <ul className="submission-list" aria-label="Pending submissions list">
             {state.submissions.map((submission) => {
               const approvingAll =
@@ -138,7 +167,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
                     </div>
                     <Button
                       onClick={() => void handleApproveAll(submission.id)}
-                      disabled={submittingKey !== null}
+                      disabled={submittingKey !== null || state.loading}
                     >
                       {approvingAll ? "Approving..." : "Approve All"}
                     </Button>
@@ -178,8 +207,8 @@ export function ParentSubmissionReviewPage(): ReactElement {
                                 )
                               }
                               disabled={
-                                submittingKey !== null ||
-                                item.status === "APPROVED"
+                                submittingKey !== null || state.loading ||
+                                item.status !== "PENDING"
                               }
                             >
                               {itemActionPending ? "Saving..." : "Approve"}
@@ -196,8 +225,8 @@ export function ParentSubmissionReviewPage(): ReactElement {
                                 )
                               }
                               disabled={
-                                submittingKey !== null ||
-                                item.status === "REJECTED"
+                                submittingKey !== null || state.loading ||
+                                item.status !== "PENDING"
                               }
                             >
                               {itemActionPending ? "Saving..." : "Reject"}
@@ -213,6 +242,7 @@ export function ParentSubmissionReviewPage(): ReactElement {
           </ul>
         ) : null}
 
+        {saved && state.error === null ? <InlineNotice variant="success">Decision saved.</InlineNotice> : null}
         {actionError !== null ? (
           <InlineNotice variant="error">
             Could not update submission decision: {actionError}

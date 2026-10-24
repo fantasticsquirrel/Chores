@@ -136,9 +136,86 @@ describe("useRecipeDetail", () => {
       targetServings: 8,
     });
     expect(result.current.scaleMultiplier).toBe("2");
+    expect(result.current.linkedCurrentIngredients[0]).toMatchObject({
+      scaled_quantity: 4,
+    });
     expect(result.current.displayedIngredients[0]).toMatchObject({
       scaled_quantity: 4,
     });
+  });
+
+  it("keeps scale output bound to the latest request and reports failure without replacing the recipe", async () => {
+    let old!: (
+      value: Awaited<ReturnType<typeof apiClient.scaleRecipe>>,
+    ) => void;
+    const scaled = {
+      recipe_id: 10,
+      base_servings: 4,
+      target_servings: 12,
+      factor: 3,
+      warnings: [],
+      ingredients: [{ ...recipe.ingredients[0], scaled_quantity: 6 }],
+      steps: [],
+    };
+    vi.spyOn(apiClient, "scaleRecipe")
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            old = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(scaled)
+      .mockRejectedValueOnce(new Error("Offline"));
+    const { result } = renderHook(() => useRecipeDetail(10));
+    await waitFor(() => expect(result.current.recipe).toEqual(recipe));
+    let earlier!: Promise<void>;
+    act(() => {
+      earlier = result.current.scaleToServings("8");
+    });
+    await act(async () => result.current.scaleToServings("12"));
+    await act(async () => {
+      old({ ...scaled, target_servings: 8, factor: 2 });
+      await earlier;
+    });
+    expect(result.current.appliedServings).toBe("12");
+    await act(async () => result.current.scaleToServings("16"));
+    expect(result.current.scaleError).toContain("Offline");
+    expect(result.current.appliedServings).toBe("12");
+    expect(result.current.recipe).toEqual(recipe);
+  });
+
+  it("rejects stale mutation handlers after management is revoked", async () => {
+    const update = vi
+      .spyOn(apiClient, "updateRecipe")
+      .mockResolvedValue(recipe);
+    const duplicate = vi
+      .spyOn(apiClient, "duplicateRecipe")
+      .mockResolvedValue(recipe);
+    const remove = vi
+      .spyOn(apiClient, "deleteRecipe")
+      .mockResolvedValue(undefined);
+    const feedback = vi.spyOn(apiClient, "upsertRecipeFeedback");
+    const { result, rerender } = renderHook(
+      ({ canManage }) => useRecipeDetail(10, { canManage }),
+      { initialProps: { canManage: true } },
+    );
+    await waitFor(() => expect(result.current.recipe).toEqual(recipe));
+    act(() => result.current.setDeleteConfirmText(recipe.title));
+    const stale = {
+      update: result.current.updateRecipe,
+      duplicate: result.current.addVariant,
+      remove: result.current.deleteRecipe,
+      feedback: result.current.saveFeedback,
+    };
+    rerender({ canManage: false });
+    await act(async () => {
+      await stale.update();
+      await stale.duplicate();
+      await stale.remove();
+      await stale.feedback();
+    });
+    for (const operation of [update, duplicate, remove, feedback])
+      expect(operation).not.toHaveBeenCalled();
   });
 
   it("keeps the reviewer identity payload tied to the loaded session and child", async () => {

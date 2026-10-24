@@ -46,9 +46,11 @@ import {
   RelativeChooser,
   IdentityChooser,
 } from "../features/family-tree/forms/PersonDetails";
+import { useTreeWorkspaceMode } from "../features/family-tree/hooks/useTreeWorkspaceMode";
 import { useGraphContinuation } from "../features/family-tree/hooks/useGraphContinuation";
 import { FamilyTreeAccessNotice } from "../features/family-tree/components/FamilyTreeAccessNotice";
 import { ProtectedTree } from "../features/family-tree/hooks/ProtectedTree";
+import { TreeWorkspaceHeader } from "../features/family-tree/components/TreeWorkspaceHeader";
 import { TreeGraphPanel } from "../features/family-tree/components/TreeGraphPanel";
 import { BirthBandColorScope } from "../features/family-tree/components/BirthBandColorScope";
 import "../features/family-tree/forms/workflows.css";
@@ -89,6 +91,7 @@ function TreeWorkspace() {
   const navigate = useNavigate(),
     { personId } = useParams(),
     [searchParams, setSearchParams] = useSearchParams();
+  const { mode, graphRegion, changeMode, revealGraph } = useTreeWorkspaceMode(searchParams, setSearchParams);
   const collection = useTreeRead(
     ["collection"],
     (requestOptions) =>
@@ -238,6 +241,8 @@ function TreeWorkspace() {
     if (busy) return;
     const next = new URLSearchParams(searchParams);
     next.set("focus", String(id));
+    next.set("view", "tree");
+    revealGraph();
     navigate(`/family-tree/people/${id}?${next.toString()}`);
   }
   function changeLens(next: LayoutOptions) {
@@ -277,30 +282,18 @@ function TreeWorkspace() {
         className="family-tree-workspace"
         aria-label="Family Tree workspace"
       >
-        <header>
-          <h1>{collection.data?.title || "Family Tree"}</h1>
-          <p>
-            Private household records. Relationships and uncertainty are
-            recorded explicitly, never inferred.
-          </p>
-          {!authoritativeManage ? (
-            <InlineNotice variant="info">
-              View-only access. Management controls are unavailable.
-            </InlineNotice>
-          ) : null}
-          {!online ? (
-            <InlineNotice variant="info">
-              Offline: showing only this session&apos;s last authorized data.
-              Remote changes or revocation cannot be checked until access
-              refresh succeeds. Editing is disabled.
-            </InlineNotice>
-          ) : null}
-          <p role="status">
-            {runtime.checking
-              ? "Rechecking authoritative access; reads and edits are paused. Your draft is kept until access is confirmed."
-              : announcement}
-          </p>
-        </header>
+        <TreeWorkspaceHeader
+          title={collection.data?.title || "Family Tree"}
+          manage={authoritativeManage}
+          online={online}
+          checking={!!runtime.checking}
+          busy={busy}
+          announcement={announcement}
+          mode={mode}
+          query={query}
+          onModeChange={changeMode}
+          onQueryChange={setQuery}
+        />
         {collection.isPending ? (
           <p role="status">Loading tree collection…</p>
         ) : null}
@@ -340,10 +333,9 @@ function TreeWorkspace() {
           </Card>
         ) : null}
         {collection.data ? (
-          <FamilyTreeDirectory
+          <div hidden={mode !== "people"}><FamilyTreeDirectory
+            searchParams={searchParams}
             activePeopleCount={collection.data.active_people_count}
-            query={query}
-            setQuery={setQuery}
             tag={tag}
             setTag={setTag}
             living={living}
@@ -358,16 +350,17 @@ function TreeWorkspace() {
               edit({ ...spec, originRevision: collection.data!.graph_revision })
             }
             showInTree={showInTree}
-          />
+          /></div>
         ) : null}
         {invalidId || invalidFocus ? (
           <InlineNotice variant="error">
             This bookmark has an invalid person or focus ID.{" "}
-            <Button onClick={() => navigate("/family-tree")}>
+            <Button onClick={() => navigate("/family-tree?view=people")}>
               Open the directory instead
             </Button>
           </InlineNotice>
         ) : null}
+        <div ref={graphRegion} role="region" aria-label="Tree workspace" tabIndex={-1} hidden={mode !== "tree"}>
         <TreeGraphPanel
           graph={graph}
           collection={collection}
@@ -382,6 +375,7 @@ function TreeWorkspace() {
           changeLens={changeLens}
           more={more}
         />
+        </div>
         {collection.data ? (
           <TreeAdvancedTools
             collection={collection.data}
@@ -400,7 +394,7 @@ function TreeWorkspace() {
             >
               Retry person details
             </Button>
-            <Link to="/family-tree">Return to directory</Link>
+            <Link to="/family-tree?view=people">Return to directory</Link>
           </InlineNotice>
         ) : null}
         {detail.data ? (

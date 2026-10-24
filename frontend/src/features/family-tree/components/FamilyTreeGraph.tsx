@@ -226,6 +226,8 @@ function TreeGraph({
             ? "Show tree and relationship list"
             : "Relationship list only"}
         </Button>
+        <details>
+          <summary>Tree lens options</summary>
         <fieldset className="family-tree-filters">
           <legend>View filters</legend>
           <label>
@@ -254,6 +256,7 @@ function TreeGraph({
             Care connections
           </label>
         </fieldset>
+        </details>
       </div>
       {(loading || warnings.length > 0 || bounded) && (
         <div role="status" className="family-tree-notice">

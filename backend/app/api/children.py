@@ -45,7 +45,8 @@ def list_children(
     if household_id != _user.household_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
     children = _service.list_children(session, household_id, active_only=active_only)
-    return [ChildResponse.model_validate(child) for child in children]
+    linked_ids = _service.linked_child_ids(session, household_id)
+    return [ChildResponse.model_validate(child).model_copy(update={"has_login": child.id in linked_ids}) for child in children]
 
 
 @router.post("", response_model=ChildResponse, status_code=status.HTTP_201_CREATED)
@@ -97,7 +98,7 @@ def update_child(
     if child is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Child not found.")
 
-    account = session.scalar(select(User).where(User.child_id == child.id, User.role == UserRole.CHILD))
+    account = session.scalar(select(User).where(User.household_id == payload.household_id, User.child_id == child.id, User.role == UserRole.CHILD))
     if payload.active is False and account is not None:
         revoke_user_sessions(session, account.id)
     audit(session, "child.updated", request=request, actor=_user, target=account, details={"child_id": child.id, "active": child.active})
@@ -107,7 +108,7 @@ def update_child(
     except IntegrityError as exc:
         session.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid household reference.") from exc
-    return ChildResponse.model_validate(child)
+    return ChildResponse.model_validate(child).model_copy(update={"has_login": account is not None})
 
 
 @router.post("/{child_id}/account", response_model=ChildAccountResponse, status_code=status.HTTP_201_CREATED)

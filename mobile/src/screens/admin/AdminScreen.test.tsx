@@ -181,4 +181,15 @@ describe("AdminScreen household modules", () => {
     await waitFor(() => expect(setAccess).toHaveBeenCalledTimes(2));
     expect(await screen.findByText("Homeschool is now enabled for the household.")).toBeTruthy();
   });
+  it("keeps Add Parent separate from scoped module management and retains its draft", async () => {
+    arrangeLoads(); render(<AdminScreen />);
+    await screen.findByText("Chore assignments and rewards.");
+    expect(screen.queryByPlaceholderText("other.parent@example.com")).toBeNull();
+    fireEvent.press(screen.getByRole("button", { name: "Add Parent" }));
+    fireEvent.changeText(screen.getByPlaceholderText("other.parent@example.com"), "draft@example.test");
+    fireEvent.press(screen.getByRole("button", { name: "Back to module management" }));
+    fireEvent.press(screen.getByRole("button", { name: "Add Parent" }));
+    expect(screen.getByPlaceholderText("other.parent@example.com").props.value).toBe("draft@example.test");
+  });
+
 });

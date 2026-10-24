@@ -1,6 +1,6 @@
+import { colors } from "../../../styles/colors";
 import { Pressable, Text, TextInput, View } from "react-native";
 
-import type { Child } from "../../../api/models";
 import { ActionButton } from "../../../components/ActionButton";
 import { FieldLabel } from "../../../components/FieldLabel";
 import { InlineNotice } from "../../../components/InlineNotice";
@@ -22,23 +22,21 @@ export function AddChildPanel({
       <SectionCard title="Add Child">
         <FieldLabel label="Name" />
         <TextInput
+          autoFocus
+          editable={!mutations.submitting}
           maxLength={255}
           onChangeText={mutations.setNameInput}
           placeholder="Avery"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={colors.textSubtle}
           style={formStyles.input}
           value={mutations.nameInput}
         />
         <Pressable
           accessibilityRole="button"
-          onPress={() =>
-            mutations.setActiveOnCreate(!mutations.activeOnCreate)
-          }
+          onPress={() => mutations.setActiveOnCreate(!mutations.activeOnCreate)}
           style={[
             formStyles.selectableRow,
-            mutations.activeOnCreate
-              ? formStyles.selectableRowSelected
-              : null,
+            mutations.activeOnCreate ? formStyles.selectableRowSelected : null,
           ]}
         >
           <Text style={formStyles.rowTitle}>Active on create</Text>
@@ -71,73 +69,30 @@ export function AddChildPanel({
   );
 }
 
-export function ChildSelectionPanel({
-  onSelect,
-  selectedChildId,
+export function ChildrenListPanel({
   state,
+  selectedChildId,
+  onSelect,
+  mutations,
 }: {
-  onSelect: (childId: number) => void;
-  selectedChildId: number | null;
   state: ChildrenState;
+  selectedChildId: number | null;
+  onSelect: (childId: number) => void;
+  mutations: UseChildMutationsResult;
 }) {
   return (
-    <SectionCard title="Select Child">
+    <SectionCard title="Children">
       {state.loading ? <LoadingRow label="Loading children" /> : null}
-      {!state.loading && state.error !== null ? (
+      {state.error ? (
         <InlineNotice
           tone="error"
           message={`Could not load children: ${state.error}`}
         />
       ) : null}
-      {!state.loading && state.children.length === 0 ? (
+      {!state.loading && !state.error && state.children.length === 0 ? (
         <Text style={shellStyles.mutedText}>No children found yet.</Text>
       ) : null}
-      <View>
-        {state.children.map((child) => (
-          <Pressable
-            accessibilityRole="button"
-            key={child.id}
-            onPress={() => onSelect(child.id)}
-            style={[
-              formStyles.selectableRow,
-              selectedChildId === child.id
-                ? formStyles.selectableRowSelected
-                : null,
-            ]}
-          >
-            <View style={formStyles.rowMain}>
-              <Text style={formStyles.rowTitle}>{child.name}</Text>
-              <Text style={formStyles.rowMeta}>
-                {child.active ? "Active" : "Inactive"}
-              </Text>
-            </View>
-            <Text
-              style={[
-                formStyles.selectionMark,
-                selectedChildId === child.id
-                  ? formStyles.selectionMarkSelected
-                  : null,
-              ]}
-            >
-              {selectedChildId === child.id ? "Selected" : "Select"}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    </SectionCard>
-  );
-}
-
-export function ChildrenListPanel({
-  children,
-  mutations,
-}: {
-  children: Child[];
-  mutations: UseChildMutationsResult;
-}) {
-  return (
-    <SectionCard title="Children">
-      {children.map((child) => {
+      {state.children.map((child) => {
         const isUpdating = mutations.updatingChildId === child.id;
         return (
           <View key={child.id} style={cardStyles.reviewItem}>
@@ -147,21 +102,45 @@ export function ChildrenListPanel({
                 <Text style={formStyles.rowMeta}>
                   {child.active ? "Active" : "Inactive"}
                 </Text>
+                <Text style={formStyles.rowMeta}>
+                  {child.has_login === true
+                    ? "Login linked"
+                    : child.has_login === false
+                      ? "No login linked"
+                      : "Login status unavailable"}
+                </Text>
               </View>
-              <ActionButton
-                compact
-                disabled={isUpdating}
-                label={
-                  isUpdating
-                    ? "Updating"
-                    : child.active
-                      ? "Set Inactive"
-                      : "Set Active"
-                }
-                onPress={() => mutations.toggleActive(child)}
-                requiresManage
-                variant={child.active ? "danger" : "secondary"}
-              />
+              <View style={formStyles.inlineButtons}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Manage login for ${child.name}`}
+                  accessibilityState={{
+                    selected: selectedChildId === child.id,
+                  }}
+                  onPress={() => onSelect(child.id)}
+                  style={formStyles.selectableRow}
+                >
+                  <Text style={formStyles.rowTitle}>
+                    {selectedChildId === child.id
+                      ? "Close login tools"
+                      : "Manage login"}
+                  </Text>
+                </Pressable>
+                <ActionButton
+                  compact
+                  disabled={isUpdating}
+                  label={
+                    isUpdating
+                      ? "Updating"
+                      : child.active
+                        ? "Set Inactive"
+                        : "Set Active"
+                  }
+                  onPress={() => mutations.toggleActive(child)}
+                  requiresManage
+                  variant={child.active ? "danger" : "secondary"}
+                />
+              </View>
             </View>
           </View>
         );
