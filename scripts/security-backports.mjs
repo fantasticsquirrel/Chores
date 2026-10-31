@@ -4,14 +4,13 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, lstatSync, copyFileSync, mkdirSync, unlinkSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const root = resolve(process.env.SECURITY_BACKPORT_ROOT || dirname(fileURLToPath(import.meta.url)), process.env.SECURITY_BACKPORT_ROOT ? '.' : '..');
+const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const vendor = resolve(dirname(fileURLToPath(import.meta.url)), '../vendor/security-backports');
 const manifest = JSON.parse(readFileSync(join(vendor, 'manifest.json'), 'utf8'));
-const checkOnly = process.argv.includes('--check');
 const hash = path => createHash('sha256').update(readFileSync(path)).digest('hex');
 function files(path, prefix = '') {
   const result = {};
@@ -45,7 +44,7 @@ function packages(modules, output = []) {
   }
   return output;
 }
-function installedPackages() {
+function installedPackages(root) {
   const installed = [];
   function scan(base, required = false) {
     try {
@@ -90,14 +89,15 @@ function behavior(name, path) {
     assert.deepEqual(api({nested:{left:1}}, {nested:{right:2}}), {nested:{left:1,right:2}});
   } else throw new Error(`Missing source-backport behavior proof: ${name}`);
 }
-try {
+export function runSecurityBackports({repositoryRoot = defaultRoot, checkOnly = false} = {}) {
+  const root = resolve(repositoryRoot);
   for (const [name, entry] of Object.entries(manifest)) {
     const expected = entry.overlay
       ? Object.fromEntries(entry.overlay.map(path => [path, entry.patched[path]]))
       : entry.patched;
     if (!matches(files(join(vendor, name)), expected)) throw new Error(`Vendor integrity mismatch: ${name}`);
   }
-  const installed = installedPackages();
+  const installed = installedPackages(root);
   for (const name of Object.keys(manifest)) if (!installed.some(([n]) => n === name)) throw new Error(`Required installed package missing: ${name}`);
   // Validate every copy before mutating any copy.
   for (const [name, path] of installed) {
@@ -119,7 +119,19 @@ try {
     if (!matches(files(path), manifest[name].patched)) throw new Error(`Patched integrity mismatch: ${path}`);
     behavior(name, path);
   }
-  console.log(JSON.stringify({status:'source-backports-verified', packages:installed.map(([name,path])=>({name,path,version:manifest[name].version})), note:'Version-based npm audit advisories remain; no existing exception is widened.'}));
-} catch (error) {
-  console.error(`Security backport rejected: ${error.message}`); process.exitCode = 1;
+  return {status:'source-backports-verified', packages:installed.map(([name,path])=>({name,path,version:manifest[name].version})), note:'Version-based npm audit advisories remain; no existing exception is widened.'};
+}
+
+function main() {
+  const repositoryRoot = process.env.SECURITY_BACKPORT_ROOT || defaultRoot;
+  console.log(JSON.stringify(runSecurityBackports({
+    repositoryRoot,
+    checkOnly: process.argv.includes('--check'),
+  })));
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  try { main(); } catch (error) {
+    console.error(`Security backport rejected: ${error.message}`); process.exitCode = 1;
+  }
 }

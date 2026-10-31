@@ -1,15 +1,42 @@
 import assert from 'node:assert/strict';
 import { test, after } from 'node:test';
-import { mkdtempSync, cpSync, writeFileSync, rmSync, mkdirSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync, mkdirSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { runSecurityBackports } from './security-backports.mjs';
 
-const script = resolve('scripts/security-backports.mjs');
 const vendor = resolve('vendor/security-backports');
 const seed = mkdtempSync(join(tmpdir(), 'security-backport-test-deps-'));
-const dependencies = spawnSync('npm',['install','--prefix',seed,'--ignore-scripts','--no-audit','--no-fund','fill-range@7.1.1','deepmerge@4.3.1'],{encoding:'utf8',timeout:60000});
-assert.equal(dependencies.status,0,dependencies.stderr);
+mkdirSync(join(seed, 'node_modules'), { recursive: true });
+cpSync(join(vendor, 'braces'), join(seed, 'node_modules/braces'), { recursive: true });
+cpSync(resolve('node_modules/deepmerge'), join(seed, 'node_modules/deepmerge'), { recursive: true });
+for (const name of ['fill-range', 'to-regex-range', 'is-number']) {
+  cpSync(resolve('node_modules', name), join(seed, 'node_modules', name), { recursive: true });
+}
+
+function replaceOnce(source, before, after, path) {
+  assert.notEqual(source.indexOf(before), -1, `Expected reviewed patch hunk in ${path}`);
+  assert.equal(source.indexOf(before), source.lastIndexOf(before), `Duplicate reviewed patch hunk in ${path}`);
+  return source.replace(before, after);
+}
+
+// Reconstruct the exact upstream files from the already verified overlay so
+// this installer regression is deterministic and never downloads test input.
+for (const [path, indent] of [['index.js', ''], ['dist/cjs.js', ''], ['dist/umd.js', '\t']]) {
+  const target = join(seed, 'node_modules/deepmerge', path);
+  let source = readFileSync(target, 'utf8');
+  source = replaceOnce(source,
+    `\n${indent}function propertyIsForbidden(key) {\n${indent}\treturn key === '__proto__'\n${indent}}\n`,
+    '', path);
+  source = replaceOnce(source,
+    `${indent}\t\t\tif (propertyIsForbidden(key)) {\n${indent}\t\t\t\treturn\n${indent}\t\t\t}\n`,
+    '', path);
+  source = replaceOnce(source,
+    'if (propertyIsForbidden(key) || propertyIsUnsafe(target, key))',
+    'if (propertyIsUnsafe(target, key))', path);
+  writeFileSync(target, source);
+}
+assert.equal(runSecurityBackports({ repositoryRoot: seed }).status, 'source-backports-verified');
 after(()=>rmSync(seed,{recursive:true,force:true}));
 function trial(change, expected) {
   const root = mkdtempSync(join(tmpdir(), 'security-backport-test-'));
@@ -17,9 +44,7 @@ function trial(change, expected) {
     cpSync(join(seed,'node_modules'),join(root,'node_modules'),{recursive:true});
     cpSync(join(vendor,'braces'),join(root,'node_modules/braces'),{recursive:true});
     change(root);
-    const run = spawnSync(process.execPath,[script,'--check'],{env:{...process.env,SECURITY_BACKPORT_ROOT:root},encoding:'utf8'});
-    assert.equal(run.status,1);
-    assert.match(run.stderr,expected);
+    assert.throws(() => runSecurityBackports({ repositoryRoot: root, checkOnly: true }), expected);
   } finally { rmSync(root,{recursive:true,force:true}); }
 }
 test('rejects altered installed source', () => trial(root => writeFileSync(join(root,'node_modules/braces/lib/compile.js'),'module.exports = () => "unsafe";'), /integrity mismatch/));

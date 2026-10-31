@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import {
   mkdirSync,
@@ -87,14 +86,11 @@ test('upstream node-forge rejects invalid GCM tags, malformed OIDs, and negative
   assert.throws(() => decipher.start({ iv: '\0'.repeat(12), tagLength: 0, tag: '' }), /tag length/i);
   const oid = '2.999.3.40000';
   assert.equal(forge.asn1.derToOid(forge.asn1.oidToDer(oid).getBytes()), oid);
-  const script = `
-    const forge = require(${JSON.stringify(cliRequire.resolve('node-forge'))});
-    const value = new forge.jsbn.BigInteger('2').modInverse(new forge.jsbn.BigInteger('-3'));
-    if (value.toString() !== '0') process.exit(2);
-  `;
-  const child = spawnSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 2_000 });
-  assert.equal(child.signal, null, `negative modulus inverse exceeded the bound: ${child.error?.message ?? child.stderr}`);
-  assert.equal(child.status, 0, child.stderr);
+  const inverse = vm.runInNewContext(`
+    const forge = require('node-forge');
+    new forge.jsbn.BigInteger('2').modInverse(new forge.jsbn.BigInteger('-3')).toString();
+  `, { require: cliRequire }, { timeout: 2_000 });
+  assert.equal(inverse, '0');
 });
 
 test('Expo CLI Zod schemas retain valid parsing and strict rejection under Zod 4', () => {
@@ -174,15 +170,13 @@ test('minimatch 11 preserves Expo fingerprint matching and bounds malicious prep
   assert.equal(paths.isIgnoredPathWithMatchObjects('apps/mobile/node_modules/pkg/index.js', matchers), true);
   assert.equal(paths.isIgnoredPathWithMatchObjects('packages/kept/index.js', matchers), false);
 
-  const script = `
-    const { Minimatch } = require(${JSON.stringify(fingerprintRequire.resolve('minimatch'))});
+  const bounded = vm.runInNewContext(`
+    const { Minimatch } = require('minimatch');
     const pattern = ${JSON.stringify('**/../'.repeat(48) + 'target')};
     const matcher = new Minimatch(pattern, { optimizationLevel: 2 });
     matcher.match('target');
-  `;
-  const child = spawnSync(process.execPath, ['-e', script], { encoding: 'utf8', timeout: 2_000 });
-  assert.equal(child.signal, null, `minimatch amplification exceeded the bound: ${child.error?.message ?? child.stderr}`);
-  assert.equal(child.status, 0, child.stderr);
+  `, { require: fingerprintRequire }, { timeout: 2_000 });
+  assert.equal(typeof bounded, 'boolean');
 });
 
 test('test-exclude 8 preserves Babel Istanbul include/exclude and glob semantics', async () => {

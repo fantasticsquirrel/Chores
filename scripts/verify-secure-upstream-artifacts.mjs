@@ -114,9 +114,14 @@ export function validateSecureArtifactMetadata({ manifest, lock }) {
 
 function workspaceSymlink(path, repositoryRoot) {
   const target = realpathSync(path);
-  const rel = relative(repositoryRoot, target);
-  if (!rel || rel.startsWith('..') || isAbsolute(rel)
-    || rel.split(/[\\/]/).some(part => part === 'node_modules' || part === 'vendor')) {
+  const allowed = new Set([
+    realpathSync(join(repositoryRoot, 'frontend')),
+    realpathSync(join(repositoryRoot, 'mobile')),
+    ...readdirSync(join(repositoryRoot, 'packages'), { withFileTypes: true })
+      .filter(entry => entry.isDirectory() && !entry.isSymbolicLink())
+      .map(entry => realpathSync(join(repositoryRoot, 'packages', entry.name))),
+  ]);
+  if (!allowed.has(target)) {
     fail(`installed dependency symlink rejected: ${path}.`);
   }
 }

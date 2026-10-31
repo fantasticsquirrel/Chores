@@ -8,8 +8,8 @@ import {fileURLToPath} from 'node:url';
 const repositoryRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 // Genuine transitive npm packages, isolated from the working repository.
 const seed=mkdtempSync(path.join(os.tmpdir(),'audit-source-deps-'));
-const installed=spawnSync('npm',['install','--prefix',seed,'--ignore-scripts','--no-audit','--no-fund','fill-range@7.1.1','deepmerge@4.3.1'],{encoding:'utf8',timeout:60000});
-assert.equal(installed.status,0,installed.stderr);
+mkdirSync(path.join(seed,'node_modules'),{recursive:true});
+for (const name of ['braces','deepmerge','fill-range','to-regex-range','is-number']) cpSync(path.join(repositoryRoot,'node_modules',name),path.join(seed,'node_modules',name),{recursive:true});
 after(()=>rmSync(seed,{recursive:true,force:true}));
 const graph={
   '@expo/cli':['@expo/metro','@expo/metro-config'], '@expo/metro':['metro','metro-config','metro-transform-worker'],
