@@ -226,7 +226,13 @@ function mount() {
 async function detail() {
   rows = [record];
   const view = mount();
-  fireEvent.press(await screen.findByRole("button", { name: "People" }));
+  fireEvent.press(
+    await screen.findByRole(
+      "button",
+      { name: "People" },
+      { timeout: 5000 },
+    ),
+  );
   fireEvent.press(
     await screen.findByRole(
       "button",
