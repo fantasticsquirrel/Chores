@@ -260,7 +260,11 @@ describe("Homeschool page", () => {
 
     await screen.findByText("Children: Maya");
 
-    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
+    const attendanceDateButton = await screen.findByRole("button", {
+      name: "2026-09-02, no attendance recorded",
+    });
+    expect(attendanceDateButton).toBeEnabled();
+    fireEvent.click(attendanceDateButton);
     const attendancePanel = screen.getByRole("dialog");
     fireEvent.click(within(attendancePanel).getByLabelText("Select Math"));
     fireEvent.change(within(attendancePanel).getByLabelText("Math notes"), { target: { value: "Decimals" } });
