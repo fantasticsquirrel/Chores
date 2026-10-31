@@ -48,7 +48,9 @@ describe("MoneyScreen", () => {
     const view = render(<MoneyScreen />);
 
     expect(await screen.findByText("Mia")).toBeTruthy();
-    expect(screen.getByText("Great teamwork")).toBeTruthy();
+    expect(
+      await screen.findByText("Great teamwork", {}, { timeout: 3000 }),
+    ).toBeTruthy();
     expect(apiClient.listChildBalances).toHaveBeenCalledTimes(1);
     expect(apiClient.listChoreTransactions).toHaveBeenCalledWith(3);
 
