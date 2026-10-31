@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 
 import type { Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolSubject } from "../../api";
 import { Button, Card, FormField } from "../../ui";
+import { contrastingTextColor, normalizeHexColor } from "../../features/homeschool/lib/attendance";
 import { buildMonthGrid, formatYearMonth, shiftYearMonth, todayISO, toYearMonth } from "./dateUtils";
 
 type AttendanceCalendarProps = {
@@ -94,8 +95,9 @@ export function AttendanceCalendar({
                 <div className="calendar-subject-labels">
                 {records.slice(0, 3).map((record) => {
                   const subject = subjectLookup.get(record.subject_id);
+                  const markerColor = normalizeHexColor(subject?.color ?? "") ?? "#475569";
                   return (
-                    <span key={record.id} className="calendar-subject-initial" title={`${subject?.name || `Subject ${record.subject_id}`}: ${record.present ? "Present" : "Absent"}`} style={{ borderColor: subject?.color || undefined }}>
+                    <span key={record.id} className="calendar-subject-initial" title={`${subject?.name || `Subject ${record.subject_id}`}: ${record.present ? "Present" : "Absent"}`} style={{ backgroundColor: markerColor, color: contrastingTextColor(markerColor) }}>
                       {record.present ? (subject?.name || `S${record.subject_id}`).slice(0, 1).toUpperCase() : "–"}
                     </span>
                   );

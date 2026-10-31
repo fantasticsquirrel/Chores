@@ -20,8 +20,9 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1050 }, { name: 
       const response = await page.request.post(`/chore-api/${endpoint}`, { data: { household_id, ...data }, headers });
       expect(response.ok(), await response.text()).toBe(true); return response.json();
     };
-    const math = await create('homeschool/subjects', { name: `Math ${viewport.name}`, color: '#1d4ed8' });
-    const reading = await create('homeschool/subjects', { name: `Reading ${viewport.name}`, color: '#047857' });
+    const [mathColor, readingColor] = viewport.name === 'desktop' ? ['#1d4ed8', '#047857'] : ['#7e22ce', '#c2410c'];
+    const math = await create('homeschool/subjects', { name: `Math ${viewport.name}`, color: mathColor });
+    const reading = await create('homeschool/subjects', { name: `Reading ${viewport.name}`, color: readingColor });
     const semester = await create('homeschool/semesters', { name: `Autumn ${viewport.name}`, start_date: '2026-09-02', end_date: '2026-12-20' });
     const otherChild = await create('children', { name: `Other learner ${viewport.name}` });
     const put = async (endpoint: string, data: object) => {
@@ -44,9 +45,9 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1050 }, { name: 
     await expect(dialog.getByText(/Copied 2026-09-01/)).toBeVisible();
     await expect(dialog.getByLabel(`${math.name} present`)).toBeChecked();
     await expect(dialog.getByLabel(`${reading.name} present`)).not.toBeChecked();
-    await expect(dialog.getByLabel(`${reading.name} comment`)).toHaveValue('Reading postponed');
+    await expect(dialog.getByLabel(`${reading.name} notes`)).toHaveValue('Reading postponed');
     await expect(dialog.getByText('Other child private note')).toHaveCount(0);
-    await dialog.getByLabel(`${math.name} comment`).fill('Fractions and decimals');
+    await dialog.getByLabel(`${math.name} notes`).fill('Fractions and decimals');
     await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
     await page.keyboard.press('Shift+Tab');
     expect(await dialog.evaluate(element => element.contains(document.activeElement))).toBe(true);
@@ -54,14 +55,14 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1050 }, { name: 
     mkdirSync(output, { recursive: true, mode: 0o700 });
     await page.screenshot({ path: path.join(output, `${viewport.name}-attendance-modal.png`) });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await dialog.getByRole('button', { name: 'Save Attendance', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(dialog.getByText(/Attendance saved/)).toBeVisible();
     await expect(dialog).not.toBeVisible({ timeout: 6000 });
     const records = await (await page.request.get(`/chore-api/homeschool/attendance?household_id=${household_id}&child_id=${child_id}`)).json();
     expect(records.filter((row: {date: string;subject_id:number}) => row.date === '2026-09-08' && [math.id,reading.id].includes(row.subject_id))).toHaveLength(2);
     await expect(page.locator('details.homeschool-log')).not.toHaveAttribute('open', '');
     await date.click();
-    await expect(dialog.getByLabel(`${math.name} comment`)).toHaveValue('Fractions and decimals');
+    await expect(dialog.getByLabel(`${math.name} notes`)).toHaveValue('Fractions and decimals');
     await page.keyboard.press('Escape');
     await expect(dialog).not.toBeVisible();
     await expect(date).toBeFocused();
@@ -97,12 +98,12 @@ for (const viewport of [{ name: "desktop", width: 1440, height: 1050 }, { name: 
       });
       await page.getByRole('button', { name: /^2026-09-09,/ }).click();
       await dialog.getByRole('button', { name: 'Copy previous day' }).click();
-      await dialog.getByRole('button', { name: 'Save Attendance', exact: true }).evaluate((button: HTMLButtonElement) => { button.click(); button.click(); });
+      await dialog.getByRole('button', { name: 'Save', exact: true }).evaluate((button: HTMLButtonElement) => { button.click(); button.click(); });
       await expect(dialog.getByRole('alert')).toContainText('1 could not be saved');
       expect(attempts.get(math.id)).toBe(1);
       expect(attempts.get(reading.id)).toBe(1);
       await expect(dialog.getByText(/Attendance saved/)).toHaveCount(0);
-      await dialog.getByRole('button', { name: 'Save Attendance', exact: true }).click();
+      await dialog.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(dialog.getByText(/Attendance saved/)).toBeVisible();
       expect(attempts.get(math.id)).toBe(1);
       expect(attempts.get(reading.id)).toBe(2);

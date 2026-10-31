@@ -1334,9 +1334,8 @@ body {
   justify-content: center;
   min-width: 1.35rem;
   height: 1.35rem;
-  border: 2px solid #ffffff44;
+  border: 1px solid #00000022;
   border-radius: 999px;
-  background: #00000044;
   font-size: 0.75rem;
   font-weight: 800;
 }

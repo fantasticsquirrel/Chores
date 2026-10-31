@@ -95,6 +95,51 @@ def test_alembic_upgrade_head_creates_family_manager_schema(tmp_path: Path, monk
         assert expected_names <= actual_names, table_name
 
 
+def test_subject_color_guard_preserves_legacy_duplicates_and_blocks_new_races(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'subject-color-guard.db'}"
+    monkeypatch.setenv("DATABASE_URL", database_url)
+    monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-with-at-least-32-characters")
+    get_settings.cache_clear()
+    config = _phase9_alembic_config(database_url)
+    command.upgrade(config, "20261024_0031")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            """INSERT INTO homeschool_subjects
+            (id, household_id, name, color, active, created_at) VALUES
+            (1, 41, 'Legacy Art', '#abc', 1, CURRENT_TIMESTAMP),
+            (2, 41, 'Legacy Drawing', '#AABBCC', 1, CURRENT_TIMESTAMP)"""
+        )
+
+    command.upgrade(config, "head")
+
+    with engine.begin() as connection:
+        connection.exec_driver_sql(
+            "UPDATE homeschool_subjects SET name='Legacy Art Renamed', color='#aabbcc' WHERE id=1"
+        )
+        assert connection.exec_driver_sql(
+            "SELECT count(*) FROM homeschool_subjects WHERE household_id=41"
+        ).scalar_one() == 2
+        with pytest.raises(Exception, match="subject color already used"):
+            connection.exec_driver_sql(
+                """INSERT INTO homeschool_subjects
+                (household_id, name, color, active, created_at)
+                VALUES (41, 'New Duplicate', '#ABC', 1, CURRENT_TIMESTAMP)"""
+            )
+        connection.exec_driver_sql(
+            """INSERT INTO homeschool_subjects
+            (household_id, name, color, active, created_at)
+            VALUES (42, 'Other Family Art', '#ABC', 1, CURRENT_TIMESTAMP),
+                   (41, 'Unique Subject', '#123456', 1, CURRENT_TIMESTAMP)"""
+        )
+        with pytest.raises(Exception, match="subject color already used"):
+            connection.exec_driver_sql(
+                "UPDATE homeschool_subjects SET color='#ABC' WHERE name='Unique Subject'"
+            )
+
 def test_global_user_email_migration_renames_duplicate_emails(tmp_path: Path, monkeypatch) -> None:
     db_file = tmp_path / "duplicate_email_migration.db"
     database_url = f"sqlite:///{db_file}"

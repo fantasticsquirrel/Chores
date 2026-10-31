@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { previousAttendance, nextSubjectColor, subjectColors, isAttendanceDate } from "./attendance";
+import { contrastingTextColor, isAttendanceDate, nextSubjectColor, normalizeHexColor, previousAttendance, subjectColors } from "./attendance";
 
 const row = { id: 1, household_id: 7, child_id: 2, subject_id: 3, date: "2026-08-01", present: false, comment: "Sick" };
 describe("attendance defaults", () => {
@@ -20,5 +20,15 @@ describe("attendance defaults", () => {
   });
   it("chooses an unused named color without case-sensitive duplicates", () => {
     expect(nextSubjectColor([{ color: subjectColors[0].value.toUpperCase() }])).toBe(subjectColors[1].value);
+  });
+  it("canonicalizes shorthand hex colors", () => {
+    expect(normalizeHexColor(" #AbC ")).toBe("#aabbcc");
+    expect(normalizeHexColor("#A1B2C3")).toBe("#a1b2c3");
+    expect(normalizeHexColor("blue")).toBeNull();
+  });
+  it("uses whichever black or white text has the greater WCAG luminance contrast", () => {
+    expect(contrastingTextColor("#000")).toBe("#ffffff");
+    expect(contrastingTextColor("#fff")).toBe("#000000");
+    expect(contrastingTextColor("#777777")).toBe("#000000");
   });
 });

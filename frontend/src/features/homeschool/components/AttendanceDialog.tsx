@@ -21,6 +21,10 @@ type Props = {
   externallySaving?: boolean;
 };
 
+function readableAttendanceDate(date: string): string {
+  return new Intl.DateTimeFormat("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
+}
+
 export function AttendanceDialog({ householdId, childId, childName, date, subjects, records, onClose, onSaved, onSavingChange, onRecordSaved, externallySaving = false }: Props): ReactElement {
   const scopedRecords = records.filter((row) => row.household_id === householdId && row.child_id === childId);
   const scopedSubjects = subjects.filter((subject) => subject.household_id === householdId);
@@ -140,7 +144,7 @@ export function AttendanceDialog({ householdId, childId, childName, date, subjec
 
   const locked = saving || success || externallySaving;
   return createPortal(
-    <dialog ref={dialog} className="homeschool-attendance-dialog" aria-modal="true" aria-labelledby="attendance-dialog-title" aria-describedby="attendance-dialog-description"
+    <dialog ref={dialog} className="homeschool-attendance-dialog" aria-modal="true" aria-labelledby="attendance-dialog-title" aria-describedby="attendance-dialog-context"
       onCancel={(event) => { event.preventDefault(); if (!busy.current && !externallySaving) onClose(); }}
       onKeyDown={(event) => {
         if (event.key === "Escape") { event.preventDefault(); if (!busy.current && !externallySaving) onClose(); }
@@ -151,13 +155,11 @@ export function AttendanceDialog({ householdId, childId, childName, date, subjec
         if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }}>
-      <div className="panel-header-row">
-        <div><h2 id="attendance-dialog-title">Record attendance for {date}</h2><p>{childName}</p></div>
-        <Button type="button" disabled={saving || externallySaving} onClick={onClose} aria-label="Close attendance editor">Close</Button>
+      <div className="panel-header-row homeschool-attendance-header">
+        <div><h2 id="attendance-dialog-title">Attendance</h2><p id="attendance-dialog-context" className="homeschool-attendance-context">{childName} · {readableAttendanceDate(date)}</p></div>
+        <Button className="homeschool-close-button" type="button" disabled={saving || externallySaving} onClick={onClose} aria-label="Close attendance editor"><span aria-hidden="true">×</span></Button>
       </div>
-      <p id="attendance-dialog-description">Choose subjects, then record each subject’s attendance and notes. Unselected subjects are left unchanged.</p>
-      <Button type="button" onClick={copyPrevious} disabled={locked || scopedSubjects.length === 0}>Copy previous day</Button>
-      <p className="balance-meta">Uses this child’s most recent earlier attendance day, even across semesters. Nothing is saved until you choose Save Attendance.</p>
+      <Button className="homeschool-secondary-button homeschool-copy-button" type="button" onClick={copyPrevious} disabled={locked || scopedSubjects.length === 0}>Copy previous day</Button>
       {copyMessage ? <p role="status">{copyMessage}</p> : null}
       {scopedRecords.some((record) => record.date === date && !scopedSubjects.some((subject) => subject.id === record.subject_id)) ? <p>Some entries on this date belong to unavailable subjects. Those records are preserved and can be reviewed in the attendance log.</p> : null}
       {externallySaving && !saving ? <p role="status">Finishing the previous save and reloading attendance…</p> : null}
@@ -167,19 +169,19 @@ export function AttendanceDialog({ householdId, childId, childName, date, subjec
           {scopedSubjects.length === 0 ? <p>Create a subject in Setup & Records first.</p> : scopedSubjects.map((subject) => {
             const entry = entries[subject.id] ?? { selected: false, present: true, comment: "" };
             return <div key={subject.id} className="homeschool-subject-entry">
-              <label className="checkbox-row"><input type="checkbox" aria-label={`Select ${subject.name}${subject.active ? "" : " (inactive)"}`} checked={entry.selected} onChange={(event) => change(subject.id, { selected: event.target.checked })} /><span className="subject-attendance-color" style={{ background: subject.color }} />{subject.name}{subject.active ? "" : " (inactive)"}</label>
-              {entry.selected ? <div className="children-form">
-                <label className="checkbox-row"><input type="checkbox" aria-label={`${subject.name} present`} checked={entry.present} onChange={(event) => change(subject.id, { present: event.target.checked })} />Present</label>
-                <FormField label={`${subject.name} comment`}><TextInput value={entry.comment} onChange={(event) => change(subject.id, { comment: event.target.value })} maxLength={2000} placeholder="What did you work on?" /></FormField>
+              <label className="checkbox-row homeschool-subject-toggle"><input type="checkbox" aria-label={`Select ${subject.name}${subject.active ? "" : " (inactive)"}`} checked={entry.selected} onChange={(event) => change(subject.id, { selected: event.target.checked })} /><span className="subject-attendance-color" style={{ background: subject.color }} /><span>{subject.name}{subject.active ? "" : " (inactive)"}</span></label>
+              {entry.selected ? <div className="homeschool-attendance-fields">
+                <label className="checkbox-row homeschool-presence-control"><input type="checkbox" aria-label={`${subject.name} present`} checked={entry.present} onChange={(event) => change(subject.id, { present: event.target.checked })} /><span>Present</span></label>
+                <FormField label="Notes" className="homeschool-notes-control"><TextInput aria-label={`${subject.name} notes`} value={entry.comment} onChange={(event) => change(subject.id, { comment: event.target.value })} maxLength={2000} placeholder="What did you work on?" /></FormField>
               </div> : null}
             </div>;
           })}
         </fieldset>
         {error ? <p role="alert" className="homeschool-save-error">{error}</p> : null}
         {success ? <p role="status" className="homeschool-save-success">Attendance saved. Closing shortly…</p> : null}
-        <div className="item-actions">
-          <Button type="submit" disabled={locked || !Object.values(entries).some((entry) => entry.selected)}>{saving ? "Saving…" : "Save Attendance"}</Button>
-          <Button type="button" onClick={onClose} disabled={saving || externallySaving}>Cancel</Button>
+        <div className="item-actions homeschool-attendance-actions">
+          <Button type="submit" disabled={locked || !Object.values(entries).some((entry) => entry.selected)}>{saving ? "Saving…" : "Save"}</Button>
+          <Button className="homeschool-secondary-button" type="button" onClick={onClose} disabled={saving || externallySaving}>Cancel</Button>
         </div>
       </form>
     </dialog>, document.body,

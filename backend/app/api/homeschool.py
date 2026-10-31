@@ -50,7 +50,9 @@ from app.services.homeschool.semesters import (
 from app.services.homeschool.subjects import (
     create_household_subject,
     delete_household_subject,
+    is_subject_color_integrity_error,
     list_household_subjects,
+    subject_color_conflict_detail,
     update_household_subject,
 )
 
@@ -130,6 +132,8 @@ def create_subject(
         session.commit()
     except IntegrityError as exc:
         session.rollback()
+        if is_subject_color_integrity_error(exc):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=subject_color_conflict_detail(payload.color)) from exc
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subject already exists.") from exc
     session.refresh(subject)
     return subject
@@ -148,6 +152,8 @@ def update_subject(
         session.commit()
     except IntegrityError as exc:
         session.rollback()
+        if is_subject_color_integrity_error(exc):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=subject_color_conflict_detail(payload.color)) from exc
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subject already exists.") from exc
     session.refresh(subject)
     return subject

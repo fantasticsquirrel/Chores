@@ -2,7 +2,7 @@ import type { FormEvent, ReactElement } from "react";
 
 import type { Child, HomeschoolSemester, HomeschoolSubject } from "../../api";
 import { Button, Card, DateInput, FormField, TextInput } from "../../ui";
-import { subjectColors } from "../../features/homeschool/lib/attendance";
+import { normalizeHexColor, subjectColors } from "../../features/homeschool/lib/attendance";
 
 export type DayCommentFormState = {
   childId: string;
@@ -74,6 +74,8 @@ export function HomeschoolForms({
   onSaveDayComment,
   onSaveGrade,
 }: HomeschoolFormsProps): ReactElement {
+  const usedSubjectColors = new Set(subjects.filter((subject) => subject.id !== editingSubjectId).map((subject) => normalizeHexColor(subject.color) ?? subject.color.trim().toLowerCase()));
+  const selectedSubjectColor = normalizeHexColor(subjectColor);
   return (
     <>
       <Card className="dashboard-panel homeschool-form-card">
@@ -105,7 +107,11 @@ export function HomeschoolForms({
             <input className="homeschool-color-input" type="color" value={/^#[0-9a-f]{6}$/i.test(subjectColor) ? subjectColor : "#1d4ed8"} onChange={(event) => onSubjectColorChange(event.target.value)} />
           </FormField>
           <div className="homeschool-color-swatches" role="group" aria-label="Subject colors">
-            {subjectColors.map((color) => <button type="button" key={color.value} aria-label={color.name} aria-pressed={subjectColor.toLowerCase() === color.value} style={{ background: color.value }} onClick={() => onSubjectColorChange(color.value)}>{subjectColor.toLowerCase() === color.value ? "✓" : ""}</button>)}
+            {subjectColors.map((color) => {
+              const used = usedSubjectColors.has(color.value);
+              const selected = selectedSubjectColor === color.value;
+              return <button type="button" key={color.value} aria-label={`${color.name}${used ? " (used)" : ""}`} aria-pressed={selected} disabled={used} title={used ? `${color.name} is already used by another subject` : color.name} style={{ background: color.value }} onClick={() => onSubjectColorChange(color.value)}>{selected ? "✓" : ""}</button>;
+            })}
           </div>
           <div className="homeschool-subject-preview" aria-label="Subject color preview"><span className="subject-attendance-color" style={{ background: subjectColor }} />{subjectName.trim() || "New subject"}</div>
           <div className="item-actions">

@@ -13,8 +13,15 @@ export const subjectColors = [
   { name: "Slate", value: "#475569" },
 ];
 
+export function normalizeHexColor(color: string): string | null {
+  const trimmed = color.trim();
+  if (!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(trimmed)) return null;
+  const digits = trimmed.slice(1).toLowerCase();
+  return digits.length === 3 ? `#${[...digits].map((character) => character.repeat(2)).join("")}` : `#${digits}`;
+}
+
 export function nextSubjectColor(subjects: { color: string }[]): string {
-  const used = new Set(subjects.map(({ color }) => color.toLowerCase()));
+  const used = new Set(subjects.map(({ color }) => normalizeHexColor(color) ?? color.trim().toLowerCase()));
   const named = subjectColors.find(({ value }) => !used.has(value));
   if (named) return named.value;
   // Keep generating separated, dark hues when the named palette is exhausted.
@@ -29,6 +36,18 @@ export function nextSubjectColor(subjects: { color: string }[]): string {
     const color = `#${channel(0)}${channel(8)}${channel(4)}`;
     if (!used.has(color)) return color;
   }
+}
+
+export function contrastingTextColor(color: string): "#000000" | "#ffffff" {
+  const normalized = normalizeHexColor(color) ?? "#ffffff";
+  const channels = [1, 3, 5].map((offset) => {
+    const value = Number.parseInt(normalized.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  const contrastWithBlack = (luminance + 0.05) / 0.05;
+  const contrastWithWhite = 1.05 / (luminance + 0.05);
+  return contrastWithBlack >= contrastWithWhite ? "#000000" : "#ffffff";
 }
 
 export function previousAttendance(records: HomeschoolAttendance[], householdId: number, childId: number, date: string): HomeschoolAttendance[] {

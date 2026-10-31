@@ -7,8 +7,55 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.homeschool import HomeschoolAttendance, HomeschoolGrade, HomeschoolSubject
-from app.schemas.homeschool import CreateHomeschoolSubjectRequest, UpdateHomeschoolSubjectRequest
+from app.schemas.homeschool import (
+    CreateHomeschoolSubjectRequest,
+    UpdateHomeschoolSubjectRequest,
+    normalize_subject_color,
+)
 from app.services.homeschool.access import get_household_subject_or_404
+
+
+SUBJECT_COLOR_TRIGGER_ERROR = "subject color already used in household"
+
+
+def subject_color_conflict_detail(color: str) -> str:
+    return (
+        f"Color {color} is already used by another subject in this household. "
+        "Choose a different color."
+    )
+
+
+def is_subject_color_integrity_error(error: Exception) -> bool:
+    return SUBJECT_COLOR_TRIGGER_ERROR in str(error)
+
+
+def _legacy_color_key(color: str) -> str:
+    try:
+        return normalize_subject_color(color)
+    except ValueError:
+        return color.strip().lower()
+
+
+def _require_available_color(
+    session: Session,
+    *,
+    household_id: int,
+    color: str,
+    exclude_subject_id: int | None = None,
+) -> None:
+    rows = session.execute(
+        select(HomeschoolSubject.id, HomeschoolSubject.color).where(
+            HomeschoolSubject.household_id == household_id
+        )
+    )
+    if any(
+        subject_id != exclude_subject_id and _legacy_color_key(existing_color) == color
+        for subject_id, existing_color in rows
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=subject_color_conflict_detail(color),
+        )
 
 
 def list_household_subjects(session: Session, household_id: int) -> list[HomeschoolSubject]:
@@ -25,6 +72,11 @@ def create_household_subject(
     session: Session,
     payload: CreateHomeschoolSubjectRequest,
 ) -> HomeschoolSubject:
+    _require_available_color(
+        session,
+        household_id=payload.household_id,
+        color=payload.color,
+    )
     subject = HomeschoolSubject(**payload.model_dump())
     session.add(subject)
     return subject
@@ -36,6 +88,13 @@ def update_household_subject(
     payload: UpdateHomeschoolSubjectRequest,
 ) -> HomeschoolSubject:
     subject = get_household_subject_or_404(session, subject_id, payload.household_id)
+    if _legacy_color_key(subject.color) != payload.color:
+        _require_available_color(
+            session,
+            household_id=payload.household_id,
+            color=payload.color,
+            exclude_subject_id=subject.id,
+        )
     subject.name = payload.name
     subject.color = payload.color
     subject.active = payload.active

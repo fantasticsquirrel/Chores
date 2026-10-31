@@ -12,6 +12,16 @@ const props = { householdId: 7, childId: 4, childName: "Maya", date: "2026-09-01
 
 describe("attendance dialog", () => {
   afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); props.onClose.mockClear(); props.onSaved.mockClear(); });
+  it("keeps only functional copy and presents readable child/date context", () => {
+    render(<AttendanceDialog {...props} />);
+    expect(screen.getByRole("heading", { name: "Attendance" })).toBeVisible();
+    expect(screen.getByText("Maya · Tuesday, September 1, 2026")).toBeVisible();
+    expect(screen.queryByText(/Choose subjects, then record/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Uses this child’s most recent/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close attendance editor" })).toHaveTextContent("×");
+    expect(screen.getByRole("button", { name: "Save" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
+  });
   it("loads all previous subjects and exact values without saving", () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance");
     render(<AttendanceDialog {...props} />);
@@ -19,7 +29,7 @@ describe("attendance dialog", () => {
     expect(screen.getByLabelText("Select Math")).toBeChecked();
     expect(screen.getByLabelText("Select Art")).toBeChecked();
     expect(screen.getByLabelText("Art present")).not.toBeChecked();
-    expect(screen.getByLabelText("Art comment")).toHaveValue("Art notes");
+    expect(screen.getByLabelText("Art notes")).toHaveValue("Art notes");
     expect(screen.getByText(/Copied 2026-08-27/)).toBeVisible();
     expect(save).not.toHaveBeenCalled();
   });
@@ -27,10 +37,10 @@ describe("attendance dialog", () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockResolvedValueOnce(records[0]).mockRejectedValueOnce(new Error("Offline")).mockResolvedValueOnce(records[1]);
     render(<AttendanceDialog {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Copy previous day" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("1 subject saved; 1 could not be saved");
     expect(props.onClose).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Attendance saved"));
     expect(save).toHaveBeenCalledTimes(3);
     expect(save.mock.calls[2][0]).toMatchObject({ subject_id: 2, present: false, comment: "Art notes", date: "2026-09-01", child_id: 4, household_id: 7 });
@@ -40,7 +50,7 @@ describe("attendance dialog", () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
     render(<AttendanceDialog {...props} />);
     fireEvent.click(screen.getByLabelText("Select Math"));
-    const button = screen.getByRole("button", { name: "Save Attendance" });
+    const button = screen.getByRole("button", { name: "Save" });
     fireEvent.click(button); fireEvent.click(button);
     expect(save).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
@@ -57,7 +67,7 @@ describe("attendance dialog", () => {
     vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockResolvedValue(records[0]);
     const first = render(<AttendanceDialog {...props} />);
     fireEvent.click(screen.getByLabelText("Select Math"));
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Attendance saved"));
     first.unmount(); vi.useFakeTimers();
     render(<AttendanceDialog {...props} date="2026-09-02" />);
@@ -75,16 +85,16 @@ describe("attendance dialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy previous day" }));
     expect(screen.getByLabelText("Select Art (inactive)")).toBeChecked();
     expect(screen.getByLabelText("Art present")).not.toBeChecked();
-    expect(screen.getByLabelText("Art comment")).toHaveValue("Art notes");
+    expect(screen.getByLabelText("Art notes")).toHaveValue("Art notes");
   });
   it("keeps known saved rows after a refresh failure without writing them twice", async () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance").mockResolvedValue(records[0]);
     const onSaved = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
     render(<AttendanceDialog {...props} onSaved={onSaved} />);
     fireEvent.click(screen.getByLabelText("Select Math"));
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Saved changes have not been rolled back");
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Attendance saved. Closing shortly…")).toBeVisible();
     expect(save).toHaveBeenCalledTimes(1);
   });
@@ -94,7 +104,7 @@ describe("attendance dialog", () => {
     const onSavingChange = vi.fn();
     const { unmount } = render(<AttendanceDialog {...props} onSavingChange={onSavingChange} />);
     fireEvent.click(screen.getByLabelText("Select Math"));
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     unmount();
     await act(async () => finish(records[0]));
     expect(props.onSaved).toHaveBeenCalledOnce();
@@ -104,11 +114,11 @@ describe("attendance dialog", () => {
   it("keeps a Back/Forward reopened dialog locked until the previous save reloads", () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance");
     const { rerender } = render(<AttendanceDialog {...props} records={[]} externallySaving />);
-    expect(screen.getByRole("button", { name: "Save Attendance" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Copy previous day" })).toBeDisabled();
     rerender(<AttendanceDialog {...props} records={[{ ...records[0], date: props.date, comment: "Just saved" }]} externallySaving={false} />);
     expect(screen.getByLabelText("Select Math")).toBeChecked();
-    expect(screen.getByLabelText("Math comment")).toHaveValue("Just saved");
+    expect(screen.getByLabelText("Math notes")).toHaveValue("Just saved");
     expect(save).not.toHaveBeenCalled();
   });
   it("traps keyboard focus, dismisses on Escape and restores the day trigger", () => {
@@ -138,14 +148,14 @@ describe("attendance dialog", () => {
     }
     render(<Harness />);
     fireEvent.click(screen.getByLabelText("Select Math"));
-    fireEvent.change(screen.getByLabelText("Math comment"), { target: { value: "Confirmed work" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save Attendance" }));
+    fireEvent.change(screen.getByLabelText("Math notes"), { target: { value: "Confirmed work" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     fireEvent.click(screen.getByRole("button", { name: "Forward" }));
-    expect(screen.getByRole("button", { name: "Save Attendance" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     await act(async () => finish({ ...records[0], date: props.date, comment: "Confirmed work" }));
     expect(screen.getByLabelText("Select Math")).toBeChecked();
-    expect(screen.getByLabelText("Math comment")).toHaveValue("Confirmed work");
+    expect(screen.getByLabelText("Math notes")).toHaveValue("Confirmed work");
     expect(props.onClose).not.toHaveBeenCalled();
   });
   it("initializes a subject arriving after refresh with complete attendance defaults", () => {
@@ -153,7 +163,7 @@ describe("attendance dialog", () => {
     rerender(<AttendanceDialog {...props} />);
     fireEvent.click(screen.getByLabelText("Select Art"));
     expect(screen.getByLabelText("Art present")).toBeChecked();
-    expect(screen.getByLabelText("Art comment")).toHaveValue("");
+    expect(screen.getByLabelText("Art notes")).toHaveValue("");
   });
   it("has an explicit no-history result and cancels without writes", () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance");

@@ -11,12 +11,20 @@
   box-shadow: 0 24px 80px #0f172a55;
 }
 .homeschool-attendance-dialog::backdrop { background: #0f172a99; }
-.homeschool-attendance-dialog .panel-header-row { align-items: start; }
+.homeschool-attendance-dialog .panel-header-row { align-items: start; flex-direction: row; }
 .homeschool-attendance-dialog h2 { font-size: 1.3rem; margin-top: 0; }
+.homeschool-attendance-context { margin: .25rem 0 0; color: var(--text-muted); font-weight: 700; }
+.homeschool-attendance-dialog .homeschool-close-button { display: inline-grid; place-items: center; width: 2.6rem; height: 2.6rem; padding: 0; border: 1px solid var(--surface-border); border-radius: 999px; background: transparent; color: var(--text-main); box-shadow: none; font-size: 1.75rem; line-height: 1; }
+.homeschool-attendance-dialog .homeschool-secondary-button { border: 1px solid var(--surface-border); background: var(--surface-soft); color: var(--text-main); box-shadow: none; }
+.homeschool-copy-button { margin-top: 1rem; }
 .homeschool-subject-entries { border: 0; padding: 0; margin: 1rem 0; min-width: 0; }
-.homeschool-subject-entry { border: 1px solid var(--surface-border); border-radius: .75rem; padding: .75rem; margin: .5rem 0; }
-.homeschool-subject-entry .children-form { margin-top: .75rem; }
+.homeschool-subject-entry { border: 1px solid var(--surface-border); border-radius: .75rem; padding: .65rem .75rem; margin: .45rem 0; }
+.homeschool-subject-toggle { min-height: 2rem; font-weight: 800; }
+.homeschool-attendance-fields { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: .75rem; margin-top: .55rem; padding-top: .55rem; border-top: 1px solid var(--surface-border); }
+.homeschool-presence-control { min-height: 2.75rem; padding-inline: .25rem; font-weight: 800; }
+.homeschool-notes-control { min-width: 0; }
 .homeschool-subject-entry input[type="text"] { width: 100%; box-sizing: border-box; }
+.homeschool-attendance-actions { display: flex; justify-content: flex-end; width: 100%; }
 .homeschool-save-success { background: #dcfce7; color: #14532d; padding: .75rem; border-radius: .5rem; }
 .homeschool-save-error { background: #fee2e2; color: #7f1d1d; padding: .75rem; border-radius: .5rem; }
 .homeschool-log { margin-top: 1rem; }
@@ -24,8 +32,16 @@
 .homeschool-color-swatches { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
 .homeschool-color-swatches button { min-width: 44px; min-height: 44px; border: 3px solid transparent; border-radius: .6rem; color: #fff; font-weight: 700; }
 .homeschool-color-swatches button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; border-color: #fff; box-shadow: 0 0 0 3px #172554; }
+.homeschool-color-swatches button:disabled { cursor: not-allowed; filter: grayscale(.35); opacity: .38; }
 .homeschool-subject-preview { display: flex; align-items: center; gap: .5rem; padding: .5rem; border: 1px solid var(--surface-border); border-radius: .5rem; color: #172554; background: #fff; }
 .homeschool-color-input { width: 100%; min-height: 44px; padding: .25rem; }
+
+@media (max-width: 520px) {
+  .homeschool-attendance-dialog { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); padding: 1rem; border-radius: 1rem; }
+  .homeschool-attendance-fields { grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr); gap: .55rem; }
+  .homeschool-subject-entry { padding: .55rem .65rem; }
+  .homeschool-attendance-actions { position: sticky; bottom: -1rem; margin: 0 -1rem -1rem; width: calc(100% + 2rem); padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom)); background: var(--surface-solid); border-top: 1px solid var(--surface-border); }
+}
 
 /* Read-only controls only: backend module/child authorization remains authoritative. */
 .module-read-only .homeschool-report button,
