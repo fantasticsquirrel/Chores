@@ -1,7 +1,14 @@
 import { useState, type ReactElement } from "react";
 
 import type { Child, Chore } from "../../../api";
-import { Button, Card, InlineNotice } from "../../../ui";
+import {
+  Button,
+  Card,
+  FormField,
+  InlineNotice,
+  Select,
+  TextInput,
+} from "../../../ui";
 import {
   buildTimingLabel,
   completionLabel,
@@ -54,26 +61,22 @@ export function ChoreList({
       </div>
 
       <div className="children-form">
-        <label>
-          Search chores
-          <input
-            className="text-input"
+        <FormField label="Search chores">
+          <TextInput
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-        </label>
-        <label>
-          Chore status
-          <select
-            className="text-input"
+        </FormField>
+        <FormField label="Chore status">
+          <Select
             value={status}
             onChange={(event) => setStatus(event.target.value)}
           >
             <option value="active">Active</option>
             <option value="archived">Archived</option>
             <option value="all">All</option>
-          </select>
-        </label>
+          </Select>
+        </FormField>
       </div>
       {!choresState.loading &&
       choresState.error === null &&
@@ -130,6 +133,7 @@ export function ChoreList({
                 {chore.is_active ? (
                   <div className="item-actions">
                     <Button
+                      variant="secondary"
                       type="button"
                       onClick={() => onEdit(chore)}
                       disabled={isArchiving}
@@ -137,6 +141,7 @@ export function ChoreList({
                       Edit
                     </Button>
                     <Button
+                      variant="secondary"
                       type="button"
                       onClick={() => onArchive(chore)}
                       disabled={isArchiving}

@@ -9,13 +9,31 @@ import {
   type FamilyTreePeoplePage,
   type FamilyTreePreview,
 } from "../../../api";
-import { Button, InlineNotice } from "../../../ui";
+import { Button, InlineNotice, Select } from "../../../ui";
 import { useTreeCommand, useTreeRuntime } from "../hooks/useTreeCommand";
 import { useTreeTask } from "../hooks/useTreeTask";
 import { useTreePages } from "../hooks/useTreeReads";
 import { duplicateCandidates, previewIssue } from "../lib/workflows/advanced";
 import { personName } from "../lib/workflows/workflows";
 import { AdvancedFeedback, ConsequenceCounts } from "./AdvancedFeedback";
+
+function mergeValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "Not set";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (typeof value === "string" || typeof value === "number")
+    return String(value);
+  if (Array.isArray(value))
+    return `${value.length} ${value.length === 1 ? "record" : "records"}`;
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of ["display_name", "label", "title", "place", "name"])
+      if (typeof record[key] === "string" && record[key])
+        return String(record[key]);
+    return "Saved details";
+  }
+  return String(value);
+}
+
 export function MergeReview({
   source,
   originRevision,
@@ -188,7 +206,7 @@ export function MergeReview({
       </label>
       <label>
         Canonical target person
-        <select
+        <Select
           value={targetId}
           disabled={blocked || command.hasAttempt}
           onChange={(e) => {
@@ -204,7 +222,7 @@ export function MergeReview({
               {personName(p)} (person {p.id})
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       {directory.isPending ? <p>Loading merge candidates…</p> : null}
       {directory.error ? (
@@ -224,8 +242,7 @@ export function MergeReview({
         <>
           <h3>Complete merge preview</h3>
           <p>
-            Source {summary.source.id} → canonical {summary.target.id}; revision{" "}
-            {preview?.expected_graph_revision}.
+            Source {summary.source.id} → retained person {summary.target.id}.
           </p>
           <p>
             Choose every conflicting scalar, then request a new preview of those
@@ -236,13 +253,13 @@ export function MergeReview({
               Retain {field}
               <p>
                 Source:{" "}
-                {JSON.stringify(
+                {mergeValue(
                   Object.entries(summary.source).find(
                     ([key]) => key === field,
                   )?.[1] ?? null,
                 )}{" "}
                 · Target:{" "}
-                {JSON.stringify(
+                {mergeValue(
                   (summary.target &&
                     Object.entries(summary.target).find(
                       ([key]) => key === field,
@@ -250,7 +267,7 @@ export function MergeReview({
                     null,
                 )}
               </p>
-              <select
+              <Select
                 aria-label={`Retain ${field}`}
                 value={choices[field] ?? ""}
                 disabled={blocked || command.hasAttempt}
@@ -265,7 +282,7 @@ export function MergeReview({
                 <option value="">Choose explicitly</option>
                 <option value="source">Source value</option>
                 <option value="target">Canonical target value</option>
-              </select>
+              </Select>
             </label>
           ))}
           <ConsequenceCounts counts={summary.retained_records} />
@@ -351,8 +368,8 @@ export function MergeReview({
       {readback.saved ? (
         <>
           <p>
-            Merge saved at revision {readback.saved.committed_revision}; retry
-            only the protected alias/canonical readback.
+            Merge saved. Refreshing the retained person and alias records
+            failed.
           </p>
           <Button
             disabled={
@@ -369,7 +386,7 @@ export function MergeReview({
       ) : null}
       <p role="status">
         {task.pending
-          ? "Loading revision-bound merge preview or exact alias/canonical readback…"
+          ? "Loading merge preview or refreshed records…"
           : command.state.busy
             ? "Committing reviewed merge…"
             : ""}

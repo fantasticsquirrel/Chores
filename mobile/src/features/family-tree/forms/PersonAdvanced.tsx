@@ -51,8 +51,7 @@ export function PersonAdvanced({
     <View>
       {recoveryPanel ? (
         <Text style={shellStyles.mutedText}>
-          Original command review only; these retained facts are not a fresh
-          snapshot. Retry sends the original revision and command key.
+          Review the retained facts before retrying the original pending change.
         </Text>
       ) : null}
       {visiblePanel === "media" ? (

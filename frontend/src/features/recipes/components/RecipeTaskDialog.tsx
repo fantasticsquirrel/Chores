@@ -63,7 +63,7 @@ export function RecipeTaskDialog({
     >
       <div className="recipe-task-heading">
         <h2 id={titleId}>{title}</h2>
-        <Button type="button" className="recipe-secondary" onClick={onClose}>
+        <Button type="button" variant="secondary" onClick={onClose}>
           Close
         </Button>
       </div>

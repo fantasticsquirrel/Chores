@@ -69,3 +69,19 @@ it("renders solid subject circles with maximal black-or-white text contrast", ()
     color: "#000000",
   });
 });
+
+it("uses the shared compact select for the child calendar filter", () => {
+  render(
+    <AttendanceCalendar
+      {...commonProps}
+      subjects={[]}
+      selectedChildAttendance={[]}
+    />,
+  );
+
+  expect(screen.getByRole("combobox", { name: "Child" })).toHaveClass(
+    "ui-control",
+    "ui-select",
+    "ui-control--compact",
+  );
+});

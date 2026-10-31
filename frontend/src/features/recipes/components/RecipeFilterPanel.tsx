@@ -1,7 +1,7 @@
 import type { FormEvent, ReactElement } from "react";
 
 import type { RecipeCategory, RecipeTag } from "../../../api";
-import { Button, Card, FormField, TextInput } from "../../../ui";
+import { Button, Card, FormField, Select, TextInput } from "../../../ui";
 
 type RecipeFilterPanelProps = {
   categories: RecipeCategory[];
@@ -62,6 +62,7 @@ export function RecipeFilterPanel({
         </div>
         <Button
           type="button"
+          variant="secondary"
           aria-expanded={showAdvancedFilters}
           onClick={toggleAdvancedFilters}
         >
@@ -95,7 +96,7 @@ export function RecipeFilterPanel({
                 />
               </FormField>
               <FormField label="Category" className="recipe-form-field">
-                <select
+                <Select
                   value={categoryId}
                   onChange={(event) => setCategoryId(event.target.value)}
                 >
@@ -105,10 +106,10 @@ export function RecipeFilterPanel({
                       {row.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </FormField>
               <FormField label="Tag" className="recipe-form-field">
-                <select
+                <Select
                   value={tagId}
                   onChange={(event) => setTagId(event.target.value)}
                 >
@@ -118,7 +119,7 @@ export function RecipeFilterPanel({
                       {row.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </FormField>
               <FormField label="Minimum Rating" className="recipe-form-field">
                 <TextInput
@@ -138,7 +139,7 @@ export function RecipeFilterPanel({
           </Button>
           <Button
             type="button"
-            className="recipe-secondary"
+            variant="secondary"
             onClick={() => void onReset()}
           >
             Reset filters

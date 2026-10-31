@@ -34,17 +34,14 @@ export function AdminDashboardPage(): ReactElement {
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <div>
-            <p className="eyebrow">Family Manager</p>
             <h1>Admin Dashboard</h1>
           </div>
         </div>
-        <p>
-          Manage household-wide Family Manager module access from one place.
-        </p>
+        <p>Manage household modules and account access.</p>
         <div className="quick-actions">
           <Button aria-expanded={addingParent} onClick={(event) => { addTrigger.current = event.currentTarget; setAddingParent(true); }}>Add Parent</Button>
-          <ButtonLink to="/parent/children">Manage Children</ButtonLink>
-          <ButtonLink to="/chore/account/security">Account Security</ButtonLink>
+          <ButtonLink variant="secondary" to="/parent/children">Manage Children</ButtonLink>
+          <ButtonLink variant="secondary" to="/chore/account/security">Account Security</ButtonLink>
         </div>
       </Card>
 

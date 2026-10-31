@@ -1,6 +1,13 @@
 import { useEffect, useRef, type FormEvent, type ReactElement } from "react";
 
-import { Button, Card, FormField, InlineNotice, TextInput } from "../../../ui";
+import {
+  Button,
+  Card,
+  FormField,
+  InlineNotice,
+  Select,
+  TextInput,
+} from "../../../ui";
 import type { ParentRole } from "../hooks/useAdminUsers";
 
 type CreateParentPanelProps = {
@@ -29,7 +36,9 @@ export function CreateParentPanel({
   setRole,
 }: CreateParentPanelProps): ReactElement {
   const form = useRef<HTMLFormElement>(null);
-  useEffect(() => { form.current?.querySelector<HTMLInputElement>("input")?.focus(); }, []);
+  useEffect(() => {
+    form.current?.querySelector<HTMLInputElement>("input")?.focus();
+  }, []);
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     void createParent();
@@ -42,7 +51,11 @@ export function CreateParentPanel({
         Create another parent login in this household. Parent admins can also
         manage module access.
       </p>
-      {error ? <InlineNotice variant="error">Could not create parent login: {error}</InlineNotice> : null}
+      {error ? (
+        <InlineNotice variant="error">
+          Could not create parent login: {error}
+        </InlineNotice>
+      ) : null}
       <form ref={form} className="children-form" onSubmit={handleSubmit}>
         <FormField label="Email">
           <TextInput
@@ -63,18 +76,19 @@ export function CreateParentPanel({
           />
         </FormField>
         <FormField label="Role">
-          <select
-            className="text-input"
+          <Select
             value={role}
             onChange={(event) => setRole(event.target.value as ParentRole)}
             disabled={creating}
           >
             <option value="PARENT">Parent</option>
             <option value="PARENT_ADMIN">Parent Admin</option>
-          </select>
+          </Select>
         </FormField>
         <div className="quick-actions">
-          <Button disabled={creating} onClick={onClose}>Back to module management</Button>
+          <Button variant="secondary" disabled={creating} onClick={onClose}>
+            Back to module management
+          </Button>
           <Button type="submit" disabled={creating}>
             {creating ? "Creating..." : "Create Parent Login"}
           </Button>

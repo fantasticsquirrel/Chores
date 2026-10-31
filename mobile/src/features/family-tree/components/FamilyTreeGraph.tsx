@@ -82,7 +82,6 @@ export function FamilyTreeGraph(props: FamilyTreeGraphProps) {
 function TreeGraph({
   graph,
   focusPersonId,
-  graphRevision,
   onSelectPerson,
   onPersonTrigger,
   onFocusPerson,
@@ -317,49 +316,57 @@ function TreeGraph({
         />
         {isGraph ? <FamilyTreeButton label="Fit" onPress={fit} /> : null}
       </View>
-      <FamilyTreeButton label="Tree lens options" expanded={lensOpen} onPress={() => setLensOpen((value) => !value)} />
-      {lensOpen ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        <FamilyTreeToggle
-          label="Show partnerships"
-          disabled={loading}
-          checked={effective.includePartners === true}
-          onPress={() =>
-            update((current) => ({
-              ...current,
-              partners: !effective.includePartners,
-            }))
-          }
-        />
-        {effective.includePartners ? (
+      <FamilyTreeButton
+        label="Tree lens options"
+        expanded={lensOpen}
+        onPress={() => setLensOpen((value) => !value)}
+      />
+      {lensOpen ? (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
           <FamilyTreeToggle
-            label="Show historical partnerships"
+            label="Show partnerships"
             disabled={loading}
-            checked={effective.showHistoricalPartners === true}
+            checked={effective.includePartners === true}
             onPress={() =>
               update((current) => ({
                 ...current,
-                history: !effective.showHistoricalPartners,
+                partners: !effective.includePartners,
               }))
             }
           />
-        ) : null}
-        <FamilyTreeToggle
-          label="Show care connections"
-          disabled={loading}
-          checked={effective.includeCare === true}
-          onPress={() =>
-            update((current) => ({ ...current, care: !effective.includeCare }))
-          }
-        />
-      </View> : null}
+          {effective.includePartners ? (
+            <FamilyTreeToggle
+              label="Show historical partnerships"
+              disabled={loading}
+              checked={effective.showHistoricalPartners === true}
+              onPress={() =>
+                update((current) => ({
+                  ...current,
+                  history: !effective.showHistoricalPartners,
+                }))
+              }
+            />
+          ) : null}
+          <FamilyTreeToggle
+            label="Show care connections"
+            disabled={loading}
+            checked={effective.includeCare === true}
+            onPress={() =>
+              update((current) => ({
+                ...current,
+                care: !effective.includeCare,
+              }))
+            }
+          />
+        </View>
+      ) : null}
       <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
         Care connections do not assert ancestry. Co-parents do not imply a
         partnership.
       </Text>
       {lensOpen && maxDepth < 32 ? (
         <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
-          Maximum server depth: {maxDepth}. Focus a frontier person to explore
-          further.
+          Maximum depth: {maxDepth}. Focus a frontier person to explore further.
         </Text>
       ) : null}
       {loading ? (
@@ -407,9 +414,6 @@ function TreeGraph({
           }}
         />
       )}
-      <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
-        Graph revision {graphRevision}
-      </Text>
       {isGraph ? (
         <Text style={{ color: colors.textSubtle, fontSize: 15 }}>
           Scroll rows sideways and vertically. Fit returns the focused person to

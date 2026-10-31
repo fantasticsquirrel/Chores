@@ -196,7 +196,7 @@ describe("Recipe organizer page", () => {
     expect(
       await screen.findByRole("heading", { name: "Recipe Organizer" }),
     ).toBeVisible();
-    expect(screen.getByText("Household Cookbook")).toBeVisible();
+    expect(screen.queryByText("Household Cookbook")).not.toBeInTheDocument();
     expect(await screen.findByText("Pancakes")).toBeVisible();
     expect(screen.getByRole("img", { name: "Pancakes" })).toHaveAttribute(
       "src",

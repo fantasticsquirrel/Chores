@@ -7,6 +7,7 @@ import {
   DateInput,
   FormField,
   InlineNotice,
+  Select,
   TextInput,
 } from "../../../ui";
 import type { ChoreFormState } from "../lib/choreForm";
@@ -47,17 +48,16 @@ export function ChoreForm({
       </div>
       <form className="children-form chore-management-form" onSubmit={onSubmit}>
         <FormField label="Used by">
-          <select
+          <Select
             value={form.task_scope}
             onChange={(event) =>
               setField("task_scope", event.target.value as "CHILD" | "PARENT")
             }
             disabled={submitting || editingId !== null}
-            className="text-input"
           >
             <option value="CHILD">Children (reward/allowance)</option>
             <option value="PARENT">My account (money-free to-do)</option>
-          </select>
+          </Select>
         </FormField>
         <FormField label="Name">
           <TextInput
@@ -112,19 +112,18 @@ export function ChoreForm({
           />
         </FormField>
         <FormField label="Schedule">
-          <select
+          <Select
             value={form.schedule_mode}
             onChange={(event) =>
               setField("schedule_mode", event.target.value as ScheduleMode)
             }
             disabled={submitting}
-            className="text-input"
           >
             <option value="NONE">On-demand</option>
             <option value="ONCE">Once</option>
             <option value="EVERY">Repeating</option>
             <option value="AFTER_COMPLETION">After completion</option>
-          </select>
+          </Select>
         </FormField>
         {showInterval ? (
           <FormField label="Interval">
@@ -138,18 +137,17 @@ export function ChoreForm({
                 }
                 disabled={submitting}
               />
-              <select
+              <Select
                 value={form.schedule_unit}
                 onChange={(event) =>
                   setField("schedule_unit", event.target.value as ScheduleUnit)
                 }
                 disabled={submitting}
-                className="text-input"
               >
                 <option value="DAY">Day(s)</option>
                 <option value="WEEK">Week(s)</option>
                 <option value="MONTH">Month(s)</option>
-              </select>
+              </Select>
             </div>
           </FormField>
         ) : null}
@@ -174,7 +172,12 @@ export function ChoreForm({
                 ? "Save Changes"
                 : "Create Chore"}
           </Button>
-          <Button type="button" onClick={onCancel} disabled={submitting}>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={onCancel}
+            disabled={submitting}
+          >
             Cancel
           </Button>
         </div>

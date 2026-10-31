@@ -1,7 +1,7 @@
 import type { FormEvent, ReactElement } from "react";
 
 import type { Child, RecipeDetail } from "../../../api";
-import { Button, FormField, TextInput } from "../../../ui";
+import { Button, FormField, Select, TextArea, TextInput } from "../../../ui";
 import type { FeedbackReviewerType } from "../hooks/useRecipeDetail";
 
 type RecipeFeedbackPanelProps = {
@@ -53,7 +53,7 @@ export function RecipeFeedbackPanel({
       {canManage && (
         <form onSubmit={handleSubmit}>
           <FormField label="Feedback For">
-            <select
+            <Select
               value={reviewerType}
               onChange={(event) =>
                 setReviewerType(event.target.value as FeedbackReviewerType)
@@ -61,11 +61,11 @@ export function RecipeFeedbackPanel({
             >
               <option value="PARENT">Parent</option>
               <option value="CHILD">Child</option>
-            </select>
+            </Select>
           </FormField>
           {reviewerType === "CHILD" ? (
             <FormField label="Child">
-              <select
+              <Select
                 value={childId}
                 onChange={(event) => setChildId(event.target.value)}
               >
@@ -74,7 +74,7 @@ export function RecipeFeedbackPanel({
                     {child.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </FormField>
           ) : null}
           <FormField label="Family Rating">
@@ -94,7 +94,8 @@ export function RecipeFeedbackPanel({
             />
           </FormField>
           <FormField label="Feedback Notes">
-            <TextInput
+            <TextArea
+              rows={3}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
             />

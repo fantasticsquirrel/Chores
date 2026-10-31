@@ -26,8 +26,8 @@ export function AdvancedFeedback({
       {command?.state.kind === "conflict" || previewConflict ? (
         <section>
           <p>
-            Your draft is retained. This preview cannot be retried at a new
-            revision. Reload and explicitly preview/review the new consequences.
+            Your draft is retained. The records changed after this review.
+            Reload and review the updated consequences before continuing.
           </p>
           <Button
             disabled={command?.state.busy || blocked}
@@ -40,8 +40,7 @@ export function AdvancedFeedback({
       {command?.state.kind === "chronology" && onChronology ? (
         <section>
           <p>
-            Review the server chronology warnings above before accepting
-            uncertainty.
+            Review the chronology warnings above before accepting uncertainty.
           </p>
           <label>
             <input
@@ -91,7 +90,7 @@ export function DraftClose({
     <section>
       <p>
         Discard this unsaved protected-session draft? Unattached staged files
-        expire on the server; committed records are unchanged.
+        expire automatically; saved records are unchanged.
       </p>
       <Button onClick={onKeep}>Keep draft</Button>
       <Button onClick={onDiscard}>Discard advanced draft</Button>

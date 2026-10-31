@@ -238,8 +238,8 @@ export function PurgeReview({
       {readback.saved ? (
         <>
           <p>
-            Purge saved at revision {readback.saved.committed_revision}; do not
-            submit another purge to repair readback.
+            Purge saved, but refreshed records could not be loaded. Do not
+            submit another purge.
           </p>
           <Button
             disabled={

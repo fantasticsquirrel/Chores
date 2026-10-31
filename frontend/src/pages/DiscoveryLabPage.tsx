@@ -53,7 +53,6 @@ export function DiscoveryLabPage() {
       <header className="discovery-hero discovery-hero--compact">
         <div className="discovery-hero-copy">
           <h1>Discovery Lab</h1>
-          <p>Choose an Exploration. Predict, experiment, and discover.</p>
           {manage && (
             <Link className="discovery-manage-link" to="/discovery-lab/manage">
               Choose Explorations for each child{" "}
@@ -117,11 +116,6 @@ export function DiscoveryLabPage() {
                     <div className="discovery-card-copy">
                       <div className="discovery-card-meta">
                         <span>{item.subject}</span>
-                        <span>
-                          {item.package
-                            ? `Downloaded v${item.package.version}`
-                            : "Built-in"}
-                        </span>
                         <span>{item.duration_minutes} min</span>
                       </div>
                       <h3>{item.title}</h3>
@@ -143,8 +137,7 @@ export function DiscoveryLabPage() {
                       className="discovery-package-alternative"
                       to={`/discovery-lab/${alternative.id}`}
                     >
-                      Open downloaded version {alternative.package?.version}{" "}
-                      (web)
+                      Open version {alternative.package?.version}
                     </Link>
                   ))}
                 </article>
@@ -196,11 +189,6 @@ export function DiscoveryExplorationPage() {
                 {item.duration_minutes} minutes
               </div>
               <h1>{item.title}</h1>
-              <p className="discovery-version-label">
-                {item.package
-                  ? `Downloaded package · Version ${item.package.version} · Web only`
-                  : "Built-in Exploration"}
-              </p>
               <p>{item.question}</p>
               <div className="discovery-tags">
                 {item.tags.map((tag) => (
@@ -228,7 +216,6 @@ export function DiscoveryExplorationPage() {
             </section>
             <div className="discovery-learning-grid">
               <section className="discovery-explanation">
-                <p className="discovery-eyebrow">Explanation</p>
                 <h2>What’s happening?</h2>
                 <p>{item.explanation}</p>
                 <aside className="discovery-misconception">

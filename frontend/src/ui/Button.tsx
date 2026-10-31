@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactElement } from "react";
 import { Link, type LinkProps } from "react-router-dom";
 
-type ButtonVariant = "primary" | "danger";
+type ButtonVariant = "primary" | "secondary" | "danger";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -16,6 +16,7 @@ function buildButtonClass(variant: ButtonVariant, className?: string): string {
   return [
     "jewel-button",
     "button-reset",
+    variant === "secondary" ? "secondary-button" : "",
     variant === "danger" ? "danger-button" : "",
     className,
   ]
@@ -23,10 +24,25 @@ function buildButtonClass(variant: ButtonVariant, className?: string): string {
     .join(" ");
 }
 
-export function Button({ variant = "primary", className, type = "button", ...rest }: ButtonProps): ReactElement {
-  return <button type={type} className={buildButtonClass(variant, className)} {...rest} />;
+export function Button({
+  variant = "primary",
+  className,
+  type = "button",
+  ...rest
+}: ButtonProps): ReactElement {
+  return (
+    <button
+      type={type}
+      className={buildButtonClass(variant, className)}
+      {...rest}
+    />
+  );
 }
 
-export function ButtonLink({ variant = "primary", className, ...rest }: ButtonLinkProps): ReactElement {
+export function ButtonLink({
+  variant = "primary",
+  className,
+  ...rest
+}: ButtonLinkProps): ReactElement {
   return <Link className={buildButtonClass(variant, className)} {...rest} />;
 }

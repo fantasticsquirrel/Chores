@@ -122,7 +122,7 @@ describe("Discovery Lab", () => {
     show();
     expect(
       await screen.findByRole("link", {
-        name: /Open downloaded version 1.0.0/,
+        name: /Open version 1.0.0/,
       }),
     ).toHaveAttribute("href", "/discovery-lab/orbital-mechanics-package");
     expect(

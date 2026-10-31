@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactElement } from "
 import { createPortal } from "react-dom";
 import { apiClient, type HomeschoolAttendance, type HomeschoolSubject } from "../../../api";
 import { formatApiError } from "../../../lib/errors";
-import { Button, FormField, TextInput } from "../../../ui";
+import { Button, FormField, TextArea } from "../../../ui";
 import { previousAttendance } from "../lib/attendance";
 import "../homeschool.css";
 
@@ -157,9 +157,9 @@ export function AttendanceDialog({ householdId, childId, childName, date, subjec
       }}>
       <div className="panel-header-row homeschool-attendance-header">
         <div><h2 id="attendance-dialog-title">Attendance</h2><p id="attendance-dialog-context" className="homeschool-attendance-context">{childName} · {readableAttendanceDate(date)}</p></div>
-        <Button className="homeschool-close-button" type="button" disabled={saving || externallySaving} onClick={onClose} aria-label="Close attendance editor"><span aria-hidden="true">×</span></Button>
+        <Button variant="secondary" className="homeschool-close-button" type="button" disabled={saving || externallySaving} onClick={onClose} aria-label="Close attendance editor"><span aria-hidden="true">×</span></Button>
       </div>
-      <Button className="homeschool-secondary-button homeschool-copy-button" type="button" onClick={copyPrevious} disabled={locked || scopedSubjects.length === 0}>Copy previous day</Button>
+      <Button variant="secondary" className="homeschool-secondary-button homeschool-copy-button" type="button" onClick={copyPrevious} disabled={locked || scopedSubjects.length === 0}>Copy previous day</Button>
       {copyMessage ? <p role="status">{copyMessage}</p> : null}
       {scopedRecords.some((record) => record.date === date && !scopedSubjects.some((subject) => subject.id === record.subject_id)) ? <p>Some entries on this date belong to unavailable subjects. Those records are preserved and can be reviewed in the attendance log.</p> : null}
       {externallySaving && !saving ? <p role="status">Finishing the previous save and reloading attendance…</p> : null}
@@ -172,7 +172,7 @@ export function AttendanceDialog({ householdId, childId, childName, date, subjec
               <label className="checkbox-row homeschool-subject-toggle"><input type="checkbox" aria-label={`Select ${subject.name}${subject.active ? "" : " (inactive)"}`} checked={entry.selected} onChange={(event) => change(subject.id, { selected: event.target.checked })} /><span className="subject-attendance-color" style={{ background: subject.color }} /><span>{subject.name}{subject.active ? "" : " (inactive)"}</span></label>
               {entry.selected ? <div className="homeschool-attendance-fields">
                 <label className="checkbox-row homeschool-presence-control"><input type="checkbox" aria-label={`${subject.name} present`} checked={entry.present} onChange={(event) => change(subject.id, { present: event.target.checked })} /><span>Present</span></label>
-                <FormField label="Notes" className="homeschool-notes-control"><TextInput aria-label={`${subject.name} notes`} value={entry.comment} onChange={(event) => change(subject.id, { comment: event.target.value })} maxLength={2000} placeholder="What did you work on?" /></FormField>
+                <FormField label="Notes" className="homeschool-notes-control"><TextArea density="comfortable" rows={2} aria-label={`${subject.name} notes`} value={entry.comment} onChange={(event) => change(subject.id, { comment: event.target.value })} maxLength={2000} placeholder="What did you work on?" /></FormField>
               </div> : null}
             </div>;
           })}
@@ -181,7 +181,7 @@ export function AttendanceDialog({ householdId, childId, childName, date, subjec
         {success ? <p role="status" className="homeschool-save-success">Attendance saved. Closing shortly…</p> : null}
         <div className="item-actions homeschool-attendance-actions">
           <Button type="submit" disabled={locked || !Object.values(entries).some((entry) => entry.selected)}>{saving ? "Saving…" : "Save"}</Button>
-          <Button className="homeschool-secondary-button" type="button" onClick={onClose} disabled={saving || externallySaving}>Cancel</Button>
+          <Button variant="secondary" className="homeschool-secondary-button" type="button" onClick={onClose} disabled={saving || externallySaving}>Cancel</Button>
         </div>
       </form>
     </dialog>, document.body,

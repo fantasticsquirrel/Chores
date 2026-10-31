@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { Child, HomeschoolAttendance, HomeschoolDayComment, HomeschoolSubject } from "../../api";
-import { Button, Card, FormField } from "../../ui";
+import { Button, Card, FormField, Select } from "../../ui";
 import { contrastingTextColor, normalizeHexColor } from "../../features/homeschool/lib/attendance";
 import { buildMonthGrid, formatYearMonth, shiftYearMonth, todayISO, toYearMonth } from "./dateUtils";
 
@@ -58,16 +58,16 @@ export function AttendanceCalendar({
       <div className="panel-header-row">
         <h2>Attendance Calendar</h2>
         <div className="quick-actions homeschool-calendar-navigation">
-          <Button type="button" disabled={saving} onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, -1))}>Previous</Button>
-          <Button type="button" disabled={saving} onClick={() => onMonthChange(toYearMonth(todayISO()))}>Today</Button>
-          <Button type="button" disabled={saving} onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, 1))}>Next</Button>
+          <Button variant="secondary" type="button" disabled={saving} onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, -1))}>Previous</Button>
+          <Button variant="secondary" type="button" disabled={saving} onClick={() => onMonthChange(toYearMonth(todayISO()))}>Today</Button>
+          <Button variant="secondary" type="button" disabled={saving} onClick={() => onMonthChange(shiftYearMonth(calendarYearMonth, 1))}>Next</Button>
         </div>
       </div>
       <FormField label="Child" className="homeschool-calendar-child">
-        <select disabled={saving} className="text-input" value={calendarChildId} onChange={(event) => onChildChange(event.target.value)}>
+        <Select density="compact" disabled={saving} value={calendarChildId} onChange={(event) => onChildChange(event.target.value)}>
           <option value="">Select child</option>
           {children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
-        </select>
+        </Select>
       </FormField>
       <h3>{calendarLabel}</h3>
       <p className="calendar-instructions">

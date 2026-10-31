@@ -278,17 +278,15 @@ describe("FT3 actual native screen composition", () => {
       label: "Replacement child",
       active: true,
     };
-    jest
-      .mocked(apiClient.getFamilyTreePerson)
-      .mockImplementation(async () => ({
-        graph_revision: revision,
-        person,
-        canonical_person: null,
-        parent_links: [],
-        care_links: [],
-        partner_episodes: [],
-        identity_link: revision === 2 ? oldLink : newLink,
-      }));
+    jest.mocked(apiClient.getFamilyTreePerson).mockImplementation(async () => ({
+      graph_revision: revision,
+      person,
+      canonical_person: null,
+      parent_links: [],
+      care_links: [],
+      partner_episodes: [],
+      identity_link: revision === 2 ? oldLink : newLink,
+    }));
     const unlink = jest
       .spyOn(apiClient, "unlinkFamilyTreeIdentity")
       .mockRejectedValueOnce(
@@ -303,13 +301,13 @@ describe("FT3 actual native screen composition", () => {
     fireEvent.press(screen.getByText("Confirm Unlink identity from Ada"));
     await screen.findByText("Association changed");
     revision = 3;
-    fireEvent.press(screen.getByText("Review latest revision"));
+    fireEvent.press(screen.getByText("Review latest records"));
     await screen.findByText(
-      /Latest association: id=11.*kind=child.*child_id=22.*Replacement child.*active=true/,
+      /Latest association: Replacement child · child account · active/,
     );
     expect(
       screen.getByText(
-        /Original association: id=10.*kind=user.*user_id=21.*Original adult.*active=true/,
+        /Original association: Original adult · parent account · active/,
       ),
     ).toBeTruthy();
     expect(unlink).toHaveBeenCalledTimes(1);
@@ -323,18 +321,16 @@ describe("FT3 actual native screen composition", () => {
   });
 
   it("runs the enabled stale-preview unknown purge retry with the newly entered password and frozen facts", async () => {
-    jest
-      .spyOn(apiClient, "previewFamilyTreePurge")
-      .mockResolvedValue(
-        job("purge", {
-          person_id: 3,
-          alias_only: false,
-          retained_backup_policy: "Backup policy",
-          stories: 0,
-          residences: 0,
-          media_references: 0,
-        }),
-      );
+    jest.spyOn(apiClient, "previewFamilyTreePurge").mockResolvedValue(
+      job("purge", {
+        person_id: 3,
+        alias_only: false,
+        retained_backup_policy: "Backup policy",
+        stories: 0,
+        residences: 0,
+        media_references: 0,
+      }),
+    );
     const mutation = jest
       .spyOn(apiClient, "commitFamilyTreePurge")
       .mockRejectedValueOnce(new Error("Unknown outcome"))
@@ -392,17 +388,15 @@ describe("FT3 actual native screen composition", () => {
     fireEvent.press(screen.getByText("Edit person"));
     fireEvent.changeText(screen.getByLabelText("First name"), "My stale draft");
     revision = 3;
-    jest
-      .mocked(apiClient.getFamilyTreePerson)
-      .mockImplementation(async () => ({
-        graph_revision: revision,
-        person: { ...person, first_name: "Other adult's new value" },
-        canonical_person: null,
-        parent_links: [],
-        care_links: [],
-        partner_episodes: [],
-        identity_link: null,
-      }));
+    jest.mocked(apiClient.getFamilyTreePerson).mockImplementation(async () => ({
+      graph_revision: revision,
+      person: { ...person, first_name: "Other adult's new value" },
+      canonical_person: null,
+      parent_links: [],
+      care_links: [],
+      partner_episodes: [],
+      identity_link: null,
+    }));
     fireEvent.press(screen.getByText("Refresh"));
     await waitFor(() =>
       expect(apiClient.getFamilyTreePerson).toHaveBeenCalledTimes(2),

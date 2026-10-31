@@ -80,7 +80,7 @@ describe("FamilyTreeGraph native presentation", () => {
       view.getByRole("button", { name: "Expand ancestors of Frontier" }),
     );
     expect(change).toHaveBeenCalledTimes(1);
-    expect(view.getByText(/Maximum server depth: 10/)).toBeTruthy();
+    expect(view.getByText(/Maximum depth: 10/)).toBeTruthy();
     fireEvent.press(view.getByRole("button", { name: "Relationship list" }));
     expect(
       view.getByRole("button", { name: "Expand ancestors of Frontier" }).props

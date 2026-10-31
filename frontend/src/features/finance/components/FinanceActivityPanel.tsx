@@ -4,7 +4,14 @@ import {
 } from "@family-manager/family-api/finance";
 import type { FormEvent, ReactElement } from "react";
 
-import { Button, Card, FormField, InlineNotice, TextInput } from "../../../ui";
+import {
+  Button,
+  Card,
+  FormField,
+  InlineNotice,
+  Select,
+  TextInput,
+} from "../../../ui";
 import type { UseChoreFinanceResult } from "../hooks/useChoreFinance";
 
 type FinanceActivityPanelProps = {
@@ -51,8 +58,7 @@ export function FinanceActivityPanel({
       ) : null}
       <form className="children-form" onSubmit={handleSubmit}>
         <FormField label="Type">
-          <select
-            className="text-input"
+          <Select
             disabled={finance.saving}
             value={finance.type}
             onChange={(event) =>
@@ -62,7 +68,7 @@ export function FinanceActivityPanel({
             <option value="PAYMENT">Payment made</option>
             <option value="BONUS">Bonus</option>
             <option value="ADJUSTMENT">Adjustment</option>
-          </select>
+          </Select>
         </FormField>
         {finance.type === "ADJUSTMENT" ? (
           <p>

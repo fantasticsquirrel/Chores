@@ -117,7 +117,7 @@ export function TreeGraphPanel({
             disabled={busy || !online}
             onClick={() => void graph.refetch()}
           >
-            Refresh graph from latest revision
+            Refresh tree
           </Button>
         </InlineNotice>
       ) : null}

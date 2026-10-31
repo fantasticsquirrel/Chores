@@ -17,6 +17,39 @@ import { latestFacts, type ReviewTarget } from "../lib/workflows/review";
 import type { Field } from "../lib/workflows/fields";
 import { FactField } from "./RecordFactField";
 
+function readableReviewValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "none";
+  if (typeof value === "boolean") return value ? "yes" : "no";
+  if (typeof value === "string" || typeof value === "number")
+    return String(value);
+  if (Array.isArray(value))
+    return value.length === 0
+      ? "none"
+      : `${value.length} ${value.length === 1 ? "record" : "records"}`;
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    for (const key of ["display_name", "label", "title", "place", "name"])
+      if (typeof record[key] === "string" && record[key])
+        return String(record[key]);
+    if (typeof record.year === "number")
+      return [record.year, record.month, record.day]
+        .filter((part) => part !== null && part !== undefined)
+        .join("-");
+    return "recorded details";
+  }
+  return String(value);
+}
+
+function readableReviewFacts(facts: Facts | undefined): string {
+  if (!facts) return "none";
+  const values = Object.values(facts)
+    .map(readableReviewValue)
+    .filter(
+      (value, index, all) => value !== "none" && all.indexOf(value) === index,
+    );
+  return values.join(", ") || "none";
+}
+
 export function RecordEditor({
   fields,
   initial,
@@ -172,8 +205,8 @@ export function RecordEditor({
             <>
               {reviewFacts && (
                 <p>
-                  Original confirmed target: {JSON.stringify(reviewFacts)};
-                  latest target: {JSON.stringify(currentFacts ?? null)}
+                  Original confirmed record: {readableReviewFacts(reviewFacts)};
+                  latest record: {readableReviewFacts(currentFacts)}.
                 </p>
               )}
               <dl>
@@ -183,9 +216,9 @@ export function RecordEditor({
                       {fields.find((field) => field.key === key)?.label ?? key}
                     </dt>
                     <dd>
-                      Original: {JSON.stringify(original.current[key] ?? null)};
-                      latest: {JSON.stringify(currentFacts?.[key] ?? null)};
-                      your draft: {JSON.stringify(draft[key] ?? null)}
+                      Original: {readableReviewValue(original.current[key])};
+                      latest: {readableReviewValue(currentFacts?.[key])}; your
+                      draft: {readableReviewValue(draft[key])}.
                     </dd>
                   </div>
                 ))}
@@ -200,8 +233,7 @@ export function RecordEditor({
                 }
                 onClick={() => void command.reapply().then(complete)}
               >
-                Reapply reviewed draft at revision{" "}
-                {command.state.reviewedRevision}
+                Reapply reviewed draft
               </Button>
             </>
           )}
@@ -210,8 +242,8 @@ export function RecordEditor({
       {command.state.kind === "chronology" && (
         <section aria-label="Chronology review">
           <p>
-            Review the entered dates and the server&apos;s chronology warning.
-            No approval is inferred from saving.
+            Review the entered dates and the chronology warning. No approval is
+            inferred from saving.
           </p>
           <label>
             <input

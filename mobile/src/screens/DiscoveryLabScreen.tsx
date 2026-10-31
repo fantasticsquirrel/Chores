@@ -16,6 +16,7 @@ import type {
 import { apiClient } from "../api/client";
 import { ActionButton } from "../components/ActionButton";
 import { SectionCard } from "../components/SectionCard";
+import { ScreenHeader } from "../components/ScreenHeader";
 import { colors } from "../styles/colors";
 import {
   DiscoveryFilters,
@@ -170,7 +171,7 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
       if (alive.current && ticket === epoch.current) {
         setAccess(result);
         setNotice(
-          `${ids.length} Exploration${ids.length === 1 ? "" : "s"} ${enabled ? "enabled" : "disabled"} for ${children.find(child => child.id === id)?.name ?? "this child"}.`,
+          `${ids.length} Exploration${ids.length === 1 ? "" : "s"} ${enabled ? "enabled" : "disabled"} for ${children.find((child) => child.id === id)?.name ?? "this child"}.`,
         );
       }
     });
@@ -179,14 +180,10 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
     matched = source.filter((i) => matches(i, filters));
   return (
     <View style={{ gap: 16 }}>
-      <SectionCard
+      <ScreenHeader
         title="Discovery Lab"
         subtitle="Science, mathematics, and history"
-      >
-        <Text style={{ color: colors.text, lineHeight: 22 }}>
-          Choose a model, predict a result, and test your explanation.
-        </Text>
-      </SectionCard>
+      />
       {busy ? (
         <ActivityIndicator accessibilityLabel="Loading Discovery Lab" />
       ) : null}
@@ -279,7 +276,12 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
               </SectionCard>
               {manage ? (
                 <View style={{ gap: 8 }}>
-                  <Text style={{ color: colors.text }}>Changes apply to {children.find(child => child.id === childId)?.name}: {matched.length} matching Explorations. Other Explorations stay unchanged.</Text>
+                  <Text style={{ color: colors.text }}>
+                    Changes apply to{" "}
+                    {children.find((child) => child.id === childId)?.name}:{" "}
+                    {matched.length} matching Explorations. Other Explorations
+                    stay unchanged.
+                  </Text>
                   <ActionButton
                     label={`Enable ${matched.length} matching Explorations`}
                     disabled={busy || !matched.length}
@@ -324,7 +326,9 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
                   <Text style={{ color: colors.textMuted }}>
                     {item.tags.join(" · ")}
                     {item.package
-                      ? ` · Web-only Exploration · Version ${item.package.version}`
+                      ? manage
+                        ? ` · Web version ${item.package.version}`
+                        : " · Opens on web"
                       : ""}
                   </Text>
                   {manage ? (
@@ -340,12 +344,28 @@ function Lab({ parent, canManage }: { parent: boolean; canManage: boolean }) {
                       }
                     />
                   ) : item.package ? (
-                    discoveryWebDestination(apiClient.apiBaseUrl, item.id) ? <ActionButton
-                      label={`Open ${item.title} on web`}
-                      variant="secondary"
-                      disabled={busy}
-                      onPress={() => void run(async () => { await Linking.openURL(discoveryWebDestination(apiClient.apiBaseUrl, item.id)!); })}
-                    /> : <Text style={{ color: colors.textMuted }}>Open Family Manager on the web to use this uploaded Exploration.</Text>
+                    discoveryWebDestination(apiClient.apiBaseUrl, item.id) ? (
+                      <ActionButton
+                        label={`Open ${item.title} on web`}
+                        variant="secondary"
+                        disabled={busy}
+                        onPress={() =>
+                          void run(async () => {
+                            await Linking.openURL(
+                              discoveryWebDestination(
+                                apiClient.apiBaseUrl,
+                                item.id,
+                              )!,
+                            );
+                          })
+                        }
+                      />
+                    ) : (
+                      <Text style={{ color: colors.textMuted }}>
+                        Open Family Manager on the web to use this uploaded
+                        Exploration.
+                      </Text>
+                    )
                   ) : (
                     <ActionButton
                       label={`Explore ${item.title}`}

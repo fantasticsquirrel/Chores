@@ -133,8 +133,8 @@ function RouteCard({ title, description }: RouteCardProps): ReactElement {
 function NotFoundPage(): ReactElement {
   return (
     <RouteCard
-      title="Route Not Found"
-      description="This page is not part of the Family Manager shell yet."
+      title="Page Not Found"
+      description="The page you requested could not be found."
     />
   );
 }
@@ -315,10 +315,7 @@ function AppShell(): ReactElement {
       <div className="background-orb orb-one" />
       <div className="background-orb orb-two" />
       <header className="top-bar glass-card app-brand-bar">
-        <div>
-          <p className="eyebrow">Family Manager</p>
-          <h2>Household Workspace</h2>
-        </div>
+        <h2>Family Manager</h2>
         {status === "authenticated" && user !== null ? (
           <div className="app-brand-session">
             <span>Signed in as {user.email}</span>
@@ -527,8 +524,8 @@ function HouseholdApp(): ReactElement {
                   path="/parent/tags"
                   element={
                     <RouteCard
-                      title="Parent Tags"
-                      description="Tag management is reserved for a later implementation task."
+                      title="Tags Unavailable"
+                      description="Tag management is not available."
                     />
                   }
                 />
@@ -552,8 +549,8 @@ function HouseholdApp(): ReactElement {
                   path="/child/calendar"
                   element={
                     <RouteCard
-                      title="Child Calendar"
-                      description="Calendar and historical cadence will be added in upcoming tasks."
+                      title="Calendar Unavailable"
+                      description="The child calendar is not available."
                     />
                   }
                 />

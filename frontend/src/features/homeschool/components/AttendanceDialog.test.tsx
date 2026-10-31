@@ -22,6 +22,11 @@ describe("attendance dialog", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeVisible();
   });
+  it("uses a comfortable shared control for each subject note", () => {
+    render(<AttendanceDialog {...props} />);
+    fireEvent.click(screen.getByLabelText("Select Math"));
+    expect(screen.getByLabelText("Math notes")).toHaveClass("ui-control", "ui-control--comfortable");
+  });
   it("loads all previous subjects and exact values without saving", () => {
     const save = vi.spyOn(apiClient, "upsertHomeschoolAttendance");
     render(<AttendanceDialog {...props} />);

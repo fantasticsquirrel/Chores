@@ -24,7 +24,6 @@ export function ChoreFinancePage(): ReactElement {
   return (
     <section className="dashboard-grid" aria-label="Chore money">
       <div className="dashboard-section-header">
-        <p className="eyebrow">Allowance ledger</p>
         <h1>Money & History</h1>
         <p>Child rewards increase the amount owed. Payments reduce it.</p>
       </div>

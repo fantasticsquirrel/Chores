@@ -227,7 +227,13 @@ async function detail() {
   rows = [record];
   const view = mount();
   fireEvent.press(await screen.findByRole("button", { name: "People" }));
-  fireEvent.press(await screen.findByRole("button", { name: "Open Ada (#3)" }, {timeout:5000}));
+  fireEvent.press(
+    await screen.findByRole(
+      "button",
+      { name: "Open Ada (#3)" },
+      { timeout: 5000 },
+    ),
+  );
   await screen.findByRole("button", { name: "Edit person" });
   return view;
 }
@@ -445,9 +451,9 @@ describe("native family tree screen real core workflows", () => {
     record = { ...record, notes_md: "Latest server note" };
     revision = 7;
     fireEvent.press(
-      screen.getByRole("button", { name: "Review latest revision" }),
+      screen.getByRole("button", { name: "Review latest records" }),
     );
-    await screen.findByText("Latest facts for review");
+    await screen.findByText("Updated records for review");
     expect(screen.getByText("Latest server note")).toBeTruthy();
     expect(
       screen.getByLabelText("Notes (plain text / Markdown)").props.value,
@@ -483,7 +489,7 @@ describe("native family tree screen real core workflows", () => {
       .mocked(apiClient.getMyModules)
       .mockRejectedValueOnce(new Error("Discovery unavailable"));
     fireEvent.press(
-      screen.getByRole("button", { name: "Review latest revision" }),
+      screen.getByRole("button", { name: "Review latest records" }),
     );
     await screen.findByText("Discovery unavailable");
     expect(
@@ -1030,7 +1036,7 @@ describe("native family tree screen real core workflows", () => {
       requestOptions,
     );
     fireEvent.press(
-      screen.getByRole("button", { name: "Retry saved command" }),
+      screen.getByRole("button", { name: "Retry pending change" }),
     );
     await waitFor(() =>
       expect(apiClient.patchFamilyTreePerson).toHaveBeenCalledTimes(2),
@@ -1104,17 +1110,33 @@ describe("native family tree screen real core workflows", () => {
   it("reveals Tree from People without losing the directory search", async () => {
     rows = [record];
     const changed = jest.fn();
-    render(<FamilyTreeScreen session={session} modules={[grant]} onModulesLoaded={jest.fn()} onViewChanged={changed} />);
+    render(
+      <FamilyTreeScreen
+        session={session}
+        modules={[grant]}
+        onModulesLoaded={jest.fn()}
+        onViewChanged={changed}
+      />,
+    );
     await screen.findByText("Explore household family history");
     expect(screen.queryByRole("button", { name: "Open Ada (#3)" })).toBeNull();
     fireEvent.changeText(screen.getByLabelText("Search people"), "Ada");
     fireEvent.press(screen.getByRole("button", { name: "Search directory" }));
-    fireEvent.press(await screen.findByRole("button", { name: "Show Ada (#3) in tree" }));
-    await waitFor(() => expect(apiClient.getFamilyTreeGraph).toHaveBeenLastCalledWith(expect.objectContaining({ focus_person_id: 3 }), expect.anything()));
-    expect(screen.getByRole("button", { name: "Tree" }).props.accessibilityState.selected).toBe(true);
+    fireEvent.press(
+      await screen.findByRole("button", { name: "Show Ada (#3) in tree" }),
+    );
+    await waitFor(() =>
+      expect(apiClient.getFamilyTreeGraph).toHaveBeenLastCalledWith(
+        expect.objectContaining({ focus_person_id: 3 }),
+        expect.anything(),
+      ),
+    );
+    expect(
+      screen.getByRole("button", { name: "Tree" }).props.accessibilityState
+        .selected,
+    ).toBe(true);
     fireEvent.press(screen.getByRole("button", { name: "People" }));
     expect(screen.getByLabelText("Search people").props.value).toBe("Ada");
     expect(changed).toHaveBeenCalled();
   });
-
 });

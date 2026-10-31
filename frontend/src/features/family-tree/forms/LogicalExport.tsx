@@ -25,12 +25,7 @@ export function LogicalExport({ canExport }: { canExport: boolean }) {
       setMessage("");
     }
   }, [canExport]);
-  if (!canExport)
-    return (
-      <p>
-        Logical export requires the server&apos;s current can_export capability.
-      </p>
-    );
+  if (!canExport) return <p>You do not have permission to export this tree.</p>;
   const blocked =
     !runtime.manage || !runtime.online || runtime.busy || runtime.checking;
   const issue = job
@@ -92,9 +87,7 @@ export function LogicalExport({ canExport }: { canExport: boolean }) {
     if (saved) {
       try {
         downloadLogicalExport(saved.bytes, saved.format);
-        setMessage(
-          "Authorized logical export downloaded. The app did not persist a genealogy cache; safeguard the downloaded file yourself.",
-        );
+        setMessage("Export downloaded. Store the file somewhere secure.");
       } catch (error) {
         task.setError(
           error instanceof Error
@@ -134,8 +127,8 @@ export function LogicalExport({ canExport }: { canExport: boolean }) {
               : "ZIP: logical records and validated referenced media only; not the live application database."}
           </p>
           <p>
-            People: {summary.people} · Media: {summary.media} · Snapshot
-            revision {job?.expected_graph_revision} · Expires {job?.expires_at}
+            People: {summary.people} · Media: {summary.media} · Expires{" "}
+            {job?.expires_at}
           </p>
           <Button disabled={blocked || !!issue} onClick={() => void download()}>
             Download authorized export

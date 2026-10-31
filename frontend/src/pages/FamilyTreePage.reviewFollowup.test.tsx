@@ -132,7 +132,7 @@ it.each(["conflict", "chronology"] as const)(
         dialog.getByRole("button", { name: "Review latest records" }),
       );
       await dialog.findByRole("button", {
-        name: /Reapply reviewed draft at revision 2/,
+        name: /Reapply reviewed draft/,
       });
     } else {
       fireEvent.click(
@@ -210,14 +210,17 @@ it("shows original and replacement identity association before revision-bound un
     dialog.getByRole("button", { name: "Review latest records" }),
   );
   const reapply = await dialog.findByRole("button", {
-    name: /Reapply reviewed draft at revision 3/,
+    name: /Reapply reviewed draft/,
   });
   expect(reapply).toBeEnabled();
   expect(screen.getByRole("dialog")).toHaveTextContent(
     "Replacement child identity",
   );
-  expect(screen.getByRole("dialog")).toHaveTextContent('"user_id":41');
-  expect(screen.getByRole("dialog")).toHaveTextContent('"child_id":52');
+  expect(screen.getByRole("dialog")).toHaveTextContent(
+    "Originally confirmed adult",
+  );
+  expect(screen.getByRole("dialog")).not.toHaveTextContent('"user_id":41');
+  expect(screen.getByRole("dialog")).not.toHaveTextContent('"child_id":52');
   fireEvent.click(reapply);
   await waitFor(() => expect(unlink).toHaveBeenCalledTimes(2));
   expect(unlink.mock.calls[0][1].expected_graph_revision).toBe(1);

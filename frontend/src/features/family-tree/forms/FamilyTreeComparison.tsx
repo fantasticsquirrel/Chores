@@ -136,7 +136,7 @@ export function FamilyTreeComparison({
               : compare.data.state === "truncated"
                 ? "Search bound reached; no definitive connection result"
                 : "No recorded connection in this bounded, filtered graph"}
-            . Revision {compare.data.graph_revision}.
+            .
           </p>
           <ol>
             {compare.data.path.map((edge, index) => (

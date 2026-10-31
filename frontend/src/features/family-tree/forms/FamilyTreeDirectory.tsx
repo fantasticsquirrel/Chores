@@ -95,8 +95,8 @@ export function FamilyTreeDirectory({
       ) : null}
       {!people.consistent ? (
         <InlineNotice variant="error">
-          The directory revision changed while paging. No mixed-revision rows
-          are shown.{" "}
+          The directory changed while more people were loading. Refresh to see
+          one consistent list.{" "}
           <Button onClick={() => void people.refresh()}>
             Refresh people directory
           </Button>
@@ -111,7 +111,9 @@ export function FamilyTreeDirectory({
       <ul aria-label="Recorded people">
         {people.items.map((person) => (
           <li key={person.id}>
-            <Link to={`/family-tree/people/${person.id}?${searchParams.toString()}`}>
+            <Link
+              to={`/family-tree/people/${person.id}?${searchParams.toString()}`}
+            >
               {personName(person)}
             </Link>{" "}
             · {person.living_status}
