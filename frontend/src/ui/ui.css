@@ -1,0 +1,113 @@
+.ui-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-weight: 750;
+}
+
+.ui-field-label {
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.ui-control {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.85rem;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-button);
+  padding: 0.68rem 0.8rem;
+  color: var(--text-main);
+  background: var(--surface-solid);
+  box-shadow: none;
+  font: 500 1rem/1.35 var(--font-ui);
+}
+
+.ui-control::placeholder {
+  color: var(--text-muted);
+  opacity: 0.82;
+}
+
+.ui-control:disabled {
+  color: var(--text-muted);
+  background: var(--surface-soft);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.ui-control--compact {
+  min-height: 2.55rem;
+  padding-block: 0.52rem;
+}
+
+.ui-control--comfortable {
+  min-height: 3.25rem;
+  padding: 0.8rem 0.9rem;
+}
+
+.ui-select {
+  cursor: pointer;
+}
+
+.ui-textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.ui-textarea.ui-control--comfortable {
+  min-height: 5.75rem;
+}
+
+.ui-control:focus-visible {
+  outline: 3px solid var(--ring-focus);
+  outline-offset: 2px;
+  border-color: var(--ring-focus);
+}
+
+.jewel-button.secondary-button {
+  border: 1px solid var(--surface-border);
+  color: var(--text-main);
+  background: var(--surface-soft);
+  box-shadow: none;
+}
+
+.jewel-button.secondary-button:hover {
+  border-color: color-mix(
+    in srgb,
+    var(--ring-focus),
+    var(--surface-border) 45%
+  );
+  background: color-mix(in srgb, var(--surface-soft), var(--surface-solid) 45%);
+  box-shadow: none;
+}
+
+.jewel-button {
+  min-height: 2.75rem;
+  line-height: 1.2;
+}
+
+.homeschool-calendar :is(h2, h3),
+.homeschool-attendance-dialog h2,
+.homeschool-form-card h2,
+.homeschool-record-card h2,
+.homeschool-report h2 {
+  font-family: var(--font-ui);
+  letter-spacing: -0.015em;
+}
+
+.homeschool-calendar-child {
+  width: min(100%, 22rem);
+  margin: 1rem 0 1.15rem;
+}
+
+.homeschool-calendar > h3 {
+  margin: 0 0 0.75rem;
+}
+
+@media (max-width: 520px) {
+  .ui-control {
+    font-size: 1rem;
+  }
+}

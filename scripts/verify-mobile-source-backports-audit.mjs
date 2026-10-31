@@ -7,8 +7,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { validateMobileBuildToolchainAudit, KNOWN_BUILD_TOOLCHAIN_ADVISORY_SOURCES } from './verify-mobile-build-toolchain-audit.mjs';
 
 const FIXES = {
-  braces: {source:1240992, ghsa:'GHSA-vfj7-8cjw-p6xm', range:'<=3.0.3', version:'3.0.3'},
-  'node-forge': {source:1240912, ghsa:'GHSA-86w9-cpqp-85rv', range:'<=1.4.0', version:'1.4.0'},
+  braces: {source:1240992, ghsa:'GHSA-vfj7-8cjw-p6xm', range:'<=3.0.3', version:'3.0.3', severity:'high'},
+  deepmerge: {source:1243505, ghsa:'GHSA-gcqx-w48m-w2h4', range:'>=4.2.0 <=4.3.1', version:'4.3.1', severity:'low'},
 };
 const plain = x => x !== null && typeof x === 'object' && Object.getPrototypeOf(x) === Object.prototype;
 const fail = message => { throw new Error(`Mobile source-backport audit rejected: ${message}`); };
@@ -25,9 +25,6 @@ function validateRaw(report) {
   const expected = counts(report.vulnerabilities), observed = report.metadata?.vulnerabilities;
   if (!plain(report.metadata) || !plain(observed) || Object.keys(observed).sort().join() !== Object.keys(expected).sort().join()) fail('invalid raw metadata summary.');
   for (const key of Object.keys(expected)) if (!Number.isInteger(observed[key]) || observed[key] !== expected[key]) fail(`raw metadata ${key} mismatch.`);
-  for (const [name,finding] of Object.entries(report.vulnerabilities)) {
-    if (finding.severity !== 'high') fail(`${name} raw finding severity changed.`);
-  }
 }
 function reachable(findings, leaves) {
   const reached = new Set(leaves);
@@ -66,13 +63,13 @@ export function normalizeMobileSourceBackportsAudit(report, {root,packages}) {
         sources.add(v.source);
         if (Object.hasOwn(FIXES,name)) {
           const fix=FIXES[name];
-          if (v.source!==fix.source || v.name!==name || v.dependency!==name || v.severity!=='high' || v.range!==fix.range || v.url!==`https://github.com/advisories/${fix.ghsa}`) fail(`${name} advisory identity changed.`);
+          if (v.source!==fix.source || v.name!==name || v.dependency!==name || v.severity!==fix.severity || v.range!==fix.range || v.url!==`https://github.com/advisories/${fix.ghsa}`) fail(`${name} advisory identity changed.`);
         } else if (name!=='image-size' || !KNOWN_BUILD_TOOLCHAIN_ADVISORY_SOURCES.has(v.source)) fail(`unapproved advisory source on ${name}: ${v.source}.`);
       }
     }
     if (sources.size) allLeaves.push(name);
     if (Object.hasOwn(FIXES,name)) {
-      if (f.severity!=='high' || f.via.length!==1 || sources.size!==1) fail(`${name} fixed advisory shape changed.`);
+      if (f.severity!==FIXES[name].severity || f.via.length!==1 || sources.size!==1) fail(`${name} fixed advisory shape changed.`);
       if (!Array.isArray(f.nodes) || !f.nodes.length || new Set(f.nodes).size!==f.nodes.length) fail(`${name} requires unique nonempty nodes.`);
       for (const node of f.nodes) {
         if (typeof node!=='string' || isAbsolute(node) || node.includes('\\') || node.split('/').some(part=>!part || part==='.' || part==='..')) fail(`${name} has invalid relative nodes.`);

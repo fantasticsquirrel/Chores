@@ -113,7 +113,7 @@ describe("native Discovery Lab", () => {
     await view.findByText("Explore Gravity lab");
     fireEvent.press(view.getByText("Manage child access"));
     fireEvent.press(view.getByText("Alex"));
-    await view.findByText(/Web-only Exploration · Version 1.2.0/);
+    await view.findByText(/Web version 1.2.0/);
     fireEvent.press(view.getByText("Enable Gravity lab"));
     await waitFor(() =>
       expect(update).toHaveBeenCalledWith(2, {
@@ -202,10 +202,14 @@ it("keeps the accepted child-access result after duplicate taps", async () => {
 
 it("keeps subject and tag choices collapsed until requested", async () => {
   mocks();
-  const view = render(<DiscoveryLabScreen session={session} modules={modules} />);
+  const view = render(
+    <DiscoveryLabScreen session={session} modules={modules} />,
+  );
   await view.findByText("Explore Gravity lab");
   expect(view.queryByRole("button", { name: "gravity" })).toBeNull();
-  expect(view.getByRole("button", { name: "Subject: All subjects" })).toBeTruthy();
+  expect(
+    view.getByRole("button", { name: "Subject: All subjects" }),
+  ).toBeTruthy();
   fireEvent.press(view.getByRole("button", { name: "Filters (0)" }));
   fireEvent.press(view.getByRole("button", { name: "gravity" }));
   fireEvent.press(view.getByRole("button", { name: "Filters (1)" }));
@@ -217,14 +221,31 @@ it("keeps subject and tag choices collapsed until requested", async () => {
 
 it("labels uploaded packages before opening and uses only the paired web destination", async () => {
   mocks();
-  jest.spyOn(apiClient, "apiBaseUrl", "get").mockReturnValue("https://family.example/chore-api");
-  jest.mocked(apiClient.listDiscoveryExplorations).mockResolvedValue([{ ...item, package: { version: "2.0.0", runtime: "worker-rich-v1", checksum: "test" } }]);
+  jest
+    .spyOn(apiClient, "apiBaseUrl", "get")
+    .mockReturnValue("https://family.example/chore-api");
+  jest.mocked(apiClient.listDiscoveryExplorations).mockResolvedValue([
+    {
+      ...item,
+      package: {
+        version: "2.0.0",
+        runtime: "worker-rich-v1",
+        checksum: "test",
+      },
+    },
+  ]);
   const read = jest.spyOn(apiClient, "getDiscoveryExploration");
   const open = jest.spyOn(Linking, "openURL").mockResolvedValue(undefined);
-  const view = render(<DiscoveryLabScreen session={session} modules={modules} />);
-  await view.findByText(/Web-only Exploration · Version 2.0.0/);
+  const view = render(
+    <DiscoveryLabScreen session={session} modules={modules} />,
+  );
+  await view.findByText(/Opens on web/);
   expect(view.queryByText("Explore Gravity lab")).toBeNull();
   fireEvent.press(view.getByText("Open Gravity lab on web"));
-  await waitFor(() => expect(open).toHaveBeenCalledWith("https://family.example/chore/discovery-lab/gravity"));
+  await waitFor(() =>
+    expect(open).toHaveBeenCalledWith(
+      "https://family.example/chore/discovery-lab/gravity",
+    ),
+  );
   expect(read).not.toHaveBeenCalled();
 });

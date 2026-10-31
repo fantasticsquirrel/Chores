@@ -260,7 +260,7 @@ function TreeWorkspace() {
     setEditor(null);
     dirty.current = false;
     setAnnouncement(
-      `Saved at revision ${result.current_revision}${result.replayed ? " (previous request confirmed)" : ""}. Refreshing affected records.`,
+      `${result.replayed ? "Previous save confirmed." : "Changes saved."} Refreshing affected records.`,
     );
     if (editor?.focusCreated && result.affected.person_ids.length) {
       const id =
@@ -313,7 +313,7 @@ function TreeWorkspace() {
             <h2>Start your family tree</h2>
             <p>
               No active people are recorded. Add your first person or restore an
-              archived person. No sample family has been created.
+              archived person.
             </p>
             {authoritativeManage ? (
               <Button

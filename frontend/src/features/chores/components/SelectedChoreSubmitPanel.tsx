@@ -1,7 +1,14 @@
 import { useState, type ReactElement } from "react";
 
 import type { Child, EligibleChore } from "../../../api";
-import { Badge, Button, Card, FormField, InlineNotice } from "../../../ui";
+import {
+  Badge,
+  Button,
+  Card,
+  FormField,
+  InlineNotice,
+  Select,
+} from "../../../ui";
 import type { EligibleChildState } from "../hooks/useEligibleChores";
 
 type SelectedChoreSubmitPanelProps = {
@@ -57,8 +64,7 @@ export function SelectedChoreSubmitPanel({
         onSubmit={(event) => event.preventDefault()}
       >
         <FormField label="Child">
-          <select
-            className="text-input"
+          <Select
             disabled={busy}
             value={selectedChildId}
             onChange={(event) => onChildChange(event.target.value)}
@@ -69,10 +75,11 @@ export function SelectedChoreSubmitPanel({
                 {child.name}
               </option>
             ))}
-          </select>
+          </Select>
         </FormField>
         <Button
           type="button"
+          variant="secondary"
           onClick={onRefresh}
           disabled={
             busy || selectedChild === null || selectedEligibleState.loading
@@ -84,6 +91,7 @@ export function SelectedChoreSubmitPanel({
 
       <Button
         type="button"
+        variant="secondary"
         aria-pressed={multiple}
         disabled={busy}
         onClick={() => setMultiple(!multiple)}

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { AssignmentMode, Child, CompletionMode } from "../../../api";
-import { Button, FormField } from "../../../ui";
+import { Button, FormField, Select } from "../../../ui";
 
 type ChildChecklistProps = {
   children: Child[];
@@ -102,6 +102,7 @@ function RotationOrderList({
                 <span>{name}</span>
                 <div className="item-actions">
                   <Button
+                    variant="secondary"
                     type="button"
                     onClick={() => move(index, -1)}
                     disabled={disabled || index === 0}
@@ -109,6 +110,7 @@ function RotationOrderList({
                     Up
                   </Button>
                   <Button
+                    variant="secondary"
                     type="button"
                     onClick={() => move(index, 1)}
                     disabled={disabled || index === order.length - 1}
@@ -157,30 +159,28 @@ export function ChoreAssignmentFields({
   return (
     <>
       <FormField label="Completion">
-        <select
+        <Select
           value={completionMode}
           onChange={(event) =>
             onCompletionModeChange(event.target.value as CompletionMode)
           }
           disabled={disabled}
-          className="text-input"
         >
           <option value="PER_CHILD">Per child</option>
           <option value="SHARED">Shared</option>
-        </select>
+        </Select>
       </FormField>
       <FormField label="Assignment">
-        <select
+        <Select
           value={assignmentMode}
           onChange={(event) =>
             onAssignmentModeChange(event.target.value as AssignmentMode)
           }
           disabled={disabled}
-          className="text-input"
         >
           <option value="STATIC">Static</option>
           <option value="ROTATING">Rotating</option>
-        </select>
+        </Select>
       </FormField>
       {assignmentMode === "ROTATING" ? (
         <fieldset className="plain-fieldset">

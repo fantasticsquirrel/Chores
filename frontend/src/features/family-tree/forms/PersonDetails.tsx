@@ -85,10 +85,7 @@ export function PersonDetails({
   return (
     <Card as="section" aria-label={`Person details: ${personName(person)}`}>
       <h2>{personName(person)}</h2>
-      <p>
-        Person {person.id} · {person.living_status} · revision{" "}
-        {detail.graph_revision}
-      </p>
+      <p>Living status: {person.living_status}</p>
       <Button
         onClick={() => onFocus(person.id)}
         disabled={!!person.merged_into_person_id}

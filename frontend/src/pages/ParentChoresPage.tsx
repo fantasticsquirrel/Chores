@@ -144,7 +144,6 @@ export function ParentChoresPage(): ReactElement {
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <div>
-            <p className="eyebrow">Parent workspace</p>
             <h1>Chores</h1>
           </div>
           <Badge>
@@ -152,13 +151,17 @@ export function ParentChoresPage(): ReactElement {
             {eligible.activeChildren.length === 1 ? "" : "ren"}
           </Badge>
         </div>
-        <p>
-          Review what is available, submit completed chores for children, and
-          maintain the household chore setup.
-        </p>
+        <p>Review, submit, and manage household chores.</p>
         <div className="quick-actions">
+          <Button type="button" onClick={openCreate} disabled={submittingForm}>
+            Add Chore
+          </Button>
+          <ButtonLink variant="secondary" to="/board">
+            Review Submissions
+          </ButtonLink>
           <Button
             type="button"
+            variant="secondary"
             onClick={handleBoardRefresh}
             disabled={
               eligible.childrenState.loading ||
@@ -167,10 +170,6 @@ export function ParentChoresPage(): ReactElement {
             }
           >
             {eligible.childrenState.loading ? "Refreshing..." : "Refresh"}
-          </Button>
-          <ButtonLink to="/board">Review Submissions</ButtonLink>
-          <Button type="button" onClick={openCreate} disabled={submittingForm}>
-            Add Chore
           </Button>
         </div>
       </Card>

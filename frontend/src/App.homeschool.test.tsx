@@ -9,6 +9,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import App from "./App";
 import { ApiClientError, apiClient } from "./api";
+import { subjectColors } from "./features/homeschool/lib/attendance";
 
 const children = [{ id: 1, household_id: 1, name: "Maya", active: true }];
 const semesters = [
@@ -121,8 +122,8 @@ describe("Homeschool page", () => {
     await screen.findByText("View attendance for the selected child.");
     await screen.findByText("Children: Maya");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Save Attendance" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /no attendance recorded/ })[0]).toBeDisabled();
     expect(screen.getByRole("button", { name: "Export Semester PDF" })).toBeEnabled();
     expect(save).not.toHaveBeenCalled();
   });
@@ -222,6 +223,23 @@ describe("Homeschool page", () => {
     );
   });
 
+  it("suggests an unused color and marks named colors already used by this household", async () => {
+    mockHomeschoolApi();
+    vi.mocked(apiClient.listHomeschoolSubjects).mockResolvedValue([
+      { id: 20, household_id: 1, name: "Math", color: subjectColors[0].value, active: true },
+      { id: 21, household_id: 1, name: "Reading", color: subjectColors[1].value.toUpperCase(), active: true },
+    ]);
+
+    render(<MemoryRouter initialEntries={["/homeschool"]}><App /></MemoryRouter>);
+
+    const subjectPanel = (await screen.findByRole("heading", { name: "Create Subject" })).closest("article");
+    expect(subjectPanel).not.toBeNull();
+    expect(within(subjectPanel as HTMLElement).getByRole("button", { name: "Sapphire (used)" })).toBeDisabled();
+    expect(within(subjectPanel as HTMLElement).getByRole("button", { name: "Emerald (used)" })).toBeDisabled();
+    expect(within(subjectPanel as HTMLElement).getByRole("button", { name: "Violet" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(subjectPanel as HTMLElement).getByLabelText("Color")).toHaveValue(subjectColors[2].value);
+  });
+
   it("saves attendance, day comments, and grades", async () => {
     mockHomeschoolApi();
     const attendanceSpy = vi
@@ -242,11 +260,15 @@ describe("Homeschool page", () => {
 
     await screen.findByText("Children: Maya");
 
-    fireEvent.click(screen.getByRole("button", { name: "2026-09-02, no attendance recorded" }));
+    const attendanceDateButton = await screen.findByRole("button", {
+      name: "2026-09-02, no attendance recorded",
+    });
+    expect(attendanceDateButton).toBeEnabled();
+    fireEvent.click(attendanceDateButton);
     const attendancePanel = screen.getByRole("dialog");
     fireEvent.click(within(attendancePanel).getByLabelText("Select Math"));
-    fireEvent.change(within(attendancePanel).getByLabelText("Math comment"), { target: { value: "Decimals" } });
-    fireEvent.click(within(attendancePanel).getByRole("button", { name: "Save Attendance" }));
+    fireEvent.change(within(attendancePanel).getByLabelText("Math notes"), { target: { value: "Decimals" } });
+    fireEvent.click(within(attendancePanel).getByRole("button", { name: "Save" }));
 
     await waitFor(() =>
       expect(attendanceSpy).toHaveBeenCalledWith({
@@ -340,18 +362,18 @@ describe("Homeschool page", () => {
     );
 
     const editorHeading = screen.getByRole("heading", {
-      name: "Record attendance for 2026-09-02",
+      name: "Attendance",
     });
     expect(editorHeading).toBeVisible();
     const editor = editorHeading.closest("dialog");
     expect(editor).not.toBeNull();
     fireEvent.click(within(editor as HTMLElement).getByLabelText("Select Math"));
-    fireEvent.change(within(editor as HTMLElement).getByLabelText("Math comment"), {
+    fireEvent.change(within(editor as HTMLElement).getByLabelText("Math notes"), {
       target: { value: "Decimals" },
     });
     fireEvent.click(
       within(editor as HTMLElement).getByRole("button", {
-        name: "Save Attendance",
+        name: "Save",
       }),
     );
 
@@ -368,7 +390,7 @@ describe("Homeschool page", () => {
     await waitFor(() =>
       expect(
         screen.queryByRole("heading", {
-          name: "Record attendance for 2026-09-02",
+          name: "Attendance",
         }),
       ).not.toBeInTheDocument(),
       { timeout: 4000 },
@@ -391,7 +413,7 @@ describe("Homeschool page", () => {
       }),
     );
     const editorHeading = screen.getByRole("heading", {
-      name: "Record attendance for 2026-09-02",
+      name: "Attendance",
     });
     fireEvent.click(
       within(editorHeading.closest("dialog") as HTMLElement).getByRole(
@@ -401,7 +423,7 @@ describe("Homeschool page", () => {
     );
     expect(
       screen.queryByRole("heading", {
-        name: "Record attendance for 2026-09-02",
+        name: "Attendance",
       }),
     ).not.toBeInTheDocument();
 

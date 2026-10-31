@@ -148,7 +148,7 @@ export function HomeschoolScreen({
         />
       ) : null}
 
-      <SectionCard title="Workspace">
+      <SectionCard title="Sections">
         <ChoiceGroup
           disabled={data.state.loading || mutations.busy}
           onChange={setActiveSection}

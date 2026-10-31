@@ -308,7 +308,6 @@ export function HomeschoolPage(): ReactElement {
       <Card className="dashboard-panel">
         <div className="panel-header-row">
           <div>
-            <p className="eyebrow">Family Manager Module</p>
             <h1>Homeschool</h1>
           </div>
         </div>
@@ -377,8 +376,8 @@ export function HomeschoolPage(): ReactElement {
       <div className="dashboard-section-header">
         <h2>Setup & Records</h2>
         <div className="quick-actions">
-          <ButtonLink to="/parent/children">Review Linked Children</ButtonLink>
-          <ButtonLink to="/admin/dashboard">Module Access</ButtonLink>
+          <ButtonLink variant="secondary" to="/parent/children">Review Linked Children</ButtonLink>
+          <ButtonLink variant="secondary" to="/admin/dashboard">Module Access</ButtonLink>
         </div>
       </div>
 

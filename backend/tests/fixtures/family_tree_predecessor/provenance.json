@@ -1,0 +1,13 @@
+{
+  "archive": "source-e6ffe2f555258d89b51a6026ab3f1d05de4e5332.tar.gz",
+  "archive_sha256": "e882ef1c283cb3e463a158870ff6815d58621de7d0dac2b4bf950bccb38c2dac",
+  "compression": "gzip -n -9",
+  "included_paths": [
+    "backend",
+    "packages/family-api/module-contract.json"
+  ],
+  "source_commit": "e6ffe2f555258d89b51a6026ab3f1d05de4e5332",
+  "source_parent": "52ff3bd8263977bf089e49ddac8537ceb364c792",
+  "source_subject": "feat: add safe family tree observability and capacity reference",
+  "source_tree": "618c7767ded32a9c073a2dcdbe2bc30f2360253b"
+}

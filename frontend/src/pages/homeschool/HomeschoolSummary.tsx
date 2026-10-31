@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 
 import type { HomeschoolAttendance, HomeschoolDayComment, HomeschoolGrade, HomeschoolSemester, HomeschoolSubject } from "../../api";
 import { SemesterReportExport } from "../../features/homeschool/components/SemesterReportExport";
-import { Card, FormField } from "../../ui";
+import { Card, FormField, Select } from "../../ui";
 
 type HomeschoolSummaryProps = {
   householdId: number | null;
@@ -55,10 +55,10 @@ export function HomeschoolSummary({
         </div>
       </div>
       <FormField label="Report semester">
-        <select className="text-input" value={selectedSemester?.id ?? ""} onChange={(event) => onSemesterChange(event.target.value)}>
+        <Select value={selectedSemester?.id ?? ""} onChange={(event) => onSemesterChange(event.target.value)}>
           {semesters.length === 0 ? <option value="">Create a semester first</option> : null}
           {semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
-        </select>
+        </Select>
       </FormField>
       {householdId !== null && selectedSemester !== null && calendarChildId !== "" ? <SemesterReportExport key={`${householdId}:${calendarChildId}:${selectedSemester.id}`} householdId={householdId} semesterId={selectedSemester.id} childId={Number(calendarChildId)} /> : null}
       {calendarChildId === "" ? <p>Select a child above to preview a summary.</p> : null}

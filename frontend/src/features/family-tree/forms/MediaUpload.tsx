@@ -128,7 +128,7 @@ export function MediaUpload({
     <section className="family-tree-record-form family-tree-advanced-form">
       <p>
         Upload a sanitized app copy (JPEG, PNG or WebP, at most 10 MiB).
-        Location/EXIF metadata is stripped by the server. Your source original
+        Location and EXIF metadata are removed during upload. Your original
         remains on your device. No remote image URL is fetched.
       </p>
       <label>
@@ -237,7 +237,7 @@ export function MediaUpload({
             command.resetIntent();
           }}
         >
-          Use reviewed revision for attachment
+          Use reviewed records for attachment
         </Button>
       ) : null}
       {readback.saved ? (

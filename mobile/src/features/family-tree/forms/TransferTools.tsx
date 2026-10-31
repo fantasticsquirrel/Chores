@@ -55,14 +55,14 @@ export function TransferTools({
       <Text style={shellStyles.mutedText}>
         Exports contain household genealogy only, not accounts or a live
         database. Share/save is an explicit user action. Append import never
-        replaces the tree or reconnects accounts. Private staging expires on the
-        server.
+        replaces the tree or reconnects accounts. Private staging expires
+        automatically.
       </Text>
       {r.working ? (
         <>
           <Text style={shellStyles.mutedText}>
-            Working on a private transfer. Interrupting is not rollback;
-            preserve the original command for explicit retry.
+            Working on a private transfer. Stopping does not undo completed
+            work; retry only the same pending transfer.
           </Text>
           <ActionButton
             label="Interrupt Family Tree transfer"
@@ -138,8 +138,8 @@ export function TransferTools({
       {t.selected ? (
         <>
           <Text style={shellStyles.mutedText}>
-            Logical package selected · {t.selected.size} bytes · maximum 100 MiB
-            input. Bounded validation occurs on the server.
+            Selected file: {t.selected.size} bytes · maximum 100 MiB. The file
+            is validated before import.
           </Text>
           <ActionButton
             label="Upload and stage append import"
@@ -157,8 +157,7 @@ export function TransferTools({
       {t.importing ? (
         <>
           <Text style={shellStyles.mutedText}>
-            Append import #{t.importing.id}: {t.importing.state} · revision{" "}
-            {t.importing.expected_graph_revision} · expires{" "}
+            Append import: {t.importing.state} · expires{" "}
             {t.importing.expires_at}
           </Text>
           {importing ? (

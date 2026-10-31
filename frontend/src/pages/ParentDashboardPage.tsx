@@ -12,7 +12,7 @@ import { isTodayCaughtUp } from "../features/dashboard/lib/todayQueue";
 import { FamilyTreeHomeShortcut } from "../features/family-tree/forms/FamilyTreeHomeShortcut";
 import { formatApiError } from "../lib/errors";
 import { hasWebDashboardCard } from "../modules/registry";
-import { Badge, Button, ButtonLink, Card, InlineNotice } from "../ui";
+import { Button, ButtonLink, Card, InlineNotice } from "../ui";
 
 type Resource<T> = { data: T | null; loading: boolean; error: string | null };
 const pending = <T,>(): Resource<T> => ({
@@ -162,7 +162,6 @@ export function ParentDashboardPage(): ReactElement {
           <Card className="dashboard-panel">
             <div className="panel-header-row">
               <h1>Today</h1>
-              <Badge>Action Queue</Badge>
             </div>
             {approvals.loading ? <p>Loading approvals...</p> : null}
             {approvals.error ? (
@@ -242,6 +241,7 @@ export function ParentDashboardPage(): ReactElement {
             </ul>
             {active.length > 0 ? (
               <Button
+                variant="secondary"
                 aria-pressed={showAll}
                 onClick={() => setShowAll(!showAll)}
               >
@@ -306,17 +306,27 @@ export function ParentDashboardPage(): ReactElement {
         <div className="quick-actions">
           {choresEnabled ? (
             <>
-              <ButtonLink to="/parent/children">Manage Children</ButtonLink>
-              <ButtonLink to="/board">Open Review</ButtonLink>
-              <ButtonLink to="/parent/money">Money &amp; History</ButtonLink>
+              <ButtonLink variant="secondary" to="/parent/children">
+                Manage Children
+              </ButtonLink>
+              <ButtonLink variant="secondary" to="/board">
+                Open Review
+              </ButtonLink>
+              <ButtonLink variant="secondary" to="/parent/money">
+                Money &amp; History
+              </ButtonLink>
             </>
           ) : null}
           {hasWebDashboardCard("homeschool") &&
           moduleKeys.includes("homeschool") ? (
-            <ButtonLink to="/homeschool">Open Homeschool</ButtonLink>
+            <ButtonLink variant="secondary" to="/homeschool">
+              Open Homeschool
+            </ButtonLink>
           ) : null}
           {hasWebDashboardCard("recipes") && moduleKeys.includes("recipes") ? (
-            <ButtonLink to="/recipes">Open Cookbook</ButtonLink>
+            <ButtonLink variant="secondary" to="/recipes">
+              Open Cookbook
+            </ButtonLink>
           ) : null}
         </div>
       </Card>

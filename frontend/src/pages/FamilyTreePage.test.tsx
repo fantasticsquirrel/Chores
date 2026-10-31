@@ -372,7 +372,7 @@ describe("Family Tree protected web workflows", () => {
       screen.getByRole("button", { name: "Review latest records" }),
     );
     const reapply = await screen.findByRole("button", {
-      name: "Reapply reviewed draft at revision 4",
+      name: "Reapply reviewed draft",
     });
     expect(screen.getByText(/latest:.*Remote change/)).toBeInTheDocument();
     fireEvent.click(reapply);

@@ -150,6 +150,59 @@ def _install_sqlite_runtime_guards(engine: Engine) -> None:
         return
     statements = [
 
+        """CREATE TRIGGER IF NOT EXISTS trg_homeschool_subject_color_insert
+        BEFORE INSERT ON homeschool_subjects
+        WHEN EXISTS (
+          SELECT 1 FROM homeschool_subjects AS existing
+          WHERE existing.household_id=NEW.household_id
+            AND (CASE
+              WHEN length(trim(existing.color))=4 AND substr(trim(existing.color),1,1)='#'
+              THEN lower('#' || substr(trim(existing.color),2,1) || substr(trim(existing.color),2,1)
+                             || substr(trim(existing.color),3,1) || substr(trim(existing.color),3,1)
+                             || substr(trim(existing.color),4,1) || substr(trim(existing.color),4,1))
+              ELSE lower(trim(existing.color)) END)
+              = (CASE
+              WHEN length(trim(NEW.color))=4 AND substr(trim(NEW.color),1,1)='#'
+              THEN lower('#' || substr(trim(NEW.color),2,1) || substr(trim(NEW.color),2,1)
+                             || substr(trim(NEW.color),3,1) || substr(trim(NEW.color),3,1)
+                             || substr(trim(NEW.color),4,1) || substr(trim(NEW.color),4,1))
+              ELSE lower(trim(NEW.color)) END)
+        )
+        BEGIN SELECT RAISE(ABORT, 'subject color already used in household'); END""",
+        """CREATE TRIGGER IF NOT EXISTS trg_homeschool_subject_color_update
+        BEFORE UPDATE OF color, household_id ON homeschool_subjects
+        WHEN (
+          NEW.household_id != OLD.household_id
+          OR (CASE
+            WHEN length(trim(NEW.color))=4 AND substr(trim(NEW.color),1,1)='#'
+            THEN lower('#' || substr(trim(NEW.color),2,1) || substr(trim(NEW.color),2,1)
+                           || substr(trim(NEW.color),3,1) || substr(trim(NEW.color),3,1)
+                           || substr(trim(NEW.color),4,1) || substr(trim(NEW.color),4,1))
+            ELSE lower(trim(NEW.color)) END)
+            != (CASE
+            WHEN length(trim(OLD.color))=4 AND substr(trim(OLD.color),1,1)='#'
+            THEN lower('#' || substr(trim(OLD.color),2,1) || substr(trim(OLD.color),2,1)
+                           || substr(trim(OLD.color),3,1) || substr(trim(OLD.color),3,1)
+                           || substr(trim(OLD.color),4,1) || substr(trim(OLD.color),4,1))
+            ELSE lower(trim(OLD.color)) END)
+        ) AND EXISTS (
+          SELECT 1 FROM homeschool_subjects AS existing
+          WHERE existing.household_id=NEW.household_id AND existing.id != OLD.id
+            AND (CASE
+              WHEN length(trim(existing.color))=4 AND substr(trim(existing.color),1,1)='#'
+              THEN lower('#' || substr(trim(existing.color),2,1) || substr(trim(existing.color),2,1)
+                             || substr(trim(existing.color),3,1) || substr(trim(existing.color),3,1)
+                             || substr(trim(existing.color),4,1) || substr(trim(existing.color),4,1))
+              ELSE lower(trim(existing.color)) END)
+              = (CASE
+              WHEN length(trim(NEW.color))=4 AND substr(trim(NEW.color),1,1)='#'
+              THEN lower('#' || substr(trim(NEW.color),2,1) || substr(trim(NEW.color),2,1)
+                             || substr(trim(NEW.color),3,1) || substr(trim(NEW.color),3,1)
+                             || substr(trim(NEW.color),4,1) || substr(trim(NEW.color),4,1))
+              ELSE lower(trim(NEW.color)) END)
+        )
+        BEGIN SELECT RAISE(ABORT, 'subject color already used in household'); END""",
+
         """CREATE TRIGGER IF NOT EXISTS trg_households_owner_update BEFORE UPDATE OF owner_user_id ON households
         WHEN NEW.owner_user_id IS NULL OR NOT EXISTS (
           SELECT 1 FROM users WHERE id=NEW.owner_user_id AND household_id=NEW.id AND active=1

@@ -1,8 +1,8 @@
 import type { FormEvent, ReactElement } from "react";
 
 import type { Child, HomeschoolSemester, HomeschoolSubject } from "../../api";
-import { Button, Card, DateInput, FormField, TextInput } from "../../ui";
-import { subjectColors } from "../../features/homeschool/lib/attendance";
+import { Button, Card, DateInput, FormField, Select, TextInput } from "../../ui";
+import { normalizeHexColor, subjectColors } from "../../features/homeschool/lib/attendance";
 
 export type DayCommentFormState = {
   childId: string;
@@ -74,6 +74,8 @@ export function HomeschoolForms({
   onSaveDayComment,
   onSaveGrade,
 }: HomeschoolFormsProps): ReactElement {
+  const usedSubjectColors = new Set(subjects.filter((subject) => subject.id !== editingSubjectId).map((subject) => normalizeHexColor(subject.color) ?? subject.color.trim().toLowerCase()));
+  const selectedSubjectColor = normalizeHexColor(subjectColor);
   return (
     <>
       <Card className="dashboard-panel homeschool-form-card">
@@ -90,7 +92,7 @@ export function HomeschoolForms({
           </FormField>
           <div className="item-actions">
             <Button type="submit" disabled={householdId === null || semesterName.trim().length === 0}>{editingSemesterId === null ? "Create Semester" : "Update Semester"}</Button>
-            {editingSemesterId !== null ? <Button type="button" onClick={onCancelSemesterEdit}>Cancel</Button> : null}
+            {editingSemesterId !== null ? <Button variant="secondary" type="button" onClick={onCancelSemesterEdit}>Cancel</Button> : null}
           </div>
         </form>
       </Card>
@@ -105,12 +107,16 @@ export function HomeschoolForms({
             <input className="homeschool-color-input" type="color" value={/^#[0-9a-f]{6}$/i.test(subjectColor) ? subjectColor : "#1d4ed8"} onChange={(event) => onSubjectColorChange(event.target.value)} />
           </FormField>
           <div className="homeschool-color-swatches" role="group" aria-label="Subject colors">
-            {subjectColors.map((color) => <button type="button" key={color.value} aria-label={color.name} aria-pressed={subjectColor.toLowerCase() === color.value} style={{ background: color.value }} onClick={() => onSubjectColorChange(color.value)}>{subjectColor.toLowerCase() === color.value ? "✓" : ""}</button>)}
+            {subjectColors.map((color) => {
+              const used = usedSubjectColors.has(color.value);
+              const selected = selectedSubjectColor === color.value;
+              return <button type="button" key={color.value} aria-label={`${color.name}${used ? " (used)" : ""}`} aria-pressed={selected} disabled={used} title={used ? `${color.name} is already used by another subject` : color.name} style={{ background: color.value }} onClick={() => onSubjectColorChange(color.value)}>{selected ? "✓" : ""}</button>;
+            })}
           </div>
           <div className="homeschool-subject-preview" aria-label="Subject color preview"><span className="subject-attendance-color" style={{ background: subjectColor }} />{subjectName.trim() || "New subject"}</div>
           <div className="item-actions">
             <Button type="submit" disabled={householdId === null || subjectName.trim().length === 0}>{editingSubjectId === null ? "Create Subject" : "Update Subject"}</Button>
-            {editingSubjectId !== null ? <Button type="button" onClick={onCancelSubjectEdit}>Cancel</Button> : null}
+            {editingSubjectId !== null ? <Button variant="secondary" type="button" onClick={onCancelSubjectEdit}>Cancel</Button> : null}
           </div>
         </form>
       </Card>
@@ -135,10 +141,10 @@ export function HomeschoolForms({
           <ChildSelect value={grade.childId} children={children} onChange={(childId) => onGradeChange({ childId })} />
           <SubjectSelect value={grade.subjectId} subjects={subjects} onChange={(subjectId) => onGradeChange({ subjectId })} />
           <FormField label="Semester">
-            <select className="text-input" value={grade.semesterId} onChange={(event) => onGradeChange({ semesterId: event.target.value })}>
+            <Select value={grade.semesterId} onChange={(event) => onGradeChange({ semesterId: event.target.value })}>
               <option value="">Overall / no semester</option>
               {semesters.map((semester) => <option key={semester.id} value={semester.id}>{semester.name}</option>)}
-            </select>
+            </Select>
           </FormField>
           <FormField label="Grade">
             <TextInput value={grade.grade} onChange={(event) => onGradeChange({ grade: event.target.value })} placeholder="A, 95%, Complete..." maxLength={64} />
@@ -159,10 +165,10 @@ type ChildSelectProps = {
 function ChildSelect({ value, children, onChange }: ChildSelectProps): ReactElement {
   return (
     <FormField label="Child">
-      <select className="text-input" value={value} onChange={(event) => onChange(event.target.value)} required>
+      <Select value={value} onChange={(event) => onChange(event.target.value)} required>
         <option value="">Select child</option>
         {children.map((child) => <option key={child.id} value={child.id}>{child.name}</option>)}
-      </select>
+      </Select>
     </FormField>
   );
 }
@@ -176,10 +182,10 @@ type SubjectSelectProps = {
 function SubjectSelect({ value, subjects, onChange }: SubjectSelectProps): ReactElement {
   return (
     <FormField label="Subject">
-      <select className="text-input" value={value} onChange={(event) => onChange(event.target.value)} required>
+      <Select value={value} onChange={(event) => onChange(event.target.value)} required>
         <option value="">Select subject</option>
         {subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
-      </select>
+      </Select>
     </FormField>
   );
 }

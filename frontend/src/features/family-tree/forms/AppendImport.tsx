@@ -365,8 +365,8 @@ export function AppendImport({
       {readback.saved ? (
         <>
           <p>
-            Import saved at revision {readback.saved.committed_revision}; retry
-            only the committed-job read.
+            Import saved, but its final status could not be loaded. Do not
+            submit another import.
           </p>
           <Button
             disabled={

@@ -1,8 +1,23 @@
 from __future__ import annotations
 
 from datetime import date
+import re
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+_SUBJECT_COLOR_PATTERN = re.compile(r"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
+
+
+def normalize_subject_color(value: str) -> str:
+    """Return the one stored form for an accepted CSS hex color."""
+    normalized = value.strip()
+    if not _SUBJECT_COLOR_PATTERN.fullmatch(normalized):
+        raise ValueError("color must be a 3- or 6-digit hex value such as #1d4ed8.")
+    digits = normalized[1:].lower()
+    if len(digits) == 3:
+        digits = "".join(character * 2 for character in digits)
+    return f"#{digits}"
 
 
 class HomeschoolSemesterResponse(BaseModel):
@@ -66,6 +81,11 @@ class CreateHomeschoolSubjectRequest(BaseModel):
     color: str = Field(default="#3b82f6", min_length=1, max_length=32)
     active: bool = True
 
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, value: str) -> str:
+        return normalize_subject_color(value)
+
 
 class UpdateHomeschoolSubjectRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
@@ -74,6 +94,11 @@ class UpdateHomeschoolSubjectRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     color: str = Field(default="#3b82f6", min_length=1, max_length=32)
     active: bool = True
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, value: str) -> str:
+        return normalize_subject_color(value)
 
 
 class HomeschoolAttendanceResponse(BaseModel):

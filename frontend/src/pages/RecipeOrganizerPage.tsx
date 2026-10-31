@@ -96,7 +96,6 @@ export function RecipeOrganizerPage(): ReactElement {
     <>
       <Card as="section" className="recipe-page-card recipe-browse-header">
         <div>
-          <p className="eyebrow">Household Cookbook</p>
           <h1>Recipe Organizer</h1>
         </div>
         {canManage && (
@@ -106,7 +105,7 @@ export function RecipeOrganizerPage(): ReactElement {
             </Button>
             <Button
               type="button"
-              className="recipe-secondary"
+              variant="secondary"
               onClick={() => openTask("import")}
             >
               Import Recipe
@@ -191,7 +190,7 @@ export function RecipeOrganizerPage(): ReactElement {
       <div>
         <Button
           type="button"
-          className="recipe-secondary"
+          variant="secondary"
           onClick={() => openTask("backup")}
         >
           Backup & Restore
@@ -289,9 +288,8 @@ export function RecipeDetailPage(): ReactElement {
   if (detail.recipe === null) {
     return (
       <Card as="section" className="recipe-detail-card">
-        <p className="eyebrow">Recipe Organizer</p>
         <h1>Loading Recipe</h1>
-        <p>Opening the recipe cooking page.</p>
+        <p role="status">Opening recipe…</p>
       </Card>
     );
   }
@@ -316,7 +314,6 @@ export function RecipeDetailPage(): ReactElement {
       {detail.message !== null ? (
         <InlineNotice variant="success">{detail.message}</InlineNotice>
       ) : null}
-      <p className="eyebrow">Recipe Cooking Page</p>
       <h1>{detail.recipe.title}</h1>
       <div className="recipe-cooking-actions">
         <span>
@@ -332,7 +329,7 @@ export function RecipeDetailPage(): ReactElement {
         </Button>
         <Button
           type="button"
-          className="recipe-secondary"
+          variant="secondary"
           disabled={detail.scaling}
           onClick={() => window.print()}
         >

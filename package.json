@@ -11,8 +11,37 @@
     "packages/*"
   ],
   "overrides": {
+    "@expo/cli": {
+      "glob": "14.0.2",
+      "node-forge": "1.4.2",
+      "zod": "4.6.7"
+    },
+    "@expo/code-signing-certificates": {
+      "node-forge": "1.4.2"
+    },
+    "@expo/config": {
+      "deepmerge": "4.3.1",
+      "glob": "14.0.2"
+    },
+    "@expo/config-plugins": {
+      "glob": "14.0.2"
+    },
+    "@expo/fingerprint": {
+      "glob": "14.0.2",
+      "minimatch": "11.0.1"
+    },
+    "@expo/metro-config": {
+      "glob": "14.0.2"
+    },
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "4.3.2"
+    },
+    "babel-plugin-istanbul": {
+      "test-exclude": {
+        ".": "8.0.0",
+        "glob": "14.0.2",
+        "minimatch": "11.0.1"
+      }
     },
     "metro": "0.84.5",
     "metro-config": "0.84.5",
@@ -22,8 +51,8 @@
     }
   },
   "scripts": {
-    "postinstall": "node scripts/security-backports.mjs",
-    "security:backports": "node scripts/security-backports.mjs --check && node --test scripts/security-backports.test.mjs scripts/security-backports-installer.test.mjs",
+    "postinstall": "node scripts/security-backports.mjs && node scripts/verify-secure-upstream-artifacts.mjs",
+    "security:backports": "node scripts/security-backports.mjs --check && node scripts/verify-secure-upstream-artifacts.mjs && node --test scripts/security-backports.test.mjs scripts/security-backports-installer.test.mjs scripts/verify-secure-upstream-artifacts.test.mjs scripts/security-upstream-consumers.test.mjs",
     "architecture:report": "python3 scripts/architecture-report.py",
     "shared-api:gate": "vitest run packages/family-api/src --environment node --maxWorkers=2",
     "family-tree-core:gate": "npm run typecheck --workspace @family-manager/family-tree-core && npm run test --workspace @family-manager/family-tree-core",

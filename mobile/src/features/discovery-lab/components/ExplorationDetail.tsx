@@ -18,10 +18,6 @@ export function ExplorationDetail({
           This published Exploration runs in the web app. Open Discovery Lab in
           your browser to use its interactive model.
         </Text>
-        <Text style={{ color: colors.textMuted, lineHeight: 23 }}>
-          This app does not load downloaded simulation code. The bundled
-          Explorations remain available here.
-        </Text>
       </SectionCard>
     );
   }

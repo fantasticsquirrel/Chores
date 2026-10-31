@@ -30,7 +30,7 @@ export function TreeRecovery({
       {state.lastCommit && state.readbackPending && state.error && allowed ? (
         <InlineNotice
           tone="warning"
-          message={`Save confirmed at revision ${state.lastCommit.committed_revision}. Only readback failed; refresh uses GETs, not another mutation.`}
+          message="Save confirmed, but refreshed records could not be loaded. Refresh will not repeat the change."
         />
       ) : null}
       {state.error ? (
@@ -50,8 +50,8 @@ export function TreeRecovery({
       {state.pending && allowed ? (
         <SectionCard title="Draft retained">
           <Text style={shellStyles.mutedText}>
-            No offline write was queued. Review or retry this exact saved
-            command; editing the form does not silently replace it.
+            Your pending change is retained. Review or retry it; editing the
+            form does not replace it.
           </Text>
           {state.pending.code === "revision_conflict" ? (
             <>
@@ -60,7 +60,7 @@ export function TreeRecovery({
                 the latest facts and explicitly reapply only after review.
               </Text>
               <ActionButton
-                label="Review latest revision"
+                label="Review latest records"
                 disabled={state.busy || state.loading}
                 variant="secondary"
                 onPress={() => void workflow.reviewConflict()}
@@ -69,8 +69,7 @@ export function TreeRecovery({
                 <>
                   <RevisionReview state={state} />
                   <Text style={shellStyles.mutedText}>
-                    Latest revision: {state.collection?.graph_revision}. Review
-                    the refreshed person facts below against your draft.
+                    Review the refreshed person facts below against your draft.
                   </Text>
                   <ActionButton
                     label="Reapply reviewed draft"
@@ -94,13 +93,13 @@ export function TreeRecovery({
             </>
           ) : (
             <ActionButton
-              label="Retry saved command"
+              label="Retry pending change"
               disabled={state.busy || state.loading}
               onPress={() => void workflow.retryMutation()}
             />
           )}
           <ActionButton
-            label="Discard saved command"
+            label="Discard pending change"
             disabled={state.busy}
             variant="secondary"
             onPress={() =>

@@ -22,15 +22,15 @@ function fact(f: Field, value: unknown) {
 }
 function association(link: FamilyTreeIdentityLink | null | undefined) {
   if (!link) return "None";
-  return `id=${link.id} kind=${link.user_id !== null ? "user" : "child"} user_id=${link.user_id ?? "null"} child_id=${link.child_id ?? "null"} label=${link.label} active=${link.active}`;
+  return `${link.label} · ${link.user_id !== null ? "parent account" : "child account"} · ${link.active ? "active" : "inactive"}`;
 }
 export function RevisionReview({ state }: { state: TreeState }) {
   const p = state.detail?.person;
   return (
-    <SectionCard title="Latest facts for review">
+    <SectionCard title="Updated records for review">
       <Text style={shellStyles.mutedText}>
-        Revision {state.collection?.graph_revision}. These are server facts;
-        your unsaved form below has not been replaced.
+        These are the latest saved facts. Your draft below has not been
+        replaced.
       </Text>
       {state.pending?.action.type === "unlinkIdentity" ? (
         <View>
@@ -62,17 +62,14 @@ export function RevisionReview({ state }: { state: TreeState }) {
           person.
         </Text>
       )}
-      {state.detail
-        ? [
-            ...state.detail.parent_links,
-            ...state.detail.care_links,
-            ...state.detail.partner_episodes,
-          ].map((r, i) => (
-            <Text key={i} selectable style={shellStyles.mutedText}>
-              Latest relationship: {JSON.stringify(r)}
-            </Text>
-          ))
-        : null}
+      {state.detail ? (
+        <Text style={shellStyles.mutedText}>
+          Latest relationship records:{" "}
+          {state.detail.parent_links.length +
+            state.detail.care_links.length +
+            state.detail.partner_episodes.length}
+        </Text>
+      ) : null}
       {state.stories?.items.map((s) => (
         <Text key={s.id} selectable style={shellStyles.mutedText}>
           Latest story #{s.id}: {s.title} — {s.body_md}
@@ -85,8 +82,9 @@ export function RevisionReview({ state }: { state: TreeState }) {
           – {dateLabel(r.end_date)}
         </Text>
       ))}
-      <Text selectable style={shellStyles.mutedText}>
-        Retained command: {JSON.stringify(state.pending?.action)}
+      <Text style={shellStyles.mutedText}>
+        Pending change:{" "}
+        {state.pending?.action.type.replace(/([A-Z])/g, " $1").toLowerCase()}
       </Text>
     </SectionCard>
   );
