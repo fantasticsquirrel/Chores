@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 const repositoryRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 // Genuine transitive npm packages, isolated from the working repository.
 const seed=mkdtempSync(path.join(os.tmpdir(),'audit-source-deps-'));
-const installed=spawnSync('npm',['install','--prefix',seed,'--ignore-scripts','--no-audit','--no-fund','fill-range@7.1.1'],{encoding:'utf8',timeout:60000});
+const installed=spawnSync('npm',['install','--prefix',seed,'--ignore-scripts','--no-audit','--no-fund','fill-range@7.1.1','deepmerge@4.3.1'],{encoding:'utf8',timeout:60000});
 assert.equal(installed.status,0,installed.stderr);
 after(()=>rmSync(seed,{recursive:true,force:true}));
 const graph={
@@ -28,7 +28,9 @@ function runWithFakeNpm({output,exitCode,change}) {
     cpSync(path.join(repositoryRoot,'scripts/fixtures'),path.join(root,'scripts/fixtures'),{recursive:true});
     cpSync(path.join(repositoryRoot,'vendor'),path.join(root,'vendor'),{recursive:true});
     cpSync(path.join(seed,'node_modules'),path.join(root,'node_modules'),{recursive:true});
-    for (const name of ['braces','node-forge']) cpSync(path.join(repositoryRoot,'vendor/security-backports',name),path.join(root,'node_modules',name),{recursive:true});
+    cpSync(path.join(repositoryRoot,'vendor/security-backports/braces'),path.join(root,'node_modules/braces'),{recursive:true});
+    const applied=spawnSync(process.execPath,[path.join(root,'scripts/security-backports.mjs')],{cwd:root,encoding:'utf8'});
+    assert.equal(applied.status,0,applied.stderr);
     if (change) change(root);
     writeFileSync(path.join(directory,'npm'),'#!/usr/bin/env bash\nprintf \'%s\' "$FAKE_AUDIT_OUTPUT"\nexit "$FAKE_AUDIT_STATUS"\n',{mode:0o700});
     return spawnSync('bash',[path.join(root,'scripts/audit-mobile-runtime-dependencies.sh')],{cwd:directory,encoding:'utf8',env:{...process.env,PATH:`${directory}:${process.env.PATH}`,FAKE_AUDIT_OUTPUT:output,FAKE_AUDIT_STATUS:String(exitCode),SECURITY_BACKPORT_ROOT:'/caller-must-not-control-root',SECURITY_MODULES_ROOT:'/caller-must-not-control-modules'}});
@@ -39,10 +41,10 @@ test('accepts exact image chain only with genuine verified installed backports',
 });
 test('preserves raw audit counts while admitting exact fixed advisories',()=>{
   const report=structuredClone(knownReport);
-  for (const [name,source,id,range] of [['braces',1240992,'GHSA-vfj7-8cjw-p6xm','<=3.0.3'],['node-forge',1240912,'GHSA-86w9-cpqp-85rv','<=1.4.0']]) report.vulnerabilities[name]={severity:'high',nodes:[`node_modules/${name}`],via:[{source,name,dependency:name,url:`https://github.com/advisories/${id}`,severity:'high',range}]};
-  report.metadata.vulnerabilities.high=13;report.metadata.vulnerabilities.total=13;
+  for (const [name,source,id,range,severity] of [['braces',1240992,'GHSA-vfj7-8cjw-p6xm','<=3.0.3','high'],['deepmerge',1243505,'GHSA-gcqx-w48m-w2h4','>=4.2.0 <=4.3.1','low']]) report.vulnerabilities[name]={severity,nodes:[`node_modules/${name}`],via:[{source,name,dependency:name,url:`https://github.com/advisories/${id}`,severity,range}]};
+  report.metadata.vulnerabilities.high=12;report.metadata.vulnerabilities.low=1;report.metadata.vulnerabilities.total=13;
   const r=runWithFakeNpm({output:JSON.stringify(report),exitCode:1});assert.equal(r.status,0,r.stderr);
-  assert.match(r.stdout,/"rawVulnerabilityCount":13/);assert.match(r.stdout,/GHSA-vfj7-8cjw-p6xm/);assert.match(r.stdout,/GHSA-86w9-cpqp-85rv/);
+  assert.match(r.stdout,/"rawVulnerabilityCount":13/);assert.match(r.stdout,/GHSA-vfj7-8cjw-p6xm/);assert.match(r.stdout,/GHSA-gcqx-w48m-w2h4/);
 });
 test('fails closed on audit transport failure',()=>{const r=runWithFakeNpm({output:'network unavailable',exitCode:2});assert.equal(r.status,2);assert.match(r.stderr,/exited unexpectedly/);});
 test('rejects unknown advisory',()=>{const report=structuredClone(knownReport);report.vulnerabilities['image-size'].via.push({source:4444444,name:'image-size',severity:'high'});const r=runWithFakeNpm({output:JSON.stringify(report),exitCode:1});assert.notEqual(r.status,0);assert.match(r.stderr,/unapproved advisory source/);});

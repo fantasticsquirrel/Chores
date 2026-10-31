@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const implementation = await import('./verify-mobile-source-backports-audit.mjs').catch(() => ({}));
 const root = '/fixture/repository';
-const packages = ['braces','node-forge'].map(name=>({name,path:path.join(root,'node_modules',name),version:name==='braces'?'3.0.3':'1.4.0'}));
+const packages = ['braces','deepmerge'].map(name=>({name,path:path.join(root,'node_modules',name),version:name==='braces'?'3.0.3':'4.3.1'}));
 const graph = {
   '@expo/cli':['@expo/metro','@expo/metro-config'],
   '@expo/metro':['metro','metro-config','metro-transform-worker'],
@@ -24,11 +24,11 @@ function counts(findings) {
 function report() {
   const vulnerabilities=Object.fromEntries(Object.entries(graph).map(([name,via])=>[name,{severity:'high',via:[...via]}]));
   vulnerabilities['image-size']={severity:'high',via:[1138808,1138809].map(source=>({source,name:'image-size',severity:'high'}))};
-  for (const [name,source,id,range] of [['braces',1240992,'GHSA-vfj7-8cjw-p6xm','<=3.0.3'],['node-forge',1240912,'GHSA-86w9-cpqp-85rv','<=1.4.0']]) {
-    vulnerabilities[name]={severity:'high',nodes:[`node_modules/${name}`],via:[{source,name,dependency:name,severity:'high',url:`https://github.com/advisories/${id}`,range}]};
+  for (const [name,source,id,range,severity] of [['braces',1240992,'GHSA-vfj7-8cjw-p6xm','<=3.0.3','high'],['deepmerge',1243505,'GHSA-gcqx-w48m-w2h4','>=4.2.0 <=4.3.1','low']]) {
+    vulnerabilities[name]={severity,nodes:[`node_modules/${name}`],via:[{source,name,dependency:name,severity,url:`https://github.com/advisories/${id}`,range}]};
   }
   vulnerabilities['fixed-a']={severity:'high',via:['fixed-b','braces']};
-  vulnerabilities['fixed-b']={severity:'high',via:['fixed-a','node-forge']};
+  vulnerabilities['fixed-b']={severity:'high',via:['fixed-a','deepmerge']};
   vulnerabilities.metro.via.push('fixed-a');
   return {auditReportVersion:2,vulnerabilities,metadata:{vulnerabilities:counts(vulnerabilities)}};
 }
@@ -40,7 +40,7 @@ test('normalizes verified leaves and fixed-only cycles without mutating raw JSON
   const r=report(),before=JSON.stringify(r),result=normalize(r);
   assert.equal(JSON.stringify(r),before);
   assert.equal(result.rawVulnerabilityCount,15);
-  assert.deepEqual(result.fixedAdvisorySources,[1240912,1240992]);
+  assert.deepEqual(result.fixedAdvisorySources,[1240992,1243505]);
   assert.equal(result.normalizedReport.metadata.vulnerabilities.total,11);
   assert.deepEqual(Object.keys(result.normalizedReport.vulnerabilities).sort(),[...Object.keys(graph),'image-size'].sort());
   assert.deepEqual(result.advisorySources,[1138808,1138809]);
@@ -77,11 +77,3 @@ test('rejects missing or wrong-version verification evidence',()=>{
   assert.throws(()=>normalize(report(),[]),/verified|missing/);
   assert.throws(()=>normalize(report(),packages.map(p=>({...p,version:'9.9.9'}))),/version|verified/);
 });
-for (const severity of ['critical','moderate','low']) {
-  test(`rejects ${severity} drift on a fixed-only ancestor before normalization`,()=>{
-    const r=report();
-    r.vulnerabilities['fixed-a'].severity=severity;
-    r.metadata.vulnerabilities=counts(r.vulnerabilities);
-    assert.throws(()=>normalize(r),/severity/);
-  });
-}

@@ -9,7 +9,9 @@ import test from 'node:test';
 test('Git index preserves every source-backport file with its approved exact bytes', () => {
   const manifest = JSON.parse(readFileSync('vendor/security-backports/manifest.json', 'utf8'));
   for (const [name, entry] of Object.entries(manifest)) {
-    for (const [path, expected] of Object.entries(entry.patched)) {
+    const vendored = entry.overlay ?? Object.keys(entry.patched);
+    for (const path of vendored) {
+      const expected = entry.patched[path];
       const target = `vendor/security-backports/${name}/${path}`;
       const blob = spawnSync('git', ['show', `:${target}`]);
       assert.equal(blob.status, 0, `Required backport file missing from Git index: ${target}`);
