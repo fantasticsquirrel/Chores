@@ -12,7 +12,7 @@ from app.db import Base
 from app.models import ALL_MODELS
 
 ROOT = Path(__file__).resolve().parents[1]
-HEAD = "20261024_0031"
+HEAD = "20261031_0032"
 LEGACY = {"homeschool_courses", "homeschool_lessons",
           "homeschool_course_assignments", "homeschool_lesson_progress"}
 

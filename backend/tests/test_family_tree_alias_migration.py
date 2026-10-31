@@ -79,6 +79,6 @@ def test_alias_history_migration_preserves_existing_rows_and_unfiltered_schema(t
                 assert after_head[name] == old, name
         for table in RETAINED_HOMESCHOOL_TABLES:
             assert after_head[table.name][1] == []
-        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261024_0031'
+        assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '20261031_0032'
     command.check(cfg)
     engine.dispose()
