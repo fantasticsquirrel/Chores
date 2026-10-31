@@ -46,6 +46,7 @@ export const CONSUMERS = Object.freeze([
   { name: '@expo/fingerprint', version: '0.19.10', dependency: 'glob' },
   { name: '@expo/fingerprint', version: '0.19.10', dependency: 'minimatch' },
   { name: '@expo/metro-config', version: '56.0.20', dependency: 'glob' },
+  { name: 'glob', version: '14.0.2', dependency: 'minimatch' },
   { name: 'babel-plugin-istanbul', version: '6.1.1', dependency: 'test-exclude' },
   { name: 'test-exclude', version: '8.0.0', dependency: 'glob' },
   { name: 'test-exclude', version: '8.0.0', dependency: 'minimatch' },
@@ -112,40 +113,86 @@ export function validateSecureArtifactMetadata({ manifest, lock }) {
   return true;
 }
 
-function workspaceSymlink(path, repositoryRoot) {
-  const target = realpathSync(path);
-  const allowed = new Set([
-    realpathSync(join(repositoryRoot, 'frontend')),
-    realpathSync(join(repositoryRoot, 'mobile')),
-    ...readdirSync(join(repositoryRoot, 'packages'), { withFileTypes: true })
-      .filter(entry => entry.isDirectory() && !entry.isSymbolicLink())
-      .map(entry => realpathSync(join(repositoryRoot, 'packages', entry.name))),
-  ]);
-  if (!allowed.has(target)) {
-    fail(`installed dependency symlink rejected: ${path}.`);
+function workspaceLayout(repositoryRoot, manifest) {
+  if (!Array.isArray(manifest.workspaces)) fail('expected an explicit workspace array.');
+  const targets = [];
+  for (const pattern of manifest.workspaces) {
+    if (typeof pattern !== 'string' || !pattern || isAbsolute(pattern)
+      || pattern.includes('\\') || pattern.split('/').some(part => !part || part === '.' || part === '..')) {
+      fail(`invalid workspace pattern: ${String(pattern)}.`);
+    }
+    if (pattern.endsWith('/*')) {
+      const parent = join(repositoryRoot, pattern.slice(0, -2));
+      for (const entry of readdirSync(parent, { withFileTypes: true })) {
+        const path = join(parent, entry.name);
+        if (entry.isSymbolicLink()) fail(`workspace symlink rejected: ${path}.`);
+        if (entry.isDirectory()) targets.push(realpathSync(path));
+      }
+    } else {
+      if (pattern.includes('*')) fail(`unsupported workspace pattern: ${pattern}.`);
+      const path = join(repositoryRoot, pattern);
+      if (lstatSync(path).isSymbolicLink()) fail(`workspace symlink rejected: ${path}.`);
+      targets.push(realpathSync(path));
+    }
   }
+  if (new Set(targets).size !== targets.length) fail('duplicate workspace target.');
+  const links = new Map();
+  for (const target of targets) {
+    const metadata = readJson(join(target, 'package.json'));
+    if (typeof metadata.name !== 'string') fail(`workspace package name missing at ${target}.`);
+    const parts = metadata.name.split('/');
+    if ((metadata.name.startsWith('@') && parts.length !== 2)
+      || (!metadata.name.startsWith('@') && parts.length !== 1)
+      || parts.some(part => !part || part === '.' || part === '..')) {
+      fail(`invalid workspace package name: ${metadata.name}.`);
+    }
+    const link = resolve(repositoryRoot, 'node_modules', ...parts);
+    if (links.has(link)) fail(`duplicate workspace package link: ${metadata.name}.`);
+    links.set(link, target);
+  }
+  return { targets, links };
 }
 
-function packageDirectories(modules, output, repositoryRoot) {
+function workspaceSymlink(path, workspaces) {
+  const target = realpathSync(path);
+  if (workspaces.links.get(resolve(path)) !== target) {
+    fail(`installed dependency symlink rejected: ${path}.`);
+  }
+  return target;
+}
+
+function packageDirectories(modules, output, workspaces, seenModules, seenPackages) {
   if (lstatSync(modules).isSymbolicLink()) fail(`node_modules symlink rejected: ${modules}.`);
+  const canonicalModules = realpathSync(modules);
+  if (seenModules.has(canonicalModules)) return;
+  seenModules.add(canonicalModules);
   for (const entry of readdirSync(modules, { withFileTypes: true })) {
     if (entry.name.startsWith('.')) continue;
     const path = join(modules, entry.name);
-    if (entry.isSymbolicLink()) { workspaceSymlink(path, repositoryRoot); continue; }
+    if (entry.isSymbolicLink()) {
+      visitPackage(workspaceSymlink(path, workspaces), output, workspaces, seenModules, seenPackages);
+      continue;
+    }
     if (!entry.isDirectory()) continue;
     if (entry.name.startsWith('@')) {
       for (const scoped of readdirSync(path, { withFileTypes: true })) {
         const scopedPath = join(path, scoped.name);
-        if (scoped.isSymbolicLink()) { workspaceSymlink(scopedPath, repositoryRoot); continue; }
-        if (scoped.isDirectory()) visitPackage(scopedPath, output, repositoryRoot);
+        if (scoped.isSymbolicLink()) {
+          visitPackage(workspaceSymlink(scopedPath, workspaces), output, workspaces, seenModules, seenPackages);
+          continue;
+        }
+        if (scoped.isDirectory()) visitPackage(scopedPath, output, workspaces, seenModules, seenPackages);
       }
     } else {
-      visitPackage(path, output, repositoryRoot);
+      visitPackage(path, output, workspaces, seenModules, seenPackages);
     }
   }
 }
 
-function visitPackage(path, output, repositoryRoot) {
+function visitPackage(path, output, workspaces, seenModules, seenPackages) {
+  const canonicalPackage = realpathSync(path);
+  if (seenPackages.has(canonicalPackage)) return;
+  seenPackages.add(canonicalPackage);
   const packageJson = join(path, 'package.json');
   try {
     const metadata = readJson(packageJson);
@@ -157,28 +204,20 @@ function visitPackage(path, output, repositoryRoot) {
   }
   const nested = join(path, 'node_modules');
   try {
-    packageDirectories(nested, output, repositoryRoot);
+    packageDirectories(nested, output, workspaces, seenModules, seenPackages);
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
 }
 
-function installedPackageDirectories(repositoryRoot) {
+function installedPackageDirectories(repositoryRoot, manifest) {
   const output = [];
-  for (const base of ['', 'frontend', 'mobile']) {
-    const modules = join(repositoryRoot, base, 'node_modules');
-    try { packageDirectories(modules, output, repositoryRoot); } catch (error) {
-      if (base === '' || error.code !== 'ENOENT') throw error;
-    }
-  }
-  const packages = join(repositoryRoot, 'packages');
-  for (const entry of readdirSync(packages, { withFileTypes: true })) {
-    if (entry.isSymbolicLink()) fail(`workspace symlink rejected: ${join(packages, entry.name)}.`);
-    if (!entry.isDirectory()) continue;
-    const modules = join(packages, entry.name, 'node_modules');
-    try { packageDirectories(modules, output, repositoryRoot); } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
+  const workspaces = workspaceLayout(repositoryRoot, manifest);
+  const seenModules = new Set();
+  const seenPackages = new Set();
+  packageDirectories(join(repositoryRoot, 'node_modules'), output, workspaces, seenModules, seenPackages);
+  for (const target of workspaces.targets) {
+    visitPackage(target, output, workspaces, seenModules, seenPackages);
   }
   return output;
 }
@@ -203,7 +242,7 @@ export function verifyInstalledSecureArtifacts(repositoryRoot = root) {
   const manifest = readJson(join(repositoryRoot, 'package.json'));
   const lock = readJson(join(repositoryRoot, 'package-lock.json'));
   validateSecureArtifactMetadata({ manifest, lock });
-  const installed = installedPackageDirectories(repositoryRoot);
+  const installed = installedPackageDirectories(repositoryRoot, manifest);
   const evidence = [];
   for (const consumer of CONSUMERS) {
     const matches = installed.filter(entry =>

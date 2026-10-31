@@ -2,8 +2,8 @@
 // Fail-closed source backport installer. Versions and npm audit exceptions stay unchanged.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { readFileSync, readdirSync, lstatSync, copyFileSync, mkdirSync, unlinkSync } from 'node:fs';
-import { resolve, dirname, join } from 'node:path';
+import { readFileSync, readdirSync, lstatSync, copyFileSync, mkdirSync, realpathSync, unlinkSync } from 'node:fs';
+import { resolve, dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 
@@ -26,19 +26,76 @@ function files(path, prefix = '') {
 function matches(actual, expected) {
   return Object.keys(actual).length === Object.keys(expected).length && Object.entries(expected).every(([path, digest]) => actual[path] === digest);
 }
-// Enumerate the actual installation, including nested dependency copies.
-function packages(modules, output = []) {
+function workspaceLayout(root) {
+  const rootManifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  if (!Array.isArray(rootManifest.workspaces)) throw new Error('Expected an explicit workspace array');
+  const targets = [];
+  for (const pattern of rootManifest.workspaces) {
+    if (typeof pattern !== 'string' || !pattern || isAbsolute(pattern)
+      || pattern.includes('\\') || pattern.split('/').some(part => !part || part === '.' || part === '..')) {
+      throw new Error(`Invalid workspace pattern: ${String(pattern)}`);
+    }
+    if (pattern.endsWith('/*')) {
+      const parent = join(root, pattern.slice(0, -2));
+      if (lstatSync(parent).isSymbolicLink()) throw new Error(`Workspace symlink rejected: ${parent}`);
+      for (const entry of readdirSync(parent, { withFileTypes: true })) {
+        const path = join(parent, entry.name);
+        if (entry.isSymbolicLink()) throw new Error(`Workspace symlink rejected: ${path}`);
+        if (entry.isDirectory()) targets.push(realpathSync(path));
+      }
+    } else {
+      if (pattern.includes('*')) throw new Error(`Unsupported workspace pattern: ${pattern}`);
+      const path = join(root, pattern);
+      if (lstatSync(path).isSymbolicLink()) throw new Error(`Workspace symlink rejected: ${path}`);
+      targets.push(realpathSync(path));
+    }
+  }
+  if (new Set(targets).size !== targets.length) throw new Error('Duplicate workspace target');
+  const links = new Map();
+  for (const target of targets) {
+    const metadata = JSON.parse(readFileSync(join(target, 'package.json'), 'utf8'));
+    if (typeof metadata.name !== 'string') throw new Error(`Workspace package name missing: ${target}`);
+    const parts = metadata.name.split('/');
+    if ((metadata.name.startsWith('@') && parts.length !== 2)
+      || (!metadata.name.startsWith('@') && parts.length !== 1)
+      || parts.some(part => !part || part === '.' || part === '..')) {
+      throw new Error(`Invalid workspace package name: ${metadata.name}`);
+    }
+    const link = resolve(root, 'node_modules', ...parts);
+    if (links.has(link)) throw new Error(`Duplicate workspace package link: ${metadata.name}`);
+    links.set(link, target);
+  }
+  return { targets, links };
+}
+
+function workspaceTarget(path, workspaces) {
+  const target = workspaces.links.get(resolve(path));
+  return target && realpathSync(path) === target ? target : null;
+}
+
+// Enumerate the actual installation, including nested dependency copies and
+// dependency trees reached through exact npm workspace links.
+function packages(modules, output, workspaces, seenModules) {
+  const stat = lstatSync(modules);
+  if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`Installed node_modules symlink/non-directory rejected: ${modules}`);
+  const canonicalModules = realpathSync(modules);
+  if (seenModules.has(canonicalModules)) return output;
+  seenModules.add(canonicalModules);
   for (const entry of readdirSync(modules, {withFileTypes: true})) {
     if (entry.name.startsWith('.')) continue;
     const path = join(modules, entry.name);
-    if (entry.name.startsWith('@') && entry.isDirectory()) { packages(path, output); continue; }
-    if (Object.hasOwn(manifest, entry.name) && entry.isSymbolicLink()) throw new Error(`Affected package symlink rejected: ${path}`);
+    if (entry.isSymbolicLink()) {
+      const target = workspaceTarget(path, workspaces);
+      if (!target) throw new Error(`Installed package symlink rejected: ${path}`);
+      try { packages(join(target, 'node_modules'), output, workspaces, seenModules); }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+      continue;
+    }
+    if (entry.name.startsWith('@') && entry.isDirectory()) { packages(path, output, workspaces, seenModules); continue; }
     if (!entry.isDirectory()) continue;
     if (Object.hasOwn(manifest, entry.name)) output.push([entry.name, path]);
     try {
-      const nested = join(path, 'node_modules'); const stat = lstatSync(nested);
-      if (stat.isSymbolicLink()) throw new Error(`Installed node_modules symlink rejected: ${nested}`);
-      if (stat.isDirectory()) packages(nested, output);
+      packages(join(path, 'node_modules'), output, workspaces, seenModules);
     }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
   }
@@ -46,24 +103,16 @@ function packages(modules, output = []) {
 }
 function installedPackages(root) {
   const installed = [];
+  const workspaces = workspaceLayout(root);
+  const seenModules = new Set();
   function scan(base, required = false) {
     try {
       if (lstatSync(base).isSymbolicLink()) throw new Error(`Workspace symlink rejected: ${base}`);
-      const modules = join(base, 'node_modules'); const stat = lstatSync(modules);
-      if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error(`Installed node_modules symlink/non-directory rejected: ${modules}`);
-      packages(modules, installed);
+      packages(join(base, 'node_modules'), installed, workspaces, seenModules);
     } catch (error) { if (required || error.code !== 'ENOENT') throw error; }
   }
   scan(root, true);
-  for (const workspace of ['frontend','mobile']) scan(join(root, workspace));
-  const shared = join(root, 'packages');
-  try {
-    if (lstatSync(shared).isSymbolicLink()) throw new Error(`Workspace symlink rejected: ${shared}`);
-    for (const entry of readdirSync(shared, {withFileTypes:true})) {
-      if (entry.isSymbolicLink()) throw new Error(`Workspace symlink rejected: ${join(shared,entry.name)}`);
-      if (entry.isDirectory()) scan(join(shared, entry.name));
-    }
-  } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  for (const workspace of workspaces.targets) scan(workspace);
   return installed;
 }
 function behavior(name, path) {

@@ -24,6 +24,17 @@ function runWithFakeNpm({output,exitCode,change}) {
   const directory=mkdtempSync(path.join(os.tmpdir(),'family-manager-mobile-audit-test-'));
   try {
     const root=path.join(directory,'repo'); mkdirSync(path.join(root,'scripts'),{recursive:true});
+    writeFileSync(path.join(root,'package.json'),JSON.stringify({name:'chore_tracking',version:'1.0.8',private:true,workspaces:['frontend','mobile','packages/*']}));
+    for (const [workspace,name] of [
+      ['frontend','@chore-tracking/frontend'],
+      ['mobile','@family-manager/mobile'],
+      ['packages/discovery-scenes','@family-manager/discovery-scenes'],
+      ['packages/family-api','@family-manager/family-api'],
+      ['packages/family-tree-core','@family-manager/family-tree-core'],
+    ]) {
+      const workspaceRoot=path.join(root,workspace);mkdirSync(workspaceRoot,{recursive:true});
+      writeFileSync(path.join(workspaceRoot,'package.json'),JSON.stringify({name,version:'0.1.0',private:true}));
+    }
     for (const name of ['audit-mobile-runtime-dependencies.sh','verify-mobile-build-toolchain-audit.mjs','verify-mobile-source-backports-audit.mjs','security-backports.mjs']) cpSync(path.join(repositoryRoot,'scripts',name),path.join(root,'scripts',name));
     cpSync(path.join(repositoryRoot,'scripts/fixtures'),path.join(root,'scripts/fixtures'),{recursive:true});
     cpSync(path.join(repositoryRoot,'vendor'),path.join(root,'vendor'),{recursive:true});
@@ -37,7 +48,7 @@ function runWithFakeNpm({output,exitCode,change}) {
   } finally {rmSync(directory,{recursive:true,force:true});}
 }
 test('accepts exact image chain only with genuine verified installed backports',()=>{
-  const r=runWithFakeNpm({output:JSON.stringify(knownReport),exitCode:1});assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/source-backports-verified/);assert.match(r.stdout,/reviewed-build-toolchain-exception/);
+  const r=runWithFakeNpm({output:JSON.stringify(knownReport),exitCode:1});assert.equal(r.status,0,JSON.stringify(r));assert.match(r.stdout,/source-backports-verified/);assert.match(r.stdout,/reviewed-build-toolchain-exception/);
 });
 test('preserves raw audit counts while admitting exact fixed advisories',()=>{
   const report=structuredClone(knownReport);

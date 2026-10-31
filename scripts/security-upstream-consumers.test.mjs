@@ -5,6 +5,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -28,7 +29,7 @@ const testExcludeRequire = createRequire(join(testExcludeRoot, 'package.json'));
 
 test('installed override consumers resolve only exact integrity-pinned artifacts', () => {
   const evidence = verifyInstalledSecureArtifacts();
-  assert.equal(evidence.length, 12);
+  assert.equal(evidence.length, 13);
 });
 
 test('node-forge 1.4.2 preserves Expo certificate signing through the real consumer', () => {
@@ -146,6 +147,80 @@ test('glob 14 preserves the APIs consumed by Expo CLI, config plugins, and Metro
   assert.deepEqual(
     globAllPackageJsonPaths(root, ['packages/*']).sort(),
     [join(root, 'packages/one/package.json'), join(root, 'packages/two/package.json')],
+  );
+});
+
+test('@expo/config detects a bare project through its shipped glob sync call', () => {
+  const root = join(scratch, 'expo-config-bare');
+  mkdirSync(join(root, 'android/app'), { recursive: true });
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'bare-fixture', private: true }));
+  writeFileSync(join(root, 'android/app/build.gradle'), 'android { namespace "com.example.fixture" }');
+
+  const config = require('@expo/config');
+  assert.equal(config.getDefaultTarget(root, { sdkVersion: 'UNVERSIONED' }), 'bare');
+});
+
+test('@expo/fingerprint discovers nested .gitignore files through its shipped glob call', async () => {
+  const root = join(scratch, 'fingerprint-ignore');
+  mkdirSync(join(root, 'android/app'), { recursive: true });
+  mkdirSync(join(root, 'node_modules'), { recursive: true });
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'fingerprint-fixture', private: true }));
+  writeFileSync(join(root, 'android/app/build.gradle'), 'android {}');
+  writeFileSync(join(root, 'android/.gitignore'), 'app/build.gradle\n');
+  symlinkSync(resolve('mobile/node_modules/expo'), join(root, 'node_modules/expo'));
+
+  const workflow = require(join(fingerprintRoot, 'build/ProjectWorkflow.js'));
+  const previousCwd = process.cwd();
+  process.chdir(root);
+  try {
+    assert.equal(await workflow.resolveProjectWorkflowAsync(root, 'android', []), 'managed');
+    rmSync(join(root, 'android/.gitignore'));
+    assert.equal(await workflow.resolveProjectWorkflowAsync(root, 'android', []), 'generic');
+  } finally {
+    process.chdir(previousCwd);
+  }
+});
+
+test('config-plugin Android extglob discovers Java and Kotlin project files', async () => {
+  const root = join(scratch, 'android-extglob');
+  const packageRoot = join(root, 'android/app/src/main/java/com/example/fixture');
+  mkdirSync(packageRoot, { recursive: true });
+  writeFileSync(join(packageRoot, 'MainApplication.kt'), 'package com.example.fixture');
+  writeFileSync(join(packageRoot, 'MainActivity.java'), 'package com.example.fixture;');
+
+  const paths = require('@expo/config-plugins/build/android/Paths');
+  assert.equal((await paths.getMainApplicationAsync(root)).path, join(packageRoot, 'MainApplication.kt'));
+  assert.equal((await paths.getMainActivityAsync(root)).path, join(packageRoot, 'MainActivity.java'));
+});
+
+test('Expo CLI shipped sync and array-pattern glob consumers preserve results', async () => {
+  const root = join(scratch, 'expo-cli-glob-shapes');
+  mkdirSync(join(root, 'app/nested'), { recursive: true });
+  mkdirSync(join(root, 'android/app/src/main/java/com/example'), { recursive: true });
+  mkdirSync(join(root, 'ios/Demo.xcodeproj'), { recursive: true });
+  writeFileSync(join(root, 'app/users+api.ts'), 'export function GET() {}');
+  writeFileSync(join(root, 'app/nested/report+api.jsx'), 'export function GET() {}');
+  writeFileSync(join(root, 'app/plain.ts'), 'export default null;');
+  writeFileSync(join(root, 'app.json'), '{"expo":{"name":"HelloWorld"}}');
+  writeFileSync(join(root, 'android/build.gradle'), 'rootProject.name = "HelloWorld"');
+  writeFileSync(join(root, 'android/app/src/main/java/com/example/MainActivity.kt'), 'class HelloWorld');
+  writeFileSync(join(root, 'ios/Demo.xcodeproj/project.pbxproj'), 'PRODUCT_NAME = HelloWorld;');
+
+  const router = require(join(cliRoot, 'build/src/start/server/metro/router.js'));
+  assert.deepEqual(
+    router.getApiRoutesForDirectory(join(root, 'app')).sort(),
+    [join(root, 'app/nested/report+api.jsx'), join(root, 'app/users+api.ts')].sort(),
+  );
+
+  const rename = require(join(cliRoot, 'build/src/prebuild/renameTemplateAppName.js'));
+  assert.deepEqual(
+    (await rename.getTemplateFilesToRenameAsync(root)).sort(),
+    [
+      'android/app/src/main/java/com/example/MainActivity.kt',
+      'android/build.gradle',
+      'app.json',
+      'ios/Demo.xcodeproj/project.pbxproj',
+    ].sort(),
   );
 });
 

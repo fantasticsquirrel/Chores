@@ -18,7 +18,7 @@ gate.
 | --- | ---: | --- |
 | `node-forge` | 1.4.2 | Expo CLI and Expo code-signing certificates |
 | `glob` | 14.0.2 | Expo CLI, config, config plugins, fingerprint, Metro config, and `test-exclude` |
-| `minimatch` | 11.0.1 | Expo fingerprint and `test-exclude` |
+| `minimatch` | 11.0.1 | Expo fingerprint, `glob@14.0.2`, and `test-exclude` |
 | `zod` | 4.6.7 | Expo CLI |
 | `test-exclude` | 8.0.0 | Babel Istanbul |
 
@@ -27,17 +27,24 @@ registry URL and SHA-512 integrity from `package-lock.json`, requires npm lock
 format 3, resolves every reviewed edge from the actual installed consumer, and
 matches the resolved path back to the exact lock entry. It rejects floating
 overrides, changed versions, URLs or integrities, absent/duplicate expected
-consumers, resolution outside the repository, dependency symlinks, and
-unreviewed changes to the consumer topology.
+consumers, resolution outside the repository, noncanonical dependency
+symlinks, and unreviewed changes to the consumer topology. The only admitted
+dependency symlinks are exact root `node_modules` links for packages declared
+by the root workspace manifest; both scanners traverse each canonical target
+and deduplicate it by real path. The reviewed graph includes the exact
+`glob@14.0.2` to `minimatch@11.0.1` edge and rejects drift in that nested copy
+even when the other admitted minimatch copies remain unchanged.
 
 `scripts/security-upstream-consumers.test.mjs` exercises APIs actually used by
 Expo and React Native tooling: Expo certificate creation/signing, Expo CLI Zod
-schemas, Expo glob wrappers and iOS/Metro discovery, Expo fingerprint path
-matching, and Babel Istanbul `test-exclude` instrumentation. The node-forge
-suite also keeps the retired local DigestInfo exploit regression against the
-Node and browser bundles and covers invalid GCM tags, large first OID arcs, and
-the negative-modulus inverse hang. The minimatch malicious pattern runs in a
-bounded child process.
+schemas, Expo glob wrappers, sync router discovery, array-pattern template
+discovery, config bare-workflow detection, config-plugin iOS/Android extglob
+discovery, Metro package discovery, fingerprint nested `.gitignore` discovery
+and path matching, and Babel Istanbul `test-exclude` instrumentation. The
+node-forge suite also keeps the retired local DigestInfo exploit regression
+against the Node and browser bundles and covers invalid GCM tags, large first
+OID arcs, and the negative-modulus inverse hang. The minimatch malicious
+pattern runs in a bounded child process.
 
 The former complete `node-forge@1.4.0` vendored package is intentionally
 removed. Its replacement was accepted only after the exact `1.4.2` artifact
@@ -94,7 +101,9 @@ release install. The Git-index regression verifies the exact bytes of every
 vendored full package or overlay, including files under globally ignored
 `dist/` paths. Security tests reject tampering, extra files, missing packages,
 wrong versions, nested/workspace copies with different bytes, and affected
-package symlinks.
+package symlinks. Isolated fixtures also reject symlinked package ancestors,
+prove canonical workspace targets are scanned by both controls, and tamper
+only the minimatch copy nested under `glob@14.0.2`.
 
 Rollback means reverting the scoped overrides, lockfile, admission verifier,
 and source overlays together, then performing a clean install. That rollback

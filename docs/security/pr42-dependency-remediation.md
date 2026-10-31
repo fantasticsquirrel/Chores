@@ -23,8 +23,8 @@ and prove compatibility through the APIs those consumers call.
 | --- | --- | --- |
 | node-forge | `1.4.2` for Expo CLI and code signing | certificate/key round trip, signing, Node/browser DigestInfo regression, GCM/OID/JSBN malicious cases |
 | Zod | `4.6.7` for Expo CLI | the two shipped CLI schemas parse valid data and reject invalid/extra data |
-| glob | `14.0.2` at each Expo and `test-exclude` parent | CLI async wrappers, config-plugin iOS discovery, Metro package discovery, sync/async coverage globs |
-| minimatch | `11.0.1` for fingerprint and `test-exclude` | real fingerprint ignore matcher and bounded malicious preprocessing |
+| glob | `14.0.2` at each Expo and `test-exclude` parent | CLI async wrappers plus shipped sync/array consumers, config bare detection, config-plugin iOS/Android extglob discovery, fingerprint nested `.gitignore` discovery, Metro package discovery, sync/async coverage globs |
+| minimatch | `11.0.1` for fingerprint, `glob@14.0.2`, and `test-exclude` | exact nested `glob` edge, real fingerprint ignore matcher, and bounded malicious preprocessing |
 | test-exclude | `8.0.0` under Babel Istanbul | include/exclude, sync/async glob, and Babel instrumentation |
 | deepmerge | retain `4.3.1` with the reviewed PR 274 overlay | all four malicious payloads plus Expo-style nested config merging |
 
@@ -33,6 +33,11 @@ future Expo patch changes that reviewed topology and must be explicitly
 re-reviewed rather than being silently admitted. The npm audit verifier remains
 source-strict: upstream fixes must remove their findings, while only the exact
 source-verified braces and deepmerge advisories can be normalized.
+
+Installed-tree traversal admits symlinks only at the canonical root link for a
+package declared by the root workspace manifest. Both the upstream-artifact
+and source-backport scanners traverse and real-path-deduplicate those workspace
+targets; any other symlinked dependency ancestor fails admission.
 
 ## Rejected alternatives
 
