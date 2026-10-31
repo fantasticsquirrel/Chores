@@ -4,10 +4,11 @@
   "main": "index.ts",
   "dependencies": {
     "@expo/metro-runtime": "~56.0.21",
+    "@family-manager/discovery-scenes": "file:../packages/discovery-scenes",
     "@family-manager/family-api": "file:../packages/family-api",
     "@family-manager/family-tree-core": "file:../packages/family-tree-core",
     "@react-native-async-storage/async-storage": "2.2.0",
-    "expo": "~56.0.23",
+    "expo": "~56.0.24",
     "expo-constants": "~56.0.27",
     "expo-device": "~56.0.4",
     "expo-document-picker": "~56.0.4",
@@ -16,24 +17,23 @@
     "expo-modules-core": "~56.0.27",
     "expo-notifications": "~56.0.26",
     "expo-print": "~56.0.4",
-    "expo-sharing": "~56.0.26",
+    "expo-sharing": "~56.0.27",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-web": "^0.21.2",
-    "react-native-webview": "13.16.1",
-    "@family-manager/discovery-scenes": "file:../packages/discovery-scenes"
+    "react-native-webview": "13.16.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.2.2",
-    "jest-expo": "~56.0.5",
-    "react-test-renderer": "^19.2.3",
-    "typescript": "~6.0.3",
     "esbuild": "0.25.12",
-    "@playwright/test": "^1.58.2"
+    "jest-expo": "~56.0.6",
+    "react-test-renderer": "^19.2.3",
+    "typescript": "~6.0.3"
   },
   "scripts": {
     "start": "expo start",
