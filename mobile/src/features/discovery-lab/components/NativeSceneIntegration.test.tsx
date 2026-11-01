@@ -98,12 +98,16 @@ describe("all native educational models use bounded offline visuals", () => {
     const random = jest.spyOn(Math, "random").mockReturnValue(0.1);
     for (let i = 0; i < 9; i++) random.mockReturnValueOnce(0.1);
     random.mockReturnValueOnce(0.9);
-    fireEvent.press(view.getByText("Run 10 trials"));
+    fireEvent.press(view.getByText("Run 10"));
     expect(random).toHaveBeenCalledTimes(10);
     expect(injectedStates().at(-1).last).toBe(3);
-    expect(view.getByText(/Gold: 9 observed/)).toBeTruthy();
-    expect(view.getByText(/Coral: 1 observed/)).toBeTruthy();
-    fireEvent.press(view.getByText("Clear trial counts"));
+    expect(
+      view.getByText(/Gold: 90\.0% observed · expected 25\.0% · 9 draws/),
+    ).toBeTruthy();
+    expect(
+      view.getByText(/Coral: 10\.0% observed · expected 25\.0% · 1 draws/),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("Clear sample"));
     expect(injectedStates().at(-1).last).toBeNull();
   });
 });

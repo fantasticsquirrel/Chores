@@ -1,6 +1,6 @@
 import { buildChanceScene } from "./chanceScene";
 import { disposeGroup } from "./tableGeometry";
-import { probabilities, sampleOutcomes, fairnessDistance } from "./model";
+import { probabilities, sampleOutcomes } from "./model";
 import { serializeTactile } from "../shared/tactile-scene";
 import { createFrameCompactor } from "../shared/compact-frame";
 let die = false,
@@ -97,9 +97,8 @@ function run(i: any) {
     scene3d = serializeTactile(
       exhibit,
       {
-        title: "Can fair chances give uneven results?",
-        subtitle:
-          "Compare theoretical probabilities with observed frequencies.",
+        title: "Chance results",
+        subtitle: "Compare observed and expected shares.",
         background: ["#efe4cc", "#ded0b3", "#baa483"],
       },
       { pizza: false },
@@ -109,7 +108,7 @@ function run(i: any) {
     {
       tag: "text",
       attrs: { x: 15, y: 24, fontSize: 16, fill: "#243b37" },
-      children: ["Solid bars: observed. Outlined bars: theoretical."],
+      children: ["Solid: observed · Outline: expected"],
     },
   ];
   for (let n = 0; n < weights.length; n++) {
@@ -144,7 +143,9 @@ function run(i: any) {
       {
         tag: "text",
         attrs: { x, y: 225, fontSize: 12, fill: "#243b37" },
-        children: [`${n + 1}: ${counts[n]} / ${(p * 100).toFixed(1)}%`],
+        children: [
+          `${n + 1}: ${total ? ((counts[n] / total) * 100).toFixed(1) + "%" : "—"} · expected ${(p * 100).toFixed(1)}%`,
+        ],
       },
     );
   }
@@ -154,14 +155,14 @@ function run(i: any) {
     vector: {
       viewBox: [0, 0, 700, 250],
       nodes,
-      description: `${total} observed trials. Counts ${counts.join(", ")}; theoretical probabilities ${chances.map((p) => (p * 100).toFixed(1) + "%").join(", ")}.`,
+      description: `${total} trials. Observed shares ${counts.map((count) => (total ? ((count / total) * 100).toFixed(1) + "%" : "—")).join(", ")}; expected shares ${chances.map((p) => (p * 100).toFixed(1) + "%").join(", ")}.`,
     },
     shapes: [],
-    description: `${die ? "Six die" : "Four spinner"} outcomes. ${fair ? "Equal" : "Unequal"} theoretical chances: ${chances.map((p) => (p * 100).toFixed(1) + "%").join(", ")}. ${total} trials; counts ${counts.join(", ")}. Last actual sampled outcome ${last === null ? "none" : last + 1}. ${valid ? `Largest observed/theory difference ${fairnessDistance(counts, weights).toFixed(3)} percentage points.` : "All weights are zero: no possible draw."}`,
+    description: `${die ? "Six die" : "Four spinner"} outcomes. ${fair ? "Equal" : "Unequal"} expected chances. ${total} trials. Last draw: ${last === null ? "none" : last + 1}. ${valid ? chances.map((chance, index) => `${index + 1}: ${total ? ((counts[index] / total) * 100).toFixed(1) + "%" : "—"} observed · expected ${(chance * 100).toFixed(1)}%`).join("; ") : "All weights are zero: no possible draw."}`,
     controls: [
       {
         id: "mode",
-        label: "Probability device",
+        label: "Device",
         kind: "select",
         min: 0,
         max: 1,
@@ -174,7 +175,7 @@ function run(i: any) {
       },
       {
         id: "selected",
-        label: "Outcome to edit",
+        label: "Outcome",
         kind: "select",
         min: 0,
         max: weights.length - 1,
@@ -187,7 +188,7 @@ function run(i: any) {
       },
       {
         id: "weight",
-        label: "Selected outcome weight",
+        label: "Outcome weight",
         min: 0,
         max: 10,
         step: 1,
@@ -195,7 +196,7 @@ function run(i: any) {
       },
       {
         id: "batch",
-        label: "Trials per batch",
+        label: "Next sample",
         kind: "select",
         min: 0,
         max: 3,
@@ -213,13 +214,12 @@ function run(i: any) {
       { id: "clear", label: "Clear sample" },
       { id: "trialSample", label: "Compare sample sizes" },
       { id: "trialWeight", label: "Change a weight" },
-      { id: "predictYes", label: "Predict yes" },
-      { id: "predictNo", label: "Predict no" },
-      { id: "baseline", label: "Set baseline" },
+      { id: "predictYes", label: "Yes" },
+      { id: "predictNo", label: "No" },
+      { id: "baseline", label: "Run first sample" },
       {
         id: "compare",
-        label:
-          trial === 0 ? "Extend to 1000 trials" : "Weight outcome 1 four times",
+        label: trial === 0 ? "Extend to 1,000 trials" : "Run weighted sample",
       },
     ],
     sections: [
@@ -227,25 +227,25 @@ function run(i: any) {
         heading: "1. Predict",
         text:
           trial === 0
-            ? `Must equal chances produce equal counts in ten trials? ${prediction}`
-            : `If one weight becomes four times larger, is that outcome guaranteed next? ${prediction}`,
+            ? `Do equal chances require equal counts in 10 trials? ${prediction}`
+            : `If outcome 1 has four times the weight, is it guaranteed next? ${prediction}`,
         buttonIds: ["predictYes", "predictNo"],
       },
       {
         heading: "2. Compare",
         text:
           trial === 0
-            ? "Use four equal weights. Record ten trials, then extend that same sample to 1000. Compare observed with theoretical bars."
-            : "Start with four weights of 1. Set outcome 1 to 4, clear the old sample and compare fresh 1000 trials with new theoretical chances.",
+            ? "Keep four equal weights. Run 10 trials, then extend the same sample to 1,000."
+            : "Start with four weights of 1. Change outcome 1 to 4, then run a fresh 1,000-trial sample.",
         buttonIds: ["baseline", "compare"],
       },
       {
         heading: "3. Explain",
-        text: "Finite samples can differ from theory. Independent trials do not make an overdue outcome more likely. More trials often improve the approximation, but not exactly or monotonically. Use both probabilities and counts as evidence.",
+        text: "Compare observed and expected percentages. Equal chances can give uneven counts. Larger samples usually settle closer, but any one larger sample can be farther away. Past draws do not change the next independent draw.",
       },
     ],
     footnote:
-      "Weights define theoretical probabilities; changing weights or device clears incompatible observations. The die’s top face and spinner pointer show the actual last sampled outcome. A weighted die is a probability model, not a physical prediction for a particular manufactured die.",
+      "Changing the device or a weight clears the sample. This is a computer model, not a physical spin, roll, or loaded-die prediction.",
   };
 }
 const compact = createFrameCompactor();

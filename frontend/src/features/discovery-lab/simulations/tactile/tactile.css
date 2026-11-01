@@ -1009,21 +1009,10 @@
   }
 }
 
-/* Chance Carnival: evidence-first guided investigation. */
-.chance-heading {
-  padding: 32px 36px 12px;
-}
-.chance-heading h2 {
-  max-width: 760px;
-}
-.chance-heading p {
-  max-width: 610px;
-  font-size: 15px;
-  line-height: 1.55;
-}
+/* Chance Carnival: prediction and evidence. */
 .chance-table {
   grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
-  padding: 0 34px 28px;
+  padding: 28px 34px;
   gap: 20px;
 }
 .chance-machine {
@@ -1039,14 +1028,12 @@
   font-size: 26px;
 }
 .chance-distribution header > p,
-.chance-chart-note,
 .chance-chart-caption,
-.chance-chart-row > strong,
 .chance-chart-axis {
   font-size: 12px;
 }
 .tactile-exhibit .chance-chart-row {
-  grid-template-columns: 30px minmax(0, 1fr) 52px;
+  grid-template-columns: 30px minmax(0, 1fr);
   gap: 12px;
   padding: 10px 0;
 }
@@ -1131,18 +1118,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
   column-gap: 34px;
-  align-items: end;
+  align-items: center;
   margin-bottom: 24px;
 }
-.chance-challenge-heading > span {
-  grid-column: 1 / -1;
-  color: #4d6a5c;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-}
 .chance-challenge-heading h3 {
-  margin: 8px 0 0;
+  margin: 0;
   font-size: 30px;
   line-height: 1.2;
 }
@@ -1158,21 +1138,15 @@
   gap: 14px;
 }
 .chance-step-card {
-  min-height: 220px;
+  min-height: 150px;
   padding: 20px;
   border: 1px solid #c9c5b2;
   border-radius: 12px;
   background: #fffdf5;
   box-shadow: 0 8px 20px #36463a12;
 }
-.chance-step-card > span {
-  color: #4c6b5d;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-}
 .chance-step-card h4 {
-  margin: 10px 0 16px;
+  margin: 0 0 16px;
   color: #263d36;
   font-family: Georgia, serif;
   font-size: 18px;
@@ -1218,9 +1192,8 @@
   text-transform: uppercase;
 }
 .chance-comparison strong {
-  font-family: Georgia, serif;
-  font-size: 25px;
-  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.5;
 }
 .chance-comparison small {
   font-size: 12px;
@@ -1251,7 +1224,7 @@
   border-radius: 12px;
   background: #f8f3e5;
 }
-.chance-weight-test .tactile-kicker {
+.chance-weight-test > div > strong {
   display: block;
   margin-bottom: 12px;
 }
@@ -1280,27 +1253,23 @@
 .chance-open-lab .chance-console {
   border-top-color: #566e61;
 }
+.chance-exhibit .tactile-readout {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .chance-exhibit .tactile-readout button {
-  margin-top: 8px;
+  margin: 0 0 0 auto;
 }
 
 @media (max-width: 760px) {
   .chance-exhibit {
     padding-bottom: 68px;
   }
-  .chance-heading {
-    padding: 24px 20px 14px;
-  }
-  .chance-heading h2 {
-    font-size: 32px;
-  }
-  .chance-heading p {
-    max-width: none;
-    font-size: 14px;
-  }
   .chance-table {
     grid-template-columns: 1fr;
-    padding: 0 14px 22px;
+    padding: 20px 14px 22px;
     gap: 16px;
   }
   .chance-machine {
@@ -1322,9 +1291,7 @@
     font-size: 24px;
   }
   .chance-distribution header > p,
-  .chance-chart-note,
   .chance-chart-caption,
-  .chance-chart-row > strong,
   .chance-chart-axis {
     font-size: 12px;
   }
@@ -1377,5 +1344,8 @@
   }
   .chance-open-lab > p {
     padding: 0 20px 12px;
+  }
+  .chance-exhibit .tactile-readout button {
+    margin-left: 0;
   }
 }

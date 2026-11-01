@@ -3,7 +3,6 @@ import { Text, View } from "react-native";
 import {
   countOutcomes,
   drawOutcomes,
-  fairnessDistance,
   probabilities,
 } from "@family-manager/family-api/discovery-models/math-life";
 import { ActionButton } from "../../../components/ActionButton";
@@ -25,7 +24,6 @@ const SPINNER_COLORS = ["#e4ac43", "#946ac0", "#228b80", "#d87961"];
 
 type Snapshot = {
   counts: number[];
-  gap: number;
 };
 
 function freshSample(weights: number[], trials: number) {
@@ -33,8 +31,25 @@ function freshSample(weights: number[], trials: number) {
   const counts = countOutcomes(draws, weights.length);
   return {
     draws,
-    snapshot: { counts, gap: fairnessDistance(counts, weights) },
+    snapshot: { counts },
   };
+}
+
+function observedShares(counts: number[]) {
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  return counts.map((count) => (total ? (count / total) * 100 : 0));
+}
+
+function sharesText(counts: number[]) {
+  return observedShares(counts)
+    .map((share) => `${share.toFixed(1)}%`)
+    .join(" · ");
+}
+
+function distanceFromEqualChance(counts: number[]) {
+  return Math.max(
+    ...observedShares(counts).map((share) => Math.abs(share - 25)),
+  );
 }
 
 export function ChanceExploration() {
@@ -129,7 +144,10 @@ export function ChanceExploration() {
   const largerWasCloser =
     smallSample !== null &&
     largeSample !== null &&
-    largeSample.gap < smallSample.gap;
+    distanceFromEqualChance(largeSample.counts) <
+      distanceFromEqualChance(smallSample.counts);
+  const smallCountsEqual =
+    smallSample !== null && new Set(smallSample.counts).size === 1;
 
   return (
     <LearningFrame onReset={reset}>
@@ -137,14 +155,13 @@ export function ChanceExploration() {
         accessibilityRole="header"
         style={{ color: colors.text, fontSize: 24, fontWeight: "800" }}
       >
-        Do equal chances force equal counts?
+        1. Compare sample sizes
       </Text>
       <Explanation>
-        Keep four spinner weights fixed at 1. Change only the number of trials
-        in each fresh sample.
+        Each outcome stays at 25%. Only the sample size changes.
       </Explanation>
       <Choice
-        label="Predict what can happen in 12 trials"
+        label="Predict: 12 trials"
         value={prediction}
         onChange={(value) => {
           setPrediction(value);
@@ -154,34 +171,39 @@ export function ChanceExploration() {
           setWeightedSample(null);
         }}
         options={[
-          { value: "exact", label: "All four counts must match" },
-          { value: "different", label: "The counts can differ" },
+          { value: "exact", label: "Counts must match" },
+          { value: "different", label: "Counts can differ" },
         ]}
       />
       <ActionButton
-        label="Run a fresh 12-trial sample"
+        label="Run 12 trials"
         disabled={!prediction}
         onPress={runSmall}
       />
       {smallSample && (
         <Explanation>
-          12-trial counts: {smallSample.counts.join(" · ")}. A fair process can
-          produce uneven counts because fair describes the unchanged chance on
-          each trial, not a required short-run pattern.
+          Counts: {smallSample.counts.join(" · ")}.{" "}
+          {prediction === "exact"
+            ? smallCountsEqual
+              ? "They matched this time, but that is not required. Each fair draw is 25%."
+              : "They differed. Each fair draw is 25%; short-run counts need not match."
+            : smallCountsEqual
+              ? "They matched this time, but counts can still differ. Each fair draw is 25%."
+              : "They differed, as you predicted. Each fair draw is 25%; short-run counts need not match."}
         </Explanation>
       )}
       <ActionButton
-        label="Run a fresh 1,200-trial sample"
+        label="Run 1,200 trials"
         disabled={!smallSample}
         onPress={runLarge}
       />
       {smallSample && largeSample && (
         <Explanation>
-          12-trial gap: {smallSample.gap.toFixed(1)} percentage points.
-          1,200-trial gap: {largeSample.gap.toFixed(1)} percentage points.{" "}
+          12 trials: {sharesText(smallSample.counts)}. 1,200 trials:{" "}
+          {sharesText(largeSample.counts)}. Expected for both: 25% each.{" "}
           {largerWasCloser
-            ? "In this pair, the larger sample is closer. Across many repetitions, larger samples tend to have smaller relative gaps."
-            : "This larger run was not closer. That can happen: a long-run tendency does not guarantee that every larger sample beats every smaller one."}
+            ? "This time, 1,200 trials are closer overall. Larger samples usually settle nearer the expected shares, but any one larger sample can be farther away."
+            : "This time, 1,200 trials are not closer overall. Larger samples usually settle nearer the expected shares, but any one larger sample can be farther away."}
         </Explanation>
       )}
 
@@ -189,37 +211,42 @@ export function ChanceExploration() {
         accessibilityRole="header"
         style={{ color: colors.text, fontSize: 22, fontWeight: "800" }}
       >
-        If one weight doubles, is its chance one-half?
+        2. Change one weight
       </Text>
       <Explanation>
-        Outcome 1 changes to weight 2. The other three outcomes stay at weight
-        1. Finish the fair-sample comparison before testing this change.
+        Outcome 1 has weight 2. Outcomes 2–4 each have weight 1.
       </Explanation>
-      <Choice
-        label="Predict outcome 1’s chance"
-        value={weightPrediction}
-        onChange={(value) => {
-          if (!largeSample) return;
-          setWeightPrediction(value);
-          setWeightedSample(null);
-        }}
-        options={[
-          { value: "two-fifths", label: "2 out of 5 (40%)" },
-          { value: "one-half", label: "2 out of 4 (50%)" },
-        ]}
-      />
-      <ActionButton
-        label="Test the doubled weight"
-        disabled={!largeSample || !weightPrediction}
-        onPress={runWeighted}
-      />
+      {!largeSample ? (
+        <Explanation>Complete both fair samples first.</Explanation>
+      ) : (
+        <>
+          <Choice
+            label="Predict outcome 1’s chance"
+            value={weightPrediction}
+            onChange={(value) => {
+              setWeightPrediction(value);
+              setWeightedSample(null);
+            }}
+            options={[
+              { value: "two-fifths", label: "40% (2 of 5)" },
+              { value: "one-half", label: "50% (2 of 4)" },
+            ]}
+          />
+          <ActionButton
+            label="Run 200 trials"
+            disabled={!weightPrediction}
+            onPress={runWeighted}
+          />
+        </>
+      )}
       {weightedSample && (
         <Explanation>
-          Outcome 1 has weight 2 out of a total weight of 5. Theoretical chance:
-          40.0%. It appeared {weightedSample.counts[0]} times in 200 trials ({" "}
-          {((weightedSample.counts[0] / 200) * 100).toFixed(1)}%). Doubling one
-          weight changes the total from 4 to 5, so the chance is 2/5, not 2/4. A
-          finite observed share can differ from 40%.
+          Outcome 1: {((weightedSample.counts[0] / 200) * 100).toFixed(1)}% ·
+          expected 40%.{" "}
+          {weightPrediction === "two-fifths"
+            ? "Correct: 2/5 = 40%."
+            : "The total weight is 5, not 4: 2/5 = 40%."}{" "}
+          A finite sample can differ from 40%.
         </Explanation>
       )}
 
@@ -231,7 +258,7 @@ export function ChanceExploration() {
           last,
           selected: -1,
         }}
-        label={`${device === "die" ? "Six-sided die" : "Four-sector spinner"}. ${last === null ? "No trial yet." : `Last sampled outcome: ${last + 1}.`} Theoretical chances ${chances.map((chance) => `${(chance * 100).toFixed(1)} percent`).join(", ")}.`}
+        label={`${device === "die" ? "Six-sided die" : "Four-sector spinner"}. ${last === null ? "No draw yet." : `Last draw: ${last + 1}.`} Expected chances: ${chances.map((chance) => `${(chance * 100).toFixed(1)}%`).join(", ")}.`}
         fallback={
           device === "spinner" ? (
             <View
@@ -268,18 +295,18 @@ export function ChanceExploration() {
         }
       />
       <Explanation>
-        Most recent outcomes:{" "}
+        Recent draws:{" "}
         {recent.length
           ? recent.map((value) => value + 1).join(" · ")
           : "none yet"}
-        . A streak does not change the chance of the next independent draw.
+        . Each draw is independent; a streak does not change the next one.
       </Explanation>
       {chances.map((chance, index) => (
         <Meter
           key={index}
           label={outcomeLabels[index]}
           value={trials ? ((counts[index] ?? 0) / trials) * 100 : 0}
-          detail={`${counts[index] ?? 0} observed (${trials ? (((counts[index] ?? 0) / trials) * 100).toFixed(1) : "0.0"}%); theoretical chance ${(chance * 100).toFixed(1)}%`}
+          detail={`${trials ? (((counts[index] ?? 0) / trials) * 100).toFixed(1) : "0.0"}% observed · expected ${(chance * 100).toFixed(1)}% · ${counts[index] ?? 0} draws`}
         />
       ))}
 
@@ -287,10 +314,10 @@ export function ChanceExploration() {
         accessibilityRole="header"
         style={{ color: colors.text, fontSize: 20, fontWeight: "800" }}
       >
-        Choose your own device, weight and sample size
+        Open controls
       </Text>
       <Choice
-        label="Random device"
+        label="Device"
         value={device}
         onChange={(value) => {
           setDevice(value);
@@ -306,7 +333,7 @@ export function ChanceExploration() {
         ]}
       />
       <Control
-        label={device === "spinner" ? "Gold sector weight" : "Face 1 weight"}
+        label="Outcome 1 weight"
         value={firstWeight}
         min={1}
         max={5}
@@ -318,10 +345,10 @@ export function ChanceExploration() {
           clearGuidedWork();
         }}
       />
-      <ActionButton label="Run 10 trials" onPress={() => runOpenSample(10)} />
-      <ActionButton label="Run 100 trials" onPress={() => runOpenSample(100)} />
+      <ActionButton label="Run 10" onPress={() => runOpenSample(10)} />
+      <ActionButton label="Run 100" onPress={() => runOpenSample(100)} />
       <ActionButton
-        label="Clear trial counts"
+        label="Clear sample"
         variant="secondary"
         onPress={() => {
           setCounts(weights.map(() => 0));
@@ -331,10 +358,9 @@ export function ChanceExploration() {
         }}
       />
       <ModelNote>
-        Independent pseudorandom draws, not physical spins or rolls. A finite
-        sample cannot prove fairness. Weights set theoretical probabilities and
-        do not physically load a die. An outcome does not become more likely
-        because it is “overdue.”
+        Computer draws, not physical spins or rolls. A finite sample cannot
+        prove fairness. Weights change mathematical chances; they do not model a
+        physically loaded die.
       </ModelNote>
     </LearningFrame>
   );

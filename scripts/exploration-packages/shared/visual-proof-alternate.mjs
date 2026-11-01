@@ -164,9 +164,7 @@ for (const topic of topics) {
         .getByRole("checkbox", { name: "Add habitat patches" })
         .check();
     if (topic === "chance-carnival")
-      await original
-        .getByLabel("Chance device", { exact: true })
-        .selectOption("die");
+      await original.getByLabel("Device", { exact: true }).selectOption("die");
     await page.waitForTimeout(500);
     await page.locator("#original").screenshot({
       path: `${out}/${topic}-${view}-alternate-original-full.png`,

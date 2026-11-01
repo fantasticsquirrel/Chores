@@ -17,26 +17,34 @@
       "fractions",
       "sampling"
     ],
-    "summary": "Set the chances on a spinner or die, run trials and compare predictions with results.",
-    "question": "Does an outcome with a one-in-four chance have to appear once every four tries?",
-    "explanation": "Probability describes how likely an outcome is. Each outcome’s weight divided by the total weight gives its chance in this model. Equal weights mean equal chances; a weight of zero makes an outcome impossible. Trial results vary, especially in small samples. More trials often bring the observed proportions closer to the predicted probabilities, but exact agreement is not guaranteed. Trials are independent computer-generated samples; a streak does not change the next trial’s chances.",
+    "summary": "Compare observed results with expected chances.",
+    "question": "Can fair chances give uneven results?",
+    "explanation": "Expected chance comes from an outcome’s weight divided by total weight; observed share comes from one sample. Equal weights give equal chances, not equal counts. Larger samples usually settle nearer the expected shares, but a particular larger sample can be farther away. Each computer draw is independent, so past draws do not change the next one.",
     "experiments": [
       {
-        "title": "Small sample, large sample",
-        "instruction": "Reset to give all four spinner outcomes equal weights. Predict the fraction for each, run 10 trials, then add a larger batch without changing the weights.",
-        "observe": "Compare each observed percentage with 25%. Explain why uneven counts in a small sample are not by themselves evidence of unequal chances."
+        "title": "Compare sample sizes",
+        "instruction": "With four equal weights, predict whether 10 counts must match. Run 10 trials, then extend the same sample to 1,000; change only sample size.",
+        "observe": "Compare observed percentages with 25% expected for each outcome. Explain uneven counts and why one larger sample can still be farther from 25%."
       },
       {
-        "title": "Change the chances",
-        "instruction": "Reset the spinner, then double the first outcome’s weight while leaving the others at 1. Predict its chance before running a fresh set of trials.",
-        "observe": "The doubled outcome has weight 2 out of a total of 5, or a 40% chance. Compare that prediction with the sample and explain why twice the weight does not mean a 50% chance."
+        "title": "Change one weight",
+        "instruction": "Start with four weights of 1, then change outcome 1 to weight 4. Predict whether it is guaranteed next before running a fresh 1,000-trial sample.",
+        "observe": "Compare outcome 1’s observed percentage with 57.1% expected. Explain why a higher chance is not a guaranteed next result."
       }
     ],
-    "misconception": "An outcome is not “due” because it has been absent. With unchanged weights, each independent trial has the same probabilities as before.",
+    "misconception": "Past draws do not make an outcome “due”; independent draws keep the same chances while weights stay fixed.",
     "sources": [
       {
-        "title": "Illustrative Mathematics: Probability models and observed frequencies",
+        "title": "Illustrative Mathematics: Models and observed frequencies",
         "url": "https://tasks.illustrativemathematics.org/content-standards/7/SP/C/7"
+      },
+      {
+        "title": "OpenStax: Long-run relative frequency",
+        "url": "https://openstax.org/books/introductory-statistics/pages/3-1-terminology"
+      },
+      {
+        "title": "OpenStax: Independent events",
+        "url": "https://openstax.org/books/introductory-statistics/pages/3-2-independent-and-mutually-exclusive-events"
       }
     ],
     "duration_minutes": 12
@@ -46,7 +54,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "4d0452f5ba76dc3cac88fe7f3be7afadf029c7909b755d7c826d9a4d3d38a3d5"
+      "sha256": "f893e4db56b89dfbb85052ae45cc4504817737660d560fccba184dfa67d98b04"
     },
     {
       "path": "assets/number-1.png",

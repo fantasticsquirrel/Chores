@@ -21,6 +21,7 @@ export function ExplorationDetail({
       </SectionCard>
     );
   }
+  const lessonRunsInActivity = detail.id === "chance-carnival";
   return (
     <>
       <SectionCard
@@ -31,25 +32,30 @@ export function ExplorationDetail({
           {detail.question}
         </Text>
         <NativeExploration key={detail.id} id={detail.id} />
-        <Text style={{ color: colors.text, lineHeight: 23 }}>
-          {detail.explanation}
-        </Text>
-      </SectionCard>
-      {detail.experiments.map((experiment) => (
-        <SectionCard key={experiment.title} title={experiment.title}>
+        {!lessonRunsInActivity && (
           <Text style={{ color: colors.text, lineHeight: 23 }}>
-            {experiment.instruction}
+            {detail.explanation}
           </Text>
-          <Text style={{ color: colors.textMuted, lineHeight: 23 }}>
-            Look for: {experiment.observe}
+        )}
+      </SectionCard>
+      {!lessonRunsInActivity &&
+        detail.experiments.map((experiment) => (
+          <SectionCard key={experiment.title} title={experiment.title}>
+            <Text style={{ color: colors.text, lineHeight: 23 }}>
+              {experiment.instruction}
+            </Text>
+            <Text style={{ color: colors.textMuted, lineHeight: 23 }}>
+              Look for: {experiment.observe}
+            </Text>
+          </SectionCard>
+        ))}
+      {!lessonRunsInActivity && (
+        <SectionCard title="Think again">
+          <Text style={{ color: colors.text, lineHeight: 23 }}>
+            {detail.misconception}
           </Text>
         </SectionCard>
-      ))}
-      <SectionCard title="Think again">
-        <Text style={{ color: colors.text, lineHeight: 23 }}>
-          {detail.misconception}
-        </Text>
-      </SectionCard>
+      )}
       <SectionCard title="Sources">
         {detail.id === "moon-phases" && (
           <Text selectable style={{ color: colors.textMuted, lineHeight: 22 }}>

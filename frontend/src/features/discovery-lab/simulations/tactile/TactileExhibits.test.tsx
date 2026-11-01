@@ -50,18 +50,16 @@ describe("tactile mathematical exhibits", () => {
     fireEvent.click(screen.getByRole("button", { name: "Run trials" }));
     expect(random).toHaveBeenCalledTimes(10);
     expect(screen.getByTestId("chance-last-outcome")).toHaveTextContent("4");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Outcome 4: theory 25.0% · observed 10 (100.0%)",
-    );
+    expect(
+      screen.getByRole("button", { name: "Inspect outcome 4" }),
+    ).toHaveTextContent("10 draws100.0% · expected 25.0%");
     fireEvent.click(screen.getByRole("button", { name: "Clear sample" }));
-    expect(screen.getByTestId("chance-last-outcome")).toHaveTextContent(
-      "No trials yet",
-    );
+    expect(screen.getByTestId("chance-last-outcome")).toHaveTextContent("—");
   });
   it("does not invent a trial when every outcome has zero weight", () => {
     render(<ChanceCarnivalSimulation />);
     for (let outcome = 0; outcome < 4; outcome++) {
-      fireEvent.change(screen.getByLabelText("Adjust outcome"), {
+      fireEvent.change(screen.getByLabelText("Outcome"), {
         target: { value: outcome },
       });
       fireEvent.change(screen.getByLabelText(`Outcome ${outcome + 1} weight`), {

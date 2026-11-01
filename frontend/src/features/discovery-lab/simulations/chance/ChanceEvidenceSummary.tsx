@@ -1,5 +1,3 @@
-import { fairnessDistance } from "@family-manager/family-api/discovery-models/math-life";
-
 type ChanceEvidenceSummaryProps = {
   recent: number[];
   counts: number[];
@@ -25,10 +23,9 @@ export function ChanceEvidenceSummary({
         data-testid="chance-recent-outcomes"
       >
         <div>
-          <h3>Most recent outcomes</h3>
+          <h3>Recent draws</h3>
           <p>
-            Read left to right. A streak does not change the chance of the next
-            independent draw.
+            Each draw is independent; a streak does not change the next one.
           </p>
         </div>
         {recent.length ? (
@@ -44,38 +41,31 @@ export function ChanceEvidenceSummary({
             ))}
           </ol>
         ) : (
-          <p className="chance-recent-empty">
-            Run a sample to reveal its final 12 draws.
-          </p>
+          <p className="chance-recent-empty">No draws yet.</p>
         )}
       </section>
 
       <div className="chance-sample-strip">
         <div>
           <strong>{total.toLocaleString()}</strong>
-          <span>trials in the current sample</span>
+          <span>trials</span>
         </div>
         <div>
           <strong>
-            {total ? `${fairnessDistance(counts, weights).toFixed(1)}` : "—"}
-            <small>{total ? " pp" : ""}</small>
+            {total ? `${((counts[outcome] / total) * 100).toFixed(1)}%` : "—"}
+            <small>
+              {" · expected "}
+              {(chances[outcome] * 100).toFixed(1)}%
+            </small>
           </strong>
-          <span>
-            largest theory–observation gap
-            <br />
-            pp = percentage points
-          </span>
+          <span>outcome {outcome + 1} observed</span>
         </div>
         <div>
           <strong>
             {weights[outcome]}
-            <small> / {weights.reduce((sum, value) => sum + value, 0)}</small>
+            <small> of {weights.reduce((sum, value) => sum + value, 0)}</small>
           </strong>
-          <span>
-            outcome {outcome + 1} weight / total weight
-            <br />
-            {(chances[outcome] * 100).toFixed(1)}% theoretical chance
-          </span>
+          <span>outcome {outcome + 1} weight</span>
         </div>
       </div>
     </>

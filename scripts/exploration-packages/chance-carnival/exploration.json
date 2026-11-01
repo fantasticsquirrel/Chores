@@ -1,0 +1,18 @@
+{
+  "summary": "Compare observed results with expected chances.",
+  "question": "Can fair chances give uneven results?",
+  "explanation": "Expected chance comes from an outcome’s weight divided by total weight; observed share comes from one sample. Equal weights give equal chances, not equal counts. Larger samples usually settle nearer the expected shares, but a particular larger sample can be farther away. Each computer draw is independent, so past draws do not change the next one.",
+  "experiments": [
+    {
+      "title": "Compare sample sizes",
+      "instruction": "With four equal weights, predict whether 10 counts must match. Run 10 trials, then extend the same sample to 1,000; change only sample size.",
+      "observe": "Compare observed percentages with 25% expected for each outcome. Explain uneven counts and why one larger sample can still be farther from 25%."
+    },
+    {
+      "title": "Change one weight",
+      "instruction": "Start with four weights of 1, then change outcome 1 to weight 4. Predict whether it is guaranteed next before running a fresh 1,000-trial sample.",
+      "observe": "Compare outcome 1’s observed percentage with 57.1% expected. Explain why a higher chance is not a guaranteed next result."
+    }
+  ],
+  "misconception": "Past draws do not make an outcome “due”; independent draws keep the same chances while weights stay fixed."
+}

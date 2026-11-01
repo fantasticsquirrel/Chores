@@ -36,4 +36,37 @@ describe("downloaded Exploration platform support", () => {
       expect(view.queryByText("Think again")).toBeNull();
     },
   );
+
+  it("keeps the built-in Chance lesson inside its activity instead of repeating registry prose", () => {
+    const view = render(
+      <ExplorationDetail
+        detail={
+          {
+            ...content,
+            id: "chance-carnival",
+            title: "Chance Carnival",
+            question: "Can fair chances give uneven results?",
+            explanation: "Repeated registry explanation.",
+            experiments: [
+              {
+                title: "Repeated experiment",
+                instruction: "Repeated instructions.",
+                observe: "Repeated observation.",
+              },
+            ],
+            misconception: "Repeated misconception.",
+            package: undefined,
+          } as DiscoveryExploration
+        }
+      />,
+    );
+
+    expect(
+      view.getByText("Can fair chances give uneven results?"),
+    ).toBeTruthy();
+    expect(view.getByText("1. Compare sample sizes")).toBeTruthy();
+    expect(view.queryByText("Repeated registry explanation.")).toBeNull();
+    expect(view.queryByText("Repeated experiment")).toBeNull();
+    expect(view.queryByText("Repeated misconception.")).toBeNull();
+  });
 });

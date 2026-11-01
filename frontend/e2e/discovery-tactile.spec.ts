@@ -66,27 +66,23 @@ for (const mobile of [false, true]) {
       "tactile-interactions",
     );
     mkdirSync(folder, { recursive: true, mode: 0o700 });
-    await page
-      .locator(".fraction-combined")
-      .screenshot({
-        path: path.join(
-          folder,
-          `${mobile ? "android" : "desktop"}-combined-fractions.png`,
-        ),
-      });
+    await page.locator(".fraction-combined").screenshot({
+      path: path.join(
+        folder,
+        `${mobile ? "android" : "desktop"}-combined-fractions.png`,
+      ),
+    });
     await page.goto(`${base}/chore/discovery-lab/pattern-palace`);
     await page
       .getByRole("button", { name: "Test 4 pentagons", exact: true })
       .click();
     await expect(page.getByRole("status")).toContainText("72° overlap");
-    await page
-      .locator(".pattern-workbench")
-      .screenshot({
-        path: path.join(
-          folder,
-          `${mobile ? "android" : "desktop"}-pentagon-overlap.png`,
-        ),
-      });
+    await page.locator(".pattern-workbench").screenshot({
+      path: path.join(
+        folder,
+        `${mobile ? "android" : "desktop"}-pentagon-overlap.png`,
+      ),
+    });
     await page
       .getByLabel("Regular tile shape", { exact: true })
       .selectOption("4");
@@ -98,9 +94,10 @@ for (const mobile of [false, true]) {
     );
     await page.goto(`${base}/chore/discovery-lab/chance-carnival`);
     await expect(page.locator(".chance-render canvas")).toBeVisible();
+    await page.getByText("Open controls", { exact: true }).click();
     for (const outcome of [1, 2, 3]) {
       await page
-        .getByLabel("Adjust outcome", { exact: true })
+        .getByLabel("Outcome", { exact: true })
         .selectOption(String(outcome));
       await page
         .getByLabel(`Outcome ${outcome + 1} weight`, { exact: true })
@@ -108,27 +105,21 @@ for (const mobile of [false, true]) {
       await page.keyboard.press("Home");
     }
     await page.getByRole("button", { name: "Run trials", exact: true }).click();
-    await expect(page.getByRole("status")).toContainText(
-      "Outcome 1: theory 100.0% · observed 10 (100.0%)",
-    );
+    await expect(
+      page.getByRole("button", { name: "Inspect outcome 1", exact: true }),
+    ).toContainText("100.0% · expected 100.0%");
     await expect(page.getByTestId("chance-last-outcome")).toHaveText("1");
-    await page.getByLabel("Chance device", { exact: true }).selectOption("die");
-    await page
-      .getByLabel("Trials in next batch", { exact: true })
-      .selectOption("10000");
+    await page.getByLabel("Device", { exact: true }).selectOption("die");
+    await page.getByLabel("Next sample", { exact: true }).selectOption("10000");
     await page.getByRole("button", { name: "Run trials", exact: true }).click();
-    await expect(page.getByRole("status")).toContainText(
-      "Trials recorded: 10,000",
-    );
+    await expect(page.getByRole("status")).toContainText("10,000 trials");
     await expect(page.getByTestId("chance-last-outcome")).toHaveText(/^[1-6]$/);
-    await page
-      .locator(".chance-table")
-      .screenshot({
-        path: path.join(
-          folder,
-          `${mobile ? "android" : "desktop"}-die-sample.png`,
-        ),
-      });
+    await page.locator(".chance-table").screenshot({
+      path: path.join(
+        folder,
+        `${mobile ? "android" : "desktop"}-die-sample.png`,
+      ),
+    });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

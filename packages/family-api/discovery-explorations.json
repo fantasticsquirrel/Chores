@@ -676,29 +676,29 @@
       "fractions",
       "sampling"
     ],
-    "summary": "Predict, sample and compare theoretical chances with observed shares.",
-    "question": "Does an outcome with a one-in-four chance have to appear once every four tries?",
-    "explanation": "Theoretical probability describes the long-run chance built into a process; an observed share describes one finite sample. Each outcome’s weight divided by the total weight gives its chance in this model. Equal weights mean equal chances, while a weight of zero makes an outcome impossible. Fresh larger samples tend to have smaller relative gaps from the theoretical chances, but a particular larger sample need not be closer and exact agreement is not guaranteed. Trials are independent computer-generated draws, so a streak does not change the next trial’s chances.",
+    "summary": "Test how observed results compare with expected chances.",
+    "question": "Can fair chances give uneven results?",
+    "explanation": "Expected chance is an outcome’s weight divided by total weight; observed share comes from one sample. Equal weights give equal chances, not equal counts. A zero weight makes an outcome impossible. Larger samples usually settle nearer the expected shares, but a particular larger sample can be farther away. Each computer draw is independent, so a streak does not change the next draw.",
     "experiments": [
       {
-        "title": "Small sample, large sample",
-        "instruction": "Set all four spinner weights to 1. Predict whether their counts must match. Run a fresh 12-trial sample, then a fresh 1,200-trial sample. Keep the weights fixed; change only sample size.",
-        "observe": "Preserve and compare both percentage-point gaps. Explain why uneven counts do not make this fair process unfair, and why one larger sample is not guaranteed to be closer."
+        "title": "Compare sample sizes",
+        "instruction": "With four equal weights, predict whether 12 counts must match. Run fresh samples of 12 and 1,200 trials; change only sample size.",
+        "observe": "Compare observed percentages with 25% expected for each outcome. Explain uneven counts and why one larger sample can still be farther from 25%."
       },
       {
-        "title": "Change the chances",
-        "instruction": "Start a fresh spinner with weights 2, 1, 1 and 1. Predict whether outcome 1 has a chance of 2 out of 5 (40%) or 2 out of 4 (50%), then run 200 trials.",
-        "observe": "Compare outcome 1’s observed share with its 40% theoretical chance. Explain why doubling one weight also changes the total weight and why a finite sample can differ from 40%."
+        "title": "Double one weight",
+        "instruction": "Set weights to 2, 1, 1, 1. Predict whether outcome 1 is 40% (2 of 5) or 50% (2 of 4), then run 200 trials.",
+        "observe": "Compare outcome 1’s observed percentage with 40% expected. Explain why doubling one weight also changes total weight."
       }
     ],
-    "misconception": "An outcome is not “due” because it has been absent. With unchanged weights, each independent trial has the same probabilities as before.",
+    "misconception": "Past draws do not make an outcome “due”; independent draws keep the same chances while weights stay fixed.",
     "sources": [
       {
-        "title": "Illustrative Mathematics: Probability models and observed frequencies",
+        "title": "Illustrative Mathematics: Models and observed frequencies",
         "url": "https://tasks.illustrativemathematics.org/content-standards/7/SP/C/7"
       },
       {
-        "title": "OpenStax: Theoretical probability and long-run relative frequency",
+        "title": "OpenStax: Long-run relative frequency",
         "url": "https://openstax.org/books/introductory-statistics/pages/3-1-terminology"
       },
       {

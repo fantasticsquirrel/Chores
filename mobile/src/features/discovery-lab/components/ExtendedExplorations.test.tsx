@@ -12,7 +12,7 @@ const controls: [string, string][] = [
   ["pattern-palace", "Rotate a quarter turn"],
   ["caravan-crossroads", "Wet season"],
   ["pollinator-express", "Visit Gold 1"],
-  ["chance-carnival", "Run 10 trials"],
+  ["chance-carnival", "Run 10"],
 ];
 
 describe("native learning explorations", () => {

@@ -184,17 +184,21 @@ export function DiscoveryExplorationPage() {
         item && (
           <>
             <header className="discovery-detail-heading">
-              <div className="discovery-eyebrow">
-                {item.subject} · Grades {item.grade_bands.join(" · ")} · About{" "}
-                {item.duration_minutes} minutes
-              </div>
+              {item.id !== "chance-carnival" && (
+                <div className="discovery-eyebrow">
+                  {item.subject} · Grades {item.grade_bands.join(" · ")} · About{" "}
+                  {item.duration_minutes} minutes
+                </div>
+              )}
               <h1>{item.title}</h1>
               <p>{item.question}</p>
-              <div className="discovery-tags">
-                {item.tags.map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
-              </div>
+              {item.id !== "chance-carnival" && (
+                <div className="discovery-tags">
+                  {item.tags.map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+              )}
             </header>
             <section
               className="discovery-experiment-stage"
@@ -214,38 +218,44 @@ export function DiscoveryExplorationPage() {
                 />
               )}
             </section>
-            <div className="discovery-learning-grid">
-              <section className="discovery-explanation">
-                <h2>What’s happening?</h2>
-                <p>{item.explanation}</p>
-                <aside className="discovery-misconception">
-                  <h3>Common misconception</h3>
-                  <p>{item.misconception}</p>
-                </aside>
-              </section>
-              <section className="discovery-guides">
-                <h2>Guided experiments</h2>
-                <ol>
-                  {item.experiments.map((experiment, index) => (
-                    <li key={experiment.title}>
-                      <span className="discovery-step" aria-hidden="true">
-                        {index + 1}
-                      </span>
-                      <div>
-                        <h3>{experiment.title}</h3>
-                        <p>{experiment.instruction}</p>
-                        <p className="discovery-observe">
-                          <strong>Notice:</strong> {experiment.observe}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            </div>
+            {item.id !== "chance-carnival" && (
+              <div className="discovery-learning-grid">
+                <section className="discovery-explanation">
+                  <h2>What’s happening?</h2>
+                  <p>{item.explanation}</p>
+                  <aside className="discovery-misconception">
+                    <h3>Common misconception</h3>
+                    <p>{item.misconception}</p>
+                  </aside>
+                </section>
+                <section className="discovery-guides">
+                  <h2>Guided experiments</h2>
+                  <ol>
+                    {item.experiments.map((experiment, index) => (
+                      <li key={experiment.title}>
+                        <span className="discovery-step" aria-hidden="true">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <h3>{experiment.title}</h3>
+                          <p>{experiment.instruction}</p>
+                          <p className="discovery-observe">
+                            <strong>Notice:</strong> {experiment.observe}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              </div>
+            )}
             <footer className="discovery-sources">
               <details>
-                <summary>Sources and references</summary>
+                <summary>
+                  {item.id === "chance-carnival"
+                    ? "Sources"
+                    : "Sources and references"}
+                </summary>
                 <ul>
                   {item.sources.map((source) => (
                     <li key={source.url}>
@@ -263,11 +273,13 @@ export function DiscoveryExplorationPage() {
                     </li>
                   ))}
                 </ul>
-                <p>
-                  These links open outside Family Manager. The interactive
-                  models simplify the real world; read their labels and
-                  assumptions.
-                </p>
+                {item.id !== "chance-carnival" && (
+                  <p>
+                    These links open outside Family Manager. The interactive
+                    models simplify the real world; read their labels and
+                    assumptions.
+                  </p>
+                )}
               </details>
             </footer>
           </>

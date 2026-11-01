@@ -21,11 +21,9 @@ export function ChanceDistribution({
   return (
     <div className="chance-distribution">
       <header>
-        <h3>Theoretical vs observed share</h3>
+        <h3>Observed vs expected</h3>
         <p>
-          Bar = observed share
-          <br />
-          <i className="chance-theory-key" /> mark = theoretical chance
+          Bar: observed · <i className="chance-theory-key" /> mark: expected
         </p>
       </header>
       <div className="chance-chart-axis">
@@ -62,17 +60,16 @@ export function ChanceDistribution({
                 <i style={{ left: `${chance * 100}%` }} />
               </span>
               <span className="chance-chart-caption">
-                <span>{counts[index].toLocaleString()} observed</span>
-                <span>{(chance * 100).toFixed(1)}% chance</span>
+                <span>{counts[index].toLocaleString()} draws</span>
+                <span>
+                  {total ? `${(observed * 100).toFixed(1)}%` : "—"} · expected{" "}
+                  {(chance * 100).toFixed(1)}%
+                </span>
               </span>
             </span>
-            <strong>{total ? `${(observed * 100).toFixed(1)}%` : "—"}</strong>
           </button>
         );
       })}
-      <p className="chance-chart-note">
-        The bars use the same 0–100% scale. Small samples can look very uneven.
-      </p>
     </div>
   );
 }

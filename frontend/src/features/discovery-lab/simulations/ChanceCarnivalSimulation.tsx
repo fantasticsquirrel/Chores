@@ -2,7 +2,6 @@ import { lazy, Suspense, useState } from "react";
 import {
   countOutcomes,
   drawOutcomes,
-  fairnessDistance,
   probabilities,
 } from "@family-manager/family-api/discovery-models/math-life";
 import { ChanceDistribution } from "./ChanceArt";
@@ -31,7 +30,7 @@ function freshSample(weights: number[], trials: number) {
   const counts = countOutcomes(draws, weights.length);
   return {
     draws,
-    snapshot: { counts, gap: fairnessDistance(counts, weights) },
+    snapshot: { counts },
   };
 }
 
@@ -170,27 +169,12 @@ export function ChanceCarnivalSimulation() {
 
   return (
     <div className="tactile-exhibit chance-exhibit">
-      <header className="tactile-heading chance-heading">
-        <span>
-          {valid
-            ? fair
-              ? `EQUAL WEIGHTS · ${chances.length} EQUALLY LIKELY OUTCOMES`
-              : `UNEQUAL WEIGHTS · OUTCOME 1 HAS ${(chances[0] * 100).toFixed(0)}% CHANCE`
-            : "NO POSSIBLE OUTCOME"}
-        </span>
-        <h2>Can fair chances give uneven results?</h2>
-        <p>
-          Predict, test two fresh samples, and explain the difference between a
-          theoretical chance and an observed share.
-        </p>
-      </header>
-
       <div className="chance-table">
         <div className="chance-machine">
           <div
             className="chance-render"
             role="img"
-            aria-label={`${die ? "Six die" : "Four spinner"} outcomes. Theoretical probabilities ${chances.map((chance) => `${(chance * 100).toFixed(1)} percent`).join(", ")}. ${total} trials observed. ${last === null ? "No trials yet." : `Last outcome: ${last + 1}.`} ${fair ? "All outcomes have equal theoretical chances." : "Outcome weights are unequal."}`}
+            aria-label={`${die ? "Six die" : "Four spinner"} outcomes. Expected chances: ${chances.map((chance) => `${(chance * 100).toFixed(1)}%`).join(", ")}. ${total} trials. ${last === null ? "No draws yet." : `Last draw: ${last + 1}.`} ${fair ? "All outcomes have equal chances." : "Outcomes have unequal chances."}`}
           >
             <Suspense
               fallback={
@@ -209,15 +193,15 @@ export function ChanceCarnivalSimulation() {
             </Suspense>
           </div>
           <div className="chance-last">
-            <span>LAST RECORDED OUTCOME</span>
+            <span>LAST DRAW</span>
             <strong data-testid="chance-last-outcome">
-              {last === null ? "No trials yet" : last + 1}
+              {last === null ? "—" : last + 1}
             </strong>
           </div>
           <p className="chance-machine-caption">
             {die
-              ? "The top face shows the last sampled outcome."
-              : "Sector area shows theoretical chance; the pointer shows the last draw."}
+              ? "Top face = last draw"
+              : "Sector size = chance · Pointer = last draw"}
           </p>
         </div>
         <ChanceDistribution
@@ -252,7 +236,6 @@ export function ChanceCarnivalSimulation() {
         counts={counts}
         outcome={outcome}
         batch={batch}
-        chances={chances}
         valid={valid}
         fair={fair}
         onSetMode={setMode}

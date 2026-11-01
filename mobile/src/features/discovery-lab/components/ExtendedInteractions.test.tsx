@@ -135,23 +135,23 @@ describe("native predictions and evidence", () => {
     jest.spyOn(Math, "random").mockReturnValue(0.1);
     const view = render(<NativeExploration id="chance-carnival" />);
 
-    expect(view.getByText("Run a fresh 12-trial sample")).toBeDisabled();
-    fireEvent.press(view.getByText("The counts can differ"));
-    fireEvent.press(view.getByText("Run a fresh 12-trial sample"));
+    expect(view.getByText("Run 12 trials")).toBeDisabled();
+    fireEvent.press(view.getByText("Counts can differ"));
+    fireEvent.press(view.getByText("Run 12 trials"));
+    expect(view.getByText(/Each fair draw is 25%/)).toBeTruthy();
+    fireEvent.press(view.getByText("Run 1,200 trials"));
     expect(
-      view.getByText(/A fair process can produce uneven counts/),
+      view.getByText(
+        /12 trials: 100.0% · 0.0% · 0.0% · 0.0%.*Expected for both: 25% each/,
+      ),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Run a fresh 1,200-trial sample"));
-    expect(view.getByText(/12-trial gap: 75.0 percentage points/)).toBeTruthy();
-    expect(
-      view.getByText(/1,200-trial gap: 75.0 percentage points/),
-    ).toBeTruthy();
-    expect(view.getByText(/This larger run was not closer/)).toBeTruthy();
+    expect(view.queryByText(/percentage points|\bpp\b|gap/i)).toBeNull();
+    expect(view.getByText(/1,200 trials are not closer overall/)).toBeTruthy();
 
-    expect(view.getByText("Test the doubled weight")).toBeDisabled();
-    fireEvent.press(view.getByText("2 out of 5 (40%)"));
-    fireEvent.press(view.getByText("Test the doubled weight"));
-    expect(view.getByText(/weight 2 out of a total weight of 5/)).toBeTruthy();
-    expect(view.getByText(/Theoretical chance: 40.0%/)).toBeTruthy();
+    expect(view.getByText("Run 200 trials")).toBeDisabled();
+    fireEvent.press(view.getByText("40% (2 of 5)"));
+    fireEvent.press(view.getByText("Run 200 trials"));
+    expect(view.getByText(/Correct: 2\/5 = 40%/)).toBeTruthy();
+    expect(view.getByText(/Outcome 1: 100.0% · expected 40%/)).toBeTruthy();
   });
 });

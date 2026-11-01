@@ -115,23 +115,23 @@ describe("fractions, patterns, trade, pollination and chance", () => {
   it("runs 10000 actual weighted trials and clears stale samples after edits", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.2);
     render(<ChanceCarnivalSimulation />);
-    change("Trials in next batch", 10000);
+    fireEvent.click(screen.getByText("Open controls"));
+    change("Next sample", 10000);
     fireEvent.click(screen.getByRole("button", { name: "Run trials" }));
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Trials in current sample: 10,000",
+      "Equal chances · 10,000 trials",
     );
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Outcome 1: theory 25.0% · observed 10000 (100.0%)",
-    );
+    expect(
+      screen.getByRole("button", { name: "Inspect outcome 1" }),
+    ).toHaveTextContent("10,000 draws100.0% · expected 25.0%");
     change("Outcome 1 weight", 2);
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Trials in current sample: 0",
+      "Weighted chances · 0 trials",
     );
-    expect(screen.getByRole("status")).toHaveTextContent("Unequal weights");
-    change("Chance device", "die");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Outcome 6: theory 16.7%",
-    );
+    change("Device", "die");
+    expect(
+      screen.getByRole("button", { name: "Inspect outcome 6" }),
+    ).toHaveTextContent("— · expected 16.7%");
   });
 
   it("gates a fair controlled comparison on prediction and preserves both samples", () => {
@@ -139,60 +139,52 @@ describe("fractions, patterns, trade, pollination and chance", () => {
     render(<ChanceCarnivalSimulation />);
 
     const smallRun = screen.getByRole("button", {
-      name: "Run a fresh 12-trial sample",
+      name: "Run 12 trials",
     });
     expect(smallRun).toBeDisabled();
-    fireEvent.click(
-      screen.getByRole("button", { name: "The counts can differ" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Counts can differ" }));
     expect(smallRun).toBeEnabled();
     fireEvent.click(smallRun);
 
     expect(
       screen.getByTestId("chance-challenge-one-feedback"),
-    ).toHaveTextContent("A fair process can produce uneven counts");
+    ).toHaveTextContent("Each fair draw is 25%");
     const recent = within(
       screen.getByTestId("chance-recent-outcomes"),
     ).getAllByRole("listitem");
     expect(recent).toHaveLength(12);
     for (const outcome of recent) expect(outcome).toHaveTextContent("1");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Run a fresh 1,200-trial sample" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Run 1,200 trials" }));
     const comparison = screen.getByTestId("chance-sample-comparison");
     expect(comparison).toHaveTextContent("12 trials");
     expect(comparison).toHaveTextContent("1,200 trials");
+    expect(comparison).toHaveTextContent("Expected for both: 25% each");
     expect(comparison).toHaveTextContent(
-      "This larger run was not closer. That can happen",
+      "This time, 1,200 trials are not closer overall",
     );
+    expect(comparison).not.toHaveTextContent(/\bpp\b|percentage points|gap/i);
   });
 
   it("unlocks the doubled-weight challenge and explains 2 out of 5", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.1);
     render(<ChanceCarnivalSimulation />);
-    fireEvent.click(
-      screen.getByRole("button", { name: "The counts can differ" }),
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Run a fresh 12-trial sample" }),
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: "Run a fresh 1,200-trial sample" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Counts can differ" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run 12 trials" }));
+    fireEvent.click(screen.getByRole("button", { name: "Run 1,200 trials" }));
 
     const weightedRun = screen.getByRole("button", {
-      name: "Test the doubled weight",
+      name: "Run 200 trials",
     });
     expect(weightedRun).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "2 out of 5 (40%)" }));
+    fireEvent.click(screen.getByRole("button", { name: "40% (2 of 5)" }));
     expect(weightedRun).toBeEnabled();
     fireEvent.click(weightedRun);
     expect(
       screen.getByTestId("chance-challenge-two-feedback"),
-    ).toHaveTextContent("weight 2 out of a total weight of 5");
+    ).toHaveTextContent("Correct: 2/5 = 40%");
     expect(
       screen.getByTestId("chance-challenge-two-feedback"),
-    ).toHaveTextContent("Theoretical chance: 40.0%");
+    ).toHaveTextContent("100.0% · expected 40%");
   });
 });
