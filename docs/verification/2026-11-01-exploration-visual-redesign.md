@@ -44,6 +44,12 @@ All five release findings from the rendered-image review were corrected:
    focus stays above the mobile navigation; no product CSS or screenshot-only
    hiding was used.
 
+A final independent image review found the operated Chance pointer shaft
+crossing the outcome 1 badge. The pointer still rotates to the model's actual
+last outcome, but its shaft is now painted below a separate badge layer. The
+arrowhead continues to identify the sampled sector while every numbered badge
+background and numeral remains unobstructed.
+
 ## Browser behavior and accessibility evidence
 
 The isolated built app used
@@ -119,6 +125,33 @@ The affected scopes passed after final formatting and package generation:
   ordinary-viewport cases; every mobile focused target ended above the fixed
   navigation according to `focused-manifest.json`
 - `git diff --check`
+
+## Final spinner readability follow-up
+
+The final image-review correction changed only the Chance SVG paint order and
+its focused regression assertion. The label coordinates, pointer rotation,
+probability model, interaction flow, copy and CSS are unchanged. Verification
+after the correction passed:
+
+- focused Chance frontend Vitest — 2 files, 19 tests;
+- `npm run lint --workspace frontend`;
+- `npm run build --workspace frontend`, with only the already-recorded Zod
+  annotation and chunk-size warnings;
+- `/tmp/capture_visual_redesign.mjs --phase after` — eight raw cases, no
+  document or stage overflow and no browser/response errors;
+- `/tmp/capture_visual_redesign_focused.mjs` — 12 ordinary-viewport cases,
+  with every mobile target above the fixed navigation;
+- visual inspection of the operated desktop/mobile art, the desktop operated
+  comparison and `share/chance-final-art.png`; outcome 1 is fully readable and
+  the arrowhead still points to sector 1;
+- exact byte comparison of all 16 raw `after-*` PNGs against `finals/`, all 24
+  focused PNGs against `focused/`, and the focused manifest against its staged
+  copy;
+- original `before-*` capture timestamps remain unchanged, and the refreshed
+  64-file media hash list is
+  `/tmp/exploration-visual-redesign-media-sha256.txt`;
+- `share/chance-final-art.png` SHA-256:
+  `7695cd29dcb8512b375eb1af6624aac4dfde1e45a4a5c3eec8d40a3e413516da`.
 
 ## Automated verification
 

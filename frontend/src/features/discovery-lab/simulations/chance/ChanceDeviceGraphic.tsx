@@ -149,7 +149,8 @@ export function ChanceDeviceGraphic({
     const start = cursor;
     const middle = start + share * 180;
     cursor += share * 360;
-    return { share, index, start, middle };
+    const label = polar(middle, Math.min(88, 64 + share * 84));
+    return { share, index, start, middle, label };
   });
   const pointerMiddle =
     last === null ? -90 : (sectors[last]?.middle ?? sectors[0]?.middle ?? -90);
@@ -269,10 +270,9 @@ export function ChanceDeviceGraphic({
           stroke="#f6e3ae"
           strokeWidth="3"
         />
-        {sectors.map(({ share, index, start, middle }) => {
+        {sectors.map(({ share, index, start }) => {
           if (share <= 0) return null;
           const path = sectorPath(start, share);
-          const label = polar(middle, Math.min(88, 64 + share * 84));
           return (
             <g key={index}>
               <path
@@ -290,22 +290,6 @@ export function ChanceDeviceGraphic({
                 data-testid="chance-sector-pattern"
                 pointerEvents="none"
               />
-              <circle
-                cx={label.x}
-                cy={label.y}
-                r="18"
-                fill="#fffaf0"
-                stroke="#28453f"
-                strokeWidth="2"
-              />
-              <text
-                x={label.x}
-                y={label.y + 6}
-                textAnchor="middle"
-                className="chance-sector-label"
-              >
-                {index + 1}
-              </text>
             </g>
           );
         })}
@@ -348,6 +332,28 @@ export function ChanceDeviceGraphic({
           strokeWidth="3"
         />
       </g>
+      {sectors.map(({ share, index, label }) =>
+        share > 0 ? (
+          <g key={index}>
+            <circle
+              cx={label.x}
+              cy={label.y}
+              r="18"
+              fill="#fffaf0"
+              stroke="#28453f"
+              strokeWidth="2"
+            />
+            <text
+              x={label.x}
+              y={label.y + 6}
+              textAnchor="middle"
+              className="chance-sector-label"
+            >
+              {index + 1}
+            </text>
+          </g>
+        ) : null,
+      )}
       <circle
         cx={CENTER_X}
         cy={CENTER_Y}

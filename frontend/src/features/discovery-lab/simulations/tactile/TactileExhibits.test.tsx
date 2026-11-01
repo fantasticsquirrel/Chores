@@ -10,8 +10,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe("tactile mathematical exhibits", () => {
-  it("draws weighted spinner sectors with non-color patterns and the sampled pointer", () => {
-    render(
+  it("keeps weighted spinner badges readable above the sampled pointer", () => {
+    const { container } = render(
       <ChanceDeviceGraphic
         chances={[0.4, 0.2, 0.2, 0.2]}
         die={false}
@@ -33,6 +33,22 @@ describe("tactile mathematical exhibits", () => {
       "1",
     );
     expect(screen.getAllByTestId("chance-sector-pattern")).toHaveLength(4);
+
+    const pointer = screen.getByTestId("chance-pointer");
+    const labels = container.querySelectorAll(".chance-sector-label");
+    expect(labels).toHaveLength(4);
+    labels.forEach((label) => {
+      const badge = label.previousElementSibling;
+      expect(badge?.tagName.toLowerCase()).toBe("circle");
+      expect(
+        pointer.compareDocumentPosition(badge as Element) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        pointer.compareDocumentPosition(label) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
   });
 
   it("selects individual equal slices and preserves selection when subdividing", () => {
