@@ -21,7 +21,9 @@ export function ExplorationDetail({
       </SectionCard>
     );
   }
-  const lessonRunsInActivity = detail.id === "chance-carnival";
+  const lessonRunsInActivity = ["chance-carnival", "photosynthesis"].includes(
+    detail.id,
+  );
   return (
     <>
       <SectionCard

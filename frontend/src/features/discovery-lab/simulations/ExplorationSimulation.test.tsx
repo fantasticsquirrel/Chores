@@ -29,6 +29,8 @@ describe("interactive exploration controls", () => {
       expect(screen.getByText("01 / PREDICT")).toBeTruthy();
     else if (id === "castle-defenses")
       expect(screen.getByText("1. Predict")).toBeTruthy();
+    else if (id === "photosynthesis")
+      expect(screen.getByText("1. Test a missing input")).toBeTruthy();
     else expect(screen.getByText("Try this")).toBeTruthy();
   });
   it("changes orbit physics with launch speed and central mass", () => {

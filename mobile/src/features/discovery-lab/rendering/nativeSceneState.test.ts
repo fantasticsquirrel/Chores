@@ -18,7 +18,7 @@ describe("native model to render-state mapping", () => {
       distances: [20, 20],
     });
   });
-  it("keeps fixed carbon suitable and sends the existing native rate", () => {
+  it("keeps fixed carbon suitable and sends the shared native index", () => {
     expect(nativeSceneState("photosynthesis", 0, 100, 1, 3)).toEqual({
       kind: "leaf",
       light: 0,
@@ -27,7 +27,7 @@ describe("native model to render-state mapping", () => {
       rate: 0,
     });
     expect(nativeSceneState("photosynthesis", 100, 100, 1, 3)).toMatchObject({
-      rate: 80,
+      rate: 100,
     });
   });
   it("sends wall height, gate, moat and sight-line changes", () => {

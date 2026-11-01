@@ -157,15 +157,46 @@ describe("complete space and life worker packages", () => {
       expect(run("angle", angle).description).toContain(`${percent}%`);
     expect(JSON.stringify(run("angle", 90).vector)).toContain("radialGradient");
   });
-  it("leaf zero resources and saved comparison remain causal", () => {
+  it("leaf challenges preserve gates, ties, and a complete comparison", () => {
     const run = worker("photosynthesis");
-    run();
-    run("save");
-    expect(run("water", 0).description).toContain("Relative activity 0 / 100");
-    expect(run("light", 100).description).toContain(
-      "Relative activity 0 / 100",
+    expect(run().buttons.map(({ id }) => id)).not.toContain("lightLevels");
+    run("lightLevels");
+    expect(run("runLight").sections[1].text).toContain(
+      "Complete the zero-water comparison first",
     );
-    expect(run("carbon", 0).description).toContain("Saved trial");
+    expect(run("runZero").sections[0].text).not.toContain("Light 30 →");
+    run("zeroRises");
+    expect(run("runZero").sections[0].text).toContain(
+      "does not match your prediction",
+    );
+    run("zeroStays");
+    const zeroCorrect = run("runZero");
+    expect(zeroCorrect.sections[0].text).toContain(
+      "Light 30 → index 0; light 100 → index 0",
+    );
+    expect(zeroCorrect.buttons.map(({ id }) => id)).toContain("lightLevels");
+    run("lightKeepsRising");
+    expect(run("runLight").sections[1].text).toContain(
+      "does not match your prediction",
+    );
+    run("lightLevels");
+    expect(run("runLight").sections[1].text).toContain(
+      "Light 15 → index 37; light 35 → index 67; light 100 → index 67",
+    );
+    run("save");
+    const changed = run("carbon", 0).description;
+    expect(changed).toContain(
+      "Trial A: light 100, water 35, carbon dioxide 80",
+    );
+    expect(changed).toContain("Changed: carbon dioxide");
+    expect(changed).toContain("Toy activity index 0 / 100");
+    const invalidated = run("zeroRises");
+    expect(invalidated.buttons.map(({ id }) => id)).not.toContain(
+      "lightLevels",
+    );
+    expect(invalidated.sections[1].text).toContain(
+      "Complete the zero-water comparison first",
+    );
   });
   it("optics equal index and critical-angle TIR preserve detailed diagram", () => {
     const run = worker("reflection-refraction");

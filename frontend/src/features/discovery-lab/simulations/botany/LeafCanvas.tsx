@@ -5,7 +5,7 @@ import {
   type LeafLabel,
 } from "./createLeafScene";
 import { BotanicalLeaf } from "../PhysicalArt";
-export function LeafCanvas(props: LeafState) {
+export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
   const { light, water, carbon, rate } = props;
   const host = useRef<HTMLDivElement>(null),
     scene = useRef<ReturnType<typeof createLeafScene>>(null);
@@ -31,7 +31,7 @@ export function LeafCanvas(props: LeafState) {
         className="leaf-canvas"
         ref={host}
         role="img"
-        aria-label={`Magnified leaf section with chloroplast-containing cells and water transport. Relative photosynthesis activity ${Math.round(props.rate)} out of 100.`}
+        aria-label={`Magnified leaf section with chloroplast-containing cells, water transport and gas exchange. Toy activity index ${Math.round(props.rate)} out of 100${props.limitingLabel ? `; model limit or limits: ${props.limitingLabel}` : ""}.`}
       />
       {!available && (
         <div className="leaf-fallback">
@@ -45,7 +45,7 @@ export function LeafCanvas(props: LeafState) {
               opacity={0.15 + props.light / 120}
             />
             <text x="190" y="370" fill="#e8f4df" fontSize="20">
-              Relative activity: {Math.round(props.rate)} / 100
+              Toy activity index: {Math.round(props.rate)} / 100
             </text>
           </svg>
           <p>
@@ -103,9 +103,6 @@ export function LeafCanvas(props: LeafState) {
           Oxygen out
         </span>
       </div>
-      <p className="leaf-process">
-        Light + water + carbon dioxide → sugar + oxygen
-      </p>
       <p className="leaf-scale">
         Schematic cutaway. Cell layers and organelles use different display
         scales.

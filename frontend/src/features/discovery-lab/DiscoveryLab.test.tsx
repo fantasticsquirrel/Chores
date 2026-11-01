@@ -189,6 +189,34 @@ describe("Discovery Lab", () => {
       "orbital-mechanics",
     );
   });
+  it("keeps the photosynthesis lesson in the activity without repeated registry prose", async () => {
+    vi.mocked(apiClient.getDiscoveryExploration).mockResolvedValue({
+      ...leaf,
+      question: "Can extra light replace water?",
+      explanation: "Repeated registry explanation.",
+      experiments: [
+        {
+          title: "Repeated experiment",
+          instruction: "Repeated instructions.",
+          observe: "Repeated observation.",
+        },
+      ],
+      misconception: "Repeated misconception.",
+      sources: orbit.sources,
+    });
+    show("/discovery-lab/photosynthesis");
+    expect(
+      await screen.findByRole("heading", { name: leaf.title }),
+    ).toBeVisible();
+    expect(screen.getByText("Can extra light replace water?")).toBeVisible();
+    expect(screen.getByTestId("simulation")).toHaveTextContent(
+      "photosynthesis",
+    );
+    expect(screen.queryByText("Repeated registry explanation.")).toBeNull();
+    expect(screen.queryByText("Repeated experiment")).toBeNull();
+    expect(screen.queryByText("Repeated misconception.")).toBeNull();
+    expect(screen.getByText("Sources")).toBeVisible();
+  });
   it("does not mount a simulation when direct access is denied", async () => {
     vi.mocked(apiClient.getDiscoveryExploration).mockRejectedValue(
       new Error("Exploration access denied."),

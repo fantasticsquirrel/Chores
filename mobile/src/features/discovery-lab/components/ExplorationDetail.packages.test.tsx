@@ -69,4 +69,35 @@ describe("downloaded Exploration platform support", () => {
     expect(view.queryByText("Repeated experiment")).toBeNull();
     expect(view.queryByText("Repeated misconception.")).toBeNull();
   });
+
+  it("keeps the built-in photosynthesis lesson inside its activity instead of repeating registry prose", () => {
+    const view = render(
+      <ExplorationDetail
+        detail={
+          {
+            ...content,
+            id: "photosynthesis",
+            title: "Inside a leaf",
+            question: "Can extra light replace water?",
+            explanation: "Repeated registry explanation.",
+            experiments: [
+              {
+                title: "Repeated experiment",
+                instruction: "Repeated instructions.",
+                observe: "Repeated observation.",
+              },
+            ],
+            misconception: "Repeated misconception.",
+            package: undefined,
+          } as DiscoveryExploration
+        }
+      />,
+    );
+
+    expect(view.getByText("Can extra light replace water?")).toBeTruthy();
+    expect(view.getByText("1. Test a missing input")).toBeTruthy();
+    expect(view.queryByText("Repeated registry explanation.")).toBeNull();
+    expect(view.queryByText("Repeated experiment")).toBeNull();
+    expect(view.queryByText("Repeated misconception.")).toBeNull();
+  });
 });

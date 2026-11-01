@@ -2,13 +2,13 @@
   "experiments": [
     {
       "title": "Test a missing resource",
-      "instruction": "Predict whether extra light can restore activity when water is absent. Choose a prediction, then Test zero water and extra light. Keep carbon dioxide fixed.",
-      "observe": "Activity remains zero. Explain why light cannot replace water in sugar production."
+      "instruction": "Predict whether changing light from 30 to 100 changes the activity index when water is 0 and carbon dioxide is held at 80. Run the fixed trials.",
+      "observe": "Both trials show 0. Light supplies energy, but it cannot replace water as a matter input."
     },
     {
-      "title": "Find the limiting resource",
-      "instruction": "Reset experiment, Save comparison, then predict what raising water above 80% will do while light 70% and carbon dioxide 80% remain fixed. Raise only water.",
-      "observe": "Activity first rises, then light becomes limiting. Compare the saved trial and explain why more water cannot replace light."
+      "title": "Find where light stops limiting",
+      "instruction": "Hold water at 35 and carbon dioxide at 80. Predict the pattern for light settings 15, 35 and 100, then run all three trials.",
+      "observe": "The index rises from 37 to 67, then stays at 67 because water limits the model above light 35."
     }
   ]
 }

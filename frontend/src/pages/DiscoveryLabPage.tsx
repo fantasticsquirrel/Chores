@@ -164,6 +164,8 @@ export function DiscoveryExplorationPage() {
   );
   if (!allowed) return <DiscoveryUnavailable />;
   const item = exploration.data;
+  const lessonRunsInActivity =
+    item?.id === "chance-carnival" || item?.id === "photosynthesis";
   return (
     <div className="discovery-lab discovery-detail">
       <Link className="discovery-back" to="/discovery-lab">
@@ -184,7 +186,7 @@ export function DiscoveryExplorationPage() {
         item && (
           <>
             <header className="discovery-detail-heading">
-              {item.id !== "chance-carnival" && (
+              {!lessonRunsInActivity && (
                 <div className="discovery-eyebrow">
                   {item.subject} · Grades {item.grade_bands.join(" · ")} · About{" "}
                   {item.duration_minutes} minutes
@@ -192,7 +194,7 @@ export function DiscoveryExplorationPage() {
               )}
               <h1>{item.title}</h1>
               <p>{item.question}</p>
-              {item.id !== "chance-carnival" && (
+              {!lessonRunsInActivity && (
                 <div className="discovery-tags">
                   {item.tags.map((tag) => (
                     <span key={tag}>{tag}</span>
@@ -218,7 +220,7 @@ export function DiscoveryExplorationPage() {
                 />
               )}
             </section>
-            {item.id !== "chance-carnival" && (
+            {!lessonRunsInActivity && (
               <div className="discovery-learning-grid">
                 <section className="discovery-explanation">
                   <h2>What’s happening?</h2>
@@ -252,9 +254,7 @@ export function DiscoveryExplorationPage() {
             <footer className="discovery-sources">
               <details>
                 <summary>
-                  {item.id === "chance-carnival"
-                    ? "Sources"
-                    : "Sources and references"}
+                  {lessonRunsInActivity ? "Sources" : "Sources and references"}
                 </summary>
                 <ul>
                   {item.sources.map((source) => (
@@ -273,7 +273,7 @@ export function DiscoveryExplorationPage() {
                     </li>
                   ))}
                 </ul>
-                {item.id !== "chance-carnival" && (
+                {!lessonRunsInActivity && (
                   <p>
                     These links open outside Family Manager. The interactive
                     models simplify the real world; read their labels and

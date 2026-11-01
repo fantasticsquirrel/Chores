@@ -62,4 +62,37 @@ describe("native guided experiment controls", () => {
       fireEvent.press(view.getByText("Increase Moon angle"));
     expect(view.getByText(/360° orbital angle; 0%.*New Moon/)).toBeTruthy();
   });
+  it("runs the same controlled photosynthesis lesson and resets it", () => {
+    const view = render(<NativeExploration id="photosynthesis" />);
+    const runMissing = view.getByText("Compare light at zero water");
+    expect(runMissing).toBeDisabled();
+    fireEvent.press(view.getByText("More light restores activity"));
+    fireEvent.press(runMissing);
+    expect(view.getByText(/result differs from your prediction/)).toBeTruthy();
+    fireEvent.press(view.getByText("Activity stays at zero"));
+    fireEvent.press(runMissing);
+    expect(view.getByText(/Water held at 0%/)).toBeTruthy();
+    expect(view.getByText(/More light cannot replace water/)).toBeTruthy();
+
+    const runSteps = view.getByText("Compare three light levels");
+    expect(runSteps).toBeDisabled();
+    fireEvent.press(view.getByText("Levels off once water limits"));
+    fireEvent.press(runSteps);
+    expect(view.getByText(/light and water tie/)).toBeTruthy();
+    expect(
+      view.getByText(/At 100% light, water limits this model/),
+    ).toBeTruthy();
+    expect(view.getByText("Increase Carbon dioxide")).toBeTruthy();
+
+    fireEvent.press(view.getByText("Set comparison A"));
+    fireEvent.press(view.getByText("Increase Water availability"));
+    expect(
+      view.getByText(
+        /Changed: water 35% → 45%\. Held: light 100% · carbon dioxide 80%/,
+      ),
+    ).toBeTruthy();
+
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(view.getByText("Compare light at zero water")).toBeDisabled();
+  });
 });

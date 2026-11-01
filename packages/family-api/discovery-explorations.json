@@ -235,30 +235,34 @@
       "photosynthesis",
       "systems"
     ],
-    "summary": "Adjust light and water to investigate what limits a leaf’s sugar-making process.",
-    "question": "Can more sunlight help when a plant has too little water?",
-    "explanation": "Photosynthesis uses light energy to convert water and carbon dioxide into sugars, releasing oxygen. A shortage of a needed resource can limit the process; more light does not guarantee proportionally more activity. This qualitative resource model is not a growth forecast and leaves out temperature, species differences and many other processes. Plants also respire, by day and night.",
+    "summary": "Test why extra light cannot replace water or carbon dioxide in photosynthesis.",
+    "question": "Can extra light replace water as an input to photosynthesis?",
+    "explanation": "Photosynthesis uses light energy to make sugars from water and carbon dioxide. The released oxygen comes from water. One required input cannot replace another, and real responses depend on more than this activity’s invented settings. Plants also respire day and night.",
     "experiments": [
       {
-        "title": "Find the bottleneck",
-        "instruction": "Predict whether adding light will help when available water is zero. Try it, then restore water.",
-        "observe": "Compare the activity readout. Explain why one resource cannot replace another."
+        "title": "Test a missing input",
+        "instruction": "Hold water at 0% and carbon dioxide at 80%. Predict, then compare 30% and 100% light.",
+        "observe": "Both toy activity indices remain zero because light energy cannot replace water."
       },
       {
-        "title": "More is not endless",
-        "instruction": "Keep water at a low, nonzero level. Predict what happens as you raise light from low to high, then compare the activity values.",
-        "observe": "Look for activity to level off when water becomes the limit. Explain why extra light cannot replace missing water."
+        "title": "Find the limiting input",
+        "instruction": "Hold water at 35% and carbon dioxide at 80%. Predict, then compare 15%, 35% and 100% light.",
+        "observe": "The index rises until water ties with, then limits, the model’s response."
       }
     ],
-    "misconception": "Plants make sugars; they do not absorb their sugar food from soil. Soil supplies water and mineral nutrients, and sunlight supplies energy rather than matter.",
+    "misconception": "Plants do not absorb sugar food from soil. Light supplies energy; water and carbon dioxide supply matter used to make sugars.",
     "sources": [
       {
-        "title": "Oregon State University: Plant growth and development",
-        "url": "https://extension.oregonstate.edu/catalog/em-9901-plant-growth-development"
+        "title": "OpenStax Biology 2e: Overview of photosynthesis",
+        "url": "https://openstax.org/books/biology-2e/pages/8-1-overview-of-photosynthesis"
       },
       {
-        "title": "Royal Horticultural Society: How plants use light",
-        "url": "https://www.rhs.org.uk/advice/understanding-plants/how-plants-use-light-to-grow"
+        "title": "OpenStax Biology 2e: Light-dependent reactions",
+        "url": "https://openstax.org/books/biology-2e/pages/8-2-the-light-dependent-reactions-of-photosynthesis"
+      },
+      {
+        "title": "Royal Horticultural Society: Plant gas exchange and respiration",
+        "url": "https://www.rhs.org.uk/advice/understanding-plants/how-plants-breathe"
       }
     ],
     "duration_minutes": 12

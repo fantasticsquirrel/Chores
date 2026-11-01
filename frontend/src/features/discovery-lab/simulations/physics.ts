@@ -1,3 +1,5 @@
+import { photosynthesisActivity } from "@family-manager/family-api/discovery-models/photosynthesis";
+
 export type Point = { x: number; y: number };
 /** Dimensionless two-body model: starting radius and gravitational parameter are 1. */
 export function traceOrbit(speed: number, mass = 1) {
@@ -45,14 +47,14 @@ export function illuminatedFraction(angle: number) {
   return (1 - Math.cos((angle * Math.PI) / 180)) / 2;
 }
 export function photosynthesis(light: number, water: number, carbon: number) {
-  const resources = [
-    { name: "light", value: light },
-    { name: "water", value: water },
-    { name: "carbon dioxide", value: carbon },
-  ];
-  const limiting = resources.reduce((a, b) => (a.value <= b.value ? a : b));
+  const result = photosynthesisActivity({
+    light,
+    water,
+    carbonDioxide: carbon,
+  });
   return {
-    rate: (100 * limiting.value) / (limiting.value + 25),
-    limiting: limiting.name,
+    rate: result.activityIndex,
+    limiting: result.limitingResources.join(" and "),
+    limitingResources: result.limitingResources,
   };
 }

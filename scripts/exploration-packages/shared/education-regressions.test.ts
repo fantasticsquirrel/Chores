@@ -72,14 +72,16 @@ it("guided sample extension never claims 1000 when only 990 draws were made", ()
   const result = send("compare");
   expect(result.description).not.toContain("990 trials");
 }, 30000);
-it("photosynthesis evidence does not claim zero activity after restoring water", () => {
+it("photosynthesis keeps fixed-trial evidence separate from open controls", () => {
   const send = worker("photosynthesis");
   send();
-  send("predictNo");
-  send("test");
+  send("zeroStays");
+  send("runZero");
   const result = send("water", 80);
-  expect(result.description).not.toContain("Relative activity 0 /");
-  expect(result.sections?.[1].text).not.toContain("Relative activity is zero");
+  expect(result.description).not.toContain("Toy activity index 0 /");
+  expect(result.sections?.[0].text).toContain(
+    "Light 30 → index 0; light 100 → index 0",
+  );
 }, 30000);
 it("Moon test evidence is invalidated when the observation changes", () => {
   const send = worker("moon-phases");

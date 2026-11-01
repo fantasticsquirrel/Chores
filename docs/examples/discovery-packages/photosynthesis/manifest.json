@@ -17,30 +17,34 @@
       "photosynthesis",
       "systems"
     ],
-    "summary": "Adjust light and water to investigate what limits a leaf’s sugar-making process.",
-    "question": "Can more sunlight help when a plant has too little water?",
-    "explanation": "Photosynthesis uses light energy to convert water and carbon dioxide into sugars, releasing oxygen. A shortage of a needed resource can limit the process; more light does not guarantee proportionally more activity. This qualitative resource model is not a growth forecast and leaves out temperature, species differences and many other processes. Plants also respire, by day and night.",
+    "summary": "Test why extra light cannot replace water or carbon dioxide in photosynthesis.",
+    "question": "Can extra light replace water as an input to photosynthesis?",
+    "explanation": "Photosynthesis uses light energy to make sugars from water and carbon dioxide. The released oxygen comes from water. One required input cannot replace another, and real responses depend on more than this activity’s invented settings. Plants also respire day and night.",
     "experiments": [
       {
         "title": "Test a missing resource",
-        "instruction": "Predict whether extra light can restore activity when water is absent. Choose a prediction, then Test zero water and extra light. Keep carbon dioxide fixed.",
-        "observe": "Activity remains zero. Explain why light cannot replace water in sugar production."
+        "instruction": "Predict whether changing light from 30 to 100 changes the activity index when water is 0 and carbon dioxide is held at 80. Run the fixed trials.",
+        "observe": "Both trials show 0. Light supplies energy, but it cannot replace water as a matter input."
       },
       {
-        "title": "Find the limiting resource",
-        "instruction": "Reset experiment, Save comparison, then predict what raising water above 80% will do while light 70% and carbon dioxide 80% remain fixed. Raise only water.",
-        "observe": "Activity first rises, then light becomes limiting. Compare the saved trial and explain why more water cannot replace light."
+        "title": "Find where light stops limiting",
+        "instruction": "Hold water at 35 and carbon dioxide at 80. Predict the pattern for light settings 15, 35 and 100, then run all three trials.",
+        "observe": "The index rises from 37 to 67, then stays at 67 because water limits the model above light 35."
       }
     ],
-    "misconception": "Plants make sugars; they do not absorb their sugar food from soil. Soil supplies water and mineral nutrients, and sunlight supplies energy rather than matter.",
+    "misconception": "Plants do not absorb sugar food from soil. Light supplies energy; water and carbon dioxide supply matter used to make sugars.",
     "sources": [
       {
-        "title": "Oregon State University: Plant growth and development",
-        "url": "https://extension.oregonstate.edu/catalog/em-9901-plant-growth-development"
+        "title": "OpenStax Biology 2e: Overview of photosynthesis",
+        "url": "https://openstax.org/books/biology-2e/pages/8-1-overview-of-photosynthesis"
       },
       {
-        "title": "Royal Horticultural Society: How plants use light",
-        "url": "https://www.rhs.org.uk/advice/understanding-plants/how-plants-use-light-to-grow"
+        "title": "OpenStax Biology 2e: Light-dependent reactions",
+        "url": "https://openstax.org/books/biology-2e/pages/8-2-the-light-dependent-reactions-of-photosynthesis"
+      },
+      {
+        "title": "Royal Horticultural Society: Plant gas exchange and respiration",
+        "url": "https://www.rhs.org.uk/advice/understanding-plants/how-plants-breathe"
       }
     ],
     "duration_minutes": 12
@@ -50,7 +54,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "36151ae983b2df301bb506c699f17de84777c0a8489939c174ee4d8fdbefa6bf"
+      "sha256": "07c38071a54d2adb6a49aef35ac253d205557e3b9d2be44eb63cb80c57c8e42f"
     },
     {
       "path": "THREE-LICENSE.txt",

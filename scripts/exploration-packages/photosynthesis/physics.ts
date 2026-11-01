@@ -45,14 +45,27 @@ export function illuminatedFraction(angle: number) {
   return (1 - Math.cos((angle * Math.PI) / 180)) / 2;
 }
 export function photosynthesis(light: number, water: number, carbon: number) {
+  const clampSetting = (value: number) =>
+    Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
+  const maximumResponse = 1 - Math.exp(-100 / 35);
   const resources = [
-    { name: "light", value: light },
-    { name: "water", value: water },
-    { name: "carbon dioxide", value: carbon },
+    { name: "light", value: clampSetting(light) },
+    { name: "water", value: clampSetting(water) },
+    { name: "carbon dioxide", value: clampSetting(carbon) },
   ];
-  const limiting = resources.reduce((a, b) => (a.value <= b.value ? a : b));
+  const responses = resources.map((resource) => ({
+    ...resource,
+    response: ((1 - Math.exp(-resource.value / 35)) / maximumResponse) * 100,
+  }));
+  const minimumResponse = Math.min(
+    ...responses.map(({ response }) => response),
+  );
+  const limitingResources = responses
+    .filter(({ response }) => Math.abs(response - minimumResponse) < 1e-9)
+    .map(({ name }) => name);
   return {
-    rate: (100 * limiting.value) / (limiting.value + 25),
-    limiting: limiting.name,
+    rate: minimumResponse,
+    limiting: limitingResources.join(" and "),
+    limitingResources,
   };
 }

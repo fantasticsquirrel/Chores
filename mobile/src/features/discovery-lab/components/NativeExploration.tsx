@@ -29,6 +29,7 @@ import { PatternExploration } from "./PatternExploration";
 import { CaravanExploration } from "./CaravanExploration";
 import { PollinatorExploration } from "./PollinatorExploration";
 import { ChanceExploration } from "./ChanceExploration";
+import { PhotosynthesisExploration } from "./PhotosynthesisExploration";
 import { NativeMoonScene } from "./NativeMoonScene";
 import { NativeSceneSurface } from "./NativeSceneSurface";
 import { nativeSceneState } from "../rendering/nativeSceneState";
@@ -39,7 +40,6 @@ const supportedIds = new Set([
   "gravity",
   "solar-system",
   "moon-phases",
-  "photosynthesis",
   "castle-defenses",
 ]);
 const extendedExplorations: Record<string, ComponentType> = {
@@ -62,6 +62,7 @@ const extendedExplorations: Record<string, ComponentType> = {
   "caravan-crossroads": CaravanExploration,
   "pollinator-express": PollinatorExploration,
   "chance-carnival": ChanceExploration,
+  photosynthesis: PhotosynthesisExploration,
 };
 export function NativeExploration({ id }: { id: string }) {
   const Extended = Object.prototype.hasOwnProperty.call(

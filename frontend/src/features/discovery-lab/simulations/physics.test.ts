@@ -31,10 +31,17 @@ describe("Exploration models", () => {
     expect(illuminatedFraction(90)).toBeCloseTo(0.5);
     expect(illuminatedFraction(180)).toBe(1);
   });
-  it("limits photosynthesis by the scarcest resource and saturates", () => {
+  it("limits the toy photosynthesis index, saturates and reports ties", () => {
     expect(photosynthesis(100, 0, 100).rate).toBe(0);
     expect(photosynthesis(100, 10, 100).limiting).toBe("water");
-    expect(photosynthesis(100, 100, 100).rate).toBeLessThan(100);
+    expect(photosynthesis(15, 100, 100).rate).toBeLessThan(
+      photosynthesis(35, 100, 100).rate,
+    );
+    expect(photosynthesis(100, 100, 100).rate).toBeCloseTo(100);
+    expect(photosynthesis(50, 50, 80).limitingResources).toEqual([
+      "light",
+      "water",
+    ]);
   });
   it("keeps the critical-angle ray grazing rather than internally reflected", () => {
     const critical = (Math.asin(1 / 1.5) * 180) / Math.PI;

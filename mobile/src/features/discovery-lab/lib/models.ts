@@ -1,3 +1,5 @@
+import { photosynthesisActivity } from "@family-manager/family-api/discovery-models/photosynthesis";
+
 /** Small deterministic native models. Scenes are schematic, not engineering tools. */
 export function dropTime(height: number, gravity: number) {
   return Math.sqrt((2 * height) / gravity);
@@ -9,8 +11,12 @@ export function refractedAngle(angle: number, n1: number, n2: number) {
 export function illumination(angle: number) {
   return (1 - Math.cos((angle * Math.PI) / 180)) / 2;
 }
-export function productionRate(light: number, water: number) {
-  return Math.min(light / (light + 25), water / (water + 25)) * 100;
+export function productionRate(light: number, water: number, carbon = 100) {
+  return photosynthesisActivity({
+    light,
+    water,
+    carbonDioxide: carbon,
+  }).activityIndex;
 }
 export type Point = { x: number; y: number };
 export function orbitModel(
