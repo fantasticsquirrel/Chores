@@ -196,7 +196,7 @@ function run(i: any) {
       },
       {
         id: "batch",
-        label: "Next sample",
+        label: "Trials to add",
         kind: "select",
         min: 0,
         max: 3,
@@ -210,7 +210,7 @@ function run(i: any) {
     ],
     buttons: [
       { id: "one", label: "Run one trial" },
-      { id: "run", label: "Run batch" },
+      { id: "run", label: "Add trials" },
       { id: "clear", label: "Clear sample" },
       { id: "trialSample", label: "Compare sample sizes" },
       { id: "trialWeight", label: "Change a weight" },

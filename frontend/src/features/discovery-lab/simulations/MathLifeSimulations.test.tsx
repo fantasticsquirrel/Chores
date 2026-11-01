@@ -116,8 +116,8 @@ describe("fractions, patterns, trade, pollination and chance", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.2);
     render(<ChanceCarnivalSimulation />);
     fireEvent.click(screen.getByText("Open controls"));
-    change("Next sample", 10000);
-    fireEvent.click(screen.getByRole("button", { name: "Run trials" }));
+    change("Trials to add", 10000);
+    fireEvent.click(screen.getByRole("button", { name: "Add trials" }));
     expect(screen.getByRole("status")).toHaveTextContent(
       "Equal chances · 10,000 trials",
     );

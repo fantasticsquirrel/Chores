@@ -47,7 +47,7 @@ describe("tactile mathematical exhibits", () => {
   it("uses the real final random draw for its visible outcome", () => {
     const random = vi.spyOn(Math, "random").mockReturnValue(0.8);
     render(<ChanceCarnivalSimulation />);
-    fireEvent.click(screen.getByRole("button", { name: "Run trials" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add trials" }));
     expect(random).toHaveBeenCalledTimes(10);
     expect(screen.getByTestId("chance-last-outcome")).toHaveTextContent("4");
     expect(
@@ -67,7 +67,7 @@ describe("tactile mathematical exhibits", () => {
       });
     }
     const random = vi.spyOn(Math, "random");
-    expect(screen.getByRole("button", { name: "Run trials" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add trials" })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Set at least one weight above zero",
     );

@@ -345,8 +345,8 @@ export function ChanceExploration() {
           clearGuidedWork();
         }}
       />
-      <ActionButton label="Run 10" onPress={() => runOpenSample(10)} />
-      <ActionButton label="Run 100" onPress={() => runOpenSample(100)} />
+      <ActionButton label="Add 10" onPress={() => runOpenSample(10)} />
+      <ActionButton label="Add 100" onPress={() => runOpenSample(100)} />
       <ActionButton
         label="Clear sample"
         variant="secondary"

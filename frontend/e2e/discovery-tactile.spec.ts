@@ -104,14 +104,16 @@ for (const mobile of [false, true]) {
         .focus();
       await page.keyboard.press("Home");
     }
-    await page.getByRole("button", { name: "Run trials", exact: true }).click();
+    await page.getByRole("button", { name: "Add trials", exact: true }).click();
     await expect(
       page.getByRole("button", { name: "Inspect outcome 1", exact: true }),
     ).toContainText("100.0% · expected 100.0%");
     await expect(page.getByTestId("chance-last-outcome")).toHaveText("1");
     await page.getByLabel("Device", { exact: true }).selectOption("die");
-    await page.getByLabel("Next sample", { exact: true }).selectOption("10000");
-    await page.getByRole("button", { name: "Run trials", exact: true }).click();
+    await page
+      .getByLabel("Trials to add", { exact: true })
+      .selectOption("10000");
+    await page.getByRole("button", { name: "Add trials", exact: true }).click();
     await expect(page.getByRole("status")).toContainText("10,000 trials");
     await expect(page.getByTestId("chance-last-outcome")).toHaveText(/^[1-6]$/);
     await page.locator(".chance-table").screenshot({

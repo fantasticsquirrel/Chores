@@ -79,7 +79,7 @@ export function ChanceOpenInvestigation({
             </p>
           </div>
           <div className="tactile-control-group">
-            <label htmlFor={`${id}-trials`}>Next sample</label>
+            <label htmlFor={`${id}-trials`}>Trials to add</label>
             <select
               id={`${id}-trials`}
               value={batch}
@@ -93,7 +93,7 @@ export function ChanceOpenInvestigation({
             </select>
             <div className="dl-actions">
               <button type="button" disabled={!valid} onClick={onRun}>
-                Run trials
+                Add trials
               </button>
               <button type="button" onClick={onClear}>
                 Clear sample
