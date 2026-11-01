@@ -202,26 +202,47 @@ export function probabilities(weights: number[]) {
   const total = weights.reduce((sum, value) => sum + value, 0);
   return weights.map((weight) => (total > 0 ? weight / total : 0));
 }
+export function drawOutcomes(
+  weights: number[],
+  trials: number,
+  random: () => number = Math.random,
+) {
+  const chances = probabilities(weights);
+  let fallback = -1;
+  for (let index = 0; index < chances.length; index++) {
+    if (chances[index] > 0) fallback = index;
+  }
+  if (fallback < 0 || trials <= 0) return [];
+  const outcomes: number[] = [];
+  for (let trial = 0; trial < Math.floor(trials); trial++) {
+    const value = random();
+    let cumulative = 0;
+    let outcome = fallback;
+    for (let index = 0; index < chances.length; index++) {
+      cumulative += chances[index];
+      if (value < cumulative) {
+        outcome = index;
+        break;
+      }
+    }
+    outcomes.push(outcome);
+  }
+  return outcomes;
+}
+export function countOutcomes(outcomes: number[], outcomeCount: number) {
+  const counts = Array.from({ length: outcomeCount }, () => 0);
+  for (const outcome of outcomes) {
+    if (Number.isInteger(outcome) && outcome >= 0 && outcome < counts.length)
+      counts[outcome]++;
+  }
+  return counts;
+}
 export function sampleOutcomes(
   weights: number[],
   trials: number,
   random: () => number = Math.random,
 ) {
-  const chances = probabilities(weights),
-    counts = weights.map(() => 0);
-  if (!chances.some((p) => p > 0)) return counts;
-  for (let trial = 0; trial < trials; trial++) {
-    const value = random();
-    let cumulative = 0;
-    for (let i = 0; i < chances.length; i++) {
-      cumulative += chances[i];
-      if (value < cumulative || i === chances.length - 1) {
-        counts[i]++;
-        break;
-      }
-    }
-  }
-  return counts;
+  return countOutcomes(drawOutcomes(weights, trials, random), weights.length);
 }
 export function fairnessDistance(counts: number[], weights: number[]) {
   const total = counts.reduce((sum, count) => sum + count, 0);

@@ -676,19 +676,19 @@
       "fractions",
       "sampling"
     ],
-    "summary": "Set the chances on a spinner or die, run trials and compare predictions with results.",
+    "summary": "Predict, sample and compare theoretical chances with observed shares.",
     "question": "Does an outcome with a one-in-four chance have to appear once every four tries?",
-    "explanation": "Probability describes how likely an outcome is. Each outcome’s weight divided by the total weight gives its chance in this model. Equal weights mean equal chances; a weight of zero makes an outcome impossible. Trial results vary, especially in small samples. More trials often bring the observed proportions closer to the predicted probabilities, but exact agreement is not guaranteed. Trials are independent computer-generated samples; a streak does not change the next trial’s chances.",
+    "explanation": "Theoretical probability describes the long-run chance built into a process; an observed share describes one finite sample. Each outcome’s weight divided by the total weight gives its chance in this model. Equal weights mean equal chances, while a weight of zero makes an outcome impossible. Fresh larger samples tend to have smaller relative gaps from the theoretical chances, but a particular larger sample need not be closer and exact agreement is not guaranteed. Trials are independent computer-generated draws, so a streak does not change the next trial’s chances.",
     "experiments": [
       {
         "title": "Small sample, large sample",
-        "instruction": "Reset to give all four spinner outcomes equal weights. Predict the fraction for each, run 10 trials, then add a larger batch without changing the weights.",
-        "observe": "Compare each observed percentage with 25%. Explain why uneven counts in a small sample are not by themselves evidence of unequal chances."
+        "instruction": "Set all four spinner weights to 1. Predict whether their counts must match. Run a fresh 12-trial sample, then a fresh 1,200-trial sample. Keep the weights fixed; change only sample size.",
+        "observe": "Preserve and compare both percentage-point gaps. Explain why uneven counts do not make this fair process unfair, and why one larger sample is not guaranteed to be closer."
       },
       {
         "title": "Change the chances",
-        "instruction": "Reset the spinner, then double the first outcome’s weight while leaving the others at 1. Predict its chance before running a fresh set of trials.",
-        "observe": "The doubled outcome has weight 2 out of a total of 5, or a 40% chance. Compare that prediction with the sample and explain why twice the weight does not mean a 50% chance."
+        "instruction": "Start a fresh spinner with weights 2, 1, 1 and 1. Predict whether outcome 1 has a chance of 2 out of 5 (40%) or 2 out of 4 (50%), then run 200 trials.",
+        "observe": "Compare outcome 1’s observed share with its 40% theoretical chance. Explain why doubling one weight also changes the total weight and why a finite sample can differ from 40%."
       }
     ],
     "misconception": "An outcome is not “due” because it has been absent. With unchanged weights, each independent trial has the same probabilities as before.",
@@ -696,6 +696,14 @@
       {
         "title": "Illustrative Mathematics: Probability models and observed frequencies",
         "url": "https://tasks.illustrativemathematics.org/content-standards/7/SP/C/7"
+      },
+      {
+        "title": "OpenStax: Theoretical probability and long-run relative frequency",
+        "url": "https://openstax.org/books/introductory-statistics/pages/3-1-terminology"
+      },
+      {
+        "title": "OpenStax: Independent events",
+        "url": "https://openstax.org/books/introductory-statistics/pages/3-2-independent-and-mutually-exclusive-events"
       }
     ],
     "duration_minutes": 12

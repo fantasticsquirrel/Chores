@@ -28,7 +28,6 @@ const expectedIds = [
   "cell-explorer",
   "shape-slicer",
   "adaptation-island",
-
 ];
 
 describe("Discovery Lab educational content", () => {
@@ -80,4 +79,22 @@ describe("Discovery Lab educational content", () => {
       }
     },
   );
+
+  it("makes Chance Carnival's controlled comparisons executable and sourced", () => {
+    const chance = content.find((entry) => entry.id === "chance-carnival");
+    expect(chance).toBeDefined();
+    expect(chance?.experiments[0].instruction).toContain(
+      "fresh 12-trial sample",
+    );
+    expect(chance?.experiments[0].instruction).toContain(
+      "fresh 1,200-trial sample",
+    );
+    expect(chance?.experiments[1].instruction).toContain("2 out of 5");
+    expect(chance?.sources.map((source) => source.url)).toEqual(
+      expect.arrayContaining([
+        "https://openstax.org/books/introductory-statistics/pages/3-1-terminology",
+        "https://openstax.org/books/introductory-statistics/pages/3-2-independent-and-mutually-exclusive-events",
+      ]),
+    );
+  });
 });

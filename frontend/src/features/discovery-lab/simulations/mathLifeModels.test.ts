@@ -12,6 +12,8 @@ import {
 } from "@family-manager/family-api/discovery-models/math-life";
 import {
   probabilities,
+  drawOutcomes,
+  countOutcomes,
   sampleOutcomes,
   fairnessDistance,
 } from "@family-manager/family-api/discovery-models/math-life";
@@ -87,6 +89,21 @@ describe("weighted probability experiments", () => {
     expect(sampleOutcomes([1, 3, 0], 10, () => 0.1)).toEqual([10, 0, 0]);
     expect(sampleOutcomes([1, 3, 0], 10000, () => 0.25)).toEqual([0, 10000, 0]);
     expect(sampleOutcomes([0, 0], 10)).toEqual([0, 0]);
+  });
+  it("preserves the actual draw sequence and conserves every valid trial", () => {
+    const values = [0, 0.249999, 0.25, 0.999999, 1];
+    let index = 0;
+    const draws = drawOutcomes([1, 3, 0], values.length, () => values[index++]);
+    expect(draws).toEqual([0, 0, 1, 1, 1]);
+    expect(countOutcomes(draws, 3)).toEqual([2, 3, 0]);
+    expect(countOutcomes(draws, 3).reduce((sum, count) => sum + count, 0)).toBe(
+      values.length,
+    );
+  });
+  it("returns no draws for zero trials or a zero-total distribution", () => {
+    expect(drawOutcomes([1, 1], 0, () => 0.2)).toEqual([]);
+    expect(drawOutcomes([0, 0], 12, () => 0.2)).toEqual([]);
+    expect(countOutcomes([-1, 0, 5], 2)).toEqual([1, 0]);
   });
   it("reports the largest percentage-point sampling gap", () => {
     expect(fairnessDistance([50, 50], [1, 1])).toBe(0);

@@ -70,9 +70,6 @@ describe("tactile mathematical exhibits", () => {
     }
     const random = vi.spyOn(Math, "random");
     expect(screen.getByRole("button", { name: "Run trials" })).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "Run 10,000 more" }),
-    ).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Set at least one weight above zero",
     );

@@ -1008,3 +1008,374 @@
     font-size: 28px;
   }
 }
+
+/* Chance Carnival: evidence-first guided investigation. */
+.chance-heading {
+  padding: 32px 36px 12px;
+}
+.chance-heading h2 {
+  max-width: 760px;
+}
+.chance-heading p {
+  max-width: 610px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.chance-table {
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  padding: 0 34px 28px;
+  gap: 20px;
+}
+.chance-machine {
+  height: 430px;
+}
+.chance-render {
+  inset: -5px -10px 58px;
+}
+.chance-distribution {
+  padding: 26px 24px;
+}
+.chance-distribution h3 {
+  font-size: 26px;
+}
+.chance-distribution header > p,
+.chance-chart-note,
+.chance-chart-caption,
+.chance-chart-row > strong,
+.chance-chart-axis {
+  font-size: 12px;
+}
+.tactile-exhibit .chance-chart-row {
+  grid-template-columns: 30px minmax(0, 1fr) 52px;
+  gap: 12px;
+  padding: 10px 0;
+}
+.chance-chart-number {
+  width: 27px;
+  height: 27px;
+  font-size: 13px;
+}
+.chance-chart-track {
+  height: 20px;
+}
+.chance-recent {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.25fr);
+  gap: 28px;
+  align-items: center;
+  padding: 22px 34px;
+  background: #f0ebda;
+  border-top: 1px solid #c5b99b;
+}
+.chance-recent h3 {
+  margin: 0 0 4px;
+  font-size: 19px;
+}
+.chance-recent p {
+  margin: 0;
+  color: #526458;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.chance-recent ol {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(32px, 1fr));
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.chance-token {
+  display: grid;
+  min-height: 38px;
+  place-items: center;
+  border: 2px solid #fff7e4;
+  border-radius: 50%;
+  color: #fffdf3;
+  font-weight: 800;
+  box-shadow: 0 3px 6px #24392e38;
+}
+.chance-token-1 {
+  background: #a94e34;
+}
+.chance-token-2 {
+  background: #247976;
+}
+.chance-token-3 {
+  background: #76569b;
+}
+.chance-token-4 {
+  background: #99721c;
+}
+.chance-token-5 {
+  background: #517b42;
+}
+.chance-token-6 {
+  background: #416e99;
+}
+.chance-recent-empty {
+  padding: 12px 16px;
+  border: 1px dashed #8e9278;
+  border-radius: 8px;
+  text-align: center;
+}
+.chance-sample-strip span {
+  font-size: 12px;
+}
+.chance-challenge {
+  padding: 34px;
+  background: #f5f1e6;
+  border-top: 1px solid #c9c4ad;
+}
+.chance-challenge-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  column-gap: 34px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+.chance-challenge-heading > span {
+  grid-column: 1 / -1;
+  color: #4d6a5c;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+.chance-challenge-heading h3 {
+  margin: 8px 0 0;
+  font-size: 30px;
+  line-height: 1.2;
+}
+.chance-challenge-heading p {
+  margin: 0;
+  color: #4f6158;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.chance-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.chance-step-card {
+  min-height: 220px;
+  padding: 20px;
+  border: 1px solid #c9c5b2;
+  border-radius: 12px;
+  background: #fffdf5;
+  box-shadow: 0 8px 20px #36463a12;
+}
+.chance-step-card > span {
+  color: #4c6b5d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+.chance-step-card h4 {
+  margin: 10px 0 16px;
+  color: #263d36;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1.35;
+}
+.chance-step-card p {
+  margin: 12px 0 0;
+  color: #58685e;
+  font-size: 12px;
+}
+.chance-evidence,
+.chance-comparison {
+  margin-top: 18px;
+  padding: 20px 22px;
+  border: 1px solid #aebba6;
+  border-radius: 12px;
+  background: #e2e8d9;
+  color: #29453a;
+}
+.chance-evidence p,
+.chance-comparison p {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.chance-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.chance-comparison > div {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #f7f5e9;
+}
+.chance-comparison span {
+  color: #587065;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.chance-comparison strong {
+  font-family: Georgia, serif;
+  font-size: 25px;
+  font-weight: 400;
+}
+.chance-comparison small {
+  font-size: 12px;
+}
+.chance-comparison > p {
+  grid-column: 1 / -1;
+}
+.chance-challenge-two {
+  background: #e9e1c9;
+}
+.chance-challenge-locked {
+  background: #e7e3d7;
+}
+.chance-locked-message {
+  margin: 0;
+  padding: 16px 18px;
+  border-left: 4px solid #8b9578;
+  background: #f5f1e6;
+  color: #506158;
+}
+.chance-weight-test {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: end;
+  padding: 22px;
+  border: 1px solid #bfb699;
+  border-radius: 12px;
+  background: #f8f3e5;
+}
+.chance-weight-test .tactile-kicker {
+  display: block;
+  margin-bottom: 12px;
+}
+.chance-open-lab {
+  border-top: 1px solid #65786c;
+  background: #243c36;
+  color: #f1ecde;
+}
+.chance-open-lab > summary {
+  min-height: 58px;
+  padding: 18px 34px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 750;
+}
+.chance-open-lab > summary:focus-visible {
+  outline: 3px solid #e1bd69;
+  outline-offset: -5px;
+}
+.chance-open-lab > p {
+  margin: 0;
+  padding: 0 34px 12px;
+  color: #d2ded2;
+  font-size: 13px;
+}
+.chance-open-lab .chance-console {
+  border-top-color: #566e61;
+}
+.chance-exhibit .tactile-readout button {
+  margin-top: 8px;
+}
+
+@media (max-width: 760px) {
+  .chance-exhibit {
+    padding-bottom: 68px;
+  }
+  .chance-heading {
+    padding: 24px 20px 14px;
+  }
+  .chance-heading h2 {
+    font-size: 32px;
+  }
+  .chance-heading p {
+    max-width: none;
+    font-size: 14px;
+  }
+  .chance-table {
+    grid-template-columns: 1fr;
+    padding: 0 14px 22px;
+    gap: 16px;
+  }
+  .chance-machine {
+    height: 340px;
+  }
+  .chance-render {
+    inset: -10px -14px 50px;
+  }
+  .chance-last {
+    bottom: 29px;
+  }
+  .chance-machine-caption {
+    font-size: 11px;
+  }
+  .chance-distribution {
+    padding: 22px 18px;
+  }
+  .chance-distribution h3 {
+    font-size: 24px;
+  }
+  .chance-distribution header > p,
+  .chance-chart-note,
+  .chance-chart-caption,
+  .chance-chart-row > strong,
+  .chance-chart-axis {
+    font-size: 12px;
+  }
+  .chance-recent {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 22px 20px;
+  }
+  .chance-recent ol {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .chance-token {
+    min-height: 42px;
+  }
+  .chance-sample-strip {
+    grid-template-columns: 1fr;
+    padding: 22px 20px;
+  }
+  .chance-sample-strip > div {
+    display: flex;
+    align-items: center;
+  }
+  .chance-sample-strip span {
+    margin-top: 0;
+    font-size: 12px;
+  }
+  .chance-challenge {
+    padding: 26px 18px;
+  }
+  .chance-challenge-heading {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .chance-challenge-heading h3 {
+    font-size: 27px;
+  }
+  .chance-steps,
+  .chance-comparison,
+  .chance-weight-test {
+    grid-template-columns: 1fr;
+  }
+  .chance-step-card {
+    min-height: 0;
+  }
+  .chance-comparison > p {
+    grid-column: 1;
+  }
+  .chance-open-lab > summary {
+    padding: 18px 20px;
+  }
+  .chance-open-lab > p {
+    padding: 0 20px 12px;
+  }
+}

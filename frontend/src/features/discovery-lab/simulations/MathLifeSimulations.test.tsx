@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FractionFeastSimulation } from "./FractionFeastSimulation";
 import { PatternPalaceSimulation } from "./PatternPalaceSimulation";
@@ -112,17 +118,81 @@ describe("fractions, patterns, trade, pollination and chance", () => {
     change("Trials in next batch", 10000);
     fireEvent.click(screen.getByRole("button", { name: "Run trials" }));
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Trials recorded: 10,000",
+      "Trials in current sample: 10,000",
     );
     expect(screen.getByRole("status")).toHaveTextContent(
       "Outcome 1: theory 25.0% · observed 10000 (100.0%)",
     );
     change("Outcome 1 weight", 2);
-    expect(screen.getByRole("status")).toHaveTextContent("Trials recorded: 0");
-    expect(screen.getByRole("status")).toHaveTextContent("Unequal chances");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Trials in current sample: 0",
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Unequal weights");
     change("Chance device", "die");
     expect(screen.getByRole("status")).toHaveTextContent(
       "Outcome 6: theory 16.7%",
     );
+  });
+
+  it("gates a fair controlled comparison on prediction and preserves both samples", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.1);
+    render(<ChanceCarnivalSimulation />);
+
+    const smallRun = screen.getByRole("button", {
+      name: "Run a fresh 12-trial sample",
+    });
+    expect(smallRun).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "The counts can differ" }),
+    );
+    expect(smallRun).toBeEnabled();
+    fireEvent.click(smallRun);
+
+    expect(
+      screen.getByTestId("chance-challenge-one-feedback"),
+    ).toHaveTextContent("A fair process can produce uneven counts");
+    const recent = within(
+      screen.getByTestId("chance-recent-outcomes"),
+    ).getAllByRole("listitem");
+    expect(recent).toHaveLength(12);
+    for (const outcome of recent) expect(outcome).toHaveTextContent("1");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Run a fresh 1,200-trial sample" }),
+    );
+    const comparison = screen.getByTestId("chance-sample-comparison");
+    expect(comparison).toHaveTextContent("12 trials");
+    expect(comparison).toHaveTextContent("1,200 trials");
+    expect(comparison).toHaveTextContent(
+      "This larger run was not closer. That can happen",
+    );
+  });
+
+  it("unlocks the doubled-weight challenge and explains 2 out of 5", () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.1);
+    render(<ChanceCarnivalSimulation />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "The counts can differ" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Run a fresh 12-trial sample" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Run a fresh 1,200-trial sample" }),
+    );
+
+    const weightedRun = screen.getByRole("button", {
+      name: "Test the doubled weight",
+    });
+    expect(weightedRun).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "2 out of 5 (40%)" }));
+    expect(weightedRun).toBeEnabled();
+    fireEvent.click(weightedRun);
+    expect(
+      screen.getByTestId("chance-challenge-two-feedback"),
+    ).toHaveTextContent("weight 2 out of a total weight of 5");
+    expect(
+      screen.getByTestId("chance-challenge-two-feedback"),
+    ).toHaveTextContent("Theoretical chance: 40.0%");
   });
 });

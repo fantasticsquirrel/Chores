@@ -131,19 +131,27 @@ describe("native predictions and evidence", () => {
     ).toBeTruthy();
   });
 
-  it("shows observed percentages, resets on probability changes and samples a die", () => {
+  it("requires predictions and preserves the controlled chance comparison", () => {
     jest.spyOn(Math, "random").mockReturnValue(0.1);
     const view = render(<NativeExploration id="chance-carnival" />);
-    fireEvent.press(view.getByText("Run 10 trials"));
+
+    expect(view.getByText("Run a fresh 12-trial sample")).toBeDisabled();
+    fireEvent.press(view.getByText("The counts can differ"));
+    fireEvent.press(view.getByText("Run a fresh 12-trial sample"));
     expect(
-      view.getByText(
-        /Gold: 10 observed \(100.0%\); expected 2.5; probability 25.0%/,
-      ),
+      view.getByText(/A fair process can produce uneven counts/),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Increase Gold sector weight"));
-    expect(view.getByText(/0 trials. The first outcome/)).toBeTruthy();
-    fireEvent.press(view.getByText("Six-sided die"));
-    fireEvent.press(view.getByText("Run 100 trials"));
-    expect(view.getByText(/Face 1: 100 observed/)).toBeTruthy();
+    fireEvent.press(view.getByText("Run a fresh 1,200-trial sample"));
+    expect(view.getByText(/12-trial gap: 75.0 percentage points/)).toBeTruthy();
+    expect(
+      view.getByText(/1,200-trial gap: 75.0 percentage points/),
+    ).toBeTruthy();
+    expect(view.getByText(/This larger run was not closer/)).toBeTruthy();
+
+    expect(view.getByText("Test the doubled weight")).toBeDisabled();
+    fireEvent.press(view.getByText("2 out of 5 (40%)"));
+    fireEvent.press(view.getByText("Test the doubled weight"));
+    expect(view.getByText(/weight 2 out of a total weight of 5/)).toBeTruthy();
+    expect(view.getByText(/Theoretical chance: 40.0%/)).toBeTruthy();
   });
 });
