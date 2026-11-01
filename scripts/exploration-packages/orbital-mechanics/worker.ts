@@ -21,8 +21,10 @@ let speed = 1,
   mass = 1,
   progress = 0,
   playing = false,
-  prediction = "",
-  tested = false,
+  speedPrediction = "",
+  speedTested = false,
+  massPrediction = "",
+  massTested = false,
   orbit = traceOrbit(1, 1);
 const scrub = timelineDrag();
 function run(i: Input) {
@@ -32,15 +34,16 @@ function run(i: Input) {
     speed = mass = 1;
     progress = 0;
     playing = false;
-    prediction = "";
-    tested = false;
+    speedPrediction = "";
+    speedTested = false;
+    massPrediction = "";
+    massTested = false;
   }
   if (i.control === "speed" || i.control === "mass") {
     if (i.control === "speed") speed = i.values.speed;
     else mass = i.values.mass;
     progress = 0;
     playing = false;
-    tested = false;
   }
   if (i.control === "progress") progress = i.values.progress / 100;
   if (i.control === "play") {
@@ -52,20 +55,40 @@ function run(i: Input) {
     mass = 1;
     progress = 0;
     playing = false;
-    tested = false;
   }
   if (i.control?.startsWith("predict")) {
-    prediction = ["Returns safely", "Hits planet", "Escapes"][
-      Number(i.control.slice(7))
-    ];
-    tested = false;
+    speedPrediction = [
+      "All three orbit",
+      "Hit → orbit → escape",
+      "All three escape",
+    ][Number(i.control.slice(7))];
+    speedTested = false;
+    massPrediction = "";
+    massTested = false;
   }
   if (i.control === "test") {
     speed = 0.6;
     mass = 1;
     progress = 0.9999;
     playing = false;
-    tested = true;
+    speedTested = Boolean(speedPrediction);
+    massPrediction = "";
+    massTested = false;
+  }
+  if (i.control?.startsWith("masspredict") && speedTested) {
+    massPrediction = [
+      "Curves into a tighter ellipse",
+      "Stays on the same circle",
+      "Escapes",
+    ][Number(i.control.slice(11))];
+    massTested = false;
+  }
+  if (i.control === "masstest" && speedTested && massPrediction) {
+    speed = 1;
+    mass = 2;
+    progress = 0.9999;
+    playing = false;
+    massTested = true;
   }
   if (i.type === "step" && playing) {
     progress = clamp(progress + (i.dt ?? 0.05) / 16, 0, 0.9999);
@@ -135,30 +158,35 @@ function run(i: Input) {
           speed === v / 100 && mass === 1,
         ),
       ),
-      ...["Returns safely", "Hits planet", "Escapes"].map((v, n) =>
-        button(`predict${n}`, v, prediction === v),
+      ...["All three orbit", "Hit → orbit → escape", "All three escape"].map(
+        (v, n) => button(`predict${n}`, v, speedPrediction === v),
       ),
-      button("test", "Test 0.60× speed"),
+      button("test", "Compare 0.60×, 1.00× and 1.42×"),
+      ...[
+        "Curves into a tighter ellipse",
+        "Stays on the same circle",
+        "Escapes",
+      ].map((v, n) => button(`masspredict${n}`, v, massPrediction === v)),
+      button("masstest", "Compare 1× and 2× mass"),
     ],
     sections: [
       {
-        heading: "1. Predict",
-        text: `At 0.60× baseline speed, what happens?${prediction ? " Your prediction: " + prediction + "." : ""}`,
-        buttonIds: ["predict0", "predict1", "predict2"],
+        heading: "1. Change only sideways speed",
+        text: `Keep central mass at 1× and starting distance fixed. Predict the order at 0.60×, 1.00× and 1.42×.${speedPrediction ? " Your prediction: " + speedPrediction + "." : ""}${speedTested ? " " + (speedPrediction === "Hit → orbit → escape" ? "Your prediction matches: " : "The result differs: ") + "0.60× collision; 1.00× near-circle orbit; 1.42× escape." : ""}`,
+        buttonIds: ["predict0", "predict1", "predict2", "test"],
       },
       {
-        heading: "2. Compare",
-        text: `Keep central mass at 1× and reduce only launch speed.${tested ? " " + (prediction === "Hits planet" ? "Your prediction matches: " : "Observed: ") + "the path reaches the planet." : ""}`,
-        buttonIds: ["test"],
+        heading: "2. Change only central mass",
+        text: `${speedTested ? "Keep speed at 1.00× and starting distance fixed. Predict the 2×-mass path." : "Complete the speed comparison first."}${massPrediction ? " Your prediction: " + massPrediction + "." : ""}${massTested ? " " + (massPrediction === "Curves into a tighter ellipse" ? "Your prediction matches: " : "The result differs: ") + "1× mass stays near 1.00–1.00 starting radii; 2× mass curves through 0.33–1.00 starting radii." : ""}`,
+        buttonIds: ["masspredict0", "masspredict1", "masspredict2", "masstest"],
       },
       {
-        heading: "3. Explain",
-        text: "Sideways motion carries the probe forward while gravity curves its path inward. At this lower speed, it reaches the surface before it can go around. Predict what 1.42× will do, then test it while keeping mass at 1×. Why does a faster launch escape even though gravity still acts?",
-        buttonIds: ["preset142"],
+        heading: "Explain the evidence",
+        text: "Sideways motion carries the probe forward while gravity curves its path inward. Escape means the path does not return in this two-body model; gravity still acts along it. Doubling central mass raises circular speed from 1.00× to 1.41×, so the unchanged 1.00× launch curves inward more strongly.",
       },
     ],
     footnote:
-      "Fixed-step two-body model, no air resistance. Planet radius is 0.22 starting radii; probe enlarged. Camera fits the whole trajectory. Speed remains relative to the original planet’s circular speed when mass changes. Arrows show direction, not force or speed to scale. Earth surface: NASA Earth Observatory Blue Marble, August 2004.",
+      "Dimensionless fixed-step two-body model. Starting distance and baseline gravitational parameter are 1; planet radius is 0.22. It omits air, other bodies, burns and the probe’s pull on the planet. A finite trace labeled escape is not proof that gravity becomes zero. Probe enlarged; arrows show direction, not force or speed to scale. Earth surface: NASA Earth Observatory Blue Marble, August 2004.",
     scene3d: fixedCamera(
       serializeScene(ctx.scene, ctx.camera, {
         target,

@@ -21,9 +21,11 @@ export function ExplorationDetail({
       </SectionCard>
     );
   }
-  const lessonRunsInActivity = ["chance-carnival", "photosynthesis"].includes(
-    detail.id,
-  );
+  const lessonRunsInActivity = [
+    "chance-carnival",
+    "orbital-mechanics",
+    "photosynthesis",
+  ].includes(detail.id);
   return (
     <>
       <SectionCard

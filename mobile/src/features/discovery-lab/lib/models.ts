@@ -1,4 +1,5 @@
 import { photosynthesisActivity } from "@family-manager/family-api/discovery-models/photosynthesis";
+import { orbitActivity } from "@family-manager/family-api/discovery-models/orbit";
 
 /** Small deterministic native models. Scenes are schematic, not engineering tools. */
 export function dropTime(height: number, gravity: number) {
@@ -23,30 +24,13 @@ export function orbitModel(
   speed: number,
   mass = 1,
 ): { points: Point[]; outcome: string } {
-  let x = 1,
-    y = 0,
-    vx = 0,
-    vy = speed;
-  const dt = 0.008,
-    points: Point[] = [];
-  for (let i = 0; i < 2400; i++) {
-    const r = Math.hypot(x, y);
-    if (r < 0.18 || r > 5) break;
-    const ax = (-mass * x) / r ** 3,
-      ay = (-mass * y) / r ** 3;
-    x += vx * dt + (ax * dt * dt) / 2;
-    y += vy * dt + (ay * dt * dt) / 2;
-    const next = Math.max(0.1, Math.hypot(x, y));
-    vx += ((ax - (mass * x) / next ** 3) * dt) / 2;
-    vy += ((ay - (mass * y) / next ** 3) * dt) / 2;
-    if (i % 6 === 0) points.push({ x, y });
-  }
+  const result = orbitActivity({ speed, mass });
   return {
-    points,
+    points: result.points,
     outcome:
-      Math.hypot(x, y) < 0.18
+      result.outcome === "collision"
         ? "Surface collision"
-        : speed >= Math.sqrt(2 * mass)
+        : result.outcome === "escape"
           ? "Unbound escape path"
           : "Bound orbit",
   };

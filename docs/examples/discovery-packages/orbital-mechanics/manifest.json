@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "orbital-mechanics-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "orbital-mechanics-package",
@@ -18,30 +18,38 @@
       "motion",
       "orbits"
     ],
-    "summary": "Launch a satellite and discover how speed and gravity shape its path.",
-    "question": "How can something keep falling without reaching the ground?",
-    "explanation": "An orbit is a continuing fall around a world. Sideways motion carries a satellite forward while gravity curves its path inward. Gravity weakens with the square of distance from the center. This scaled, two-dimensional model leaves out air resistance, other worlds and the satellite’s pull on the planet.",
+    "summary": "Compare collisions, orbits and escapes by changing one launch variable at a time.",
+    "question": "How does sideways launch speed change a falling path?",
+    "explanation": "Gravity accelerates a probe toward the central body while sideways motion carries it forward. At one starting radius in this model, too little sideways speed intersects the drawn surface, the baseline speed makes a circular orbit, and at least √2 times that baseline escapes. Doubling central mass raises the circular speed to √2 times the original baseline, so an unchanged launch curves into a tighter ellipse. Gravity continues to act along bound and escape paths.",
     "experiments": [
       {
-        "title": "Compare launch speeds",
-        "instruction": "Predict what happens at 0.60× baseline speed. Keep central mass at 1×. Choose a prediction, then Test 0.60× speed.",
-        "observe": "The path reaches the planet. Explain how insufficient sideways motion lets gravity curve the path into the surface."
+        "title": "Change only sideways speed",
+        "instruction": "Predict the outcome order at 0.60×, 1.00× and 1.42× speed. Keep central mass at 1× and starting distance fixed, then compare all three paths.",
+        "observe": "The paths collide, orbit and escape in that order. Gravity still curves the escaping path."
       },
       {
-        "title": "Test escape",
-        "instruction": "Predict what 1.42× speed will do. Choose 1.42× speed, keeping central mass at 1×, then use Play motion or Trace position.",
-        "observe": "Compare with 1.00× speed. The escaping probe still experiences gravity; explain why escape does not mean gravity disappears."
+        "title": "Change only central mass",
+        "instruction": "Predict the path at 2× central mass. Keep launch speed at 1.00× and starting distance fixed, then compare with 1× mass.",
+        "observe": "The 1×-mass path stays near circular; the 2×-mass path becomes a tighter ellipse because circular speed is higher."
       }
     ],
-    "misconception": "Orbiting spacecraft have not escaped gravity. Gravity is what keeps their paths curving.",
+    "misconception": "Escape does not mean gravity switches off. Gravity weakens with distance and keeps curving the escape path even though it cannot turn the probe back.",
     "sources": [
       {
-        "title": "NASA: Gravity and mechanics",
+        "title": "NASA Basics of Space Flight: acceleration in orbit",
         "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/"
       },
       {
-        "title": "NASA: Orbital motion",
+        "title": "NASA Basics of Space Flight: orbit and free fall",
         "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-4/"
+      },
+      {
+        "title": "NASA Universe of Learning: orbit types and circular speed",
+        "url": "https://www.nasa.gov/wp-content/uploads/2023/09/nw-10182021.pdf"
+      },
+      {
+        "title": "NASA GSFC: orbital velocity and escape",
+        "url": "https://spdf.gsfc.nasa.gov/pub/documents/archived_websites/pwg.gsfc.nasa.gov/stargaze/Skepl3rd.htm"
       }
     ],
     "duration_minutes": 12
@@ -51,7 +59,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "9bfa2e2bde61085434f1cb7d3c5344374c9b46e52bb499c68ebe385f45dc4274"
+      "sha256": "9a9ef63753c5dd2bf72e4736c5622b2901561212c8f302d9579f360182e0f125"
     },
     {
       "path": "assets/SOURCES.txt",

@@ -97,4 +97,23 @@ describe("Discovery Lab educational content", () => {
       ]),
     );
   });
+
+  it("makes Orbit Workshop's two controlled comparisons executable and sourced", () => {
+    const orbit = content.find((entry) => entry.id === "orbital-mechanics");
+    expect(orbit?.experiments[0].instruction).toContain("0.60×");
+    expect(orbit?.experiments[0].instruction).toContain("1.42×");
+    expect(orbit?.experiments[1].instruction).toContain("2× central mass");
+    expect(orbit?.experiments[1].instruction).toContain(
+      "launch speed at 1.00×",
+    );
+    expect(orbit?.misconception).toContain("Gravity weakens with distance");
+    expect(orbit?.sources.map((source) => source.url)).toEqual(
+      expect.arrayContaining([
+        "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/",
+        "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-4/",
+        "https://www.nasa.gov/wp-content/uploads/2023/09/nw-10182021.pdf",
+        "https://spdf.gsfc.nasa.gov/pub/documents/archived_websites/pwg.gsfc.nasa.gov/stargaze/Skepl3rd.htm",
+      ]),
+    );
+  });
 });

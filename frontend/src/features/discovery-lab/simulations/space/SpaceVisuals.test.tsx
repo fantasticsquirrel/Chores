@@ -39,17 +39,50 @@ describe("space learning controls", () => {
     ).toBe("0");
     expect(screen.getByRole("button", { name: "Play motion" })).toBeTruthy();
   });
-  it("shows finite collision and escapes while preserving gravity", () => {
+  it("runs both controlled orbit comparisons and resets their evidence", () => {
     render(<OrbitSimulation />);
-    fireEvent.click(screen.getByRole("button", { name: "Test 0.60× speed" }));
-    expect(screen.getByText("planet collision")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toContain(
-      "reaches the planet",
+    const speedAction = screen.getByRole("button", {
+      name: "Compare 0.60×, 1.00× and 1.42×",
+    });
+    const massAction = screen.getByRole("button", {
+      name: "Compare 1× and 2× mass",
+    });
+    expect(speedAction).toBeDisabled();
+    expect(massAction).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Hit → orbit → escape",
+      }),
     );
-    fireEvent.click(screen.getByRole("button", { name: /^1.42× speed$/ }));
-    expect(screen.getByText("escape path")).toBeTruthy();
+    fireEvent.click(speedAction);
+    expect(screen.getByTestId("orbit-speed-evidence").textContent).toContain(
+      "0.60× collision",
+    );
+    expect(screen.getByTestId("orbit-speed-evidence").textContent).toContain(
+      "1.42× escape",
+    );
+    expect(massAction).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Curves into a tighter ellipse",
+      }),
+    );
+    fireEvent.click(massAction);
+    expect(screen.getByTestId("orbit-mass-evidence").textContent).toContain(
+      "0.33–1.00 starting radii",
+    );
+    expect(screen.getByTestId("orbit-mass-feedback").textContent).toContain(
+      "same 1.00× launch",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.queryByTestId("orbit-speed-evidence")).toBeNull();
+    expect(screen.queryByTestId("orbit-mass-evidence")).toBeNull();
+    expect(speedAction).toBeDisabled();
     expect(
-      screen.getByText(/Gravity pulls toward the planet throughout/),
+      screen.getByText(/Planet radius is 0.22 of the starting radius/),
     ).toBeTruthy();
   });
   it("selects eight planets with buttons and preserves one diameter scale", () => {

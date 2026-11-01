@@ -34,12 +34,25 @@ describe("native guided experiment controls", () => {
     view.rerender(<NativeExploration id="future-topic" />);
     expect(view.queryByText("Open gate")).toBeNull();
   });
-  it("changes central mass without changing launch speed and resets", () => {
+  it("runs both controlled orbit comparisons and resets", () => {
     const view = render(<NativeExploration id="orbital-mechanics" />);
-    fireEvent.press(view.getByText("Increase Central mass"));
-    expect(view.getByText(/central mass 1.3/)).toBeTruthy();
+    const compareSpeed = view.getByText("Compare 0.60×, 1.00× and 1.42×");
+    expect(compareSpeed).toBeDisabled();
+    fireEvent.press(view.getByText("Hit → orbit → escape"));
+    fireEvent.press(compareSpeed);
+    expect(view.getByText(/0.60× collision/)).toBeTruthy();
+    expect(
+      view.getByText(/gravity still acts along the escape path/),
+    ).toBeTruthy();
+
+    const compareMass = view.getByText("Compare 1× and 2× mass");
+    expect(compareMass).toBeDisabled();
+    fireEvent.press(view.getByText("Curves into a tighter ellipse"));
+    fireEvent.press(compareMass);
+    expect(view.getAllByText(/0.33–1.00 starting radii/)).toHaveLength(2);
+
     fireEvent.press(view.getByText("Reset experiment"));
-    expect(view.getByText(/central mass 1.0/)).toBeTruthy();
+    expect(compareSpeed).toBeDisabled();
   });
   it("uses water in both optical directions", () => {
     const view = render(<NativeExploration id="reflection-refraction" />);

@@ -70,6 +70,39 @@ describe("downloaded Exploration platform support", () => {
     expect(view.queryByText("Repeated misconception.")).toBeNull();
   });
 
+  it("keeps the built-in Orbit lesson inside its activity instead of repeating registry prose", () => {
+    const view = render(
+      <ExplorationDetail
+        detail={
+          {
+            ...content,
+            id: "orbital-mechanics",
+            title: "Orbit Workshop",
+            question: "How does sideways launch speed change a falling path?",
+            explanation: "Repeated registry explanation.",
+            experiments: [
+              {
+                title: "Repeated experiment",
+                instruction: "Repeated instructions.",
+                observe: "Repeated observation.",
+              },
+            ],
+            misconception: "Repeated misconception.",
+            package: undefined,
+          } as DiscoveryExploration
+        }
+      />,
+    );
+
+    expect(
+      view.getByText("How does sideways launch speed change a falling path?"),
+    ).toBeTruthy();
+    expect(view.getByText("1. Change only sideways speed")).toBeTruthy();
+    expect(view.queryByText("Repeated registry explanation.")).toBeNull();
+    expect(view.queryByText("Repeated experiment")).toBeNull();
+    expect(view.queryByText("Repeated misconception.")).toBeNull();
+  });
+
   it("keeps the built-in photosynthesis lesson inside its activity instead of repeating registry prose", () => {
     const view = render(
       <ExplorationDetail

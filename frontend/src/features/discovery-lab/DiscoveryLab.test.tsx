@@ -176,7 +176,7 @@ describe("Discovery Lab", () => {
     fireEvent.click(screen.getByRole("button", { name: "Package authoring" }));
     expect(await screen.findByLabelText("Upload package ZIP")).toBeVisible();
   });
-  it("renders guided exploration and code simulation after authoritative detail read", async () => {
+  it("keeps the Orbit lesson in the activity without repeated registry prose", async () => {
     show("/discovery-lab/orbital-mechanics");
     expect(
       await screen.findByRole("heading", { name: orbit.title }),
@@ -184,7 +184,10 @@ describe("Discovery Lab", () => {
     expect(screen.getByTestId("simulation")).toHaveTextContent(
       "orbital-mechanics",
     );
-    expect(screen.getByText(orbit.misconception)).toBeVisible();
+    expect(screen.queryByText(orbit.explanation)).toBeNull();
+    expect(screen.queryByText(orbit.experiments[0].title)).toBeNull();
+    expect(screen.queryByText(orbit.misconception)).toBeNull();
+    expect(screen.getByText("Sources")).toBeVisible();
     expect(apiClient.getDiscoveryExploration).toHaveBeenCalledWith(
       "orbital-mechanics",
     );

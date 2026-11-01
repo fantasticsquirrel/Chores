@@ -1,14 +1,14 @@
 {
   "experiments": [
     {
-      "title": "Compare launch speeds",
-      "instruction": "Predict what happens at 0.60× baseline speed. Keep central mass at 1×. Choose a prediction, then Test 0.60× speed.",
-      "observe": "The path reaches the planet. Explain how insufficient sideways motion lets gravity curve the path into the surface."
+      "title": "Change only sideways speed",
+      "instruction": "Predict the outcome order at 0.60×, 1.00× and 1.42× speed. Keep central mass at 1× and starting distance fixed, then compare all three paths.",
+      "observe": "The paths collide, orbit and escape in that order. Gravity still curves the escaping path."
     },
     {
-      "title": "Test escape",
-      "instruction": "Predict what 1.42× speed will do. Choose 1.42× speed, keeping central mass at 1×, then use Play motion or Trace position.",
-      "observe": "Compare with 1.00× speed. The escaping probe still experiences gravity; explain why escape does not mean gravity disappears."
+      "title": "Change only central mass",
+      "instruction": "Predict the path at 2× central mass. Keep launch speed at 1.00× and starting distance fixed, then compare with 1× mass.",
+      "observe": "The 1×-mass path stays near circular; the 2×-mass path becomes a tighter ellipse because circular speed is higher."
     }
   ]
 }

@@ -164,8 +164,11 @@ export function DiscoveryExplorationPage() {
   );
   if (!allowed) return <DiscoveryUnavailable />;
   const item = exploration.data;
-  const lessonRunsInActivity =
-    item?.id === "chance-carnival" || item?.id === "photosynthesis";
+  const lessonRunsInActivity = [
+    "chance-carnival",
+    "orbital-mechanics",
+    "photosynthesis",
+  ].includes(item?.id ?? "");
   return (
     <div className="discovery-lab discovery-detail">
       <Link className="discovery-back" to="/discovery-lab">

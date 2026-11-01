@@ -31,6 +31,10 @@ describe("interactive exploration controls", () => {
       expect(screen.getByText("1. Predict")).toBeTruthy();
     else if (id === "photosynthesis")
       expect(screen.getByText("1. Test a missing input")).toBeTruthy();
+    else if (id === "orbital-mechanics")
+      expect(
+        screen.getByRole("heading", { name: "Change sideways speed" }),
+      ).toBeTruthy();
     else expect(screen.getByText("Try this")).toBeTruthy();
   });
   it("changes orbit physics with launch speed and central mass", () => {
@@ -38,7 +42,9 @@ describe("interactive exploration controls", () => {
     fireEvent.change(screen.getByLabelText("Launch speed"), {
       target: { value: 1.6 },
     });
-    expect(screen.getByText("escape path")).toBeTruthy();
+    expect(
+      screen.getByText("escape", { selector: ".orbit-outcome" }),
+    ).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Central mass"), {
       target: { value: 2 },
     });
@@ -68,11 +74,15 @@ describe("interactive exploration controls", () => {
     fireEvent.change(screen.getByLabelText("Water availability"), {
       target: { value: 0 },
     });
-    expect(screen.getByText("0 / 100")).toBeTruthy();
+    expect(
+      screen.getByRole("meter", { name: "Toy activity index" }),
+    ).toHaveAttribute("aria-valuenow", "0");
     fireEvent.change(screen.getByLabelText("Light availability"), {
       target: { value: 100 },
     });
-    expect(screen.getByText("0 / 100")).toBeTruthy();
+    expect(
+      screen.getByRole("meter", { name: "Toy activity index" }),
+    ).toHaveAttribute("aria-valuenow", "0");
   });
   it("changes the route when the gate opens", () => {
     render(<ExplorationSimulation explorationId="castle-defenses" />);

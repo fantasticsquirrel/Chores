@@ -72,9 +72,11 @@ describe("Discovery routes", () => {
     open("/discovery-lab/gravity");
     const routeFallback = await screen.findByText("Opening Exploration…");
     await waitForElementToBeRemoved(routeFallback, { timeout: 5_000 });
-    const slider = screen.getByRole("slider", {
-      name: "Test experiment control",
-    });
+    const slider = await screen.findByRole(
+      "slider",
+      { name: "Test experiment control" },
+      { timeout: 10_000 },
+    );
     expect(slider).toBeEnabled();
     expect(document.querySelector(".module-read-only")).toBeNull();
     fireEvent.change(slider, { target: { value: "7" } });

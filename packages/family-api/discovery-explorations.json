@@ -14,30 +14,38 @@
       "motion",
       "orbits"
     ],
-    "summary": "Launch a satellite and discover how speed and gravity shape its path.",
-    "question": "How can something keep falling without reaching the ground?",
-    "explanation": "An orbit is a continuing fall around a world. Sideways motion carries a satellite forward while gravity curves its path inward. Gravity weakens with the square of distance from the center. This scaled, two-dimensional model leaves out air resistance, other worlds and the satellite’s pull on the planet.",
+    "summary": "Compare collisions, orbits and escapes by changing one launch variable at a time.",
+    "question": "How does sideways launch speed change a falling path?",
+    "explanation": "Gravity accelerates a probe toward the central body while sideways motion carries it forward. At one starting radius in this model, too little sideways speed intersects the drawn surface, the baseline speed makes a circular orbit, and at least √2 times that baseline escapes. Doubling central mass raises the circular speed to √2 times the original baseline, so an unchanged launch curves into a tighter ellipse. Gravity continues to act along bound and escape paths.",
     "experiments": [
       {
-        "title": "Find an orbit",
-        "instruction": "Keep central mass at 1. Predict the paths at launch speeds 0.2, 1 and 1.5, then compare the traces.",
-        "observe": "Identify a collision, a bound orbit and an escape path. Explain how sideways speed changes the effect of gravity on the path."
+        "title": "Change sideways speed",
+        "instruction": "Predict the sequence for 0.60×, 1.00× and 1.42× launch speed. Keep central mass at 1× and the starting radius fixed, then compare all three traces.",
+        "observe": "Identify collision, bound orbit and escape. Explain why the escaping trace still curves while gravity acts."
       },
       {
-        "title": "Change the pull",
-        "instruction": "Keep launch speed at 1. Predict how the path will change when you increase central mass, then compare the traces.",
-        "observe": "Look for a stronger inward curve. Explain why the same launch speed no longer makes the same circular orbit."
+        "title": "Change central mass",
+        "instruction": "Predict the path at 2× central mass. Keep launch speed at 1.00× and the starting radius fixed, then compare with mass 1×.",
+        "observe": "Compare the 1.00–1.00 and 0.33–1.00 radius ranges. Explain why the same launch no longer makes a circle."
       }
     ],
-    "misconception": "Orbiting spacecraft have not escaped gravity. Gravity is what keeps their paths curving.",
+    "misconception": "Escape does not mean gravity switches off. Gravity weakens with distance and keeps curving the escape path even though it cannot turn the probe back.",
     "sources": [
       {
-        "title": "NASA: Gravity and mechanics",
+        "title": "NASA Basics of Space Flight: acceleration in orbit",
         "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/"
       },
       {
-        "title": "NASA: Orbital motion",
+        "title": "NASA Basics of Space Flight: orbit and free fall",
         "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter3-4/"
+      },
+      {
+        "title": "NASA Universe of Learning: orbit types and circular speed",
+        "url": "https://www.nasa.gov/wp-content/uploads/2023/09/nw-10182021.pdf"
+      },
+      {
+        "title": "NASA GSFC: orbital velocity and escape",
+        "url": "https://spdf.gsfc.nasa.gov/pub/documents/archived_websites/pwg.gsfc.nasa.gov/stargaze/Skepl3rd.htm"
       }
     ],
     "duration_minutes": 12
