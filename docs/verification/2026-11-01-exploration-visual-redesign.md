@@ -1,7 +1,9 @@
 # Chance Carnival + Leaf Energy Lab visual redesign verification
 
-Date: 2026-11-01  
-Branch: `feat/discovery-learning-overhaul`  
+Date: 2026-11-01
+
+Branch: `feat/discovery-learning-overhaul`
+
 Starting revision: `6e8292670e44ab0b85501c50e48f4c90d866a45b`
 
 ## Verified scope
