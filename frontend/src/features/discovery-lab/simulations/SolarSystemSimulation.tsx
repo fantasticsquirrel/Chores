@@ -77,6 +77,27 @@ export function SolarSystemSimulation() {
         className="solar-mission"
         aria-label="Solar system comparison view"
       >
+        {mode === "orbits" && (
+          <div className="solar-camera-row">
+            <span id="solar-camera-label">Camera view</span>
+            <div
+              className="solar-camera-switch"
+              role="group"
+              aria-labelledby="solar-camera-label"
+            >
+              {(["close", "overview", "follow"] as const).map((view) => (
+                <button
+                  type="button"
+                  key={view}
+                  aria-pressed={cameraMode === view}
+                  onClick={() => setCameraMode(view)}
+                >
+                  {view[0].toUpperCase() + view.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div
           className={`solar-stage solar-stage--${mode}`}
           data-camera={cameraMode}
@@ -101,24 +122,6 @@ export function SolarSystemSimulation() {
               {mode === "sizes" ? "Earth diameters" : "mean distance"}
             </span>
           </div>
-          {mode === "orbits" && (
-            <div
-              className="solar-camera-switch"
-              role="group"
-              aria-label="Camera view"
-            >
-              {(["close", "overview", "follow"] as const).map((view) => (
-                <button
-                  type="button"
-                  key={view}
-                  aria-pressed={cameraMode === view}
-                  onClick={() => setCameraMode(view)}
-                >
-                  {view[0].toUpperCase() + view.slice(1)}
-                </button>
-              ))}
-            </div>
-          )}
           <Suspense
             fallback={
               <div className="space-loading">Loading 3D solar system…</div>
@@ -136,39 +139,26 @@ export function SolarSystemSimulation() {
               fallbackLabel={`${planet.name}: ${planet.meanDistanceAu} AU mean distance, ${planet.orbitalPeriodYears} Earth-year orbit, ${planet.diameterKm.toLocaleString()} km equatorial diameter.`}
             />
           </Suspense>
-          <div className="solar-scene-key" aria-label="Scene key">
-            {mode === "sizes" ? (
-              <span>
-                Earth and {planet.name} · one diameter scale and baseline
-              </span>
-            ) : cameraMode === "close" ? (
-              <>
-                <span>
-                  <i className="solar-key-selected" aria-hidden="true" />{" "}
-                  Sun-centered inset: selected path
-                </span>
-                <span>Globe: enlarged planet close-up</span>
-              </>
-            ) : (
-              <>
-                <span>
-                  <i className="solar-key-selected" aria-hidden="true" />{" "}
-                  selected path
-                </span>
-                <span>
-                  <i className="solar-key-trail" aria-hidden="true" /> elapsed
-                  arc
-                </span>
-              </>
-            )}
-          </div>
-          <p className="solar-scene-help">
+        </div>
+
+        <div className="solar-stage-caption">
+          <p>
             {mode === "sizes"
-              ? "Compare from the shared baseline; the Sun and orbit gaps are not in this view."
-              : cameraMode === "close"
-                ? "Sun-centered inset with compressed orbit gaps; globe enlarged separately."
-                : "Drag or use arrow keys to change the same ten-year timeline."}
+              ? `Earth and ${planet.name} share one diameter scale and baseline; rings are excluded.`
+              : "Planet enlarged; orbit distances compressed."}
           </p>
+          {mode === "orbits" && cameraMode === "overview" && (
+            <div className="solar-scene-key" aria-label="Scene key">
+              <span>
+                <i className="solar-key-selected" aria-hidden="true" />
+                selected planet’s orbit
+              </span>
+              <span>
+                <i className="solar-key-trail" aria-hidden="true" />
+                elapsed portion
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="solar-flight-deck">

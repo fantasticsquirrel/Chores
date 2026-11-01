@@ -74,7 +74,9 @@ async function expectSolarTextContrast(page: Page) {
       document.querySelector<HTMLElement>(".solar-scene-heading h2")!,
       document.querySelector<HTMLElement>(".solar-scene-heading p")!,
     ];
-    const help = document.querySelector<HTMLElement>(".solar-scene-help")!;
+    const caption = document.querySelector<HTMLElement>(
+      ".solar-stage-caption",
+    )!;
     const deckText = Array.from(
       document.querySelectorAll<HTMLElement>(
         ".solar-readout dt, .solar-readout dd",
@@ -86,9 +88,9 @@ async function expectSolarTextContrast(page: Page) {
       stageContrasts: stageText.map((element) =>
         minimumContrast(getComputedStyle(element).color, stageStops),
       ),
-      helpContrast: contrast(
-        parseRgb(getComputedStyle(help).color),
-        parseRgb(getComputedStyle(help).backgroundColor),
+      captionContrast: contrast(
+        parseRgb(getComputedStyle(caption).color),
+        parseRgb(getComputedStyle(caption).backgroundColor),
       ),
       deckContrasts: deckText.map((element) =>
         minimumContrast(getComputedStyle(element).color, deckStops),
@@ -101,7 +103,9 @@ async function expectSolarTextContrast(page: Page) {
   for (const [index, ratio] of audit.stageContrasts.entries()) {
     expect(ratio, `stage text ${index}`).toBeGreaterThanOrEqual(4.5);
   }
-  expect(audit.helpContrast, "scene help text").toBeGreaterThanOrEqual(4.5);
+  expect(audit.captionContrast, "scene caption text").toBeGreaterThanOrEqual(
+    4.5,
+  );
   for (const [index, ratio] of audit.deckContrasts.entries()) {
     expect(ratio, `deck text ${index}`).toBeGreaterThanOrEqual(4.5);
   }
@@ -122,6 +126,12 @@ async function capture(
   if (!captureRoot) return;
   mkdirSync(captureRoot, { recursive: true, mode: 0o700 });
   const prefix = `${captureLabel}-${state}-${viewport}`;
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      ),
+  );
   await page.screenshot({
     path: path.join(captureRoot, `${prefix}-full.png`),
     fullPage: true,
@@ -177,12 +187,27 @@ for (const viewport of [
     await expect(
       page.getByRole("button", { name: "Compare Earth and Jupiter" }),
     ).toBeDisabled();
+    const stage = page.locator(".solar-stage");
+    const cameraControls = page.getByRole("group", { name: "Camera view" });
+    const [stageBox, cameraBox] = await Promise.all([
+      stage.boundingBox(),
+      cameraControls.boundingBox(),
+    ]);
+    expect(stageBox).not.toBeNull();
+    expect(cameraBox).not.toBeNull();
+    expect(cameraBox!.y + cameraBox!.height).toBeLessThanOrEqual(stageBox!.y);
+    await expect(
+      page.getByText("Planet enlarged; orbit distances compressed.", {
+        exact: true,
+      }),
+    ).toHaveCount(1);
     await expect(
       page.getByText("Sun-centered inset: selected path", { exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       page.getByText("Globe: enlarged planet close-up", { exact: true }),
-    ).toBeVisible();
+    ).toHaveCount(0);
+    await expect(page.locator(".solar-scene-key")).toHaveCount(0);
     await expect(page.getByText("Planet mission", { exact: true })).toHaveCount(
       0,
     );
@@ -193,6 +218,9 @@ for (const viewport of [
     await expect(
       page.getByRole("button", { name: "Overview", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator(".solar-scene-key")).toContainText(
+      "selected planet’s orbit",
+    );
     await capture(page, viewport.name, "overview");
 
     await page.getByRole("button", { name: "Mars 4", exact: true }).click();
@@ -201,6 +229,7 @@ for (const viewport of [
       page.getByRole("button", { name: "Follow", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByText("Mars", { exact: true }).first()).toBeVisible();
+    await expect(page.locator(".solar-scene-key")).toHaveCount(0);
     await capture(page, viewport.name, "follow");
 
     const scene = page.locator(".space-render-solar");
@@ -243,8 +272,8 @@ for (const viewport of [
     await expect(page.getByTestId("solar-diameter-feedback")).toContainText(
       "11.21 Earth diameters",
     );
-    await expect(page.locator(".solar-scene-key")).toContainText(
-      "one diameter scale and baseline",
+    await expect(page.locator(".solar-stage-caption")).toContainText(
+      "Earth and Jupiter share one diameter scale and baseline",
     );
     await capture(page, viewport.name, "diameter");
     await capture(page, viewport.name, "operated");
@@ -258,9 +287,9 @@ for (const viewport of [
       .getByLabel("Comparison view", { exact: true })
       .selectOption("orbits");
     await page.getByRole("button", { name: "Overview", exact: true }).click();
-    await expect(
-      page.getByText("selected path", { exact: true }),
-    ).toBeVisible();
+    await expect(page.locator(".solar-scene-key")).toContainText(
+      "selected planet’s orbit",
+    );
     await capture(page, viewport.name, "boundary");
 
     expect(

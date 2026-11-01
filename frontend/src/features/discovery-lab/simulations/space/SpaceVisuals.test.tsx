@@ -190,6 +190,33 @@ describe("space learning controls", () => {
     expect(diameterAction).toBeDisabled();
   });
 
+  it("keeps Solar camera controls outside the drawing and removes repeated scene notes", () => {
+    render(<SolarSystemSimulation />);
+
+    const stage = document.querySelector(".solar-stage");
+    const cameraControls = screen.getByRole("group", { name: "Camera view" });
+    expect(stage).toBeTruthy();
+    expect(stage?.contains(cameraControls)).toBe(false);
+    expect(
+      screen.getAllByText("Planet enlarged; orbit distances compressed."),
+    ).toHaveLength(1);
+    expect(
+      screen.queryByText("Sun-centered inset: selected path", { exact: true }),
+    ).toBeNull();
+    expect(
+      screen.queryByText("Globe: enlarged planet close-up", { exact: true }),
+    ).toBeNull();
+    expect(screen.queryByLabelText("Scene key")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Overview" }));
+    expect(screen.getByLabelText("Scene key")).toHaveTextContent(
+      "selected planet’s orbit",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Follow" }));
+    expect(screen.queryByLabelText("Scene key")).toBeNull();
+  });
+
   it("keeps solar motion opt-in and keyboard-scrubbable", async () => {
     render(<SolarSystemSimulation />);
     expect(screen.getByRole("button", { name: "Play motion" })).toBeTruthy();

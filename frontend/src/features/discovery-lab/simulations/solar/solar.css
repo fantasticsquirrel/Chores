@@ -77,6 +77,25 @@
     inset 0 1px rgba(255, 255, 255, 0.05);
 }
 
+.solar-camera-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 62px;
+  padding: 9px 20px;
+  border-bottom: 1px solid rgba(115, 171, 181, 0.35);
+  background: linear-gradient(135deg, rgb(14, 40, 52), rgb(8, 27, 40));
+}
+
+.solar-camera-row > span {
+  color: #dceae5;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .solar-lab .solar-stage {
   position: relative;
   min-height: 660px;
@@ -125,10 +144,7 @@
 }
 
 .solar-scene-heading,
-.solar-scene-stat,
-.solar-camera-switch,
-.solar-scene-key,
-.solar-lab .solar-scene-help {
+.solar-scene-stat {
   position: absolute;
   z-index: 2;
 }
@@ -207,8 +223,6 @@
 }
 
 .solar-camera-switch {
-  top: 112px;
-  right: 28px;
   display: flex;
   padding: 3px;
   border: 1px solid rgba(132, 190, 197, 0.44);
@@ -233,14 +247,29 @@
   box-shadow: 0 2px 14px rgba(207, 239, 217, 0.25);
 }
 
+.solar-stage-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 22px;
+  min-height: 48px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(115, 171, 181, 0.35);
+  color: #c4d7dd;
+  background: #06121e;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.solar-stage-caption p {
+  margin: 0;
+}
+
 .solar-scene-key {
-  bottom: 25px;
-  left: 28px;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 18px;
-  color: #c4d7dd;
-  font-size: 0.78rem;
 }
 
 .solar-scene-key span {
@@ -263,21 +292,6 @@
 .solar-key-trail {
   background: #82e4d0;
   box-shadow: 0 0 8px #71d8c3;
-}
-
-.solar-lab .solar-scene-help {
-  right: 28px;
-  bottom: 23px;
-  max-width: 430px;
-  margin: 0;
-  padding: 7px 10px;
-  border: 1px solid rgba(154, 204, 209, 0.2);
-  border-radius: 9px;
-  color: #c0d5dd;
-  background: #06121e;
-  font-size: 0.77rem;
-  line-height: 1.35;
-  text-align: right;
 }
 
 .solar-lab .space-render-fallback {
@@ -728,24 +742,14 @@
     font-size: 1.72rem;
   }
 
-  .solar-camera-switch {
-    top: 112px;
-    right: auto;
-    left: 20px;
+  .solar-stage-caption {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .solar-scene-key {
-    bottom: 70px;
-    left: 20px;
+    justify-content: flex-start;
     gap: 12px;
-  }
-
-  .solar-lab .solar-scene-help {
-    right: 20px;
-    bottom: 19px;
-    left: 20px;
-    max-width: none;
-    text-align: left;
   }
 
   .solar-flight-deck,
@@ -787,12 +791,25 @@
     min-height: 500px;
   }
 
+  .solar-camera-row {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 7px;
+    padding: 10px 14px 12px;
+  }
+
+  .solar-camera-switch {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .solar-scene-heading p,
   .solar-scene-stat span {
     font-size: 0.7rem;
   }
 
   .solar-camera-switch button {
+    width: 100%;
     padding-inline: 11px;
   }
 

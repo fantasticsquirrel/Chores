@@ -38,6 +38,39 @@ function createGlowSphere(radius: number, color: number, opacity: number) {
   );
 }
 
+function createSceneLabel(text: string, accent = false) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 384;
+  canvas.height = 96;
+  const context = canvas.getContext("2d")!;
+  context.fillStyle = "rgba(3, 14, 24, 0.88)";
+  context.fillRect(1, 1, canvas.width - 2, canvas.height - 2);
+  context.strokeStyle = accent
+    ? "rgba(245, 223, 162, 0.92)"
+    : "rgba(141, 193, 201, 0.72)";
+  context.lineWidth = 4;
+  context.strokeRect(3, 3, canvas.width - 6, canvas.height - 6);
+  context.fillStyle = accent ? "#fff1bd" : "#f2f7f2";
+  context.font = "700 42px system-ui, sans-serif";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText(text, canvas.width / 2, canvas.height / 2 + 1);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearFilter;
+  const label = new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: texture,
+      depthTest: false,
+      depthWrite: false,
+      transparent: true,
+      toneMapped: false,
+    }),
+  );
+  label.renderOrder = 20;
+  return label;
+}
+
 function createAsteroidBelt(parent: THREE.Object3D) {
   const inner = orbitRadius(3);
   const outer = orbitRadius(4);
@@ -96,7 +129,8 @@ export function buildSolarScene(
   });
 
   const stars = addStars(scene);
-  scene.add(new THREE.HemisphereLight(0x91b9d5, 0x02050a, 0.78));
+  const ambient = new THREE.HemisphereLight(0x91b9d5, 0x02050a, 0.78);
+  scene.add(ambient);
   const warmKey = new THREE.DirectionalLight(0xffddac, 4.6);
   warmKey.position.set(-6, 5, 8);
   warmKey.castShadow = true;
@@ -159,24 +193,36 @@ export function buildSolarScene(
     sunGroup.add(
       createGlowSphere(0.23 + layer * 0.035, 0xffa84d, 0.09 - layer * 0.012),
     );
-  const sunLight = new THREE.PointLight(0xffc36d, 4.2, 12, 1.4);
-  sunLight.position.set(0, 0.5, 0);
+  const sunLight = new THREE.PointLight(0xffc36d, 16, 0, 2);
+  sunLight.position.set(0, 0.16, 0);
   system.add(sunLight);
 
   const orbitLines = PLANETS.map((_, index) =>
     ring(orbitRadius(index), 0x55798c, system, 0.42),
   );
   createAsteroidBelt(system);
-  const systemPlanets = PLANETS.map((planet, index) => {
-    const radius = Math.min(
-      0.13,
-      0.055 + Math.sqrt(planet.diameter / PLANETS[2].diameter) * 0.022,
-    );
+  const systemPlanetRadii = PLANETS.map((planet) =>
+    Math.min(
+      0.16,
+      0.065 + Math.sqrt(planet.diameter / PLANETS[2].diameter) * 0.026,
+    ),
+  );
+  const systemPlanets = PLANETS.map((_, index) => {
+    const radius = systemPlanetRadii[index];
     const group = createPlanet(index, radius, earthTexture, textures[index]);
     group.name = `solar-overview-${index}`;
     system.add(group);
     return group;
   });
+  const systemLabels = PLANETS.map((planet) => {
+    const label = createSceneLabel(planet.name);
+    label.name = `solar-label-${planet.name.toLowerCase()}`;
+    system.add(label);
+    return label;
+  });
+  const sunLabel = createSceneLabel("Sun", true);
+  sunLabel.name = "solar-label-sun";
+  system.add(sunLabel);
   const selectedMarker = ring(0.17, 0xf5dfa2, system, 0.92);
   selectedMarker.rotation.x = Math.PI / 2;
   const startMarker = new THREE.Mesh(
@@ -245,6 +291,43 @@ export function buildSolarScene(
     system.visible = state.mode === "orbits" && state.cameraMode !== "close";
     sizes.visible = state.mode === "sizes";
     stars.position.set(0, 0, 0);
+    const sunCenteredLighting =
+      state.mode === "orbits" && state.cameraMode !== "close";
+    warmKey.visible = !sunCenteredLighting;
+    blueRim.visible = !sunCenteredLighting;
+    ambient.intensity = sunCenteredLighting ? 0.22 : 0.78;
+    sunLight.visible = sunCenteredLighting;
+    selectedMarker.visible = state.cameraMode === "overview";
+    systemLabels.forEach((label, index) => {
+      const follow = state.cameraMode === "follow";
+      label.visible =
+        state.cameraMode === "overview" || (follow && index === state.selected);
+      label.scale.set(
+        follow ? (aspect < 1 ? 0.62 : 0.66) : aspect < 1 ? 0.92 : 0.76,
+        follow ? (aspect < 1 ? 0.155 : 0.165) : aspect < 1 ? 0.23 : 0.19,
+        1,
+      );
+    });
+    sunLabel.visible =
+      state.cameraMode === "overview" || state.cameraMode === "follow";
+    sunLabel.scale.set(
+      state.cameraMode === "follow"
+        ? aspect < 1
+          ? 0.52
+          : 0.54
+        : aspect < 1
+          ? 0.78
+          : 0.68,
+      state.cameraMode === "follow"
+        ? aspect < 1
+          ? 0.13
+          : 0.135
+        : aspect < 1
+          ? 0.195
+          : 0.17,
+      1,
+    );
+    sunLabel.position.set(0, 0.3, 0);
 
     if (state.mode === "sizes") {
       const comparisonRadius =
@@ -281,7 +364,7 @@ export function buildSolarScene(
     }
 
     if (state.cameraMode === "overview") {
-      frameCamera(camera, aspect, 3.35, 3.35);
+      frameCamera(camera, aspect, 3.18, 3.18);
       focus.set(0, 0, 0);
       camera.position.set(0, 7.8, 6.9);
       camera.lookAt(focus);
@@ -297,8 +380,8 @@ export function buildSolarScene(
       frameCamera(
         camera,
         aspect,
-        aspect < 1 ? 0.76 : 0.68,
-        aspect < 1 ? 0.72 : 0.95,
+        aspect < 1 ? 0.98 : 0.82,
+        aspect < 1 ? 0.7 : 1.2,
       );
       camera.position.copy(focus).add(new THREE.Vector3(2.9, 2.5, 3.1));
       camera.lookAt(focus);
@@ -313,15 +396,15 @@ export function buildSolarScene(
       aspect < 1 ? 1.7 : 2.2,
     );
     closeWorlds.forEach((world) => {
-      world.position.set(aspect < 1 ? 0 : 0.38, aspect < 1 ? 0.34 : 0.12, 0);
-      world.scale.setScalar(aspect < 1 ? 0.77 : 1);
+      world.position.set(aspect < 1 ? 0 : 0.38, aspect < 1 ? 0.22 : 0.12, 0);
+      world.scale.setScalar(aspect < 1 ? 0.9 : 1);
     });
     closeInset.position.set(
       aspect < 1 ? -0.55 : -1.43,
-      aspect < 1 ? -1.02 : -0.74,
+      aspect < 1 ? -1.25 : -1.0,
       0.22,
     );
-    closeInset.scale.setScalar(aspect < 1 ? 0.73 : 0.84);
+    closeInset.scale.setScalar(aspect < 1 ? 0.82 : 0.86);
     focus.set(0.12, -0.02, 0);
     camera.position.set(2.9, 3.1, 6.4);
     camera.lookAt(focus);
@@ -378,6 +461,12 @@ export function buildSolarScene(
       const selectedRadius = orbitRadius(state.selected);
       const start = state.selected * 0.8;
       selectedMarker.position.copy(selected.position);
+      selectedMarker.scale.setScalar(
+        Math.max(
+          0.85,
+          (systemPlanetRadii[state.selected] * 1.18 + 0.04) / 0.17,
+        ),
+      );
       startMarker.position.set(
         Math.cos(start) * selectedRadius,
         0.018,
@@ -392,11 +481,23 @@ export function buildSolarScene(
       travel.geometry = arcGeometry(selectedRadius, start, shownFraction);
       travelGlow.geometry = travel.geometry.clone();
 
-      systemPlanets.forEach((world, index) =>
-        world.scale.setScalar(
-          state.cameraMode === "follow" && index === state.selected ? 2.25 : 1,
-        ),
-      );
+      systemPlanets.forEach((world, index) => {
+        const scale =
+          index === state.selected
+            ? state.cameraMode === "follow"
+              ? 2.15
+              : state.cameraMode === "overview"
+                ? 1.18
+                : 1
+            : 1;
+        world.scale.setScalar(scale);
+        systemLabels[index].position.set(
+          world.position.x,
+          systemPlanetRadii[index] * scale +
+            (state.cameraMode === "follow" ? 0.17 : 0.1),
+          world.position.z,
+        );
+      });
       layout();
     },
   };
