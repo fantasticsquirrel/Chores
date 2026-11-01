@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import {
   countOutcomes,
   drawOutcomes,
@@ -13,13 +13,8 @@ import {
 } from "./chance/ChanceGuidedChallenges";
 import { ChanceEvidenceSummary } from "./chance/ChanceEvidenceSummary";
 import { ChanceOpenInvestigation } from "./chance/ChanceOpenInvestigation";
+import { ChanceDeviceGraphic } from "./chance/ChanceDeviceGraphic";
 import "./tactile/tactile.css";
-
-const TableCanvas = lazy(() =>
-  import("./tactile/TableCanvas").then((module) => ({
-    default: module.TableCanvas,
-  })),
-);
 
 const FAIR_WEIGHTS = [1, 1, 1, 1];
 const DOUBLED_WEIGHTS = [2, 1, 1, 1];
@@ -169,55 +164,48 @@ export function ChanceCarnivalSimulation() {
 
   return (
     <div className="tactile-exhibit chance-exhibit">
-      <div className="chance-table">
-        <div className="chance-machine">
-          <div
-            className="chance-render"
-            role="img"
-            aria-label={`${die ? "Six die" : "Four spinner"} outcomes. Expected chances: ${chances.map((chance) => `${(chance * 100).toFixed(1)}%`).join(", ")}. ${total} trials. ${last === null ? "No draws yet." : `Last draw: ${last + 1}.`} ${fair ? "All outcomes have equal chances." : "Outcomes have unequal chances."}`}
-          >
-            <Suspense
-              fallback={
-                <div className="tactile-loading">
-                  Loading the probability model…
-                </div>
-              }
+      <section className="chance-workbench" aria-label="Probability workbench">
+        <div className="chance-table">
+          <div className="chance-machine">
+            <div
+              className="chance-render"
+              role="img"
+              aria-label={`${die ? "Six-sided die" : "Four-section spinner"}. Expected chances: ${chances.map((chance) => `${(chance * 100).toFixed(1)}%`).join(", ")}. ${total} trials. ${last === null ? "No draws yet." : `Last draw: ${last + 1}.`} ${fair ? "All outcomes have equal chances." : "Outcomes have unequal chances."}`}
             >
-              <TableCanvas
-                kind="chance"
+              <ChanceDeviceGraphic
                 chances={chances}
                 die={die}
                 last={last}
                 selected={outcome}
               />
-            </Suspense>
+            </div>
+            <div className="chance-last">
+              <span>Last draw</span>
+              <strong data-testid="chance-last-outcome">
+                {last === null ? "—" : last + 1}
+              </strong>
+            </div>
+            <p className="chance-machine-caption">
+              {die
+                ? "Top face = last draw"
+                : "Sector size = chance · Pointer = last draw"}
+            </p>
           </div>
-          <div className="chance-last">
-            <span>LAST DRAW</span>
-            <strong data-testid="chance-last-outcome">
-              {last === null ? "—" : last + 1}
-            </strong>
-          </div>
-          <p className="chance-machine-caption">
-            {die
-              ? "Top face = last draw"
-              : "Sector size = chance · Pointer = last draw"}
-          </p>
+          <ChanceDistribution
+            chances={chances}
+            counts={counts}
+            selected={outcome}
+            onSelect={setOutcome}
+          />
         </div>
-        <ChanceDistribution
-          chances={chances}
+        <ChanceEvidenceSummary
+          recent={recent}
           counts={counts}
-          selected={outcome}
-          onSelect={setOutcome}
+          weights={weights}
+          outcome={outcome}
+          chances={chances}
         />
-      </div>
-      <ChanceEvidenceSummary
-        recent={recent}
-        counts={counts}
-        weights={weights}
-        outcome={outcome}
-        chances={chances}
-      />
+      </section>
       <ChanceGuidedChallenges
         prediction={prediction}
         smallSample={smallSample}

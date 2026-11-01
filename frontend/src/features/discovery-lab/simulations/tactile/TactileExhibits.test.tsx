@@ -3,12 +3,38 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FractionFeastSimulation } from "../FractionFeastSimulation";
 import { PatternPalaceSimulation } from "../PatternPalaceSimulation";
 import { ChanceCarnivalSimulation } from "../ChanceCarnivalSimulation";
+import { ChanceDeviceGraphic } from "../chance/ChanceDeviceGraphic";
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
 describe("tactile mathematical exhibits", () => {
+  it("draws weighted spinner sectors with non-color patterns and the sampled pointer", () => {
+    render(
+      <ChanceDeviceGraphic
+        chances={[0.4, 0.2, 0.2, 0.2]}
+        die={false}
+        last={0}
+        selected={2}
+      />,
+    );
+
+    expect(screen.getByTestId("chance-sector-1")).toHaveAttribute(
+      "data-share",
+      "40.0",
+    );
+    expect(screen.getByTestId("chance-sector-3")).toHaveAttribute(
+      "data-selected",
+      "true",
+    );
+    expect(screen.getByTestId("chance-pointer")).toHaveAttribute(
+      "data-outcome",
+      "1",
+    );
+    expect(screen.getAllByTestId("chance-sector-pattern")).toHaveLength(4);
+  });
+
   it("selects individual equal slices and preserves selection when subdividing", () => {
     render(<FractionFeastSimulation />);
     fireEvent.click(screen.getByRole("button", { name: "Plate A slice 2" }));

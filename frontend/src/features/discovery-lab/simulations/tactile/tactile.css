@@ -1349,3 +1349,723 @@
     margin-left: 0;
   }
 }
+
+/* Chance Carnival visual workbench. */
+.chance-exhibit {
+  --chance-ink: #193f3a;
+  --chance-muted: #526a60;
+  --chance-paper: #fbf7ec;
+  --chance-line: #c9bea3;
+  background:
+    radial-gradient(circle at 8% 4%, #f4e7c4 0 4%, transparent 24%),
+    #e8e0cb;
+}
+
+.chance-workbench {
+  margin: 18px;
+  overflow: hidden;
+  border: 1px solid #b9ad91;
+  border-radius: 20px;
+  background: #d7c9aa;
+  box-shadow: 0 18px 42px #263d3322;
+}
+
+.chance-workbench .chance-table {
+  grid-template-columns: minmax(330px, 0.84fr) minmax(460px, 1.16fr);
+  gap: 24px;
+  padding: 24px;
+}
+
+.chance-workbench .chance-machine {
+  display: grid;
+  grid-template-rows: 320px auto auto;
+  height: auto;
+  min-width: 0;
+  padding: 4px 4px 0;
+}
+
+.chance-workbench .chance-render {
+  position: relative;
+  inset: auto;
+  min-width: 0;
+  height: 320px;
+}
+
+.chance-device-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chance-sector-label {
+  fill: #193f3a;
+  font: 800 17px/1 system-ui, sans-serif;
+}
+
+.chance-pointer {
+  transition: transform 420ms cubic-bezier(0.2, 0.78, 0.28, 1);
+  transform-origin: 210px 172px;
+}
+
+.chance-workbench .chance-last {
+  position: static;
+  display: flex;
+  gap: 9px;
+  justify-content: center;
+  min-height: 34px;
+  color: var(--chance-ink);
+}
+
+.chance-workbench .chance-last > span {
+  color: var(--chance-muted);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.chance-workbench .chance-last strong {
+  min-width: 1ch;
+  color: var(--chance-ink);
+  font-family: Georgia, serif;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  text-align: center;
+}
+
+.chance-workbench .chance-last strong[data-testid="chance-last-outcome"] {
+  min-width: 1ch;
+  text-align: center;
+}
+
+.chance-workbench .chance-machine-caption {
+  position: static;
+  margin: 7px 0 0;
+  color: var(--chance-muted);
+  font-size: 12px;
+}
+
+.chance-workbench .chance-distribution {
+  align-self: stretch;
+  padding: 22px 24px 18px;
+  border: 1px solid #b5ab91;
+  border-radius: 16px;
+  background: #fbf8ef;
+  box-shadow: 0 12px 30px #33443a1a;
+}
+
+.chance-distribution-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.chance-distribution-header h3,
+.chance-workbench .chance-distribution h3 {
+  margin: 0;
+  color: var(--chance-ink);
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.chance-chart-legend {
+  display: flex;
+  gap: 14px;
+  color: var(--chance-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.chance-chart-legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chance-observed-key {
+  width: 20px;
+  height: 8px;
+  border-radius: 3px;
+  background: #4c8275;
+}
+
+.chance-theory-key {
+  width: 9px;
+  height: 9px;
+  margin: 0;
+  border: 2px solid var(--chance-ink);
+  transform: rotate(45deg);
+}
+
+.chance-workbench .chance-chart-axis {
+  margin: 0 7px 6px 45px;
+  color: #66776d;
+  font-size: 12px;
+}
+
+.chance-workbench .chance-chart-row,
+.tactile-exhibit .chance-workbench .chance-chart-row {
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  min-height: 66px;
+  padding: 9px 8px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--chance-ink);
+}
+
+.tactile-exhibit .chance-workbench .chance-chart-row + .chance-chart-row {
+  border-top: 1px solid #ddd6c3;
+  border-radius: 0;
+}
+
+.tactile-exhibit .chance-workbench .chance-chart-row[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--chance-color) 11%, #fbf8ef);
+  box-shadow: inset 4px 0 0 var(--chance-color);
+}
+
+.chance-workbench .chance-chart-number {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #fff9eb;
+  background-color: var(--chance-color);
+  background-size: 9px 9px;
+  font-size: 13px;
+}
+
+.chance-chart-pattern-1 {
+  background-image: radial-gradient(#ffffff80 1.4px, transparent 1.7px);
+}
+
+.chance-chart-pattern-2 {
+  background-image: repeating-linear-gradient(35deg, #ffffff66 0 2px, transparent 2px 7px);
+}
+
+.chance-chart-pattern-3 {
+  background-image: linear-gradient(#ffffff4d 1px, transparent 1px), linear-gradient(90deg, #ffffff4d 1px, transparent 1px);
+}
+
+.chance-chart-pattern-4 {
+  background-image: repeating-linear-gradient(-45deg, #ffffff55 0 2px, transparent 2px 8px);
+}
+
+.chance-chart-pattern-5 {
+  background-image: radial-gradient(#ffffff66 2px, transparent 2.4px);
+}
+
+.chance-chart-pattern-6 {
+  background-image: repeating-linear-gradient(90deg, #ffffff4d 0 2px, transparent 2px 7px);
+}
+
+.chance-workbench .chance-chart-track {
+  height: 18px;
+  overflow: visible;
+  border: 1px solid #b7bda9;
+  border-radius: 999px;
+  background: repeating-linear-gradient(to right, #e6e8dc 0, #e6e8dc calc(25% - 1px), #c9cfc1 calc(25% - 1px), #c9cfc1 25%);
+}
+
+.chance-workbench .chance-chart-fill {
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--chance-color);
+  background-image: linear-gradient(90deg, #ffffff1f, transparent);
+  transition: width 360ms ease;
+}
+
+.chance-workbench .chance-expected-mark {
+  top: 50%;
+  bottom: auto;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #173e38;
+  background: #fffaf0;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.chance-workbench .chance-chart-caption {
+  margin-top: 6px;
+  color: #586b62;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.chance-evidence-dock {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
+  border-top: 1px solid #b9ad91;
+}
+
+.chance-evidence-dock .chance-recent {
+  grid-template-columns: minmax(190px, 0.7fr) minmax(0, 1.3fr);
+  gap: 22px;
+  padding: 20px 24px;
+  border: 0;
+  background: #f8f3e6;
+}
+
+.chance-evidence-dock .chance-recent h3 {
+  color: var(--chance-ink);
+  font-size: 19px;
+}
+
+.chance-evidence-dock .chance-recent p {
+  font-size: 12px;
+}
+
+.chance-evidence-dock .chance-recent ol {
+  grid-template-columns: repeat(6, minmax(31px, 1fr));
+  gap: 6px;
+}
+
+.chance-evidence-dock .chance-token {
+  min-height: 34px;
+  border-radius: 9px;
+  box-shadow: 0 3px 7px #26392e2b;
+}
+
+.chance-evidence-dock .chance-sample-strip {
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 12px 20px;
+  border: 0;
+  border-left: 1px solid #526c62;
+  background: #21483f;
+}
+
+.chance-evidence-dock .chance-sample-strip > div {
+  display: grid;
+  grid-template-columns: minmax(92px, auto) 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.chance-evidence-dock .chance-sample-strip > div + div {
+  border-top: 1px solid #ffffff29;
+}
+
+.chance-evidence-dock .chance-sample-strip strong {
+  color: #fff5d8;
+  font-size: 23px;
+}
+
+.chance-evidence-dock .chance-sample-strip small,
+.chance-evidence-dock .chance-sample-strip span {
+  color: #d5e2d8;
+  font-size: 12px;
+}
+
+.chance-challenge {
+  padding: 32px 42px 36px;
+  background: #fbf8ee;
+}
+
+.chance-challenge-heading {
+  margin-bottom: 20px;
+}
+
+.chance-challenge-heading h3 {
+  color: var(--chance-ink);
+  font-size: 29px;
+}
+
+.chance-trial-sequence {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr 0.9fr;
+  overflow: hidden;
+  border: 1px solid var(--chance-line);
+  border-radius: 14px;
+  background: #f2ecda;
+}
+
+.chance-trial-step {
+  position: relative;
+  min-height: 138px;
+  padding: 23px 20px 20px 58px;
+}
+
+.chance-trial-step + .chance-trial-step {
+  border-left: 1px solid var(--chance-line);
+}
+
+.chance-step-number {
+  position: absolute;
+  top: 22px;
+  left: 18px;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 1px solid #81968b;
+  border-radius: 50%;
+  background: #fffaf0;
+  color: var(--chance-ink);
+  font-weight: 800;
+}
+
+.chance-trial-step h4 {
+  margin: 3px 0 15px;
+  color: var(--chance-ink);
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+
+.chance-trial-step p {
+  margin: 10px 0 0;
+  color: var(--chance-muted);
+  font-size: 12px;
+}
+
+.chance-evidence,
+.chance-comparison {
+  border-color: #9cb3a7;
+  border-radius: 14px;
+  background: #e6eee4;
+  box-shadow: none;
+}
+
+.chance-comparison {
+  gap: 14px;
+  padding: 16px;
+}
+
+.chance-comparison .chance-snapshot {
+  display: grid;
+  gap: 5px;
+  padding: 15px;
+  border: 1px solid #d9d5c5;
+  border-radius: 10px;
+  background: #fffaf0;
+}
+
+.chance-snapshot-bars {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.chance-snapshot-bars > div {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 6px;
+  align-items: center;
+}
+
+.chance-snapshot-bars i {
+  color: #4c6258;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.chance-snapshot-bars span {
+  position: relative;
+  display: block;
+  height: 8px;
+  overflow: visible;
+  border-radius: 99px;
+  background: #dedfd4;
+}
+
+.chance-snapshot-bars b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #3e7c70;
+}
+
+.chance-snapshot-bars em {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 25%;
+  border-left: 2px solid #173e38;
+}
+
+.chance-challenge-two {
+  background: #eee4c9;
+}
+
+.chance-weight-test {
+  grid-template-columns: minmax(190px, 0.55fr) minmax(280px, 1fr) auto;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #fffaf0;
+}
+
+.chance-weight-ratio {
+  display: grid;
+  gap: 8px;
+}
+
+.chance-weight-ratio > div {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.chance-weight-ratio i {
+  display: grid;
+  height: 28px;
+  place-items: center;
+  border: 1px solid #aa9e80;
+  border-radius: 5px;
+  background: #e7dfc9;
+  color: #3c5147;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.chance-weight-ratio .chance-weight-one {
+  border-color: #9f4d37;
+  background: repeating-linear-gradient(35deg, #c76646 0 5px, #d47758 5px 8px);
+  color: #fffaf0;
+}
+
+.chance-weight-total {
+  color: var(--chance-muted);
+  font-size: 12px;
+}
+
+.chance-weight-ratio strong {
+  font-size: 13px;
+}
+
+.chance-open-lab > summary {
+  font-size: 14px;
+}
+
+.chance-model-note {
+  margin: 0;
+  padding: 13px 32px 18px;
+  color: #4c6259;
+  font-size: 12px;
+}
+
+.chance-model-note summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.chance-model-note p {
+  margin: 8px 0 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chance-pointer,
+  .chance-workbench .chance-chart-fill {
+    transition: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .chance-workbench .chance-table {
+    grid-template-columns: 1fr;
+  }
+
+  .chance-evidence-dock {
+    grid-template-columns: 1fr;
+  }
+
+  .chance-evidence-dock .chance-sample-strip {
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid #526c62;
+    border-left: 0;
+  }
+
+  .chance-evidence-dock .chance-sample-strip > div {
+    display: block;
+    padding: 8px 12px;
+  }
+
+  .chance-evidence-dock .chance-sample-strip > div + div {
+    border-top: 0;
+    border-left: 1px solid #ffffff29;
+  }
+
+  .chance-weight-test {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chance-weight-test > button {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .chance-exhibit {
+    padding-bottom: 72px;
+  }
+
+  .chance-workbench {
+    margin: 10px;
+    border-radius: 15px;
+  }
+
+  .chance-workbench .chance-table {
+    gap: 14px;
+    padding: 12px;
+  }
+
+  .chance-workbench .chance-machine {
+    grid-template-rows: 246px auto auto;
+  }
+
+  .chance-workbench .chance-render {
+    height: 246px;
+  }
+
+  .chance-workbench .chance-machine-caption,
+  .chance-workbench .chance-last > span {
+    font-size: 12px;
+  }
+
+  .chance-workbench .chance-distribution {
+    padding: 18px 12px 12px;
+  }
+
+  .chance-distribution-header {
+    display: grid;
+    gap: 9px;
+    margin-bottom: 13px;
+  }
+
+  .chance-distribution-header h3,
+  .chance-workbench .chance-distribution h3 {
+    font-size: 23px;
+  }
+
+  .chance-chart-legend {
+    font-size: 12px;
+  }
+
+  .chance-workbench .chance-chart-row,
+  .tactile-exhibit .chance-workbench .chance-chart-row {
+    min-height: 59px;
+    padding: 7px 5px;
+  }
+
+  .chance-workbench .chance-chart-caption,
+  .chance-workbench .chance-chart-axis {
+    font-size: 12px;
+  }
+
+  .chance-evidence-dock .chance-recent {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 18px 14px;
+  }
+
+  .chance-evidence-dock .chance-recent ol {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .chance-evidence-dock .chance-sample-strip {
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 8px;
+  }
+
+  .chance-evidence-dock .chance-sample-strip > div {
+    min-width: 0;
+    padding: 7px;
+  }
+
+  .chance-evidence-dock .chance-sample-strip strong {
+    font-size: 19px;
+    white-space: normal;
+  }
+
+  .chance-evidence-dock .chance-sample-strip small,
+  .chance-evidence-dock .chance-sample-strip span {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .chance-challenge {
+    padding: 25px 16px 28px;
+  }
+
+  .chance-challenge-heading {
+    gap: 7px;
+    margin-bottom: 15px;
+  }
+
+  .chance-challenge-heading h3 {
+    font-size: 26px;
+  }
+
+  .chance-challenge-heading p {
+    font-size: 13px;
+  }
+
+  .chance-trial-sequence {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chance-trial-predict {
+    grid-column: 1 / -1;
+  }
+
+  .chance-trial-step {
+    min-height: 122px;
+    padding: 18px 12px 17px 49px;
+  }
+
+  .chance-trial-step + .chance-trial-step {
+    border-left: 0;
+    border-top: 1px solid var(--chance-line);
+  }
+
+  .chance-trial-step:last-child {
+    border-left: 1px solid var(--chance-line);
+  }
+
+  .chance-step-number {
+    top: 17px;
+    left: 12px;
+  }
+
+  .chance-trial-step h4 {
+    font-size: 16px;
+  }
+
+  .chance-trial-step .dl-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chance-trial-step .dl-actions button {
+    padding: 7px;
+  }
+
+  .chance-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .chance-comparison > p {
+    grid-column: 1;
+  }
+
+  .chance-weight-test {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chance-weight-test > button {
+    grid-column: 1;
+    width: 100%;
+  }
+
+  .chance-model-note {
+    padding: 13px 20px 18px;
+  }
+}

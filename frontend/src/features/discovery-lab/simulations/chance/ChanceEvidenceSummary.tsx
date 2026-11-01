@@ -16,7 +16,7 @@ export function ChanceEvidenceSummary({
   const total = counts.reduce((sum, count) => sum + count, 0);
 
   return (
-    <>
+    <div className="chance-evidence-dock">
       <section
         className="chance-recent"
         aria-label="Recent trial outcomes"
@@ -45,7 +45,7 @@ export function ChanceEvidenceSummary({
         )}
       </section>
 
-      <div className="chance-sample-strip">
+      <div className="chance-sample-strip" aria-label="Current sample summary">
         <div>
           <strong>{total.toLocaleString()}</strong>
           <span>trials</span>
@@ -68,6 +68,6 @@ export function ChanceEvidenceSummary({
           <span>outcome {outcome + 1} weight</span>
         </div>
       </div>
-    </>
+    </div>
   );
 }

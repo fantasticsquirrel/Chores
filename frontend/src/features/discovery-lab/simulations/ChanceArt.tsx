@@ -1,10 +1,12 @@
+import type { CSSProperties } from "react";
+
 const COLORS = [
-  "#bf6c48",
-  "#398b88",
-  "#8e71b1",
-  "#c29b42",
-  "#6e955e",
-  "#567fa5",
+  "#c76646",
+  "#2f8782",
+  "#8063a5",
+  "#bd8f28",
+  "#618d53",
+  "#4f789f",
 ];
 export function ChanceDistribution({
   chances,
@@ -20,11 +22,12 @@ export function ChanceDistribution({
   const total = counts.reduce((sum, count) => sum + count, 0);
   return (
     <div className="chance-distribution">
-      <header>
+      <header className="chance-distribution-header">
         <h3>Observed vs expected</h3>
-        <p>
-          Bar: observed · <i className="chance-theory-key" /> mark: expected
-        </p>
+        <div className="chance-chart-legend" aria-hidden="true">
+          <span><i className="chance-observed-key" /> observed</span>
+          <span><i className="chance-theory-key" /> expected</span>
+        </div>
       </header>
       <div className="chance-chart-axis">
         <span>0%</span>
@@ -41,11 +44,9 @@ export function ChanceDistribution({
             aria-label={`Inspect outcome ${index + 1}`}
             aria-pressed={selected === index}
             onClick={() => onSelect(index)}
+            style={{ "--chance-color": COLORS[index] } as CSSProperties}
           >
-            <span
-              className="chance-chart-number"
-              style={{ backgroundColor: COLORS[index] }}
-            >
+            <span className={`chance-chart-number chance-chart-pattern-${index + 1}`}>
               {index + 1}
             </span>
             <span className="chance-chart-body">
@@ -54,10 +55,12 @@ export function ChanceDistribution({
                   className="chance-chart-fill"
                   style={{
                     width: `${observed * 100}%`,
-                    backgroundColor: COLORS[index],
                   }}
                 />
-                <i style={{ left: `${chance * 100}%` }} />
+                <i
+                  className="chance-expected-mark"
+                  style={{ left: `${chance * 100}%` }}
+                />
               </span>
               <span className="chance-chart-caption">
                 <span>{counts[index].toLocaleString()} draws</span>

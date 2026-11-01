@@ -118,11 +118,15 @@ export function ChanceOpenInvestigation({
         </button>
       </div>
 
-      <p className="tactile-model-note">
-        This model uses computer draws, not physical spins or rolls. A finite
-        sample cannot prove fairness. Weights change mathematical chances; they
-        do not model a physically loaded die.
-      </p>
+      <details className="tactile-model-note chance-model-note">
+        <summary>
+          Computer draws; a finite sample cannot prove fairness.
+        </summary>
+        <p>
+          This is not a physical spin or roll. Weights change mathematical
+          chances; they do not model a physically loaded die.
+        </p>
+      </details>
     </>
   );
 }

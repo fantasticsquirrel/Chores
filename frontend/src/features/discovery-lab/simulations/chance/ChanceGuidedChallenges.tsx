@@ -37,6 +37,33 @@ function distanceFromEqualChance(counts: number[]) {
   );
 }
 
+function SampleDistribution({
+  label,
+  counts,
+}: {
+  label: string;
+  counts: number[];
+}) {
+  const shares = observedShares(counts);
+  return (
+    <div className="chance-snapshot">
+      <span>{label}</span>
+      <strong>{sharesText(counts)}</strong>
+      <div className="chance-snapshot-bars" aria-hidden="true">
+        {shares.map((share, index) => (
+          <div key={index}>
+            <i>{index + 1}</i>
+            <span>
+              <b style={{ width: `${share}%` }} />
+              <em />
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ChanceGuidedChallenges({
   prediction,
   smallSample,
@@ -68,8 +95,9 @@ export function ChanceGuidedChallenges({
           <h3 id={`${id}-challenge-one`}>1. Compare sample sizes</h3>
           <p>Each outcome stays at 25%. Only the sample size changes.</p>
         </header>
-        <div className="chance-steps">
-          <div className="chance-step-card">
+        <div className="chance-trial-sequence">
+          <div className="chance-trial-step chance-trial-predict">
+            <span className="chance-step-number" aria-hidden="true">1</span>
             <h4>Predict: 12 trials</h4>
             <div className="dl-actions">
               <button
@@ -88,7 +116,8 @@ export function ChanceGuidedChallenges({
               </button>
             </div>
           </div>
-          <div className="chance-step-card">
+          <div className="chance-trial-step">
+            <span className="chance-step-number" aria-hidden="true">2</span>
             <h4>Small sample</h4>
             <button
               type="button"
@@ -99,7 +128,8 @@ export function ChanceGuidedChallenges({
             </button>
             {!prediction && <p>Predict first.</p>}
           </div>
-          <div className="chance-step-card">
+          <div className="chance-trial-step">
+            <span className="chance-step-number" aria-hidden="true">3</span>
             <h4>Larger sample</h4>
             <button
               type="button"
@@ -137,14 +167,8 @@ export function ChanceGuidedChallenges({
             data-testid="chance-sample-comparison"
             aria-live="polite"
           >
-            <div>
-              <span>12 trials</span>
-              <strong>{sharesText(smallSample.counts)}</strong>
-            </div>
-            <div>
-              <span>1,200 trials</span>
-              <strong>{sharesText(largeSample.counts)}</strong>
-            </div>
+            <SampleDistribution label="12 trials" counts={smallSample.counts} />
+            <SampleDistribution label="1,200 trials" counts={largeSample.counts} />
             <p>
               Expected for both: 25% each.{" "}
               {largerWasCloser
@@ -170,6 +194,17 @@ export function ChanceGuidedChallenges({
           </p>
         ) : (
           <div className="chance-weight-test">
+            <div className="chance-weight-ratio" aria-label="Outcome 1 has two of five total weight units">
+              <span className="chance-weight-total">Total weight = 5</span>
+              <div aria-hidden="true">
+                <i className="chance-weight-one">1</i>
+                <i className="chance-weight-one">1</i>
+                <i>2</i>
+                <i>3</i>
+                <i>4</i>
+              </div>
+              <strong>Outcome 1 owns 2 of 5 units</strong>
+            </div>
             <div>
               <strong>Predict outcome 1’s chance</strong>
               <div className="dl-actions">
