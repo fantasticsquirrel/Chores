@@ -228,6 +228,15 @@
   font-weight: 700;
 }
 
+/* Keep Orbit telemetry legible when broader Discovery paragraph rules load later. */
+.discovery-lab .orbit-lab .orbit-scene-help,
+.discovery-lab .orbit-lab .orbit-flight-readout > span {
+  color: #b8ccd5;
+}
+.discovery-lab .orbit-lab .orbit-flight-readout strong {
+  color: #f2f8f4;
+}
+
 .orbit-challenges {
   display: grid;
   grid-template-columns: 1fr 1fr;

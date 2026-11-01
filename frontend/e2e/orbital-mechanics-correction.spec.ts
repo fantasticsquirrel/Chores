@@ -27,6 +27,90 @@ async function signIn(page: Page) {
   await expect(page).toHaveURL(/\/chore\/parent\/dashboard$/);
 }
 
+async function expectOrbitTextContrast(page: Page) {
+  const audit = await page.evaluate(() => {
+    type Rgb = { r: number; g: number; b: number; alpha: number };
+    const parseRgb = (value: string): Rgb => {
+      const channels = value.match(/[\d.]+/g)?.map(Number) ?? [];
+      return {
+        r: channels[0] ?? 0,
+        g: channels[1] ?? 0,
+        b: channels[2] ?? 0,
+        alpha: channels[3] ?? 1,
+      };
+    };
+    const opaqueStops = (value: string) =>
+      (value.match(/rgba?\([^)]+\)/g) ?? [])
+        .map(parseRgb)
+        .filter((color) => color.alpha >= 0.999);
+    const luminance = ({ r, g, b }: Rgb) => {
+      const linear = [r, g, b].map((channel) => {
+        const value = channel / 255;
+        return value <= 0.04045
+          ? value / 12.92
+          : ((value + 0.055) / 1.055) ** 2.4;
+      });
+      return linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722;
+    };
+    const contrast = (foreground: Rgb, background: Rgb) => {
+      const first = luminance(foreground);
+      const second = luminance(background);
+      return (
+        (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05)
+      );
+    };
+    const minimumContrast = (color: string, backgrounds: Rgb[]) =>
+      Math.min(
+        ...backgrounds.map((background) =>
+          contrast(parseRgb(color), background),
+        ),
+      );
+
+    const help = document.querySelector<HTMLElement>(".orbit-scene-help")!;
+    const stage = document.querySelector<HTMLElement>(".orbit-scene-stage")!;
+    const deck = document.querySelector<HTMLElement>(".orbit-flight-deck")!;
+    const labels = Array.from(
+      document.querySelectorAll<HTMLElement>(".orbit-flight-readout > span"),
+    );
+    const values = Array.from(
+      document.querySelectorAll<HTMLElement>(".orbit-flight-readout strong"),
+    );
+    const stageBackground = getComputedStyle(stage).backgroundImage;
+    const deckBackground = getComputedStyle(deck).backgroundImage;
+    const stageStops = opaqueStops(stageBackground);
+    const deckStops = opaqueStops(deckBackground);
+
+    return {
+      stageBackground,
+      deckBackground,
+      stageStopCount: stageStops.length,
+      deckStopCount: deckStops.length,
+      helpColor: getComputedStyle(help).color,
+      helpContrast: minimumContrast(getComputedStyle(help).color, stageStops),
+      labelColors: labels.map((label) => getComputedStyle(label).color),
+      labelContrasts: labels.map((label) =>
+        minimumContrast(getComputedStyle(label).color, deckStops),
+      ),
+      valueColors: values.map((value) => getComputedStyle(value).color),
+      valueContrasts: values.map((value) =>
+        minimumContrast(getComputedStyle(value).color, deckStops),
+      ),
+    };
+  });
+
+  expect(audit.stageStopCount).toBeGreaterThanOrEqual(2);
+  expect(audit.deckStopCount).toBeGreaterThanOrEqual(2);
+  expect(audit.helpContrast).toBeGreaterThanOrEqual(4.5);
+  expect(audit.labelContrasts).toHaveLength(4);
+  expect(audit.valueContrasts).toHaveLength(4);
+  audit.labelContrasts.forEach((ratio) =>
+    expect(ratio).toBeGreaterThanOrEqual(4.5),
+  );
+  audit.valueContrasts.forEach((ratio) =>
+    expect(ratio).toBeGreaterThanOrEqual(4.5),
+  );
+}
+
 async function capture(
   page: Page,
   viewport: string,
@@ -77,6 +161,7 @@ for (const viewport of [
       "data-scene-ready",
       "true",
     );
+    await expectOrbitTextContrast(page);
     await capture(page, viewport.name, "initial");
 
     await page.getByRole("button", { name: "Overview", exact: true }).click();
