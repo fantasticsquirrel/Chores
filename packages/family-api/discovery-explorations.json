@@ -299,22 +299,22 @@
       "engineering",
       "design"
     ],
-    "summary": "Explore how gates, ditches, towers and walls worked together in a medieval castle.",
-    "question": "Why protect an entrance with more than one barrier?",
-    "explanation": "This simplified model is inspired by English castles of the 13th century, not a reconstruction of one site. Gatehouses protected entrances, projecting towers improved visibility along walls, and additional walls created further barriers. Castles also served as homes and centres of power. Designs varied by time, terrain and resources; this model explores routes and sight lines, not the outcome of a siege.",
+    "summary": "Test how a gate, ditch and projecting tower change routes and wall-side views.",
+    "question": "How did separate defenses change an approach to a stone castle?",
+    "explanation": "This 13th-century English-inspired composite is not a reconstruction of one castle. Gatehouses controlled passage, ditches interrupted approaches, projecting towers changed viewing positions along wall faces, and multiple wall lines could add successive barriers. Castles also housed households, workers and administrators. Designs varied by period, site, terrain and resources; this controlled model compares routes and illustrated viewing directions, not weapon ranges or the outcome of a siege.",
     "experiments": [
       {
-        "title": "Guard the gate",
-        "instruction": "Predict what happens to the entrance when the gate closes. Open and close it, then inspect the entrance and its result.",
-        "observe": "The closed gate blocks the direct entrance. Explain why a castle needs both barriers and a way for people and supplies to enter."
+        "title": "Compare two open-gate routes",
+        "instruction": "Keep the gate open and ditch at 22 m. Predict which routes reach an entrance, compare the bridge route with the north-wall route, then inspect both endpoints.",
+        "observe": "The bridge reaches the entrance; the north route stops at the ditch. Explain why opening one gate does not remove a ditch or create a doorway through another wall."
       },
       {
-        "title": "See along the walls",
-        "instruction": "Predict what defenders could see from a projecting tower. Show the tower’s sight lines or coverage and inspect the adjoining walls.",
-        "observe": "Trace the views beside the walls. Explain how projecting towers help visibility and why that alone cannot make a castle invincible."
+        "title": "Compare wall-side viewpoints",
+        "instruction": "Keep the bridge route, closed gate and 22 m ditch fixed. Predict which position shows more adjoining wall faces, then compare the flat corner with the projecting tower.",
+        "observe": "Count the dashed viewing directions in both trials. Explain why projecting beyond a wall changes what can be seen; the lines are illustrative directions, not complete visibility or weapon ranges."
       }
     ],
-    "misconception": "Not every castle had stone walls or a water-filled moat. Ditches could be dry, and castle designs changed over centuries.",
+    "misconception": "No single feature made a castle impregnable. Not every castle had stone walls, a keep, concentric defenses or a water-filled moat; ditches could be dry, and designs changed over centuries.",
     "sources": [
       {
         "title": "English Heritage: Castles through time",
@@ -323,6 +323,18 @@
       {
         "title": "English Heritage: Carisbrooke Castle teachers’ kit",
         "url": "https://www.english-heritage.org.uk/siteassets/home/visit/places-to-visit/carisbrooke-castle/school-visits/carisbrooke-castle_teachers-kit_2023.pdf"
+      },
+      {
+        "title": "Historic England: Stone Castles",
+        "url": "https://historicengland.org.uk/images-books/publications/iha-stone-castles/heag235-stone-castles/"
+      },
+      {
+        "title": "Historic England: Etal Castle",
+        "url": "https://historicengland.org.uk/listing/the-list/list-entry/1011644"
+      },
+      {
+        "title": "English Heritage: Eynsford Castle description",
+        "url": "https://www.english-heritage.org.uk/visit/places-to-visit/eynsford-castle/history/description/"
       }
     ],
     "duration_minutes": 12

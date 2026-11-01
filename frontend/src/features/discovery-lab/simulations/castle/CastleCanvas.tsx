@@ -3,7 +3,6 @@ import { CastleDrawing } from "../CastleDrawing";
 import { Scene } from "../SimulationPrimitives";
 import {
   createCastleScene,
-  type CastleLabel,
   type CastleScene,
   type CastleView,
 } from "./createCastleScene";
@@ -21,15 +20,14 @@ export function CastleCanvas({
   const [available, setAvailable] = useState(
       typeof WebGLRenderingContext !== "undefined",
     ),
-    [labels, setLabels] = useState<CastleLabel[]>([]);
-  const [view, setView] = useState<CastleView | null>("courtyard");
+    [view, setView] = useState<CastleView | null>("courtyard");
   useEffect(() => {
     if (!host.current || typeof WebGLRenderingContext === "undefined") {
       setAvailable(false);
       return;
     }
     try {
-      scene.current = createCastleScene(host.current, setLabels);
+      scene.current = createCastleScene(host.current);
     } catch {
       setAvailable(false);
       return;
@@ -55,7 +53,7 @@ export function CastleCanvas({
     setView(value);
   };
   return (
-    <>
+    <div className="castle-viewer">
       <div
         className="castle-canvas"
         ref={host}
@@ -108,18 +106,7 @@ export function CastleCanvas({
           drag.current = null;
         }}
       >
-        {available ? (
-          labels.map((label) => (
-            <span
-              key={label.text}
-              className="castle-annotation"
-              aria-hidden="true"
-              style={{ left: `${label.x}%`, top: `${label.y}%` }}
-            >
-              {label.text}
-            </span>
-          ))
-        ) : (
+        {!available && (
           <div className="castle-fallback">
             <p>
               3D view unavailable. The plan below shows the same controls and
@@ -174,9 +161,11 @@ export function CastleCanvas({
           </div>
         </div>
       )}
-      <p className="castle-camera-hint">
-        Drag to turn · Arrow keys to orbit · + / − to zoom · Home to reset view
-      </p>
-    </>
+      {available && (
+        <p className="castle-camera-hint">
+          Drag or use arrow keys to turn · + / − to zoom · Home for courtyard
+        </p>
+      )}
+    </div>
   );
 }

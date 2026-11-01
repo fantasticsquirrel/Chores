@@ -104,14 +104,16 @@
   background: #cbd3be;
   color: #263d2c;
 }
+.discovery-lab .package-3d-hint,
 .package-3d-hint {
   position: absolute;
   bottom: 4px;
   left: 25px;
   right: 25px;
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   text-align: center;
-  color: #4b5d45;
+  color: #293c32;
   pointer-events: none;
   margin: 0;
 }
@@ -191,8 +193,9 @@
     min-width: 29px;
     font-size: 9px;
   }
+  .discovery-lab .package-3d-hint,
   .package-3d-hint {
-    font-size: 9px;
+    font-size: 10px;
     bottom: 9px;
     left: 14px;
     right: 14px;
@@ -270,6 +273,12 @@
   color: #465a40;
   padding: 10px 12px;
   font-size: 12px;
+}
+.discovery-package-runtime-3d .discovery-package-sections button:disabled {
+  cursor: not-allowed;
+  border-color: #c3c5ba;
+  background: #e5e4da;
+  color: #777b71;
 }
 .discovery-package-runtime-3d button[aria-pressed="true"] {
   background: #344d3d;

@@ -29,7 +29,7 @@ describe("castle route evidence", () => {
   it("distinguishes a ditch from a solid wall and never invents a north entrance", () => {
     expect(
       castleObservation({ ...defaultCastleState, approach: "north" }),
-    ).toBe("obstructed by ditch");
+    ).toBe("stops at ditch");
     expect(
       castleObservation({ ...defaultCastleState, approach: "north", moat: 0 }),
     ).toBe("reaches solid outer wall");

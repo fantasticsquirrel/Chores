@@ -15,16 +15,24 @@ const CastleCanvas = lazy(() =>
 );
 export function CastleSimulation() {
   const [state, setState] = useState<CastleState>(defaultCastleState);
-  const set = <K extends keyof CastleState>(key: K, value: CastleState[K]) =>
+  const [lessonVersion, setLessonVersion] = useState(0);
+  const set = <K extends keyof CastleState>(key: K, value: CastleState[K]) => {
     setState((current) => ({ ...current, [key]: value }));
+    setLessonVersion((current) => current + 1);
+  };
   const observation = castleObservation(state);
   const description = `Three-dimensional English-inspired castle. ${state.moat} meter ditch; ${state.gate ? "closed" : "raised"} portcullis at the bridge entrance; ${state.towers ? "four projecting corner towers" : "no projecting corner towers"}; ${state.inner ? "an additional inner wall" : "one outer wall"}. The ${state.approach} route ${observation}. ${state.towers ? "Towers provide views along adjoining outer wall faces." : "Flat-wall observers have less wall-side visibility."} Drag or use arrow keys to turn the view; camera buttons provide fixed views.`;
   return (
     <div className="castle-exhibit">
       <div className="castle-visual">
         <div className="castle-heading">
-          <h2>What blocks the approach?</h2>
-          <p>Compare the entrance with a route toward a solid wall.</p>
+          <h2>How does each defense change the approach?</h2>
+          <p>Compare one route or viewpoint at a time.</p>
+        </div>
+        <div className="castle-route-key">
+          <i aria-hidden="true" />{" "}
+          {state.approach === "bridge" ? "Bridge route" : "North route"}{" "}
+          <span>· {observation}</span>
         </div>
         <Suspense
           fallback={
@@ -33,11 +41,6 @@ export function CastleSimulation() {
         >
           <CastleCanvas state={state} description={description} />
         </Suspense>
-        <div className="castle-route-key">
-          <i aria-hidden="true" />{" "}
-          {state.approach === "bridge" ? "Bridge route" : "North route"}{" "}
-          <span>· {observation}</span>
-        </div>
       </div>
       <div className="castle-console">
         <div className="castle-route-controls">
@@ -99,9 +102,12 @@ export function CastleSimulation() {
         <button
           className="castle-reset"
           type="button"
-          onClick={() => setState({ ...defaultCastleState })}
+          onClick={() => {
+            setState({ ...defaultCastleState });
+            setLessonVersion((current) => current + 1);
+          }}
         >
-          Reset design
+          Reset lesson
         </button>
       </div>
       <div className="castle-observation" role="status">
@@ -112,7 +118,11 @@ export function CastleSimulation() {
         {state.inner &&
           "The inner wall adds another barrier; it does not make the castle invincible."}
       </div>
-      <CastleInvestigation state={state} onChange={setState} />
+      <CastleInvestigation
+        key={lessonVersion}
+        state={state}
+        onChange={setState}
+      />
       <p className="castle-model-note">
         13th-century English-inspired composite, not a reconstruction.
         Dimensions are schematic; ditch width is compressed in the view. Ditches

@@ -42,7 +42,12 @@ export type Scene = {
   animate?: boolean;
   shapes: Shape[];
   controls: Control[];
-  buttons?: { id: string; label: string; pressed?: boolean }[];
+  buttons?: {
+    id: string;
+    label: string;
+    pressed?: boolean;
+    disabled?: boolean;
+  }[];
   sections?: { heading: string; text: string; buttonIds?: string[] }[];
   footnote?: string;
 };
@@ -246,7 +251,8 @@ export function parseScene(
         typeof b.label !== "string" ||
         !b.label.trim() ||
         b.label.length > 120 ||
-        (b.pressed !== undefined && typeof b.pressed !== "boolean")
+        (b.pressed !== undefined && typeof b.pressed !== "boolean") ||
+        (b.disabled !== undefined && typeof b.disabled !== "boolean")
       )
         return null;
       ids.add(b.id);

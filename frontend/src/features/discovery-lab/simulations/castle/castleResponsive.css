@@ -1,11 +1,10 @@
 @media (max-width: 760px) {
   .castle-visual {
-    height: 510px;
+    min-height: 0;
+    padding: 20px 18px 14px;
   }
   .castle-heading {
-    left: 19px;
-    top: 20px;
-    right: 19px;
+    position: relative;
   }
   .discovery-lab .castle-heading h2,
   .castle-heading h2 {
@@ -17,26 +16,19 @@
     max-width: 255px;
   }
   .castle-route-key {
-    left: 19px;
-    top: 91px;
     font-size: 9px;
-    max-width: calc(100% - 36px);
+    max-width: 100%;
     gap: 5px;
+    margin-top: 10px;
   }
   .castle-route-key span {
     max-width: 150px;
   }
   .castle-canvas {
-    inset: 94px -4% 60px;
-  }
-  .castle-annotation {
-    font-size: 9px;
-    padding: 4px 5px;
+    min-height: 365px;
+    margin: 0 -18px;
   }
   .castle-camera {
-    left: 10px;
-    right: 10px;
-    bottom: 29px;
     gap: 4px;
   }
   .castle-camera > div {
@@ -48,11 +40,10 @@
     min-width: 29px;
     font-size: 9px;
   }
+  .discovery-lab .castle-camera-hint,
   .castle-camera-hint {
-    font-size: 9px;
-    bottom: 9px;
-    left: 14px;
-    right: 14px;
+    font-size: 10px;
+    margin-top: 7px;
   }
   .castle-console {
     grid-template-columns: 1fr;
@@ -100,7 +91,8 @@
     min-width: 34px;
     font-size: 17px;
   }
+  .discovery-lab .castle-camera-hint,
   .castle-camera-hint {
-    font-size: 9px;
+    font-size: 10px;
   }
 }

@@ -1,38 +1,30 @@
 {
   "schema_version": 1,
   "package_id": "castle-defenses-package",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "runtime": "worker-3d-v1",
   "exploration": {
     "id": "castle-defenses-package",
     "title": "Castle Design Lab",
     "subject": "History",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "history",
-      "castles",
-      "engineering",
-      "design"
-    ],
-    "summary": "Explore how gates, ditches, towers and walls worked together in a medieval castle.",
-    "question": "Why protect an entrance with more than one barrier?",
-    "explanation": "This simplified model is inspired by English castles of the 13th century, not a reconstruction of one site. Gatehouses protected entrances, projecting towers improved visibility along walls, and additional walls created further barriers. Castles also served as homes and centres of power. Designs varied by time, terrain and resources; this model explores routes and sight lines, not the outcome of a siege.",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["history", "castles", "engineering", "design"],
+    "summary": "Test how a gate, ditch and projecting tower change routes and wall-side views.",
+    "question": "How did separate defenses change an approach to a stone castle?",
+    "explanation": "This 13th-century English-inspired composite is not a reconstruction of one castle. Gatehouses controlled passage, ditches interrupted approaches, projecting towers changed viewing positions along wall faces, and multiple wall lines could add successive barriers. Castles also housed households, workers and administrators. Designs varied by period, site, terrain and resources; this controlled model compares routes and illustrated viewing directions, not weapon ranges or the outcome of a siege.",
     "experiments": [
       {
-        "title": "Compare the two approaches",
-        "instruction": "Predict whether opening the gate opens both approaches. Reset experiment, choose Predict yes or Predict no, then Test open gate and Compare north route. Keep the ditch at 22 m.",
-        "observe": "Compare each golden route endpoint. Explain why an open entrance does not remove the ditch or create a doorway through the north wall."
+        "title": "Compare two open-gate routes",
+        "instruction": "Keep the gate open and ditch at 22 m. Predict which routes reach an entrance, compare the bridge route with the north-wall route, then inspect both endpoints.",
+        "observe": "The bridge reaches the entrance; the north route stops at the ditch. Explain why opening one gate does not remove a ditch or create a doorway through another wall."
       },
       {
-        "title": "Compare wall-side visibility",
-        "instruction": "Predict whether a flat wall gives the same view along its base as a projecting tower. Choose Compare sight lines, make your prediction, then Remove corner towers and Restore towers. Keep the route and ditch fixed.",
-        "observe": "Trace the cyan dashed sight-line overlay with and without towers. It illustrates viewing directions, not cables or structures. Explain why projecting beyond the wall changes the view but does not guarantee a defense."
+        "title": "Compare wall-side viewpoints",
+        "instruction": "Keep the bridge route, closed gate and 22 m ditch fixed. Predict which position shows more adjoining wall faces, then compare the flat corner with the projecting tower.",
+        "observe": "Count the dashed viewing directions in both trials. Explain why projecting beyond a wall changes what can be seen; the lines are illustrative directions, not complete visibility or weapon ranges."
       }
     ],
-    "misconception": "Not every castle had stone walls or a water-filled moat. Ditches could be dry, and castle designs changed over centuries.",
+    "misconception": "No single feature made a castle impregnable. Not every castle had stone walls, a keep, concentric defenses or a water-filled moat; ditches could be dry, and designs changed over centuries.",
     "sources": [
       {
         "title": "English Heritage: Castles through time",
@@ -41,6 +33,18 @@
       {
         "title": "English Heritage: Carisbrooke Castle teachers’ kit",
         "url": "https://www.english-heritage.org.uk/siteassets/home/visit/places-to-visit/carisbrooke-castle/school-visits/carisbrooke-castle_teachers-kit_2023.pdf"
+      },
+      {
+        "title": "Historic England: Stone Castles",
+        "url": "https://historicengland.org.uk/images-books/publications/iha-stone-castles/heag235-stone-castles/"
+      },
+      {
+        "title": "Historic England: Etal Castle",
+        "url": "https://historicengland.org.uk/listing/the-list/list-entry/1011644"
+      },
+      {
+        "title": "English Heritage: Eynsford Castle description",
+        "url": "https://www.english-heritage.org.uk/visit/places-to-visit/eynsford-castle/history/description/"
       }
     ],
     "duration_minutes": 12
@@ -50,7 +54,7 @@
     {
       "path": "castle.js",
       "mime_type": "text/javascript",
-      "sha256": "5e52b93f4df62d9e0848b3a6fb38ab8de19fd4f3981a9f46811e9108adca2778"
+      "sha256": "f41e8f4cd4147f0099fa823d4622efe0eeb5bfc71e1926ec79e48238129590a6"
     }
   ]
 }

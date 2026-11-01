@@ -35,12 +35,12 @@ describe("native guided experiment controls", () => {
     expect(view.getByRole("alert")).toHaveTextContent(
       "This Exploration's interactive model is not available in this app yet.",
     );
-    expect(view.queryByText("Open gate")).toBeNull();
+    expect(view.queryByText("Compare open-gate routes")).toBeNull();
     expect(view.queryByText("Experiment bench")).toBeNull();
     view.rerender(<NativeExploration id="castle-defenses" />);
-    expect(view.getByText("Open gate")).toBeTruthy();
+    expect(view.getByText("Compare open-gate routes")).toBeTruthy();
     view.rerender(<NativeExploration id="future-topic" />);
-    expect(view.queryByText("Open gate")).toBeNull();
+    expect(view.queryByText("Compare open-gate routes")).toBeNull();
   });
   it("runs both controlled orbit comparisons and resets", () => {
     const view = render(<NativeExploration id="orbital-mechanics" />);
@@ -106,14 +106,28 @@ describe("native guided experiment controls", () => {
     expect(massAction).toBeDisabled();
     expect(worldAction).toBeDisabled();
   });
-  it("opens the gate and explicitly reveals sight lines", () => {
+  it("runs both controlled castle comparisons and resets", () => {
     const view = render(<NativeExploration id="castle-defenses" />);
-    fireEvent.press(view.getByText("Open gate"));
+    const routes = view.getByText("Compare open-gate routes");
+    const views = view.getByText("Compare wall-side views");
+    expect(routes).toBeDisabled();
+    expect(views).toBeDisabled();
+
+    fireEvent.press(view.getByText("Both routes"));
+    fireEvent.press(routes);
+    expect(view.getByText(/differs from your prediction/)).toBeTruthy();
     expect(
-      view.getByText(/Gate open: the direct entrance route remains/),
+      view.getByText(/Bridge: reaches outer entrance.*North: stops at ditch/),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Show sight-line overlay (not structures)"));
-    expect(view.getByText(/Sight-line overlay shown/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Projecting tower"));
+    fireEvent.press(views);
+    expect(view.getByText(/matches your prediction/)).toBeTruthy();
+    expect(view.getByText(/Flat wall: 1.*Projecting tower: 2/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(routes).toBeDisabled();
+    expect(views).toBeDisabled();
   });
   it("runs both controlled Moon comparisons and resets", () => {
     const view = render(<NativeExploration id="moon-phases" />);

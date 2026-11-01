@@ -110,3 +110,19 @@ it("requires nonblank accessible descriptions and control labels", () => {
     ).toBeNull();
   }
 });
+
+it("accepts boolean disabled button state and rejects other values", () => {
+  const scene = {
+    description: "Prediction-gated comparison",
+    shapes: [],
+    controls: [],
+    buttons: [{ id: "compare", label: "Compare trials", disabled: true }],
+  };
+  expect(parseScene(scene)?.buttons?.[0].disabled).toBe(true);
+  expect(
+    parseScene({
+      ...scene,
+      buttons: [{ ...scene.buttons[0], disabled: "yes" }],
+    }),
+  ).toBeNull();
+});

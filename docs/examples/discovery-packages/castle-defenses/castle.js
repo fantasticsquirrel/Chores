@@ -3,6 +3,77 @@
   var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
   var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
+  // packages/family-api/src/discovery-models/castle.ts
+  var CASTLE_DEFAULT_INPUTS = {
+    ditchWidthMeters: 22,
+    wallHeightMeters: 14,
+    towers: true,
+    gate: true,
+    inner: false,
+    approach: "bridge",
+    sight: false
+  };
+  var CASTLE_GATE_COMPARISON = [
+    { ...CASTLE_DEFAULT_INPUTS, gate: false, approach: "bridge" },
+    { ...CASTLE_DEFAULT_INPUTS, gate: false, approach: "north" }
+  ];
+  var CASTLE_TOWER_COMPARISON = [
+    { ...CASTLE_DEFAULT_INPUTS, towers: false, sight: true },
+    { ...CASTLE_DEFAULT_INPUTS, towers: true, sight: true }
+  ];
+  function bounded(value, minimum, maximum, fallback) {
+    return Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : fallback;
+  }
+  function normalizeCastleInputs(inputs) {
+    return {
+      ...inputs,
+      ditchWidthMeters: bounded(inputs.ditchWidthMeters, 0, 36, 22),
+      wallHeightMeters: bounded(inputs.wallHeightMeters, 3, 18, 14),
+      approach: inputs.approach === "north" ? "north" : "bridge"
+    };
+  }
+  var castleDitchSpan = (widthMeters) => bounded(widthMeters, 0, 36, 22) * 0.22;
+  function castleRouteEnd(raw) {
+    const inputs = normalizeCastleInputs(raw);
+    if (inputs.approach === "bridge") return inputs.gate ? 15.2 : 10;
+    return inputs.ditchWidthMeters > 0 ? -16.5 - castleDitchSpan(inputs.ditchWidthMeters) : -13.8;
+  }
+  function castleActivity(raw) {
+    const inputs = normalizeCastleInputs(raw);
+    const routeEnd2 = castleRouteEnd(inputs);
+    const routeStart = inputs.approach === "bridge" ? 32 : -31;
+    const routeOutcome = inputs.approach === "bridge" ? inputs.gate ? "blocked by closed gate" : "reaches outer entrance" : inputs.ditchWidthMeters > 0 ? "stops at ditch" : "reaches solid outer wall";
+    return {
+      inputs,
+      routeEnd: routeEnd2,
+      routeOutcome,
+      routeTravelModelUnits: Math.abs(routeEnd2 - routeStart),
+      sightLineCount: inputs.sight ? inputs.towers ? 2 : 1 : 0,
+      wallHeightScale: inputs.wallHeightMeters / 14
+    };
+  }
+  function compareCastleTrials(first, second) {
+    const a = normalizeCastleInputs(first);
+    const b = normalizeCastleInputs(second);
+    const changed = [];
+    if (a.approach !== b.approach) changed.push("approach route");
+    if (a.gate !== b.gate) changed.push("gate");
+    if (a.ditchWidthMeters !== b.ditchWidthMeters) changed.push("ditch width");
+    if (a.towers !== b.towers) changed.push("projecting towers");
+    if (a.inner !== b.inner) changed.push("inner wall");
+    if (a.sight !== b.sight) changed.push("sight-line overlay");
+    const held = [];
+    if (a.approach === b.approach) held.push(`${a.approach} approach`);
+    if (a.gate === b.gate) held.push(`${a.gate ? "closed" : "open"} gate`);
+    if (a.ditchWidthMeters === b.ditchWidthMeters)
+      held.push(`${a.ditchWidthMeters} m ditch`);
+    if (a.towers === b.towers)
+      held.push(a.towers ? "projecting towers" : "flat curtain walls");
+    if (a.inner === b.inner) held.push(`inner wall ${a.inner ? "on" : "off"}`);
+    if (a.sight === b.sight && a.sight) held.push("sight-line overlay on");
+    return { changed, held };
+  }
+
   // scripts/exploration-packages/space-life-support/vector-author.ts
   var Fragment = "fragment";
   var nextId = 0;
@@ -690,6 +761,260 @@
     return mesh;
   }
 
+  // scripts/castle-package/castleState.ts
+  var ditchSpan = (width) => width * 0.22;
+  function routeEnd(state) {
+    if (state.approach === "bridge") return state.gate ? 15.2 : 10;
+    return state.moat > 0 ? -16.5 - ditchSpan(state.moat) : -13.8;
+  }
+  var wallHeightScale = (state) => Math.max(3, Math.min(18, state.wallHeightMeters ?? 14)) / 14;
+
+  // scripts/castle-package/castleLandscape.ts
+  function createLandscape(m) {
+    const group = new Group(), ditch = new Group(), bridge = new Group();
+    const base = new Mesh(
+      new CylinderGeometry(40, 39, 1.8, 80),
+      m.earth
+    );
+    base.scale.z = 0.86;
+    base.position.y = -1.2;
+    base.receiveShadow = true;
+    group.add(base);
+    const top = new Mesh(new CircleGeometry(40, 80), m.grass);
+    top.rotation.x = -Math.PI / 2;
+    top.scale.y = 0.86;
+    top.position.y = -0.27;
+    top.receiveShadow = true;
+    group.add(top);
+    box(group, 34.8, 0.85, 28.8, 0, 0.03, 0, m.bank);
+    box(group, 28, 0.08, 22, 0, 0.5, 0, m.paving);
+    const joint = new LineBasicMaterial({
+      color: 7827290,
+      transparent: true,
+      opacity: 0.24
+    });
+    for (let x = -13; x < 14; x += 2)
+      line(
+        group,
+        [
+          [x, 0.55, -10.7],
+          [x, 0.55, 10.7]
+        ],
+        joint
+      );
+    for (let z = -10; z < 11; z += 2)
+      line(
+        group,
+        [
+          [-13.7, 0.55, z],
+          [13.7, 0.55, z]
+        ],
+        joint
+      );
+    box(group, 3.8, 0.05, 20, 0, -0.19, 25, m.path);
+    box(group, 2.9, 0.05, 20, 0, -0.19, -25, m.path);
+    for (let i = 0; i < 37; i++) {
+      const a = i * 2.3999, radius = 29 + i % 4 * 1.9;
+      const x = Math.sin(a) * radius, z = Math.cos(a) * radius * 0.84;
+      if (Math.abs(x) < 5 || Math.abs(x) < 25 && Math.abs(z) < 25) continue;
+      const height = 2 + i % 5 * 0.45;
+      cylinder(group, 0.17, height * 0.8, x, height * 0.3, z, m.timber);
+      for (let j = 0; j < 3; j++) {
+        const crown = new Mesh(
+          new IcosahedronGeometry(height * 0.52, 1),
+          m.leaves[(i + j) % 3]
+        );
+        crown.position.set(
+          x + Math.sin(j * 2) * 0.65,
+          height * 0.75 + j * 0.3,
+          z + Math.cos(j * 2) * 0.5
+        );
+        crown.scale.y = 1.25;
+        crown.castShadow = true;
+        group.add(crown);
+      }
+    }
+    box(bridge, 3.5, 0.32, 1, 0, 0.76, 0.5, m.timber);
+    for (let i = 0; i < 22; i++)
+      box(bridge, 3.6, 0.08, 0.018, 0, 0.97, (i + 0.5) / 22, m.path);
+    [-1.7, 1.7].forEach((x) => {
+      box(bridge, 0.12, 0.18, 1, x, 1.14, 0.5, m.timber);
+      [0, 0.25, 0.5, 0.75, 1].forEach(
+        (z) => box(bridge, 0.13, 0.75, 0.02, x, 1.23, z, m.timber)
+      );
+    });
+    bridge.position.z = 14.7;
+    group.add(ditch, bridge);
+    return { group, ditch, bridge, joint };
+  }
+  function updateLandscape(ditch, bridge, state, m) {
+    const span = ditchSpan(state.moat);
+    if (span > 0) {
+      const outerX = 17.4 + span, outerZ = 14.4 + span;
+      box(ditch, outerX * 2, 0.1, span, 0, -0.12, -14.4 - span / 2, m.water);
+      box(ditch, outerX * 2, 0.1, span, 0, -0.12, 14.4 + span / 2, m.water);
+      box(ditch, span, 0.1, 28.8, -17.4 - span / 2, -0.12, 0, m.water);
+      box(ditch, span, 0.1, 28.8, 17.4 + span / 2, -0.12, 0, m.water);
+      [
+        [outerX * 2 + 1, 0.55, 0, outerZ],
+        [outerX * 2 + 1, 0.55, 0, -outerZ],
+        [0.55, outerZ * 2, outerX, 0],
+        [0.55, outerZ * 2, -outerX, 0]
+      ].forEach(
+        ([width, depth, x, z]) => box(ditch, width, 0.25, depth, x, -0.02, z, m.bank)
+      );
+      for (let i = 0; i < 26; i++) {
+        const x = -outerX + 1 + i * 3.73 % (outerX * 2 - 2);
+        const z = (i % 2 ? 1 : -1) * (14.8 + i % 4 * span / 5);
+        box(ditch, 0.8 + i % 3, 0.015, 0.025, x, -0.05, z, m.ridge);
+      }
+    }
+    bridge.scale.z = Math.max(4.2, span + 2);
+    [-1.65, 1.65].forEach(
+      (x) => line(
+        ditch,
+        [
+          [x, 5.5, 14.5],
+          [x, 1.12, 14.7 + bridge.scale.z * 0.65]
+        ],
+        m.ray
+      )
+    );
+  }
+  function createEvidence(state, m) {
+    const group = new Group(), end = routeEnd(state), start = state.approach === "bridge" ? 32 : -31;
+    const direction = Math.sign(end - start);
+    for (let z = start; direction > 0 ? z < end : z > end; z += direction * 0.9) {
+      box(
+        group,
+        0.1,
+        0.05,
+        0.45,
+        0,
+        state.approach === "bridge" ? 1.04 : 0.48,
+        z,
+        m.gold
+      );
+    }
+    const marker = new Mesh(
+      new TorusGeometry(0.42, 0.065, 8, 32),
+      m.gold
+    );
+    marker.rotation.x = -Math.PI / 2;
+    marker.position.set(0, state.approach === "bridge" ? 1.09 : 0.49, end);
+    group.add(marker);
+    if (state.sight) {
+      const height = (y) => 0.55 + (y - 0.55) * wallHeightScale(state);
+      const rays = state.towers ? [
+        [
+          [18, height(10.4), 12],
+          [18, height(2.8), -6]
+        ],
+        [
+          [15, height(10.4), 15],
+          [7, height(2.8), 15]
+        ]
+      ] : [
+        [
+          [16, height(8.1), 10],
+          [24, 1, 10]
+        ]
+      ];
+      rays.forEach(
+        (points) => line(group, points, m.sightOverlay).computeLineDistances()
+      );
+    }
+    return group;
+  }
+
+  // scripts/castle-package/castleMaterials.ts
+  function masonryTexture() {
+    const canvas = new TextureCanvas();
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#665f50";
+    context.fillRect(0, 0, 512, 512);
+    for (let row = 0; row < 16; row++) {
+      for (let col = -1; col < 9; col++) {
+        const noise = (row * 73 + col * 43 + 517) % 29;
+        const x = col * 64 + row % 2 * 32;
+        context.fillStyle = `rgb(${145 + noise},${137 + noise},${116 + noise})`;
+        context.fillRect(x + 1, row * 32 + 1, 61, 29);
+        context.fillStyle = "#e0d6bd55";
+        context.fillRect(x + 3, row * 32 + 2, 58, 1);
+        for (let mark = 0; mark < 18; mark++) {
+          context.fillStyle = mark % 2 ? "#453c2922" : "#f9ebd722";
+          context.fillRect(
+            x + (mark * 17 + row * 7) % 60,
+            row * 32 + mark * 11 % 29,
+            2,
+            1
+          );
+        }
+      }
+    }
+    const texture = new CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = RepeatWrapping;
+    texture.colorSpace = SRGBColorSpace;
+    texture.repeat.set(2, 1.5);
+    texture.anisotropy = 4;
+    return texture;
+  }
+  function castleMaterials() {
+    const texture = masonryTexture();
+    const stone = new MeshStandardMaterial({
+      map: texture,
+      bumpMap: texture,
+      bumpScale: 0.045,
+      roughness: 0.93,
+      color: 13088912
+    });
+    const plain = (color, roughness = 0.9) => new MeshStandardMaterial({ color, roughness });
+    return {
+      stone,
+      trim: plain(13746070),
+      darkStone: plain(7892309),
+      roof: plain(4800316),
+      ridge: plain(6773582),
+      timber: plain(6044709),
+      iron: plain(2107690, 0.62),
+      dark: plain(2369827),
+      grass: plain(5466435),
+      bank: plain(5990472),
+      earth: plain(3815467),
+      water: new MeshStandardMaterial({
+        color: 2647411,
+        roughness: 0.24,
+        metalness: 0.08
+      }),
+      paving: plain(9602667),
+      path: plain(11636572),
+      leaves: [plain(3231291), plain(4546622), plain(6320967)],
+      sightOverlay: new LineDashedMaterial({
+        color: 5826798,
+        dashSize: 0.8,
+        gapSize: 0.6,
+        transparent: true,
+        opacity: 0.9
+      }),
+      gold: new MeshBasicMaterial({ color: 16765818 }),
+      ray: new LineBasicMaterial({
+        color: 16306824,
+        transparent: true,
+        opacity: 0.65
+      }),
+      dispose() {
+        texture.dispose();
+        Object.values(this).forEach((value) => {
+          if (value instanceof Material) value.dispose();
+          if (Array.isArray(value))
+            value.forEach((material) => material.dispose());
+        });
+      }
+    };
+  }
+
   // scripts/castle-package/castleStructure.ts
   function curtain(group, length, x, z, rotation, m, height = 7) {
     const wall = new Group();
@@ -878,333 +1203,134 @@
     return { group, curtains, towers, inner, gate };
   }
 
-  // scripts/castle-package/castleState.ts
-  var defaultCastleState = {
-    moat: 22,
-    towers: true,
-    gate: true,
-    inner: false,
-    approach: "bridge",
-    sight: false
-  };
-  var ditchSpan = (width) => width * 0.22;
-  function castleObservation(state) {
-    return state.approach === "bridge" ? state.gate ? "blocked by closed gate" : "reaches outer entrance" : state.moat > 0 ? "obstructed by ditch" : "reaches solid outer wall";
-  }
-  function routeEnd(state) {
-    if (state.approach === "bridge") return state.gate ? 15.2 : 10;
-    return state.moat > 0 ? -16.5 - ditchSpan(state.moat) : -13.8;
-  }
-  var wallHeightScale = (state) => Math.max(3, Math.min(18, state.wallHeightMeters ?? 14)) / 14;
-
-  // scripts/castle-package/castleLandscape.ts
-  function createLandscape(m) {
-    const group = new Group(), ditch = new Group(), bridge = new Group();
-    const base = new Mesh(
-      new CylinderGeometry(40, 39, 1.8, 80),
-      m.earth
-    );
-    base.scale.z = 0.86;
-    base.position.y = -1.2;
-    base.receiveShadow = true;
-    group.add(base);
-    const top = new Mesh(new CircleGeometry(40, 80), m.grass);
-    top.rotation.x = -Math.PI / 2;
-    top.scale.y = 0.86;
-    top.position.y = -0.27;
-    top.receiveShadow = true;
-    group.add(top);
-    box(group, 34.8, 0.85, 28.8, 0, 0.03, 0, m.bank);
-    box(group, 28, 0.08, 22, 0, 0.5, 0, m.paving);
-    const joint = new LineBasicMaterial({
-      color: 7827290,
-      transparent: true,
-      opacity: 0.24
-    });
-    for (let x = -13; x < 14; x += 2)
-      line(
-        group,
-        [
-          [x, 0.55, -10.7],
-          [x, 0.55, 10.7]
-        ],
-        joint
-      );
-    for (let z = -10; z < 11; z += 2)
-      line(
-        group,
-        [
-          [-13.7, 0.55, z],
-          [13.7, 0.55, z]
-        ],
-        joint
-      );
-    box(group, 3.8, 0.05, 20, 0, -0.19, 25, m.path);
-    box(group, 2.9, 0.05, 20, 0, -0.19, -25, m.path);
-    for (let i = 0; i < 37; i++) {
-      const a = i * 2.3999, radius = 29 + i % 4 * 1.9;
-      const x = Math.sin(a) * radius, z = Math.cos(a) * radius * 0.84;
-      if (Math.abs(x) < 5 || Math.abs(x) < 25 && Math.abs(z) < 25) continue;
-      const height = 2 + i % 5 * 0.45;
-      cylinder(group, 0.17, height * 0.8, x, height * 0.3, z, m.timber);
-      for (let j = 0; j < 3; j++) {
-        const crown = new Mesh(
-          new IcosahedronGeometry(height * 0.52, 1),
-          m.leaves[(i + j) % 3]
-        );
-        crown.position.set(
-          x + Math.sin(j * 2) * 0.65,
-          height * 0.75 + j * 0.3,
-          z + Math.cos(j * 2) * 0.5
-        );
-        crown.scale.y = 1.25;
-        crown.castShadow = true;
-        group.add(crown);
-      }
-    }
-    box(bridge, 3.5, 0.32, 1, 0, 0.76, 0.5, m.timber);
-    for (let i = 0; i < 22; i++)
-      box(bridge, 3.6, 0.08, 0.018, 0, 0.97, (i + 0.5) / 22, m.path);
-    [-1.7, 1.7].forEach((x) => {
-      box(bridge, 0.12, 0.18, 1, x, 1.14, 0.5, m.timber);
-      [0, 0.25, 0.5, 0.75, 1].forEach(
-        (z) => box(bridge, 0.13, 0.75, 0.02, x, 1.23, z, m.timber)
-      );
-    });
-    bridge.position.z = 14.7;
-    group.add(ditch, bridge);
-    return { group, ditch, bridge, joint };
-  }
-  function updateLandscape(ditch, bridge, state, m) {
-    const span = ditchSpan(state.moat);
-    if (span > 0) {
-      const outerX = 17.4 + span, outerZ = 14.4 + span;
-      box(ditch, outerX * 2, 0.1, span, 0, -0.12, -14.4 - span / 2, m.water);
-      box(ditch, outerX * 2, 0.1, span, 0, -0.12, 14.4 + span / 2, m.water);
-      box(ditch, span, 0.1, 28.8, -17.4 - span / 2, -0.12, 0, m.water);
-      box(ditch, span, 0.1, 28.8, 17.4 + span / 2, -0.12, 0, m.water);
-      [
-        [outerX * 2 + 1, 0.55, 0, outerZ],
-        [outerX * 2 + 1, 0.55, 0, -outerZ],
-        [0.55, outerZ * 2, outerX, 0],
-        [0.55, outerZ * 2, -outerX, 0]
-      ].forEach(
-        ([width, depth, x, z]) => box(ditch, width, 0.25, depth, x, -0.02, z, m.bank)
-      );
-      for (let i = 0; i < 26; i++) {
-        const x = -outerX + 1 + i * 3.73 % (outerX * 2 - 2);
-        const z = (i % 2 ? 1 : -1) * (14.8 + i % 4 * span / 5);
-        box(ditch, 0.8 + i % 3, 0.015, 0.025, x, -0.05, z, m.ridge);
-      }
-    }
-    bridge.scale.z = Math.max(4.2, span + 2);
-    [-1.65, 1.65].forEach(
-      (x) => line(
-        ditch,
-        [
-          [x, 5.5, 14.5],
-          [x, 1.12, 14.7 + bridge.scale.z * 0.65]
-        ],
-        m.ray
-      )
-    );
-  }
-  function createEvidence(state, m) {
-    const group = new Group(), end = routeEnd(state), start = state.approach === "bridge" ? 32 : -31;
-    const direction = Math.sign(end - start);
-    for (let z = start; direction > 0 ? z < end : z > end; z += direction * 0.9) {
-      box(
-        group,
-        0.1,
-        0.05,
-        0.45,
-        0,
-        state.approach === "bridge" ? 1.04 : 0.48,
-        z,
-        m.gold
-      );
-    }
-    const marker = new Mesh(
-      new TorusGeometry(0.42, 0.065, 8, 32),
-      m.gold
-    );
-    marker.rotation.x = -Math.PI / 2;
-    marker.position.set(0, state.approach === "bridge" ? 1.09 : 0.49, end);
-    group.add(marker);
-    if (state.sight) {
-      const height = (y) => 0.55 + (y - 0.55) * wallHeightScale(state);
-      const rays = state.towers ? [
-        [
-          [18, height(10.4), 12],
-          [18, height(2.8), -6]
-        ],
-        [
-          [15, height(10.4), 15],
-          [7, height(2.8), 15]
-        ]
-      ] : [
-        [
-          [16, height(8.1), 10],
-          [24, 1, 10]
-        ]
-      ];
-      rays.forEach(
-        (points) => line(group, points, m.sightOverlay).computeLineDistances()
-      );
-    }
-    return group;
-  }
-
-  // scripts/castle-package/castleMaterials.ts
-  function masonryTexture() {
-    const canvas = new TextureCanvas();
-    canvas.width = 512;
-    canvas.height = 512;
-    const context = canvas.getContext("2d");
-    context.fillStyle = "#746d5c";
-    context.fillRect(0, 0, 512, 512);
-    for (let row = 0; row < 16; row++) {
-      for (let col = -1; col < 9; col++) {
-        const noise = (row * 73 + col * 43 + 517) % 29;
-        const x = col * 64 + row % 2 * 32;
-        context.fillStyle = `rgb(${153 + noise},${146 + noise},${126 + noise})`;
-        context.fillRect(x + 1, row * 32 + 1, 61, 29);
-        context.fillStyle = "#e0d6bd55";
-        context.fillRect(x + 3, row * 32 + 2, 58, 1);
-        for (let mark = 0; mark < 18; mark++) {
-          context.fillStyle = mark % 2 ? "#453c2922" : "#f9ebd722";
-          context.fillRect(
-            x + (mark * 17 + row * 7) % 60,
-            row * 32 + mark * 11 % 29,
-            2,
-            1
-          );
-        }
-      }
-    }
-    const texture = new CanvasTexture(canvas);
-    texture.wrapS = texture.wrapT = RepeatWrapping;
-    texture.colorSpace = SRGBColorSpace;
-    texture.repeat.set(2, 1.5);
-    texture.anisotropy = 4;
-    return texture;
-  }
-  function castleMaterials() {
-    const texture = masonryTexture();
-    const stone = new MeshStandardMaterial({
-      map: texture,
-      bumpMap: texture,
-      bumpScale: 0.045,
-      roughness: 0.93,
-      color: 13946036
-    });
-    const plain = (color, roughness = 0.9) => new MeshStandardMaterial({ color, roughness });
-    return {
-      stone,
-      trim: plain(12827297),
-      darkStone: plain(9341302),
-      roof: plain(5923426),
-      ridge: plain(8751744),
-      timber: plain(7557684),
-      iron: plain(3423033, 0.65),
-      dark: plain(2895911),
-      grass: plain(6583116),
-      bank: plain(7303763),
-      earth: plain(5000764),
-      water: new MeshStandardMaterial({
-        color: 4226427,
-        roughness: 0.32,
-        metalness: 0.22
-      }),
-      paving: plain(10195576),
-      path: plain(12692350),
-      leaves: [plain(4216894), plain(5466182), plain(6847307)],
-      sightOverlay: new LineDashedMaterial({
-        color: 5826798,
-        dashSize: 0.8,
-        gapSize: 0.6,
-        transparent: true,
-        opacity: 0.9
-      }),
-      gold: new MeshBasicMaterial({ color: 16765818 }),
-      ray: new LineBasicMaterial({
-        color: 16306824,
-        transparent: true,
-        opacity: 0.65
-      }),
-      dispose() {
-        texture.dispose();
-        Object.values(this).forEach((value) => {
-          if (value instanceof Material) value.dispose();
-          if (Array.isArray(value))
-            value.forEach((material) => material.dispose());
-        });
-      }
-    };
-  }
-
   // scripts/castle-package/castle-worker.ts
   var topic = "routes";
   var prediction = null;
   var tested = false;
+  var routeEvidence = CASTLE_GATE_COMPARISON.map(castleActivity);
+  var towerEvidence = CASTLE_TOWER_COMPARISON.map(castleActivity);
+  var routeVariables = compareCastleTrials(...CASTLE_GATE_COMPARISON);
+  var towerVariables = compareCastleTrials(...CASTLE_TOWER_COMPARISON);
   var modelNote = "13th-century English-inspired composite, not a reconstruction. Dimensions are schematic; ditch width is compressed in the view. Ditches could be wet or dry. Sight lines illustrate positions, not weapon ranges. Routes and visibility do not predict a siege result.";
+  function inputsFrom(values) {
+    return normalizeCastleInputs({
+      ...CASTLE_DEFAULT_INPUTS,
+      ditchWidthMeters: values.moat ?? 22,
+      towers: (values.towers ?? 1) === 1,
+      gate: (values.gate ?? 1) === 1,
+      inner: (values.inner ?? 0) === 1,
+      approach: values.approach === 1 ? "north" : "bridge",
+      sight: (values.sight ?? 0) === 1
+    });
+  }
+  var toState = (inputs) => ({
+    moat: inputs.ditchWidthMeters,
+    wallHeightMeters: inputs.wallHeightMeters,
+    towers: inputs.towers,
+    gate: inputs.gate,
+    inner: inputs.inner,
+    approach: inputs.approach,
+    sight: inputs.sight
+  });
   function run(input) {
     if (input.type === "reset") {
       topic = "routes";
       prediction = null;
       tested = false;
     }
-    const values = input.type === "reset" ? {} : input.values;
-    const state = {
-      ...defaultCastleState,
-      moat: values.moat ?? 22,
-      towers: (values.towers ?? 1) === 1,
-      gate: (values.gate ?? 1) === 1,
-      inner: (values.inner ?? 0) === 1,
-      approach: values.approach === 1 ? "north" : "bridge",
-      sight: (values.sight ?? 0) === 1
-    };
+    let inputs = inputsFrom(input.type === "reset" ? {} : input.values);
     if (input.control === "compareRoutes" || input.control === "compareViews") {
       topic = input.control === "compareRoutes" ? "routes" : "views";
       prediction = null;
       tested = false;
-    } else if (input.control === "predictYes" || input.control === "predictNo") {
-      prediction = input.control === "predictYes" ? "Yes" : "No";
+    } else if (["routeBoth", "routeBridge", "routeNeither"].includes(input.control ?? "")) {
+      prediction = input.control.replace("route", "").toLowerCase();
       tested = false;
-    } else if (input.control === "testPrediction") {
-      if (topic === "routes") {
-        state.moat = 22;
-        state.gate = false;
-        state.approach = tested && state.approach === "bridge" ? "north" : "bridge";
-      } else {
-        state.towers = tested ? !state.towers : false;
-        state.sight = true;
-      }
+    } else if (["viewTower", "viewSame", "viewFlat"].includes(input.control ?? "")) {
+      prediction = input.control.replace("view", "").toLowerCase();
+      tested = false;
+    } else if (input.control === "testPrediction" && prediction) {
       tested = true;
+      inputs = topic === "routes" ? CASTLE_GATE_COMPARISON[0] : CASTLE_TOWER_COMPARISON[1];
+    } else if (tested && input.control === "showFirst") {
+      inputs = topic === "routes" ? CASTLE_GATE_COMPARISON[0] : CASTLE_TOWER_COMPARISON[0];
+    } else if (tested && input.control === "showSecond") {
+      inputs = topic === "routes" ? CASTLE_GATE_COMPARISON[1] : CASTLE_TOWER_COMPARISON[1];
     }
+    const state = toState(inputs);
+    const activity = castleActivity(inputs);
     resetResources();
     resetVectorIds();
-    const material = castleMaterials(), fortress = createFortress(material), landscape = createLandscape(material);
+    const material = castleMaterials();
+    const fortress = createFortress(material);
+    const landscape = createLandscape(material);
     fortress.towers.visible = state.towers;
     fortress.inner.visible = state.inner;
     fortress.gate.position.y = state.gate ? 0 : 4.9;
     updateLandscape(landscape.ditch, landscape.bridge, state, material);
     const evidence = createEvidence(state, material);
-    const observation = castleObservation(state);
-    const question = topic === "routes" ? "Does opening the gate open both approaches?" : "Can a flat wall give the same view along its base as a projecting tower?";
-    const action = topic === "routes" ? "Open the gate. Compare the bridge with the north route, keeping the ditch at 22 m." : "Keep the route and ditch fixed. Remove the corner towers, then add them back. Follow the dashed sight-line overlay at the front corner.";
-    const explain = tested ? topic === "routes" ? "The bridge reaches the open entrance. On the north side, the ditch still interrupts the route. Even without a ditch, that route meets a solid wall, not a doorway. Why does an entrance need extra protection?" : "A tower projects beyond the wall, giving an observer a position to look along its outside face. The lines show possible views, not weapon range or a guaranteed defense. Why does standing farther out change what is visible?" : topic === "routes" ? "What still stops the north approach when the gate is open? Use the route endpoint as evidence." : "Which part of the wall can an observer on a projecting tower see? Compare the lines with and without towers.";
-    const toggle = (id, label, checked) => ({ id, label, kind: "toggle", min: 0, max: 1, step: 1, value: checked ? 1 : 0 });
+    const question = topic === "routes" ? "With the gate open, which routes reach an entrance?" : "Which position shows more adjoining wall faces?";
+    const action = topic === "routes" ? "Keep the gate open and ditch at 22 m. Compare the bridge route with the north wall route." : "Keep the bridge route, closed gate and 22 m ditch fixed. Compare the front corner with and without its projecting tower.";
+    const feedback = topic === "routes" ? `The result ${prediction === "bridge" ? "matches" : "differs from"} your prediction. Bridge: ${routeEvidence[0].routeOutcome} \xB7 North: ${routeEvidence[1].routeOutcome}. Changed: ${routeVariables.changed.join(", ")}. Held: ${routeVariables.held.join(" \xB7 ")}. Opening the gate does not create an entrance through the north wall.` : `The result ${prediction === "tower" ? "matches" : "differs from"} your prediction. Flat wall: ${towerEvidence[0].sightLineCount} illustrated direction \xB7 Projecting tower: ${towerEvidence[1].sightLineCount}. Changed: ${towerVariables.changed.join(", ")}. Held: ${towerVariables.held.join(" \xB7 ")}. Projecting outward changes the wall faces visible from this example position. The dashed directions are not complete visibility or weapon ranges.`;
+    const choiceIds = topic === "routes" ? ["routeBoth", "routeBridge", "routeNeither"] : ["viewTower", "viewSame", "viewFlat"];
+    const evidenceIds = ["showFirst", "showSecond"];
+    const toggle = (id, label, checked) => ({
+      id,
+      label,
+      kind: "toggle",
+      min: 0,
+      max: 1,
+      step: 1,
+      value: checked ? 1 : 0
+    });
     return {
       animate: false,
       shapes: [],
-      fallbackVector: { viewBox: [0, 0, 720, 420], description: `Castle plan: ${observation}`, nodes: [CastleDrawing(state)] },
-      description: `${state.moat} m ditch; ${state.gate ? "closed" : "raised"} portcullis; ${state.towers ? "four projecting corner towers" : "no projecting corner towers"}; ${state.inner ? "an additional inner wall" : "one outer wall"}. The ${state.approach} route ${observation}. ${state.towers ? "Projecting towers give views along adjoining walls." : "Without projecting towers, wall-side visibility is reduced."} ${state.inner ? "The inner wall adds another barrier; it does not make the castle invincible." : ""}`,
-      sections: [{ heading: "1. Predict", text: `${question}${prediction ? ` Your prediction: ${prediction}.` : ""}`, buttonIds: ["predictYes", "predictNo"] }, { heading: "2. Compare", text: action, buttonIds: ["testPrediction"] }, { heading: "3. Explain", text: explain }],
+      fallbackVector: {
+        viewBox: [0, 0, 720, 420],
+        description: `Castle plan: the ${state.approach} route ${activity.routeOutcome}.`,
+        nodes: [CastleDrawing(state)]
+      },
+      description: `${state.moat} m ditch; ${state.gate ? "closed" : "raised"} portcullis; ${state.towers ? "four projecting corner towers" : "flat curtain-wall corners"}; ${state.inner ? "an additional inner wall" : "one outer wall"}. The ${state.approach} route ${activity.routeOutcome}. ${state.sight ? `${activity.sightLineCount} illustrative sight-line directions are shown.` : "Sight-line directions are hidden."} ${state.inner ? "The inner wall adds another barrier; it does not make the castle invincible." : ""}`,
+      sections: [
+        {
+          heading: "1. Predict",
+          text: `${question}${prediction ? ` Your prediction: ${prediction}.` : " Choose a prediction before comparing."}`,
+          buttonIds: choiceIds
+        },
+        {
+          heading: "2. Compare",
+          text: action,
+          buttonIds: ["testPrediction", ...tested ? evidenceIds : []]
+        },
+        {
+          heading: "3. Explain",
+          text: tested ? feedback : topic === "routes" ? "Predict first. Then use both route endpoints as evidence." : "Predict first. Then count the illustrated directions in both views."
+        }
+      ],
       footnote: modelNote,
       controls: [
-        { id: "approach", label: "Approach route", kind: "select", min: 0, max: 1, step: 1, value: state.approach === "bridge" ? 0 : 1, options: [{ value: 0, label: "Bridge and gate" }, { value: 1, label: "Across the north ditch" }] },
-        { id: "moat", label: "Ditch width (m)", min: 0, max: 36, step: 1, value: state.moat },
+        {
+          id: "approach",
+          label: "Approach route",
+          kind: "select",
+          min: 0,
+          max: 1,
+          step: 1,
+          value: state.approach === "bridge" ? 0 : 1,
+          options: [
+            { value: 0, label: "Bridge and gate" },
+            { value: 1, label: "Across the north ditch" }
+          ]
+        },
+        {
+          id: "moat",
+          label: "Ditch width (m)",
+          min: 0,
+          max: 36,
+          step: 1,
+          value: state.moat
+        },
         toggle("gate", "Close gate", state.gate),
         toggle("towers", "Projecting towers", state.towers),
         toggle("inner", "Inner wall", state.inner),
@@ -1213,27 +1339,105 @@
       buttons: [
         { id: "compareRoutes", label: "Compare routes" },
         { id: "compareViews", label: "Compare sight lines" },
-        { id: "predictYes", label: "Predict yes" },
-        { id: "predictNo", label: "Predict no" },
-        { id: "testPrediction", label: topic === "routes" ? tested && state.approach === "bridge" ? "Compare north route" : "Test open gate" : tested && !state.towers ? "Restore towers" : "Remove corner towers" }
+        ...topic === "routes" ? [
+          { id: "routeBoth", label: "Both routes" },
+          { id: "routeBridge", label: "Bridge only" },
+          { id: "routeNeither", label: "Neither route" }
+        ] : [
+          { id: "viewTower", label: "Projecting tower" },
+          { id: "viewSame", label: "Same view" },
+          { id: "viewFlat", label: "Flat wall" }
+        ],
+        {
+          id: "testPrediction",
+          label: topic === "routes" ? "Compare open-gate routes" : "Compare wall-side views",
+          disabled: !prediction
+        },
+        ...tested ? [
+          {
+            id: "showFirst",
+            label: topic === "routes" ? "Show bridge evidence" : "Show flat-wall evidence"
+          },
+          {
+            id: "showSecond",
+            label: topic === "routes" ? "Show north evidence" : "Show tower evidence"
+          }
+        ] : []
       ],
       scene3d: {
         ...resources(),
-        nodes: [landscape.group.record(), fortress.group.record(), evidence.record()],
+        nodes: [
+          landscape.group.record(),
+          fortress.group.record(),
+          evidence.record()
+        ],
         camera: {
           target: [0, 3.2, 0],
           radius: 80,
           yaw: 0.62,
           elevation: 0.7,
-          zoom: 1,
+          zoom: 0.88,
           halfHeight: 21.5,
           narrowHalfWidth: 28,
           narrowAspect: 1.25,
-          presets: [{ id: "courtyard", label: "Courtyard", yaw: 0.62, elevation: 0.7, zoom: 1 }, { id: "entrance", label: "Entrance", yaw: 0.1, elevation: 0.3, zoom: 1.15 }, { id: "north", label: "North wall", yaw: Math.PI + 0.3, elevation: 0.7, zoom: 1 }, { id: "overhead", label: "Above", yaw: 0.62, elevation: 1.42, zoom: 1 }]
+          presets: [
+            {
+              id: "courtyard",
+              label: "Courtyard",
+              yaw: 0.62,
+              elevation: 0.7,
+              zoom: 0.88
+            },
+            {
+              id: "entrance",
+              label: "Entrance",
+              yaw: 0.1,
+              elevation: 0.3,
+              zoom: 1
+            },
+            {
+              id: "north",
+              label: "North wall",
+              yaw: Math.PI + 0.3,
+              elevation: 0.7,
+              zoom: 0.88
+            },
+            {
+              id: "overhead",
+              label: "Above",
+              yaw: 0.62,
+              elevation: 1.42,
+              zoom: 0.88
+            }
+          ]
         },
-        lighting: { hemisphere: { sky: 15200483, ground: 6578507, intensity: 2.2 }, directional: [{ color: 16770232, intensity: 3.1, position: [-32, 60, 35], shadow: { size: 2048, extent: 48, near: 1, far: 130, bias: -3e-4, normalBias: 0.06, radius: 3 } }, { color: 12112603, intensity: 0.5, position: [25, 16, -25] }] },
-        labels: [{ text: "Keep", position: [-3.4, 16, -3.3] }, { text: "Gatehouse", position: [4.5, 12.8, 13] }, { text: state.towers ? "Projecting tower" : "Curtain wall", position: [-15, state.towers ? 12 : 8, 12] }],
-        presentation: { title: "What blocks the approach?", subtitle: "Compare the entrance with a route toward a solid wall.", route: `${state.approach === "bridge" ? "Bridge route" : "North route"} \xB7 ${observation}`, background: ["#e7e8db", "#d5d9c9", "#b7c0ad"] }
+        lighting: {
+          hemisphere: { sky: 12375252, ground: 3423019, intensity: 1.45 },
+          directional: [
+            {
+              color: 16766876,
+              intensity: 2.7,
+              position: [-32, 60, 35],
+              shadow: {
+                size: 2048,
+                extent: 48,
+                near: 1,
+                far: 130,
+                bias: -3e-4,
+                normalBias: 0.06,
+                radius: 3
+              }
+            },
+            { color: 8763855, intensity: 0.82, position: [25, 16, -25] }
+          ]
+        },
+        labels: [],
+        presentation: {
+          title: "Test one castle defense",
+          subtitle: "Compare a route or wall-side view.",
+          route: `${state.approach === "bridge" ? "Bridge route" : "North route"} \xB7 ${activity.routeOutcome}`,
+          background: ["#e8e1cf", "#c4cec0", "#879b88"]
+        }
       }
     };
   }

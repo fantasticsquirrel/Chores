@@ -1,28 +1,27 @@
 @import "./castleLearning.css";
 .castle-exhibit {
   overflow: hidden;
-  border: 1px solid #b8c0ad;
-  border-radius: 18px;
-  background: #e9e8df;
+  border: 1px solid #445d5c;
+  border-radius: 22px;
+  background: #e8e4d8;
   color: #25372e;
+  box-shadow:
+    0 24px 70px #0a1b2440,
+    inset 0 1px #ffffff1c;
 }
 .castle-visual {
-  position: relative;
-  height: 650px;
-  background: radial-gradient(
-    ellipse at 49% 47%,
-    #e7e8db 0,
-    #d5d9c9 52%,
-    #b7c0ad 100%
-  );
+  min-height: 700px;
+  padding: 28px 30px 18px;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse at 58% 44%, #51645d 0, #263f46 50%, #112731 100%),
+    linear-gradient(155deg, #122832, #776b4b);
   isolation: isolate;
 }
 .castle-heading {
-  position: absolute;
-  top: 27px;
-  left: 30px;
-  z-index: 2;
-  pointer-events: none;
+  position: relative;
+  z-index: 1;
 }
 .discovery-lab .castle-heading h2,
 .castle-heading h2 {
@@ -31,20 +30,29 @@
   font-weight: 400;
   letter-spacing: -0.03em;
   margin: 0;
-  color: #25372e;
+  color: #fff4d9;
+  text-shadow: 0 2px 20px #07171fcc;
 }
 .discovery-lab .castle-heading p,
 .castle-heading p {
   font-size: 12px;
   margin: 9px 0 0;
-  color: #54614f;
+  color: #c9d8d2;
+}
+.castle-viewer {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  margin-top: 10px;
 }
 .castle-canvas {
-  position: absolute;
-  inset: 72px 0 34px;
+  position: relative;
+  min-height: 505px;
+  margin: 0 -30px;
   cursor: grab;
   touch-action: none;
-  outline-offset: -5px;
+  outline-offset: -8px;
 }
 .castle-canvas:active {
   cursor: grabbing;
@@ -54,85 +62,64 @@
   height: 100%;
   display: block;
 }
-.castle-annotation {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  color: #2d3e33;
-  padding: 5px 9px;
-  background: #f4f3e8e8;
-  border: 1px solid #9ba78c99;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px #243b2922;
-  pointer-events: none;
-  font-size: 11px;
-  white-space: nowrap;
-}
-.castle-annotation::after {
-  content: "";
-  display: block;
-  width: 1px;
-  height: 15px;
-  background: #586c4f;
-  position: absolute;
-  left: 50%;
-  top: 100%;
-}
 .castle-camera {
-  position: absolute;
-  bottom: 24px;
-  left: 25px;
-  right: 25px;
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  position: relative;
+  z-index: 1;
 }
 .castle-camera > div {
   display: flex;
   gap: 4px;
   padding: 4px;
-  border: 1px solid #8e9c8599;
-  background: #e9eddfd9;
-  border-radius: 8px;
+  border: 1px solid #c7ddd05c;
+  background: #0b2029c9;
+  box-shadow: 0 7px 24px #07171f66;
+  border-radius: 10px;
 }
 .castle-camera button {
   border: 0;
   background: transparent;
-  color: #465641;
-  border-radius: 5px;
+  color: #d8e7de;
+  border-radius: 7px;
   padding: 9px 12px;
   font-size: 12px;
   min-width: 35px;
   min-height: 35px;
 }
 .castle-camera button[aria-pressed="true"] {
-  background: #344d3d;
-  color: #f4f3e6;
+  background: #e7c781;
+  color: #16282a;
+  font-weight: 700;
 }
 .castle-camera button:hover {
-  background: #cbd3be;
-  color: #263d2c;
+  background: #395862;
+  color: #fff9e9;
 }
+.discovery-lab .castle-camera-hint,
 .castle-camera-hint {
-  position: absolute;
-  bottom: 4px;
-  left: 25px;
-  right: 25px;
-  font-size: 10px;
+  position: relative;
+  font-size: 11px;
+  font-weight: 600;
   text-align: center;
-  color: #4b5d45;
+  color: #f1f7f3;
   pointer-events: none;
-  margin: 0;
+  margin: 8px 0 0;
 }
 .castle-route-key {
-  position: absolute;
-  left: 30px;
-  top: 90px;
   display: flex;
   gap: 7px;
   align-items: center;
   font-size: 11px;
-  color: #4b5946;
+  color: #dae7df;
   pointer-events: none;
+  margin-top: 13px;
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid #d4e2d12e;
+  border-radius: 999px;
+  background: #0e252dc7;
 }
 .castle-route-key i {
   width: 17px;
@@ -146,7 +133,7 @@
   grid-template-columns: 1.05fr 1.5fr auto;
   gap: 24px;
   align-items: center;
-  background: #f0efe6;
+  background: #eee9dc;
   padding: 24px 30px;
   border-top: 1px solid #b5bea9;
 }
@@ -222,7 +209,7 @@
 }
 .castle-observation {
   padding: 14px 30px;
-  background: #dce3d3;
+  background: #d6dfcf;
   font-size: 12px;
   color: #3b513b;
   line-height: 1.65;
@@ -235,15 +222,17 @@
 }
 .castle-fallback {
   padding: 25px;
-  margin-top: 30px;
+  margin: 30px;
   font-size: 12px;
 }
 .castle-fallback svg {
   max-height: 450px;
 }
 .castle-loading {
+  min-height: 505px;
   padding: 180px 30px;
   text-align: center;
+  color: #d8e7de;
 }
 
 .castle-exhibit .dl-slider-heading,

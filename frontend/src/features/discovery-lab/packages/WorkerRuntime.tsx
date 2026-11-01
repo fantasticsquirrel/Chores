@@ -373,6 +373,7 @@ export function WorkerRuntime({
           <button
             key={button.id}
             aria-pressed={button.pressed}
+            disabled={button.disabled}
             onClick={() => pressButton(button.id)}
           >
             {button.label}
@@ -404,6 +405,7 @@ export function WorkerRuntime({
                   <button
                     key={id}
                     aria-pressed={button.pressed}
+                    disabled={button.disabled}
                     onClick={() => pressButton(id)}
                   >
                     {button.label}

@@ -48,6 +48,7 @@
 }
 .castle-predictions {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
 }
 .castle-predictions button {
@@ -65,13 +66,40 @@
 }
 .castle-test {
   margin-top: 14px;
-  padding: 4px 0;
-  border: 0;
-  border-bottom: 1px solid #6b865d;
-  background: transparent;
-  color: #3f603d;
+  padding: 9px 12px;
+  border: 1px solid #527451;
+  border-radius: 6px;
+  background: #456546;
+  color: #fff;
   font-weight: 650;
   font-size: 12px;
+}
+.castle-test:disabled {
+  cursor: not-allowed;
+  border-color: #b7bcad;
+  background: #e3e3d8;
+  color: #767b70;
+}
+.castle-evidence-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.castle-evidence-controls button {
+  padding: 7px 9px;
+  border: 1px solid #9baa8f;
+  border-radius: 5px;
+  background: #edf0e5;
+  color: #3b563d;
+  font-size: 11px;
+}
+.discovery-lab .castle-investigation-feedback,
+.castle-investigation-feedback {
+  padding: 11px 12px;
+  border-left: 3px solid #a66c31;
+  border-radius: 0 6px 6px 0;
+  background: #f0eadb;
 }
 .discovery-lab .castle-model-note,
 .castle-model-note {

@@ -35,6 +35,7 @@ import { OpticsExploration } from "./OpticsExploration";
 import { GravityExploration } from "./GravityExploration";
 import { SolarSystemExploration } from "./SolarSystemExploration";
 import { MoonPhasesExploration } from "./MoonPhasesExploration";
+import { CastleExploration } from "./CastleExploration";
 import { NativeMoonScene } from "./NativeMoonScene";
 import { NativeSceneSurface } from "./NativeSceneSurface";
 import { nativeSceneState } from "../rendering/nativeSceneState";
@@ -65,6 +66,7 @@ const extendedExplorations: Record<string, ComponentType> = {
   gravity: GravityExploration,
   "solar-system": SolarSystemExploration,
   "moon-phases": MoonPhasesExploration,
+  "castle-defenses": CastleExploration,
   photosynthesis: PhotosynthesisExploration,
 };
 export function NativeExploration({ id }: { id: string }) {

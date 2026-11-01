@@ -1,3 +1,11 @@
+import {
+  CASTLE_DEFAULT_INPUTS,
+  castleActivity,
+  castleDitchSpan,
+  castleRouteEnd,
+  normalizeCastleInputs,
+} from "@family-manager/family-api/discovery-models/castle";
+
 export type CastleState = {
   moat: number;
   wallHeightMeters?: number;
@@ -8,29 +16,35 @@ export type CastleState = {
   sight: boolean;
 };
 export const defaultCastleState: CastleState = {
-  moat: 22,
-  towers: true,
-  gate: true,
-  inner: false,
-  approach: "bridge",
-  sight: false,
+  moat: CASTLE_DEFAULT_INPUTS.ditchWidthMeters,
+  wallHeightMeters: CASTLE_DEFAULT_INPUTS.wallHeightMeters,
+  towers: CASTLE_DEFAULT_INPUTS.towers,
+  gate: CASTLE_DEFAULT_INPUTS.gate,
+  inner: CASTLE_DEFAULT_INPUTS.inner,
+  approach: CASTLE_DEFAULT_INPUTS.approach,
+  sight: CASTLE_DEFAULT_INPUTS.sight,
 };
+
+export const castleInputs = (state: CastleState) =>
+  normalizeCastleInputs({
+    ditchWidthMeters: state.moat,
+    wallHeightMeters: state.wallHeightMeters ?? 14,
+    towers: state.towers,
+    gate: state.gate,
+    inner: state.inner,
+    approach: state.approach,
+    sight: state.sight,
+  });
+
 // Exhibit dimensions are schematic: ditch width is compressed to keep the wall visible.
-export const ditchSpan = (width: number) => width * 0.22;
+export const ditchSpan = castleDitchSpan;
 export function castleObservation(state: CastleState) {
-  return state.approach === "bridge"
-    ? state.gate
-      ? "blocked by closed gate"
-      : "reaches outer entrance"
-    : state.moat > 0
-      ? "obstructed by ditch"
-      : "reaches solid outer wall";
+  return castleActivity(castleInputs(state)).routeOutcome;
 }
 export function routeEnd(state: CastleState) {
-  if (state.approach === "bridge") return state.gate ? 15.2 : 10;
-  return state.moat > 0 ? -16.5 - ditchSpan(state.moat) : -13.8;
+  return castleRouteEnd(castleInputs(state));
 }
 
 /** Native wall-height control; web reference curtain height is 14 m. */
 export const wallHeightScale = (state: CastleState) =>
-  Math.max(3, Math.min(18, state.wallHeightMeters ?? 14)) / 14;
+  castleActivity(castleInputs(state)).wallHeightScale;

@@ -13,14 +13,10 @@ import {
   type CastleState,
 } from "./castleState";
 export type CastleView = "courtyard" | "entrance" | "north" | "overhead";
-export type CastleLabel = { text: string; x: number; y: number };
 export type CastleScene = ReturnType<typeof createCastleScene>;
 
 /** DOM-hosted, demand-rendered exhibit. No React dependency, asset requests or idle loop. */
-export function createCastleScene(
-  host: HTMLElement,
-  onLabels: (labels: CastleLabel[]) => void,
-) {
+export function createCastleScene(host: HTMLElement) {
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
     alpha: true,
@@ -39,8 +35,8 @@ export function createCastleScene(
     fortress = createFortress(materials),
     landscape = createLandscape(materials);
   scene.add(landscape.group, fortress.group);
-  scene.add(new THREE.HemisphereLight(0xe7f0e3, 0x64614b, 2.2));
-  const sun = new THREE.DirectionalLight(0xffe4b8, 3.1);
+  scene.add(new THREE.HemisphereLight(0xbcd4d4, 0x343b2b, 1.45));
+  const sun = new THREE.DirectionalLight(0xffd79c, 2.7);
   sun.position.set(-32, 60, 35);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -56,7 +52,7 @@ export function createCastleScene(
   sun.shadow.normalBias = 0.06;
   sun.shadow.radius = 3;
   scene.add(sun);
-  const bounce = new THREE.DirectionalLight(0xb8d2db, 0.5);
+  const bounce = new THREE.DirectionalLight(0x85b9cf, 0.82);
   bounce.position.set(25, 16, -25);
   scene.add(bounce);
   let state = defaultCastleState,
@@ -77,26 +73,6 @@ export function createCastleScene(
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     renderer.render(scene, camera);
-    const anchors: [string, number, number, number][] = [
-      ["Keep", -3.4, 16, -3.3],
-      ["Gatehouse", 4.5, 12.8, 13],
-      [
-        state.towers ? "Projecting tower" : "Curtain wall",
-        -15,
-        (state.towers ? 12 : 8) * wallHeightScale(state),
-        12,
-      ],
-    ];
-    onLabels(
-      anchors
-        .map(([text, x, y, z]) => {
-          const point = new THREE.Vector3(x, y, z).project(camera);
-          return { text, x: (point.x + 1) * 50, y: (1 - point.y) * 50 };
-        })
-        .filter(
-          (label) => label.x > 5 && label.x < 90 && label.y > 3 && label.y < 90,
-        ),
-    );
   };
   const setState = (value: CastleState) => {
     state = value;
