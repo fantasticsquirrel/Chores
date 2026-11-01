@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   SOLAR_OVERVIEW_GLYPH_HEIGHT_PX,
   layoutSolarOverviewCallouts,
-} from "./solarScene";
+} from "./solarCallouts";
 
 describe("Solar overview callouts", () => {
   it("keeps overview label glyphs readable at native desktop and mobile scale", () => {
