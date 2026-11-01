@@ -47,13 +47,13 @@ describe("interactive exploration controls", () => {
       target: { value: 1.6 },
     });
     expect(
-      screen.getByText("escape", { selector: ".orbit-outcome" }),
+      screen.getByText("Escape path", { selector: ".orbit-outcome" }),
     ).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Central mass"), {
       target: { value: 2 },
     });
-    expect(screen.getByText("bound orbit")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByText("Bound orbit")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
     expect(
       (screen.getByLabelText("Launch speed") as HTMLInputElement).value,
     ).toBe("1");

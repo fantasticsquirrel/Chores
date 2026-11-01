@@ -89,3 +89,34 @@ bounded numerical model outputs. All actions are native buttons/radios or
 labeled range inputs, prediction gates expose disabled state, feedback uses a
 polite status region, SVGs have text alternatives, outcomes are not color-only,
 touch targets are at least 44 px, and focus-visible styles are present.
+
+## Parent visual correction
+
+Parent review on 2026-11-01 rejected the flat semantic SVG as the primary web
+artwork because it made the textured planet and probe too small and allowed
+diagnostic readouts to dominate the scene. The accurate shared model and the
+two gated investigations remain unchanged, but the web hierarchy is corrected:
+
+- The primary web artwork is again a dimensional Three.js scene driven directly
+  by `orbitActivity(...)` points. It uses the NASA Earth texture, an atmosphere
+  shell, warm key and cool rim lighting, a detailed enlarged probe, and the
+  shared gravity and motion directions.
+- The default close camera turns with the current radial direction and crops the
+  larger trajectory so the physical `0.22`-radius planet and nearby probe stay
+  legible without changing either scale. Overview fits bounds calculated from
+  every trajectory point; Follow centers the calculated probe position for long
+  escape paths. The comparison diagrams remain the same-scale evidence view.
+- The primary scene reports only the outcome and concise causal explanation.
+  Launch settings and current distance/gravity sit in the flight controls below
+  the art. Finite-sample diagnostic prose remains in the evidence diagrams and
+  necessary model note, not over the art.
+- Motion is opt-in, pausable and restartable. Drag, the timeline, and
+  Home/End/arrow keys expose the same path without requiring animation.
+
+Artwork is intentionally not pixel-identical across platforms. Web exposes the
+enhanced close, calculated overview and probe-follow cameras. The generated
+offline scene contains the enhanced renderer, while native presentation and
+controls remain platform-native. The isolated rich package keeps its
+established 3D renderer. All three use the same lesson order, controlled inputs,
+outcomes and model limits; this correction does not claim graphical parity
+among those renderers.

@@ -29,6 +29,9 @@
   width: 100%;
   height: 100%;
 }
+.space-render.is-unavailable canvas {
+  visibility: hidden;
+}
 .space-heading {
   position: absolute;
   z-index: 2;
@@ -322,6 +325,7 @@
 .space-render-fallback {
   max-width: 560px;
   margin: auto;
+  background: #03101bf2;
 }
 .space-exhibit :is(button, select, input):focus-visible {
   outline: 3px solid #e9ae54;

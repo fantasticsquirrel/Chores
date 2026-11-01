@@ -37,6 +37,7 @@ export function usePlayback(duration = 12, loop = true, initialProgress = 0) {
       if (!playing && position.current >= 0.9999) setProgress(0);
       setPlaying((p) => !p);
     },
+    pause: () => setPlaying(false),
     reset: () => {
       setPlaying(false);
       setProgress(0);

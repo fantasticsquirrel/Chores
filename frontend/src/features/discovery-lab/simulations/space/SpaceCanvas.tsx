@@ -7,6 +7,7 @@ import earthUrl from "./assets/nasa-blue-marble-2k.jpg";
 
 type Props = {
   label: string;
+  fallbackLabel?: string;
   progress: number;
   onProgress: (value: number) => void;
 } & (
@@ -51,9 +52,24 @@ export function SpaceCanvas(props: Props) {
   return (
     <div
       ref={host}
-      className={`space-render space-render-${kind}`}
+      className={`space-render space-render-${kind}${available ? "" : " is-unavailable"}`}
       role="img"
       aria-label={props.label}
+      aria-keyshortcuts={
+        kind === "orbit" ? "ArrowLeft ArrowRight Home End" : undefined
+      }
+      tabIndex={kind === "orbit" ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (kind !== "orbit") return;
+        let next: number | null = null;
+        if (event.key === "ArrowLeft") next = props.progress - 0.025;
+        if (event.key === "ArrowRight") next = props.progress + 0.025;
+        if (event.key === "Home") next = 0;
+        if (event.key === "End") next = 0.9999;
+        if (next === null) return;
+        event.preventDefault();
+        props.onProgress(Math.max(0, Math.min(0.9999, next)));
+      }}
       onPointerDown={(event) => {
         if (event.button !== 0) return;
         drag.current = { x: event.clientX, progress: props.progress };
@@ -83,8 +99,12 @@ export function SpaceCanvas(props: Props) {
       {!available && (
         <div className="space-render-fallback">
           <strong>3D view unavailable</strong>
-          <p>{props.label}</p>
-          <span>Use the controls below to compare the calculated results.</span>
+          <p>{props.fallbackLabel ?? props.label}</p>
+          <span>
+            {kind === "orbit"
+              ? "The controls and comparison diagrams below still report the model results."
+              : "Use the controls below to compare the calculated results."}
+          </span>
         </div>
       )}
     </div>

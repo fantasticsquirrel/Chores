@@ -5,6 +5,11 @@ Date: 2026-11-01
 Branch: `feat/discovery-learning-overhaul`
 Baseline: `946b71ede04c918f4f109f2fe1dd44f8c35884a3`
 
+> **Superseded visual acceptance:** Parent review on 2026-11-01 rejected the
+> flat central SVG documented below. Orbit Workshop is reopened and is not
+> counted complete. The correction status and current verification limits are
+> recorded at the end of this document.
+
 ## Scope and outcome
 
 Only `orbital-mechanics` was redesigned. The web experience now uses a new
@@ -143,13 +148,60 @@ checkpoint; they were not rerun after these corrective bytes:
   `scopeRecoveryRemediation.test.tsx` (`People` is present in the rendered tree
   but its role query times out). Orbit-focused native tests and mobile typecheck
   are green; the unrelated module was not changed in this single-module run.
-- The independent Chromium sandbox probe cannot launch in this root container:
-  root is rejected without `--no-sandbox`, while the unprivileged system user
-  lacks a usable home/crashpad directory. The probe was not weakened; the other
-  sandbox, package, adversarial, audit and static checks above passed.
 - The worker-rich package keeps its established 3D central scene. Its lesson
   flow, copy and evidence changed, but the renderer itself was not graphically
   redesigned. Downloaded packages remain web-only in native, as stated by the
   existing contract.
 - No package was published, no deployment was run, and production was not
   touched.
+
+## Parent visual correction status
+
+The correction replaces the flat primary SVG with a demand-rendered Three.js
+scene driven by the unchanged shared `orbitActivity(...)` points. The web and
+generated native/offline scene now include a NASA-textured Earth, atmosphere,
+warm key/cool rim/hemisphere lighting, a view-dependent atmosphere, a larger
+detailed probe and shared-model path/vectors. The default close camera rotates
+with the current radial direction to frame the physical `0.22`-radius planet
+and nearby probe without changing their scale. Overview fits bounds calculated
+from the actual model points, and Follow centers the actual probe position for
+escape. The central scene keeps only concise outcome copy; settings and live
+measurements are below the art. Motion is opt-in with play, pause, restart,
+drag, timeline and keyboard scrubbing.
+
+Artwork parity is intentionally limited: web and the generated native offline
+scene share the enhanced scene builder, while native presentation and controls
+remain platform-native. The isolated rich package retains its established 3D
+renderer. All use the same shared lesson inputs, outcome order and caveats.
+
+Completed correction checks:
+
+- Focused web/renderer/route/rich-package regressions: 7 files, 49/49.
+- Full frontend Vitest: 150 files, 841/841.
+- Shared Orbit model plus registry content: 2 files, 34/34.
+- Native Orbit lesson UI: 10/10; generated offline scene freshness and mobile
+  TypeScript passed. Generated scene builder output: 1,823,866 bytes.
+- Isolated worker education/runtime regressions: 9/9.
+- Frontend ESLint and production build passed. Build emitted only the existing
+  Zod annotation and large-chunk warnings.
+- Security backport/source verification: 4/4; touched Orbit source contains no
+  `dangerouslySetInnerHTML`, dynamic evaluation or `javascript:` URL patterns.
+- Strict architecture report: zero boundary violations. Existing unrelated
+  hotspots remain reported; `git diff --check` is part of final handoff.
+- Isolated Playwright passed 2/2 at 1440×1050 and 390×844. It exercised real
+  authentication, initial close and calculated overview cameras, opt-in motion
+  plus pause stability and restart, Home/End keyboard movement, both controlled
+  evidence flows, escape Follow, ordinary mobile scroll, horizontal overflow
+  and WebGL context-loss fallback.
+
+Fresh full-page, component and scene captures were visually inspected for
+desktop/mobile initial, overview, motion-paused, operated and escape-follow
+states. The phone close view shows the textured planet at roughly 125 px while
+retaining a legible probe and curved trajectory; Overview shows the whole bound
+path, and Follow retains the escaping probe at the model cutoff. The clean
+fallback and ordinary-scroll phone view were also inspected. Review artifacts,
+including original/rejected/corrected comparisons and motion proof, are staged
+under
+`/root/.openclaw/workspace/media/exploration-series/orbital-mechanics-correction/`.
+Orbit remains reopened and `in_progress`, not accepted or counted complete,
+until parent visual review. Gravity and all later modules remain paused.

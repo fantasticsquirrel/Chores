@@ -50,18 +50,18 @@ export function addStars(scene: THREE.Scene) {
         -8 - (i % 7),
       ),
   );
-  scene.add(
-    new THREE.Points(
-      new THREE.BufferGeometry().setFromPoints(points),
-      new THREE.PointsMaterial({
-        color: 0xb3c8dc,
-        size: 0.035,
-        transparent: true,
-        opacity: 0.6,
-        sizeAttenuation: true,
-      }),
-    ),
+  const stars = new THREE.Points(
+    new THREE.BufferGeometry().setFromPoints(points),
+    new THREE.PointsMaterial({
+      color: 0xb3c8dc,
+      size: 0.035,
+      transparent: true,
+      opacity: 0.6,
+      sizeAttenuation: true,
+    }),
   );
+  scene.add(stars);
+  return stars;
 }
 /** Authored color illustrations, not measured surface maps. Deterministic and offline. */
 export function illustratedTexture(index: number) {

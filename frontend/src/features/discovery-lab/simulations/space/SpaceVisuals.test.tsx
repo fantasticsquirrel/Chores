@@ -77,12 +77,27 @@ describe("space learning controls", () => {
       "same 1.00× launch",
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
     expect(screen.queryByTestId("orbit-speed-evidence")).toBeNull();
     expect(screen.queryByTestId("orbit-mass-evidence")).toBeNull();
     expect(speedAction).toBeDisabled();
     expect(
       screen.getByText(/Planet radius is 0.22 of the starting radius/),
+    ).toBeTruthy();
+  });
+  it("keeps motion controllable and diagnostic trace prose out of the primary scene", () => {
+    render(<OrbitSimulation />);
+
+    expect(screen.getByRole("button", { name: "Play motion" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Restart flight" })).toBeTruthy();
+    const timeline = screen.getByLabelText("Flight position");
+    fireEvent.change(timeline, { target: { value: 62 } });
+    expect((timeline as HTMLInputElement).value).toBe("62");
+    fireEvent.click(screen.getByRole("button", { name: "Restart flight" }));
+    expect((timeline as HTMLInputElement).value).toBe("0");
+    expect(screen.queryByText(/finite displayed trace/i)).toBeNull();
+    expect(
+      screen.getByText("Gravity keeps curving the probe inward."),
     ).toBeTruthy();
   });
   it("selects eight planets with buttons and preserves one diameter scale", () => {
