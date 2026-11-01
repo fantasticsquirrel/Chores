@@ -12,6 +12,7 @@ import {
   ActivityRow,
   PredictionButtons,
 } from "./photosynthesis/PhotosynthesisLessonParts";
+import { PhotosynthesisLivePanel } from "./photosynthesis/PhotosynthesisLivePanel";
 import {
   changedList,
   resourceList,
@@ -85,26 +86,7 @@ export function PhotosynthesisSimulation() {
             limitingLabel={resourceList(current.limitingResources)}
           />
         </Suspense>
-        <div className="leaf-current-result" role="status" aria-live="polite">
-          <span>
-            Toy activity index:{" "}
-            <strong>{roundIndex(current.activityIndex)} / 100</strong>
-          </span>
-          <span>
-            Model limit(s):{" "}
-            <strong>{resourceList(current.limitingResources)}</strong>
-          </span>
-          <span>
-            Inputs: light {current.inputs.light}% · water {current.inputs.water}
-            % · carbon dioxide {current.inputs.carbonDioxide}%
-          </span>
-        </div>
-        <div className="leaf-process-note" data-testid="leaf-process-note">
-          <p>
-            Light energy + water + carbon dioxide → sugars + oxygen. Light
-            supplies energy, not food; the oxygen released comes from water.
-          </p>
-        </div>
+        <PhotosynthesisLivePanel current={current} />
       </section>
 
       <div className="leaf-guided-work">
@@ -312,17 +294,19 @@ export function PhotosynthesisSimulation() {
       </details>
 
       <div className="leaf-model-note">
-        <p>
-          Settings are invented availability levels. The toy index applies the
-          same saturating rule to each input, then uses the lowest response. It
-          is not a measured photosynthesis rate, sugar amount or growth
-          forecast. Temperature, species, nutrients, stored water and stomatal
-          behavior are omitted.
+        <p className="leaf-model-summary">
+          Invented settings and a lowest-response rule produce this toy index;
+          it is not a measured photosynthesis rate or growth forecast.
         </p>
-        <p>
-          Plants respire day and night; this index does not subtract
-          respiration.
-        </p>
+        <details>
+          <summary>Model limits</summary>
+          <p>
+            The index does not measure sugar amount. It omits temperature,
+            species, nutrients, stored water, time and stomatal behavior.
+            Plants respire day and night; this index does not subtract
+            respiration.
+          </p>
+        </details>
       </div>
       <div className="leaf-reset-row">
         <button type="button" onClick={reset}>
