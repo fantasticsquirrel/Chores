@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { orbitTangentAt } from "@family-manager/family-api/discovery-models/orbit";
 import type { Point } from "../physics";
 import type { SceneContext } from "./createSpaceScene";
 import { frameCamera } from "./createSpaceScene";
@@ -123,8 +124,7 @@ export function buildOrbitScene(
         state.points.length - 1,
         Math.floor(state.progress * state.points.length),
       );
-      const point = state.points[index],
-        next = state.points[Math.min(index + 1, state.points.length - 1)];
+      const point = state.points[index];
       satellite.position.set(point.x, 0.012, -point.y);
       const direction = new THREE.Vector3(-point.x, 0, point.y).normalize();
       force.position.copy(satellite.position);
@@ -134,7 +134,8 @@ export function buildOrbitScene(
         0.045,
         0.025,
       );
-      const tangent = new THREE.Vector3(next.x - point.x, 0, -next.y + point.y);
+      const tangentPoint = orbitTangentAt(state.points, index);
+      const tangent = new THREE.Vector3(tangentPoint.x, 0, -tangentPoint.y);
       velocity.visible = tangent.length() > 0;
       if (velocity.visible) {
         tangent.normalize();

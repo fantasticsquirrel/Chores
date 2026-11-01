@@ -22,6 +22,29 @@ renderer and package-local physics copy, as required by the package isolation
 boundary. Registry explanation, experiment and misconception text is suppressed
 below the complete lesson; accessible Sources remains.
 
+## Independent supervisor correction
+
+The post-redesign review in `/tmp/orbit-independent-review.txt` identified four
+real defects. This correction pass stayed within Orbit Workshop and resolved
+each one:
+
+- “Circular speed here” is now “Circular launch speed at start.” The value is
+  `sqrt(mass)` at the fixed starting distance, not a circular speed recomputed
+  at the probe's current radius.
+- At the final sampled point, the web SVG, generated native/offline scene and
+  worker-rich 3D scene now use the final incoming segment for motion direction.
+  The arrow no longer collapses in either guided operated state.
+- Escape copy no longer claims that an auto-fitted trace leaves the frame. It
+  states that the displayed trace has not returned before the model cutoff.
+- Every sampled closest/farthest interval is explicitly labeled as a finite
+  “displayed trace,” rather than a complete analytic orbit range.
+
+The old tiny SVG-unit starting-radius label remains absent. Its replacement is
+an HTML diagram-key item, “starting radius reference,” tied to the dotted-ring
+symbol. Chromium measured its actual computed font size at 12 px and rendered
+height at 16 px at both 1440×1000 and 390×844. This is a screen-pixel
+measurement, not an SVG user-unit assumption.
+
 ## Visual evidence
 
 Raw, immutable before evidence and final after evidence:
@@ -44,9 +67,42 @@ Review-ready media:
 Visual inspection found no clipping or horizontal overflow. One iteration
 removed a tiny in-canvas label and raised the remaining open-control labels to
 12 px. The final browser audit found zero visible text samples below 12 px and
-zero visible buttons below 44 px in the lesson at either viewport.
+zero visible buttons below 44 px in the lesson at either viewport. Corrected
+after captures and every staged final/comparison were refreshed; hashes of all
+original `before-*` PNGs were unchanged.
+
+The corrected central art was inspected at both widths. The incoming cyan
+motion arrow remains visible at the operated endpoint, the dotted starting
+radius is keyed below the scene, and the longer key wraps without collision on
+mobile. Focused mobile evidence remains above the fixed navigation.
 
 ## Verification results
+
+Correction-pass checks (affected scope only):
+
+- Shared Orbit model regression: 1 file, 5/5 tests.
+- Web diagram and Orbit flow regressions: 2 files, 8/8 tests.
+- Native Orbit UI regression: 1 suite, 10/10 tests. Its existing npm wrapper
+  also ran the mobile non-UI unit set, 32 files and 296/296.
+- Worker education regressions: 1 file, 9/9, including a serialized-scene
+  assertion that the cyan motion-arrow geometry is visible after a completed
+  guided trace.
+- Frontend ESLint passed; production build passed with only the existing Zod
+  annotation and large-chunk warnings.
+- Mobile typecheck and generated offline-scene freshness passed.
+- Rich package 1.0.2 rebuilt and validated twice with identical ZIP SHA-256
+  `533545882a787b8dd565472a3716c0b7b8726d473c376af478a207ebe1a6a582`.
+- Corrected browser interaction/render audit passed at 1440×1000 and 390×844:
+  keyboard flow, controlled evidence, reset and boundary controls; zero
+  overflow, undersized targets, text below 12 px, console errors or failed
+  responses; actual radius-key size 12 px/16 px; nonzero endpoint motion-vector
+  length 0.25 at both widths.
+- Registry content regression passed 1 file, 29/29; `git diff --check` passed.
+  No unrelated frontend, shared, backend, security or full mobile UI gate was
+  repeated.
+
+The following broader results are preserved from the original Orbit redesign
+checkpoint; they were not rerun after these corrective bytes:
 
 - Red-first shared model test: failed before `orbit.ts` existed; final shared
   focused suite passed 41/41 across model, content and education regressions.
@@ -62,7 +118,7 @@ zero visible buttons below 44 px in the lesson at either viewport.
   and detail suites passed 16/16; mobile unit tests passed 32 files and 296
   tests.
 - Rich package: education/runtime regressions passed 20/20; the deterministic
-  v1.0.1 ZIP validated twice with SHA-256
+  v1.0.1 ZIP validated twice at the original checkpoint with SHA-256
   `05b5dedf1791ac031b5efaf060b88ba63209cefd3c966c7030e82e06e6ce22ec`.
 - Backend Discovery/security suites: passed 50 tests with two known library/test
   fixture warnings.

@@ -26,7 +26,7 @@
       {
         "title": "Change central mass",
         "instruction": "Predict the path at 2× central mass. Keep launch speed at 1.00× and the starting radius fixed, then compare with mass 1×.",
-        "observe": "Compare the 1.00–1.00 and 0.33–1.00 radius ranges. Explain why the same launch no longer makes a circle."
+        "observe": "Compare the displayed 1.00–1.00 and 0.33–1.00 trace ranges. Explain why the same launch no longer makes a circle."
       }
     ],
     "misconception": "Escape does not mean gravity switches off. Gravity weakens with distance and keeps curving the escape path even though it cannot turn the probe back.",

@@ -6,6 +6,19 @@ import { frameCamera } from "./createSpaceScene";
 import { addStars, createPlanet, material, mesh, ring } from "./spaceMaterials";
 import { trajectoryView } from "./spaceModels";
 export type OrbitSceneState = { points: Point[]; progress: number };
+
+export function orbitTangentAt(points: readonly Point[], index: number) {
+  const safeIndex = Math.max(0, Math.min(points.length - 1, index));
+  const point = points[safeIndex];
+  if (!point || points.length < 2) return { x: 0, y: 0 };
+  if (safeIndex === points.length - 1) {
+    const previous = points[safeIndex - 1];
+    return { x: point.x - previous.x, y: point.y - previous.y };
+  }
+  const next = points[safeIndex + 1];
+  return { x: next.x - point.x, y: next.y - point.y };
+}
+
 export function buildOrbitScene(
   { scene, camera, invalidate }: SceneContext,
   earthUrl: string,
@@ -124,8 +137,7 @@ export function buildOrbitScene(
         state.points.length - 1,
         Math.floor(state.progress * state.points.length),
       );
-      const point = state.points[index],
-        next = state.points[Math.min(index + 1, state.points.length - 1)];
+      const point = state.points[index];
       satellite.position.set(point.x, 0.012, -point.y);
       const direction = new THREE.Vector3(-point.x, 0, point.y).normalize();
       force.position.copy(satellite.position);
@@ -135,7 +147,8 @@ export function buildOrbitScene(
         0.045,
         0.025,
       );
-      const tangent = new THREE.Vector3(next.x - point.x, 0, -next.y + point.y);
+      const tangentPoint = orbitTangentAt(state.points, index);
+      const tangent = new THREE.Vector3(tangentPoint.x, 0, -tangentPoint.y);
       velocity.visible = tangent.length() > 0;
       if (velocity.visible) {
         tangent.normalize();

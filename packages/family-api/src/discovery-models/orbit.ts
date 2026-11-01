@@ -42,6 +42,26 @@ export function orbitGravity(mass: number, radius: number) {
 }
 
 /**
+ * Direction of travel at a sampled point. At the final sample there is no
+ * forward sample, so preserve the incoming tangent instead of returning a
+ * zero-length direction.
+ */
+export function orbitTangentAt(
+  points: readonly OrbitPoint[],
+  index: number,
+): OrbitPoint {
+  const safeIndex = Math.max(0, Math.min(points.length - 1, index));
+  const point = points[safeIndex];
+  if (!point || points.length < 2) return { x: 0, y: 0 };
+  if (safeIndex === points.length - 1) {
+    const previous = points[safeIndex - 1];
+    return { x: point.x - previous.x, y: point.y - previous.y };
+  }
+  const next = points[safeIndex + 1];
+  return { x: next.x - point.x, y: next.y - point.y };
+}
+
+/**
  * Dimensionless, fixed-step, two-body classroom model. The starting center
  * distance and the baseline gravitational parameter are both 1. The orbiting
  * body has no influence on the central body.

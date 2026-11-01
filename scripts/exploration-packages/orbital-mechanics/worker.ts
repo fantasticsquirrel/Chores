@@ -177,7 +177,7 @@ function run(i: Input) {
       },
       {
         heading: "2. Change only central mass",
-        text: `${speedTested ? "Keep speed at 1.00× and starting distance fixed. Predict the 2×-mass path." : "Complete the speed comparison first."}${massPrediction ? " Your prediction: " + massPrediction + "." : ""}${massTested ? " " + (massPrediction === "Curves into a tighter ellipse" ? "Your prediction matches: " : "The result differs: ") + "1× mass stays near 1.00–1.00 starting radii; 2× mass curves through 0.33–1.00 starting radii." : ""}`,
+        text: `${speedTested ? "Keep speed at 1.00× and starting distance fixed. Predict the 2×-mass path." : "Complete the speed comparison first."}${massPrediction ? " Your prediction: " + massPrediction + "." : ""}${massTested ? " " + (massPrediction === "Curves into a tighter ellipse" ? "Your prediction matches: " : "The result differs: ") + "The displayed 1×-mass trace spans 1.00–1.00 starting radii; the displayed 2×-mass trace spans 0.33–1.00 starting radii." : ""}`,
         buttonIds: ["masspredict0", "masspredict1", "masspredict2", "masstest"],
       },
       {

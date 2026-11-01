@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "orbital-mechanics-package",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "orbital-mechanics-package",
@@ -59,7 +59,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "9a9ef63753c5dd2bf72e4736c5622b2901561212c8f302d9579f360182e0f125"
+      "sha256": "3648bfb07ebdc52033fc438984bb60d0f6f8c15ff942cc5c43afe14571e8cae7"
     },
     {
       "path": "assets/SOURCES.txt",

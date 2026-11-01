@@ -71,7 +71,7 @@ describe("space learning controls", () => {
     );
     fireEvent.click(massAction);
     expect(screen.getByTestId("orbit-mass-evidence").textContent).toContain(
-      "0.33–1.00 starting radii",
+      "Displayed trace: 0.33–1.00 starting radii",
     );
     expect(screen.getByTestId("orbit-mass-feedback").textContent).toContain(
       "same 1.00× launch",

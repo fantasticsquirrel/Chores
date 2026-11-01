@@ -19,7 +19,7 @@ import {
 type SpeedPrediction = "" | "hit-orbit-escape" | "all-orbit" | "all-escape";
 type MassPrediction = "" | "tighter" | "same" | "escape";
 
-function radiusRange(closest: number, farthest: number) {
+function displayedTraceRange(closest: number, farthest: number) {
   return `${closest.toFixed(2)}–${farthest.toFixed(2)} starting radii`;
 }
 
@@ -43,7 +43,7 @@ export function OrbitExploration() {
   return (
     <LearningFrame onReset={reset}>
       <Diagram
-        label={`Trajectory model: ${current.outcome}. Launch speed ${current.inputs.speed.toFixed(2)} times baseline; central mass ${current.inputs.mass.toFixed(1)} times. Path ranges from ${radiusRange(current.closestRadius, current.farthestRadius)}.`}
+        label={`Trajectory model: ${current.outcome}. Launch speed ${current.inputs.speed.toFixed(2)} times baseline; central mass ${current.inputs.mass.toFixed(1)} times. The displayed trace spans ${displayedTraceRange(current.closestRadius, current.farthestRadius)}.`}
         visualState={{ kind: "orbit", points: current.points, progress: 0.78 }}
       >
         {(width) => (
@@ -56,8 +56,8 @@ export function OrbitExploration() {
       <Explanation>
         Current result: {current.outcome}. Speed{" "}
         {current.inputs.speed.toFixed(2)}× · mass{" "}
-        {current.inputs.mass.toFixed(1)}× · path{" "}
-        {radiusRange(current.closestRadius, current.farthestRadius)}.
+        {current.inputs.mass.toFixed(1)}× · displayed trace{" "}
+        {displayedTraceRange(current.closestRadius, current.farthestRadius)}.
       </Explanation>
 
       <Text
@@ -144,9 +144,9 @@ export function OrbitExploration() {
       />
       {massComplete && (
         <Explanation>
-          At 1× mass the path stays near 1.00–1.00 starting radii. At 2× mass it
-          spans{" "}
-          {radiusRange(
+          The displayed 1×-mass trace spans 1.00–1.00 starting radii. The
+          displayed 2×-mass trace spans{" "}
+          {displayedTraceRange(
             massTrials[1].closestRadius,
             massTrials[1].farthestRadius,
           )}

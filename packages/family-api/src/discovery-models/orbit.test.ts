@@ -3,6 +3,7 @@ import {
   compareOrbitInputs,
   orbitActivity,
   orbitGravity,
+  orbitTangentAt,
   ORBIT_MASS_COMPARISON,
   ORBIT_SPEED_COMPARISON,
 } from "./orbit";
@@ -55,5 +56,18 @@ describe("dimensionless orbit teaching model", () => {
     expect(
       compareOrbitInputs({ speed: 1, mass: 1 }, { speed: 1, mass: 2 }),
     ).toEqual({ changed: ["central mass"], held: ["launch speed"] });
+  });
+
+  it("uses the incoming path tangent at the final displayed sample", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 0.5, y: 1 },
+      { x: 2, y: 1.5 },
+    ];
+    expect(orbitTangentAt(points, 1)).toEqual({ x: 1.5, y: 0.5 });
+    expect(orbitTangentAt(points, 2)).toEqual({ x: 1.5, y: 0.5 });
+    expect(
+      Math.hypot(...Object.values(orbitTangentAt(points, 2))),
+    ).toBeGreaterThan(0);
   });
 });

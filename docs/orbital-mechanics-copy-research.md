@@ -52,12 +52,13 @@ is suppressed while Sources remains available.
    unchanged speed makes a tighter ellipse when circular speed rises to 1.414×.
 
 The web scene labels current outcome, speed, mass, center distance, current
-gravity, circular speed, inward-gravity direction, motion direction, and
-traveled/future traces. Comparison plots keep all outcomes visible together
-and encode each outcome with text and a symbol as well as color. Native and
-rich-package lessons use the same two gated investigations, outcomes,
-measurements and model caveat. The rich package retains its established 3D
-renderer; this run changes its educational flow and evidence, not that renderer.
+gravity, circular launch speed at the starting distance, inward-gravity
+direction, motion direction, and traveled/future traces. Comparison plots keep
+all outcomes visible together and encode each outcome with text and a symbol as
+well as color. Native and rich-package lessons use the same two gated
+investigations, outcomes, measurements and model caveat. The rich package
+retains its established 3D renderer; this run changes its educational flow and
+evidence, not that renderer.
 
 ## Model and editorial boundaries
 
@@ -70,8 +71,9 @@ renderer; this run changes its educational flow and evidence, not that renderer.
   not a real flight prediction or evidence that gravity becomes zero.
 - The model calls exactly `sqrt(mass)` circular speed and
   `sqrt(2 * mass)` escape speed at the fixed starting radius. The 2×-mass
-  comparison therefore uses 1.414× circular speed and yields a modeled
-  0.33–1.00 radius range at unchanged speed 1.00×.
+  comparison therefore uses 1.414× circular launch speed and yields a finite
+  displayed trace from 0.33–1.00 starting radii at unchanged speed 1.00×. The
+  sampled interval is not presented as a complete analytic apsis range.
 - Copy uses the multiplication sign `×` for relative factors. No percentages
   or percentage-point claims appear in this lesson.
 - Reset clears both predictions and both evidence panels and restores speed

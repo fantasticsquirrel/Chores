@@ -5,6 +5,7 @@ import type {
   OrbitPoint,
 } from "@family-manager/family-api/discovery-models/orbit";
 import { orbitActivity } from "@family-manager/family-api/discovery-models/orbit";
+import { orbitTangentAt } from "@family-manager/family-api/discovery-models/orbit";
 
 type OrbitResult = ReturnType<typeof orbitActivity>;
 
@@ -57,10 +58,10 @@ function vectorEnd(
 
 function outcomeDescription(result: OrbitResult) {
   if (result.outcome === "collision")
-    return `The trace reaches the drawn surface at ${result.closestRadius.toFixed(2)} starting radii.`;
+    return `The displayed trace reaches the drawn surface at ${result.closestRadius.toFixed(2)} starting radii.`;
   if (result.outcome === "escape")
-    return `The trace leaves the frame after reaching ${result.farthestRadius.toFixed(2)} starting radii; gravity still points inward.`;
-  return `The trace remains bound from ${result.closestRadius.toFixed(2)} to ${result.farthestRadius.toFixed(2)} starting radii.`;
+    return `The displayed trace reaches ${result.farthestRadius.toFixed(2)} starting radii without returning before the model's cutoff; gravity still points inward.`;
+  return `The finite displayed trace stays bound and spans ${result.closestRadius.toFixed(2)}–${result.farthestRadius.toFixed(2)} starting radii.`;
 }
 
 export function OrbitPathDiagram({
@@ -77,9 +78,13 @@ export function OrbitPathDiagram({
     Math.floor(progress * result.points.length),
   );
   const point = result.points[index];
-  const next = result.points[Math.min(index + 1, result.points.length - 1)];
+  const tangent = orbitTangentAt(result.points, index);
   const gravityEnd = vectorEnd(point, { x: 0, y: 0 }, 0.25);
-  const motionEnd = vectorEnd(point, next, 0.25);
+  const motionEnd = vectorEnd(
+    point,
+    { x: point.x + tangent.x, y: point.y + tangent.y },
+    0.25,
+  );
   const traveled = result.points.slice(0, Math.max(1, index + 1));
   const radius = Math.hypot(point.x, point.y);
   const gravity =
@@ -115,7 +120,7 @@ export function OrbitPathDiagram({
           preserveAspectRatio="xMidYMid meet"
         >
           <title id={titleId}>
-            {`Modeled ${OUTCOME_LABEL[result.outcome]} at ${result.inputs.speed.toFixed(2)} times baseline launch speed and ${result.inputs.mass.toFixed(1)} times central mass. Current center distance ${radius.toFixed(2)} starting radii. Gravity points inward and motion follows the path.`}
+            {`Modeled ${OUTCOME_LABEL[result.outcome]} at ${result.inputs.speed.toFixed(2)} times baseline launch speed and ${result.inputs.mass.toFixed(1)} times central mass. Current center distance ${radius.toFixed(2)} starting radii. The dotted circle marks the starting radius. Gravity points inward and motion follows the path.`}
           </title>
           <defs>
             <radialGradient id={`${markerId}-planet`} cx="35%" cy="30%">
@@ -169,6 +174,7 @@ export function OrbitPathDiagram({
           />
           <line
             className="orbit-vector orbit-vector--motion"
+            data-testid="orbit-motion-vector"
             x1={point.x}
             y1={-point.y}
             x2={motionEnd.x}
@@ -183,18 +189,22 @@ export function OrbitPathDiagram({
             <path d="M-.14-.055h.075v.11H-.14zm.205 0h.075v.11H.065z" />
           </g>
         </svg>
-        <div className="orbit-vector-key" aria-hidden="true">
+        <div className="orbit-vector-key" aria-label="Diagram key">
           <span>
-            <i className="orbit-key-gravity" />
+            <i className="orbit-key-gravity" aria-hidden="true" />
             gravity inward
           </span>
           <span>
-            <i className="orbit-key-motion" />
+            <i className="orbit-key-motion" aria-hidden="true" />
             motion direction
           </span>
           <span>
-            <i className="orbit-key-trace" />
+            <i className="orbit-key-trace" aria-hidden="true" />
             modeled trace
+          </span>
+          <span>
+            <i className="orbit-key-radius" aria-hidden="true" />
+            starting radius reference
           </span>
         </div>
       </div>
@@ -208,8 +218,8 @@ export function OrbitPathDiagram({
           <dd>{gravity.toFixed(2)}× starting reference</dd>
         </div>
         <div>
-          <dt>Circular speed here</dt>
-          <dd>{result.circularSpeed.toFixed(3)}× at the start</dd>
+          <dt>Circular launch speed at start</dt>
+          <dd>{result.circularSpeed.toFixed(3)}×</dd>
         </div>
       </dl>
     </section>
@@ -217,7 +227,7 @@ export function OrbitPathDiagram({
 }
 
 function rangeText(result: OrbitResult) {
-  return `${result.closestRadius.toFixed(2)}–${result.farthestRadius.toFixed(2)} starting radii`;
+  return `Displayed trace: ${result.closestRadius.toFixed(2)}–${result.farthestRadius.toFixed(2)} starting radii`;
 }
 
 export function OrbitComparisonPlot({

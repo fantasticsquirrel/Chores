@@ -131,3 +131,29 @@ it("wrong Moon and orbit predictions never receive a matching-prediction reward"
     );
   }
 }, 30000);
+
+it("keeps the Orbit motion arrow visible at a completed guided trace", () => {
+  const send = worker("orbital-mechanics");
+  send();
+  send("predict1");
+  const result = send("test");
+  const motionMaterials = new Set(
+    result.rich3d?.materials
+      ?.filter((material) => material.color === 0x9cbded)
+      .map((material) => material.id) ?? [],
+  );
+  const hasVisibleMotionGeometry = (
+    nodes: any[],
+    parentVisible = true,
+  ): boolean =>
+    nodes.some((node) => {
+      const visible = parentVisible && node.visible !== false;
+      return (
+        (visible && motionMaterials.has(node.material)) ||
+        hasVisibleMotionGeometry(node.children ?? [], visible)
+      );
+    });
+
+  expect(motionMaterials.size).toBeGreaterThan(0);
+  expect(hasVisibleMotionGeometry(result.rich3d?.nodes ?? [])).toBe(true);
+}, 30000);
