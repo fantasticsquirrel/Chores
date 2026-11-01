@@ -14,18 +14,31 @@ export type GravitySceneState = {
   comparisonDistance?: number;
 };
 export function buildGravityScene({ scene, camera, renderer }: SceneContext) {
-  renderer.toneMappingExposure = 1.3;
+  renderer.toneMappingExposure = 1.45;
   const brass = material(0xbca379, 0.7, 0.35),
     dark = material(0x25333d, 0.55, 0.4),
     steel = material(0x71818a, 0.7, 0.3);
   const floor = mesh(
     new THREE.PlaneGeometry(80, 80),
-    material(0x18242c, 0.3, 0.5),
+    material(0x14252b, 0.28, 0.48),
     scene,
     [0, -0.15, 0],
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
+  const plinth = mesh(
+    new THREE.CylinderGeometry(3.75, 4.15, 0.22, 72),
+    material(0x183139, 0.48, 0.38),
+    scene,
+    [0, -0.03, 0],
+  );
+  plinth.receiveShadow = true;
+  mesh(
+    new THREE.TorusGeometry(3.72, 0.035, 10, 80),
+    material(0x6ca59d, 0.5, 0.28),
+    scene,
+    [0, 0.09, 0],
+  ).rotation.x = Math.PI / 2;
   scene.add(new THREE.HemisphereLight(0xc8e2f1, 0x14222e, 2));
   const key = new THREE.DirectionalLight(0xffe7c4, 4);
   key.position.set(-4, 8, 5);
@@ -41,7 +54,9 @@ export function buildGravityScene({ scene, camera, renderer }: SceneContext) {
   scene.add(rim);
   const balls: THREE.Mesh[] = [],
     shadows: THREE.Mesh[] = [],
-    tickGroups: THREE.Group[] = [];
+    tickGroups: THREE.Group[] = [],
+    gravityArrows: THREE.ArrowHelper[] = [],
+    landingRings: THREE.Mesh[] = [];
   for (const [i, x] of [-1.55, 1.55].entries()) {
     const tower = new THREE.Group();
     tower.position.x = x;
@@ -109,6 +124,19 @@ export function buildGravityScene({ scene, camera, renderer }: SceneContext) {
       tower,
       [0, 0.38, 0],
     );
+    const landingRing = mesh(
+      new THREE.TorusGeometry(0.46, 0.028, 10, 48),
+      new THREE.MeshBasicMaterial({
+        color: i === 0 ? 0xf0cf8c : 0x7bd2c7,
+        transparent: true,
+        opacity: 0.18,
+        depthWrite: false,
+      }),
+      tower,
+      [0, 0.425, 0],
+    );
+    landingRing.rotation.x = Math.PI / 2;
+    landingRings.push(landingRing);
     const ball = mesh(
       new THREE.SphereGeometry(0.21, 48, 36),
       material(i === 0 ? 0xb0bdd6 : 0xb0d0ba, 0.72, 0.24),
@@ -117,6 +145,18 @@ export function buildGravityScene({ scene, camera, renderer }: SceneContext) {
     );
     ball.castShadow = true;
     balls.push(ball);
+    const gravityArrow = new THREE.ArrowHelper(
+      new THREE.Vector3(0, -1, 0),
+      new THREE.Vector3(0.34, 4.38, 0.1),
+      0.72,
+      i === 0 ? 0xf0cf8c : 0x7bd2c7,
+      0.14,
+      0.09,
+    );
+    gravityArrow.line.renderOrder = 3;
+    gravityArrow.cone.renderOrder = 3;
+    tower.add(gravityArrow);
+    gravityArrows.push(gravityArrow);
     const shadow = mesh(
       new THREE.CircleGeometry(0.26, 32),
       new THREE.MeshBasicMaterial({
@@ -134,8 +174,8 @@ export function buildGravityScene({ scene, camera, renderer }: SceneContext) {
   }
   return {
     resize(aspect: number) {
-      frameCamera(camera, aspect, 3.1, 3.9);
-      camera.position.set(5, 5.4, 13);
+      frameCamera(camera, aspect, 3.05, 3.85);
+      camera.position.set(5.4, 5.1, 12.4);
       camera.lookAt(0, 2.4, 0);
     },
     update(state: GravitySceneState) {
@@ -146,9 +186,16 @@ export function buildGravityScene({ scene, camera, renderer }: SceneContext) {
           supplied ?? fallAtTime(state.height, g, state.elapsed).distance;
         const fraction = Math.max(0, Math.min(1, distance / state.height));
         balls[i].position.y = 4.45 - fraction * 3.82;
+        const arrowLength = Math.max(0.34, Math.min(1.1, 0.72 * (g / 9.81)));
+        gravityArrows[i].position.y = balls[i].position.y - 0.07;
+        gravityArrows[i].setLength(arrowLength, 0.14, 0.09);
         shadows[i].scale.setScalar(0.55 + (1 - fraction) * 0.8);
         (shadows[i].material as THREE.MeshBasicMaterial).opacity =
           0.16 + fraction * 0.5;
+        const ringMaterial = landingRings[i]
+          .material as THREE.MeshBasicMaterial;
+        ringMaterial.opacity = 0.18 + fraction * 0.62;
+        landingRings[i].scale.setScalar(0.92 + fraction * 0.12);
       });
       // Mass changes weight, not shape or acceleration: same visible size avoids implying volume is mass.
     },

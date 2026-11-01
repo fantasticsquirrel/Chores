@@ -1,0 +1,720 @@
+.gravity-lab {
+  overflow: hidden;
+  color: #eff8f4;
+  border: 1px solid #34515c;
+  border-radius: 22px;
+  background: #07131d;
+  box-shadow: 0 28px 70px #07131d26;
+}
+
+.gravity-lab button {
+  min-height: 44px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.gravity-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 24px;
+  border-bottom: 1px solid #34515c;
+  background: linear-gradient(110deg, #102b35, #0a1d29 65%, #182a31);
+}
+
+.gravity-toolbar p {
+  margin: 0;
+  color: #e9f4ef;
+  font:
+    600 15px/1.5 Georgia,
+    serif;
+}
+
+.gravity-toolbar button,
+.gravity-playback button,
+.gravity-feedback button {
+  border: 1px solid #78988e;
+  border-radius: 999px;
+  padding: 8px 16px;
+  color: #f3f8ef;
+  background: #173b3d;
+}
+
+.gravity-apparatus {
+  overflow: hidden;
+  background: #0c1d27;
+}
+
+.gravity-lab .gravity-stage {
+  height: 600px;
+  background:
+    radial-gradient(circle at 50% 72%, #2c4142 0, transparent 31%),
+    radial-gradient(circle at 50% 26%, #173843 0, transparent 43%),
+    linear-gradient(145deg, #07141d, #102a32 54%, #081720);
+}
+
+.gravity-lab .gravity-stage::after {
+  position: absolute;
+  z-index: 0;
+  right: 8%;
+  bottom: 19%;
+  left: 8%;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #84b8b852, transparent);
+  box-shadow: 0 24px 70px 18px #4b9e8d18;
+}
+
+.gravity-lab .gravity-stage .space-render {
+  z-index: 1;
+  inset: 108px 18px 31px;
+  cursor: ew-resize;
+}
+
+.gravity-lab .space-heading,
+.gravity-lab .space-stage-stat,
+.gravity-lab .space-drag {
+  z-index: 3;
+}
+
+.gravity-lab .space-drag {
+  position: absolute;
+  right: 24px;
+  bottom: 18px;
+  max-width: min(360px, calc(100% - 48px));
+  margin: 0;
+  border: 1px solid #527078;
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #d4e1e2;
+  background: #07141feb;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.gravity-lab .space-render-fallback p {
+  margin: 0;
+  color: #b8ccd1;
+}
+
+.gravity-state {
+  display: block;
+  margin-bottom: 7px;
+  color: #b6ded0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.gravity-lab .space-heading h2 {
+  margin-bottom: 7px;
+  font-size: 34px;
+}
+
+.gravity-lab .space-heading p {
+  color: #bed0d4;
+}
+
+.gravity-lane-readouts {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  padding: 15px max(28px, 23%) 19px;
+  border-top: 1px solid #37515a;
+  border-bottom: 1px solid #37515a;
+  background: linear-gradient(90deg, #0e212c, #132b32 50%, #0e212c);
+}
+
+.gravity-lane-readouts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  text-align: center;
+}
+
+.gravity-lane-readouts span {
+  overflow: hidden;
+  color: #c9dcdd;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gravity-lane-readouts strong {
+  color: #f4f3dd;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.gravity-lane-readouts small {
+  color: #a7c8ce;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.gravity-flight-deck {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.1fr);
+  gap: 18px 24px;
+  padding: 22px 28px 26px;
+  background: linear-gradient(120deg, #102734, #0b1d29 60%, #13272d), #0b1d29;
+}
+
+.gravity-plot-panel {
+  min-width: 0;
+  padding: 12px 12px 8px;
+  border: 1px solid #3b5963;
+  border-radius: 16px;
+  background: #071621b5;
+}
+
+.gravity-plot {
+  display: block;
+  width: 100%;
+  height: 154px;
+  overflow: visible;
+}
+
+.gravity-plot text {
+  fill: #a9c5cc;
+  font:
+    10px system-ui,
+    sans-serif;
+}
+
+.gravity-plot-grid {
+  fill: none;
+  stroke: #6f8b9352;
+  stroke-width: 1;
+}
+
+.gravity-plot-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-width: 4;
+}
+
+.gravity-plot-line--a {
+  stroke: #f0d293;
+}
+
+.gravity-plot-line--b {
+  stroke: #84d8cf;
+  stroke-dasharray: 8 6;
+}
+
+.gravity-plot-marker {
+  stroke: #f6f4e5;
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.gravity-plot-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 0 5px 5px;
+  color: #d6e3e0;
+  font-size: 11px;
+}
+
+.gravity-plot-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.gravity-plot-key i {
+  width: 20px;
+  height: 3px;
+  background: #f0d293;
+}
+
+.gravity-plot-key .gravity-key-b {
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #84d8cf 0 7px,
+    transparent 7px 11px
+  );
+}
+
+.gravity-live-evidence {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  min-width: 0;
+}
+
+.gravity-live-evidence dl {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #3b5963;
+  border-radius: 16px;
+  background: #17333b8c;
+}
+
+.gravity-live-evidence dl:nth-child(2) {
+  border-style: dashed;
+}
+
+.gravity-live-evidence dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gravity-live-evidence dt {
+  color: #a9c5cc;
+  font-size: 11px;
+}
+
+.gravity-live-evidence dd {
+  overflow: hidden;
+  margin: 0;
+  color: #f3f7ed;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gravity-timeline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 24px;
+}
+
+.gravity-timeline .dl-slider-heading {
+  color: #dce9e8;
+}
+
+.gravity-timeline .dl-value {
+  color: #f3f0d9;
+}
+
+.gravity-timeline .dl-range-labels {
+  color: #9fbcc4;
+}
+
+.gravity-timeline input {
+  min-height: 28px;
+  accent-color: #a7d6c6;
+}
+
+.gravity-playback {
+  display: flex;
+  gap: 8px;
+}
+
+.gravity-playback button:last-child {
+  color: #253d40;
+  border-color: #f1eee1;
+  background: #f1eee1;
+}
+
+.gravity-challenges {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: #b7c6bd;
+}
+
+.gravity-challenge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 27px 28px 30px;
+  color: #213f42;
+  background: #eeece2;
+}
+
+.gravity-challenge header > span {
+  color: #54736d;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.gravity-challenge h3 {
+  margin: 7px 0 6px;
+  color: #16383a;
+  font:
+    600 23px/1.2 Georgia,
+    serif;
+}
+
+.gravity-challenge header p,
+.gravity-challenge .gravity-locked {
+  margin: 0;
+  color: #506763;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.gravity-challenge fieldset {
+  width: 100%;
+  min-width: 0;
+  margin: 20px 0 13px;
+  padding: 0;
+  border: 0;
+}
+
+.gravity-challenge legend {
+  margin-bottom: 11px;
+  color: #294946;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.gravity-predictions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.gravity-predictions button {
+  padding: 8px 11px;
+  border: 1px solid #a8b8ae;
+  border-radius: 9px;
+  color: #29433f;
+  background: #faf9f2;
+  font-size: 12px;
+}
+
+.gravity-predictions button[aria-pressed="true"] {
+  color: #fff;
+  border-color: #285a53;
+  background: #285a53;
+  box-shadow: inset 0 0 0 2px #d7e7dc;
+}
+
+.gravity-run {
+  margin-top: auto;
+  padding: 9px 14px;
+  border: 1px solid #315d55;
+  border-radius: 10px;
+  color: #f9fbf4;
+  background: #285a53;
+  font-weight: 750;
+}
+
+.gravity-run:disabled {
+  cursor: not-allowed;
+  color: #65736f;
+  border-color: #abb7af;
+  background: #d7dbd4;
+}
+
+.gravity-locked {
+  width: 100%;
+  margin: 20px 0 13px !important;
+  padding: 13px 14px;
+  border-left: 4px solid #839c92;
+  background: #e3e3d9;
+}
+
+.gravity-feedback {
+  width: 100%;
+  margin-top: 17px;
+  padding-top: 15px;
+  border-top: 1px solid #bdc9c1;
+}
+
+.gravity-feedback strong {
+  color: #214e48;
+}
+
+.gravity-feedback p {
+  margin: 7px 0;
+  color: #465d59;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.gravity-feedback button {
+  min-height: 40px;
+  margin-top: 4px;
+  padding: 5px 0;
+  color: #285a53;
+  border: 0;
+  border-bottom: 1px solid #6b8c82;
+  border-radius: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.gravity-open-controls {
+  color: #e7f0ec;
+  border-top: 1px solid #36515b;
+  background: #102531;
+}
+
+.gravity-open-controls summary {
+  min-height: 50px;
+  padding: 17px 28px;
+  cursor: pointer;
+  color: #eff5ee;
+  font-weight: 750;
+}
+
+.gravity-open-controls > p {
+  margin: 0;
+  padding: 0 28px 16px;
+  color: #b3c8cb;
+  font-size: 12px;
+}
+
+.gravity-control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding: 0 28px 25px;
+}
+
+.gravity-control-grid > label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  color: #dce8e7;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.gravity-control-grid select {
+  min-height: 44px;
+  width: 100%;
+  padding: 8px;
+  color: #edf5f1;
+  border: 1px solid #526f78;
+  border-radius: 9px;
+  background: #1a3442;
+  font: inherit;
+}
+
+.gravity-control-grid .dl-slider-heading {
+  color: #dce8e7;
+}
+
+.gravity-control-grid .dl-value {
+  color: #f1eed7;
+}
+
+.gravity-control-grid .dl-range-labels {
+  color: #9fb7bf;
+}
+
+.gravity-control-grid input {
+  min-height: 28px;
+  accent-color: #abd5c8;
+}
+
+.gravity-model-note {
+  padding: 25px 28px 27px;
+  color: #c2d4d3;
+  border-top: 1px solid #36515b;
+  background: #07141f;
+}
+
+.gravity-model-note h3 {
+  margin: 0 0 10px;
+  color: #f1f2e5;
+  font:
+    600 20px/1.3 Georgia,
+    serif;
+}
+
+.gravity-lab .gravity-model-note p {
+  max-width: 920px;
+  margin: 7px 0;
+  color: #c9d8d7;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.gravity-lab .gravity-model-note strong {
+  color: #e7dcc0;
+}
+
+.gravity-lab :is(button, summary, select, input):focus-visible {
+  outline: 3px solid #ffbc56;
+  outline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  .gravity-lab {
+    border-radius: 18px;
+  }
+
+  .gravity-toolbar {
+    align-items: flex-start;
+    padding: 15px 17px;
+  }
+
+  .gravity-toolbar p {
+    font-size: 13px;
+  }
+
+  .gravity-toolbar button {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .gravity-lab .gravity-stage {
+    height: 500px;
+  }
+
+  .gravity-lab .gravity-stage .space-render {
+    inset: 125px 0 42px;
+  }
+
+  .gravity-lab .space-heading {
+    top: 20px;
+    left: 18px;
+  }
+
+  .gravity-lab .space-stage-stat {
+    top: 22px;
+    right: 18px;
+  }
+
+  .gravity-state {
+    max-width: 150px;
+    font-size: 9px;
+  }
+
+  .gravity-lab .space-heading h2 {
+    font-size: 27px;
+  }
+
+  .gravity-lab .space-heading p {
+    max-width: 175px;
+    font-size: 11px;
+  }
+
+  .gravity-lab .space-drag {
+    right: 14px;
+    bottom: 16px;
+    left: 14px;
+    max-width: none;
+    border-radius: 12px;
+    font-size: 10px;
+    text-align: center;
+  }
+
+  .gravity-lane-readouts {
+    gap: 10px;
+    padding: 14px 10px 17px;
+  }
+
+  .gravity-lane-readouts span {
+    font-size: 11px;
+  }
+
+  .gravity-lane-readouts strong {
+    font-size: 16px;
+  }
+
+  .gravity-lane-readouts small {
+    font-size: 10px;
+  }
+
+  .gravity-flight-deck {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 17px 14px 21px;
+  }
+
+  .gravity-plot {
+    height: auto;
+  }
+
+  .gravity-live-evidence {
+    gap: 7px;
+  }
+
+  .gravity-live-evidence dl {
+    padding: 12px 10px;
+  }
+
+  .gravity-live-evidence dl div {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .gravity-live-evidence dd {
+    text-align: left;
+  }
+
+  .gravity-timeline {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .gravity-playback {
+    justify-content: flex-end;
+  }
+
+  .gravity-playback button {
+    padding: 7px 12px;
+    font-size: 11px;
+  }
+
+  .gravity-challenges {
+    grid-template-columns: 1fr;
+  }
+
+  .gravity-challenge {
+    padding: 24px 18px 27px;
+  }
+
+  .gravity-challenge h3 {
+    font-size: 21px;
+  }
+
+  .gravity-control-grid {
+    grid-template-columns: 1fr;
+    padding: 0 18px 23px;
+  }
+
+  .gravity-open-controls summary {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .gravity-open-controls > p {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .gravity-model-note {
+    padding: 23px 18px 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gravity-lab *,
+  .gravity-lab *::before,
+  .gravity-lab *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

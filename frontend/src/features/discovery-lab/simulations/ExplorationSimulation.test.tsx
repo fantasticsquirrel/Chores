@@ -39,6 +39,10 @@ describe("interactive exploration controls", () => {
       expect(
         screen.getByRole("heading", { name: "Cross the critical angle" }),
       ).toBeTruthy();
+    else if (id === "gravity")
+      expect(
+        screen.getByRole("heading", { name: "Change only mass" }),
+      ).toBeTruthy();
     else expect(screen.getByText("Try this")).toBeTruthy();
   });
   it("changes orbit physics with launch speed and central mass", () => {

@@ -1,14 +1,13 @@
 {
   "schema_version": 1,
   "package_id": "gravity-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "gravity-package",
     "title": "Gravity Drop Lab",
     "subject": "Physics",
     "grade_bands": [
-      "K-2",
       "3-5",
       "6-8"
     ],
@@ -18,30 +17,38 @@
       "mass",
       "measurement"
     ],
-    "summary": "Drop two objects on different worlds and compare their motion.",
-    "question": "Does a heavier object always reach the ground first?",
-    "explanation": "Without air resistance, objects released together from the same height fall with the same acceleration, regardless of their mass. Mass stays the same on another world, but weight changes with local gravity. This near-surface model uses constant, rounded gravity values and leaves out air and wind.",
+    "summary": "Compare how object mass and local gravity affect a vacuum drop.",
+    "question": "What changes a vacuum drop: object mass or local gravity?",
+    "explanation": "Mass is the amount of matter in an object; weight is the gravitational force on it. In a vacuum at one location, objects released together from the same height have the same acceleration regardless of mass. Changing local gravity changes acceleration and weight, while mass stays fixed. This near-surface model uses constant local gravity.",
     "experiments": [
       {
         "title": "Compare masses fairly",
-        "instruction": "Predict which reaches the floor first. Keep height fixed, select a prediction, then Compare 1 kg with 10 kg.",
-        "observe": "Both Earth objects land at the same time. Explain why their different weights do not imply different accelerations."
+        "instruction": "Keep Earth gravity and a 20 m release height fixed. Predict which lands first, then compare 1 kg with 10 kg.",
+        "observe": "Both land in 2.02 s, while their weights are 9.81 N and 98.1 N. Explain why weight changes but vacuum acceleration does not."
       },
       {
         "title": "Compare worlds",
-        "instruction": "Predict whether Moon gravity makes the same-height drop faster or slower. Keep height and mass fixed. Choose Moon, then Play motion or Timeline.",
-        "observe": "Compare the Earth reference and Moon object at the same elapsed time. Explain the difference using their accelerations."
+        "instruction": "Keep mass at 5 kg and the release height at 20 m. Predict which drop takes longer, then compare Earth with the Moon.",
+        "observe": "Earth takes 2.02 s and the Moon takes 4.97 s. Explain why weaker local gravity changes the fall while mass stays fixed."
       }
     ],
-    "misconception": "A heavy object does not necessarily fall faster. Air resistance can change real-world results; this lab models a vacuum.",
+    "misconception": "More weight does not produce more free-fall acceleration when gravity is the only force: the added gravitational force and added inertia scale together. Air resistance can change real-world results.",
     "sources": [
       {
-        "title": "NASA: What is microgravity?",
-        "url": "https://www.nasa.gov/centers-and-facilities/glenn/what-is-microgravity/"
+        "title": "OpenStax: Free fall",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/3-5-free-fall"
+      },
+      {
+        "title": "NASA Glenn: Free falling objects",
+        "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/free-falling-objects/"
       },
       {
         "title": "NASA: Planetary fact sheet",
         "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+      },
+      {
+        "title": "NASA: Jupiter facts",
+        "url": "https://science.nasa.gov/jupiter/jupiter-facts/"
       }
     ],
     "duration_minutes": 10
@@ -51,7 +58,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "985d52cb819b5305a74f7140c44ca84dc3f9e75af136ab604eb58dbcdd27058d"
+      "sha256": "df6155c053a0ca4f34b304550b1e1a77604cad38b656d4cefccabb0b3fba0891"
     },
     {
       "path": "THREE-LICENSE.txt",

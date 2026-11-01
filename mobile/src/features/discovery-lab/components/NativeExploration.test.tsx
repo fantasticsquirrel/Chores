@@ -77,6 +77,27 @@ describe("native guided experiment controls", () => {
     fireEvent.press(view.getByText("Reset experiment"));
     expect(criticalAction).toBeDisabled();
   });
+  it("runs both controlled gravity comparisons with evidence and resets", () => {
+    const view = render(<NativeExploration id="gravity" />);
+    const massAction = view.getByText("Compare 1 kg and 10 kg");
+    const worldAction = view.getByText("Compare Earth and Moon");
+    expect(massAction).toBeDisabled();
+    expect(worldAction).toBeDisabled();
+
+    fireEvent.press(view.getByText("10 kg lands first"));
+    fireEvent.press(massAction);
+    expect(view.getByText(/differs from your prediction/)).toBeTruthy();
+    expect(view.getByText(/9.81 N.*98.1 N/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Moon takes longer"));
+    fireEvent.press(worldAction);
+    expect(view.getByText(/matches your prediction/)).toBeTruthy();
+    expect(view.getByText(/Earth 2.02 s.*Moon 4.97 s/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(massAction).toBeDisabled();
+    expect(worldAction).toBeDisabled();
+  });
   it("opens the gate and explicitly reveals sight lines", () => {
     const view = render(<NativeExploration id="castle-defenses" />);
     fireEvent.press(view.getByText("Open gate"));

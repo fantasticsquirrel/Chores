@@ -126,7 +126,7 @@ describe("complete space and life worker packages", () => {
     expect(run("preset142").description).toContain("escape path");
     expect(run("mass", 2).description).toContain("Escape threshold 2.000");
   });
-  it("gravity mass affects weight but not landing time", () => {
+  it("gravity gates both comparisons and keeps weight distinct from fall time", () => {
     const run = worker("gravity");
     const a = run();
     const b = run("mass", 20);
@@ -134,7 +134,26 @@ describe("complete space and life worker packages", () => {
       b.description.match(/fall time [\d.]+ s/g),
     );
     expect(b.description).toContain("196.2 N");
-    expect(run("test").sections[1].text).toContain("same acceleration");
+    expect(a.buttons.map(({ id }) => id)).not.toContain("compareMass");
+    expect(run("compareMass").sections[0].text).toContain("Predict first");
+    expect(run("compareWorld").sections[1].text).toContain(
+      "Complete the mass comparison first",
+    );
+    const predictedMass = run("massHeavy");
+    expect(predictedMass.buttons.map(({ id }) => id)).toContain("compareMass");
+    expect(run("compareMass").sections[0].text).toContain(
+      "differs from your prediction",
+    );
+    expect(run("showMass").buttons.map(({ id }) => id)).not.toContain(
+      "compareWorld",
+    );
+    const predictedWorld = run("worldMoonLonger");
+    expect(predictedWorld.buttons.map(({ id }) => id)).toContain(
+      "compareWorld",
+    );
+    expect(run("compareWorld").sections[1].text).toContain(
+      "matches your prediction",
+    );
   });
   it("solar keeps eight shortcuts and common diameter scale", () => {
     const run = worker("solar-system");

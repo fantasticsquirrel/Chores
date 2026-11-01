@@ -166,6 +166,7 @@ export function DiscoveryExplorationPage() {
   const item = exploration.data;
   const lessonRunsInActivity = [
     "chance-carnival",
+    "gravity",
     "orbital-mechanics",
     "photosynthesis",
     "reflection-refraction",

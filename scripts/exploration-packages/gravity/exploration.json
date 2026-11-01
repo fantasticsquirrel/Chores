@@ -2,13 +2,13 @@
   "experiments": [
     {
       "title": "Compare masses fairly",
-      "instruction": "Predict which reaches the floor first. Keep height fixed, select a prediction, then Compare 1 kg with 10 kg.",
-      "observe": "Both Earth objects land at the same time. Explain why their different weights do not imply different accelerations."
+      "instruction": "Keep Earth gravity and a 20 m release height fixed. Predict which lands first, then compare 1 kg with 10 kg.",
+      "observe": "Both land in 2.02 s, while their weights are 9.81 N and 98.1 N. Explain why weight changes but vacuum acceleration does not."
     },
     {
       "title": "Compare worlds",
-      "instruction": "Predict whether Moon gravity makes the same-height drop faster or slower. Keep height and mass fixed. Choose Moon, then Play motion or Timeline.",
-      "observe": "Compare the Earth reference and Moon object at the same elapsed time. Explain the difference using their accelerations."
+      "instruction": "Keep mass at 5 kg and the release height at 20 m. Predict which drop takes longer, then compare Earth with the Moon.",
+      "observe": "Earth takes 2.02 s and the Moon takes 4.97 s. Explain why weaker local gravity changes the fall while mass stays fixed."
     }
   ]
 }

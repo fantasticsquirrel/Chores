@@ -240,6 +240,33 @@ describe("Discovery Lab", () => {
     expect(screen.queryByText(optics.misconception)).toBeNull();
     expect(screen.getByText("Sources")).toBeVisible();
   });
+  it("keeps the Gravity lesson in the activity without repeated registry prose", async () => {
+    const gravity = {
+      ...orbit,
+      id: "gravity",
+      title: "Gravity Drop Lab",
+      question: "What changes a vacuum drop?",
+      explanation: "Repeated gravity explanation.",
+      misconception: "Repeated gravity misconception.",
+      experiments: [
+        {
+          title: "Repeated gravity experiment",
+          instruction: "Repeated gravity instructions.",
+          observe: "Repeated gravity observation.",
+        },
+      ],
+    };
+    vi.mocked(apiClient.getDiscoveryExploration).mockResolvedValue(gravity);
+    show("/discovery-lab/gravity");
+    expect(
+      await screen.findByRole("heading", { name: gravity.title }),
+    ).toBeVisible();
+    expect(screen.getByTestId("simulation")).toHaveTextContent("gravity");
+    expect(screen.queryByText(gravity.explanation)).toBeNull();
+    expect(screen.queryByText(gravity.experiments[0].title)).toBeNull();
+    expect(screen.queryByText(gravity.misconception)).toBeNull();
+    expect(screen.getByText("Sources")).toBeVisible();
+  });
   it("does not mount a simulation when direct access is denied", async () => {
     vi.mocked(apiClient.getDiscoveryExploration).mockRejectedValue(
       new Error("Exploration access denied."),

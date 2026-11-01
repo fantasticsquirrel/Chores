@@ -51,8 +51,9 @@ describe("native Discovery Lab", () => {
     fireEvent.press(await view.findByText("Explore Gravity lab"));
     await view.findByText("Reset experiment");
     expect(apiClient.getDiscoveryExploration).toHaveBeenCalledWith("gravity");
-    fireEvent.press(view.getByText("Increase Time (tenths of seconds)"));
-    expect(view.getByText(/Masses 1 kg and 3 kg fall 0.2 m/)).toBeTruthy();
+    fireEvent.press(view.getByText("Same landing time"));
+    fireEvent.press(view.getByText("Compare 1 kg and 10 kg"));
+    expect(view.getByText(/Both land in 2.02 s/)).toBeTruthy();
     fireEvent.press(view.getByText("Back to Explorations"));
     expect(view.getByText("Explore Gravity lab")).toBeTruthy();
   });

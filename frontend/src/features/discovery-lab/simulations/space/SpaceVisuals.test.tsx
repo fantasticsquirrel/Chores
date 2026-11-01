@@ -7,6 +7,10 @@ afterEach(cleanup);
 describe("space learning controls", () => {
   it("changes weight but not fall time when mass changes", () => {
     render(<GravitySimulation />);
+    expect(
+      document.querySelector(".gravity-lane-readouts"),
+    ).not.toHaveAttribute("aria-live");
+    fireEvent.click(screen.getByText("Open controls"));
     const time = screen.getByLabelText("Comparison fall time").textContent;
     const weight = screen.getByLabelText("Comparison weight").textContent;
     fireEvent.change(screen.getByLabelText("Comparison object mass"), {
@@ -19,25 +23,69 @@ describe("space learning controls", () => {
       weight,
     );
     fireEvent.change(screen.getByLabelText("Comparison world"), {
-      target: { value: 1 },
+      target: { value: "moon" },
     });
     expect(screen.getByLabelText("Comparison fall time").textContent).not.toBe(
       time,
     );
+    fireEvent.change(screen.getByLabelText("Drop height"), {
+      target: { value: 50 },
+    });
+    expect(
+      screen.getByRole("img", { name: /Distance fallen over time/ }),
+    ).toHaveTextContent("50 m");
   });
-  it("gives observed evidence for a fair mass comparison", () => {
+  it("gates, explains and resets both gravity comparisons", () => {
     render(<GravitySimulation />);
-    fireEvent.click(screen.getByRole("button", { name: /^Same time$/ }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Compare 1 kg with 10 kg" }),
+    const massAction = screen.getByRole("button", {
+      name: "Compare 1 kg and 10 kg",
+    });
+    const worldAction = screen.getByRole("button", {
+      name: "Compare Earth and Moon",
+    });
+    expect(massAction).toBeDisabled();
+    expect(worldAction).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "10 kg lands first" }));
+    fireEvent.click(massAction);
+    expect(screen.getByTestId("gravity-mass-feedback").textContent).toContain(
+      "differs from your prediction",
     );
-    expect(screen.getByRole("status").textContent).toContain(
-      "same acceleration",
+    expect(screen.getByTestId("gravity-mass-feedback").textContent).toContain(
+      "9.81 N",
+    );
+    expect(screen.getByTestId("gravity-mass-feedback").textContent).toContain(
+      "98.1 N",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Moon takes longer" }));
+    fireEvent.click(worldAction);
+    expect(screen.getByTestId("gravity-world-feedback").textContent).toContain(
+      "matches your prediction",
+    );
+    expect(screen.getByTestId("gravity-world-feedback").textContent).toContain(
+      "4.97 s",
     );
     expect(
-      (screen.getByLabelText("Comparison world") as HTMLSelectElement).value,
-    ).toBe("0");
-    expect(screen.getByRole("button", { name: "Play motion" })).toBeTruthy();
+      screen.getByRole("img", { name: /Moon · 5 kg lands in 4.97 seconds/ }),
+    ).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.queryByTestId("gravity-mass-feedback")).toBeNull();
+    expect(screen.queryByTestId("gravity-world-feedback")).toBeNull();
+    expect(massAction).toBeDisabled();
+    expect(worldAction).toBeDisabled();
+  });
+  it("scrubs the gravity evidence with keyboard controls", async () => {
+    render(<GravitySimulation />);
+    const scene = await screen.findByRole("img", {
+      name: /Mass comparison in two vacuum-drop towers/,
+    });
+    const timeline = screen.getByLabelText("Drop timeline") as HTMLInputElement;
+    fireEvent.keyDown(scene, { key: "End" });
+    expect(timeline.value).toBe("100");
+    fireEvent.keyDown(scene, { key: "Home" });
+    expect(timeline.value).toBe("0");
   });
   it("runs both controlled orbit comparisons and resets their evidence", () => {
     render(<OrbitSimulation />);
