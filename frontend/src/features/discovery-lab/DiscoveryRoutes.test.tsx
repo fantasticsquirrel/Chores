@@ -1,4 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "../../App";
 import { apiClient } from "../../api";
@@ -65,7 +70,9 @@ describe("Discovery routes", () => {
       ],
     });
     open("/discovery-lab/gravity");
-    const slider = await screen.findByRole("slider", {
+    const routeFallback = await screen.findByText("Opening Exploration…");
+    await waitForElementToBeRemoved(routeFallback, { timeout: 5_000 });
+    const slider = screen.getByRole("slider", {
       name: "Test experiment control",
     });
     expect(slider).toBeEnabled();

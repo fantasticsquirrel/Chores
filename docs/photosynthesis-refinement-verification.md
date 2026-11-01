@@ -66,13 +66,30 @@ Passed checks:
 - `git diff --check` and a scan of touched code for `dangerouslySetInnerHTML`,
   `.innerHTML`, `eval` and `new Function`.
 
-The root frontend Vitest run completed 828 of 829 tests. The remaining failure
-is the unchanged `DiscoveryRoutes.test.tsx` lazy-route assertion, which stays on
-“Opening Exploration…” longer than Testing Library's one-second async timeout;
-it also fails when rerun alone. An earlier concurrent run similarly timed out
-an unchanged `FamilyTreeJourneys` case. All touched Photosynthesis, Discovery
-Lab, package and model suites pass. No assertion or scientific-model check was
-weakened to hide these unrelated timing failures.
+The first delivered-commit root frontend run completed 828 of 829 tests and
+left `DiscoveryRoutes.test.tsx` on the “Opening Exploration…” Suspense fallback
+past Testing Library's default one-second content lookup. Final review did not
+treat unchanged source as proof that this was unrelated. In an isolated
+detached worktree at the exact starting commit
+`e0912bac6c4568620a7aa33d4f460b67488c588f`, the route file passed 4/4 by
+itself, and the complete baseline frontend suite passed 145 files and 822 tests
+in 191.51 seconds. The delivered commit's focused file also passed 4/4 before
+the test adjustment. There is therefore no reproduced baseline failure to
+record, and the earlier “fails alone/unrelated” characterization is withdrawn.
+
+The actual fragility was a test-readiness boundary: the assertion asked for
+content behind a lazy route within one second, even while the UI correctly
+showed its explicit loading fallback. The Photosynthesis renderer is mocked in
+this route test, so its expanded component is not mounted or behaviorally under
+test, but transform and lazy-import completion still vary with process load.
+The test now observes “Opening Exploration…,” waits up to five seconds for that
+specific fallback to be removed, and only then makes the original synchronous
+assertions that the slider is enabled, the read-only wrapper is absent and the
+input changes to 7. The adjusted focused run passed 4/4; the lazy-route case
+took 2.016 seconds, directly demonstrating why the one-second lookup was not a
+reliable readiness signal. No product timeout, route behavior or functional
+assertion was relaxed, and unrelated suites were not rerun on the delivered
+tree.
 
 The production build reports its existing Rollup chunk-size and dependency
 annotation warnings; they are warnings, not failures. No APK, deployment or
@@ -108,21 +125,43 @@ not claim verification on a physical device or assistive-technology matrix.
 
 ## Visual evidence
 
-True pre-edit and final captures are in:
+True pre-edit and final full-page captures remain in:
 
 `/tmp/ui-captures/second-exploration/2026-11-01/`
 
 The set includes initial and operated/completed full-page and component images
 for desktop and mobile. Candidate Circuit City and Sound Playground captures
-are in the same directory. Readable before/after sheets and selected captures
-for handoff are staged in:
+are in the same directory. The original mobile guided element capture, where
+the fixed navigation crossed the second feedback paragraph, is retained as
+`after-completed-mobile-guided-obscured-original.png`; it is not used as final
+evidence.
+
+Final mobile challenge evidence was recaptured at the normal 390 × 844
+viewport after scrolling, without CSS or product changes:
+
+- `after-completed-mobile-challenge1-focused.png`: card top 16.3 px, card
+  bottom 504.5 px, fixed-navigation top 782.2 px.
+- `after-completed-mobile-challenge2-focused.png`: card top 16.5 px, card
+  bottom 544.8 px, fixed-navigation top 782.2 px.
+
+Both cards are fully above the navigation. The second capture visibly includes
+the complete feedback: the index rises from 37 to 67, light and water tie at
+35%, and the index stays 67 at 100% light because water limits the model. The
+complete card captures are composed vertically in
+`after-completed-mobile-guided.png`; raw before and final mobile full pages were
+not replaced.
+
+Readable before/after sheets and selected captures for handoff are staged in:
 
 `/root/.openclaw/workspace/media/second-exploration/`
 
-The operated pair compares the old rate-only saved snapshot with the completed
-new controlled lesson. The stages are intentionally not identical because the
-refinement replaces an unguided snapshot with gated predictions and preserved
-evidence.
+The staged set now includes both focused viewport captures, the complete guided
+panel composition, and copies of `before-operated-mobile-full.png` and
+`after-completed-mobile-full.png`. `paired-operated-mobile.png` uses the
+complete guided panels and accurately labels the baseline “saved index only;
+setup not saved” against the final “controlled evidence + full feedback.” The
+stages are intentionally not identical because the refinement replaces an
+unguided snapshot with gated predictions and preserved evidence.
 
 ## Editorial and independent review
 

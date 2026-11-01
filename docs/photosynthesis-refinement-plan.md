@@ -148,3 +148,18 @@ remains available after the two guided comparisons.
 
 Verification, browser assertions, review findings and honest gaps are recorded
 in [photosynthesis-refinement-verification.md](photosynthesis-refinement-verification.md).
+
+## Final supervisor closure
+
+The lazy-route test was checked against the exact starting commit in an
+isolated detached worktree rather than being classified from source history.
+The baseline passed the focused route file and its complete 822-test frontend
+suite. The delivered test now waits for the named Suspense fallback to finish
+before retaining all original interactivity assertions; the final focused run
+passed all four route tests.
+
+Mobile evidence was also recaptured at ordinary scroll positions. Separate
+390 × 844 challenge-one and challenge-two screenshots keep each complete card
+above the fixed navigation, and the revised operated comparison uses those full
+panels. Exact filenames, element/navigation bounds and the complete second
+feedback are recorded in the verification report.
