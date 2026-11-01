@@ -154,6 +154,9 @@ describe("Leaf Energy Lab learning flow", () => {
     render(<PhotosynthesisSimulation />);
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent("Toy activity index");
+    expect(screen.getByTestId("leaf-gauge-name")).toHaveTextContent(
+      "Toy activity index",
+    );
     expect(status).toHaveTextContent("Model limit(s): water");
     expect(screen.getByRole("img")).toHaveAccessibleName();
     expect(

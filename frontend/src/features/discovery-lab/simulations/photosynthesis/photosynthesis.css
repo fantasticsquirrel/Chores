@@ -246,6 +246,7 @@
     sans-serif;
 }
 
+.leaf-mobile-structure-key,
 .leaf-mobile-flow-key {
   display: none;
 }
@@ -298,6 +299,20 @@
   box-shadow: 0 12px 28px #112e282e;
 }
 
+.leaf-index-reading {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+}
+
+.leaf-gauge-name {
+  color: #fff3bc;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.25;
+  text-align: center;
+}
+
 .leaf-index-gauge::before {
   grid-area: 1 / 1;
   width: 7.1rem;
@@ -332,15 +347,6 @@
   gap: 0.35rem;
   font-size: 0.8rem;
   line-height: 1.5;
-}
-
-.leaf-reading-copy > span:first-child {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 
 .leaf-reading-copy strong {
@@ -669,8 +675,11 @@
     align-items: center;
   }
 
-  .leaf-index-gauge {
+  .leaf-index-reading {
     grid-row: 1 / span 2;
+  }
+
+  .leaf-index-gauge {
     width: 7rem;
     height: 7rem;
   }
@@ -699,7 +708,7 @@
   }
 
   .leaf-guided-work {
-    order: 1;
+    order: 2;
     grid-template-columns: 1fr;
     border-right: 0;
     border-left: 0;
@@ -712,7 +721,7 @@
   }
 
   .leaf-visual-panel {
-    order: 2;
+    order: 1;
     border-right: 0;
     border-left: 0;
     border-radius: 0;
@@ -764,6 +773,30 @@
   .leaf-structure-leader,
   .leaf-process-core {
     display: none;
+  }
+
+  .leaf-mobile-structure-key {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem;
+    padding: 0.55rem 0.55rem 0;
+  }
+
+  .leaf-mobile-structure-key span {
+    display: grid;
+    align-content: start;
+    gap: 0.2rem;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid #c7cbb6;
+    border-radius: 7px;
+    background: #eef1d9;
+    color: #40584e;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .leaf-mobile-structure-key strong {
+    color: #214b40;
   }
 
   .leaf-mobile-flow-key {
@@ -819,6 +852,10 @@
   .leaf-current-result {
     grid-template-columns: 6.5rem 1fr;
     padding: 1rem;
+  }
+
+  .leaf-index-reading {
+    align-self: start;
   }
 
   .leaf-index-gauge {

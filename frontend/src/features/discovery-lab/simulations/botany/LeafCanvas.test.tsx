@@ -35,6 +35,18 @@ describe("Leaf Energy process diagram", () => {
       "data-activity",
       "87",
     );
+    expect(screen.getByTestId("leaf-sugar-output")).toHaveTextContent(
+      "to the plant",
+    );
+    expect(screen.getByTestId("leaf-sugar-output")).not.toHaveTextContent(
+      "/ 100",
+    );
+    expect(screen.getByTestId("leaf-mobile-structure-key")).toHaveTextContent(
+      "Leaf tissue contains cells with chloroplasts",
+    );
+    expect(screen.getByTestId("leaf-mobile-structure-key")).toHaveTextContent(
+      "Stoma",
+    );
 
     rerender(
       <LeafCanvas
@@ -50,8 +62,8 @@ describe("Leaf Energy process diagram", () => {
       "0",
     );
     expect(screen.getByTestId("leaf-sugar-output")).toHaveAttribute(
-      "data-level",
-      "0",
+      "data-output-state",
+      "inactive",
     );
     expect(screen.getByTestId("leaf-chloroplast")).toHaveAttribute(
       "data-activity",

@@ -23,7 +23,26 @@ Starting revision: `6e8292670e44ab0b85501c50e48f4c90d866a45b`
   reduced-motion media query.
 - The Chance offline package vector result now uses observed bars with expected
   markers. The Leaf offline fallback vector now labels energy and matter flows.
-  Both example packages were rebuilt as version `1.0.1`.
+  Chance remains at `1.0.1`; the corrected Leaf package was rebuilt as `1.0.2`.
+
+## Independent supervisor review fixes
+
+All five release findings from the rendered-image review were corrected:
+
+1. The Leaf ring now has a visible `Toy activity index` name and exposes a
+   named `meter` with its 0–100 value to assistive technology.
+2. Web desktop/mobile and offline fallback sugar paths now say `to the plant`;
+   the invented index no longer appears on a matter arrow. Output paths use
+   only an active/inactive cue, not a numeric sugar-flow encoding.
+3. Mobile now shows a 12px structure key stating that leaf tissue contains
+   cells with chloroplasts and that a stoma is a pore for gas exchange. The
+   graphic's accessible description names the same nested relationship.
+4. The live illustration/instrument precedes both guided cards on mobile.
+5. The original honest full-page/component captures remain, including fixed
+   navigation where it naturally occurs. A separate ordinary-viewport set was
+   scrolled normally and checked geometrically so each operated art/challenge
+   focus stays above the mobile navigation; no product CSS or screenshot-only
+   hiding was used.
 
 ## Browser behavior and accessibility evidence
 
@@ -40,8 +59,10 @@ both activities. It verified:
   comparison, reset, open controls, and agreement between the visible die face
   and the model's last draw;
 - Leaf zero-water and zero-carbon-dioxide boundary behavior, the 35% water
-  plateau, exact state-driven SVG levels, reset, and the distinction between
-  energy and matter flow metadata;
+  plateau, exact state-driven input levels, active/inactive output pathways,
+  reset, and the distinction between energy and matter flow metadata;
+- the visible/named Leaf activity meter, non-numeric sugar transport label,
+  mobile anatomy key and activity-first mobile order;
 - descriptive graphic labels, numeric/non-color encodings, no document or
   activity-stage horizontal overflow, no failed responses or browser console
   errors, and a 12px minimum for visible activity text.
@@ -63,7 +84,48 @@ were inspected after the final build and copied to:
 - `/root/.openclaw/workspace/media/exploration-visual-redesign/finals/`
 - `/root/.openclaw/workspace/media/exploration-visual-redesign/comparisons/`
 
+The untouched `before-*` baseline files retain their original capture times.
+The final build was recaptured into the `after-*` paths. Additional focused
+evidence contains 12 ordinary viewport cases (both operated art panels and all
+four operated challenges at desktop and mobile), each with a viewport image,
+standalone image and recorded target/navigation geometry:
+
+- `/tmp/ui-captures/exploration-visual-redesign/2026-11-01/focused/`
+- `/root/.openclaw/workspace/media/exploration-visual-redesign/focused/`
+
+The six concise files in
+`/root/.openclaw/workspace/media/exploration-visual-redesign/share/` are the
+readable Telegram-friendly final art, operated-challenge and mobile
+before/after graphics. SHA-256 values for all staged PNGs are recorded in
+`/tmp/exploration-visual-redesign-media-sha256.txt`.
+
+## Focused follow-up verification
+
+The supervisor fixes changed only Leaf web presentation/tests and its offline
+fallback package, so the broader already-passing suites below were not repeated.
+The affected scopes passed after final formatting and package generation:
+
+- `npm run lint --workspace frontend`
+- `npm run build --workspace frontend`
+- focused frontend Vitest — 3 files, 8 passed, 11 skipped by the test-name filter
+- focused offline education regressions — 1 file, 2 passed, 6 skipped by the
+  test-name filter
+- deterministic Leaf package build plus server validation —
+  `photosynthesis-package 1.0.2`, ZIP SHA-256
+  `1b25ab99413747b2493827bfe1c53b0cf9503fb75b0072ab02e3e4087c6111cb`
+- final deterministic browser interactions — four module/viewport cases, 12px
+  minimum visible activity text, no overflow, no browser/response errors
+- fresh screenshot capture — eight matched raw cases and 12 focused
+  ordinary-viewport cases; every mobile focused target ended above the fixed
+  navigation according to `focused-manifest.json`
+- `git diff --check`
+
 ## Automated verification
+
+The following broader gates were completed for the original redesign through
+revision `80b64261b49ac739945f29af3bc4346af867d7c6`; they are retained here as
+the unchanged adjacent verification record rather than represented as reruns
+for the supervisor-only fix:
 
 Passed:
 

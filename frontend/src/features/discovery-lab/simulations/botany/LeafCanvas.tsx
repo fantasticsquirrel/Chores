@@ -8,6 +8,13 @@ function flowStyle(level: number) {
   } as CSSProperties;
 }
 
+function outputFlowStyle(active: boolean) {
+  return {
+    "--leaf-flow-opacity": active ? 0.86 : 0.14,
+    "--leaf-flow-width": "4.5px",
+  } as CSSProperties;
+}
+
 function FlowLabel({
   x,
   y,
@@ -43,7 +50,8 @@ export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
   const { light, water, carbon, rate } = props;
   const id = useId().replace(/:/g, "");
   const roundedRate = Math.round(rate);
-  const label = `Leaf process diagram. Light energy ${Math.round(light)} percent enters the leaf. Water ${Math.round(water)} percent enters through a vein and carbon dioxide ${Math.round(carbon)} percent enters through a stoma. Chloroplast activity index ${roundedRate} out of 100. Sugars and oxygen are outputs. The oxygen released comes from water.${props.limitingLabel ? ` Model limit or limits: ${props.limitingLabel}.` : ""}`;
+  const outputActive = rate > 0;
+  const label = `Leaf process diagram linking a whole leaf to leaf tissue, cells, a chloroplast inside a cell, and a stoma in the leaf surface. Light energy ${Math.round(light)} percent enters the leaf. Water ${Math.round(water)} percent enters through a vein and carbon dioxide ${Math.round(carbon)} percent enters through the stoma. Toy activity index ${roundedRate} out of 100. Sugars move from the leaf to the plant, and oxygen leaves the leaf. The oxygen released comes from water.${props.limitingLabel ? ` Model limit or limits: ${props.limitingLabel}.` : ""}`;
 
   return (
     <div
@@ -318,8 +326,8 @@ export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
           className="leaf-sugar-flow leaf-state-flow"
           data-testid="leaf-sugar-output"
           data-flow-kind="matter"
-          data-level={roundedRate}
-          style={flowStyle(rate)}
+          data-output-state={outputActive ? "active" : "inactive"}
+          style={outputFlowStyle(outputActive)}
         >
           <path
             d="M581 240C527 259 470 285 410 321C354 350 306 365 246 376"
@@ -330,7 +338,7 @@ export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
             y={374}
             width={154}
             title="SUGARS OUT"
-            detail={`activity ${roundedRate} / 100`}
+            detail="to the plant"
           />
         </g>
 
@@ -338,8 +346,8 @@ export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
           className="leaf-oxygen-flow leaf-state-flow"
           data-testid="leaf-oxygen-output"
           data-flow-kind="matter"
-          data-level={roundedRate}
-          style={flowStyle(rate)}
+          data-output-state={outputActive ? "active" : "inactive"}
+          style={outputFlowStyle(outputActive)}
         >
           <path
             d="M655 334C704 302 750 271 807 240"
@@ -386,6 +394,19 @@ export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
           </text>
         </g>
       </svg>
+      <div
+        className="leaf-mobile-structure-key"
+        data-testid="leaf-mobile-structure-key"
+      >
+        <span>
+          <strong>Inside a leaf</strong>
+          Leaf tissue contains cells with chloroplasts.
+        </span>
+        <span>
+          <strong>Leaf surface</strong>
+          Stoma: a pore for gas exchange.
+        </span>
+      </div>
       <div className="leaf-mobile-flow-key" aria-hidden="true">
         <span className="leaf-key-energy">
           Light energy in <strong>{Math.round(light)}%</strong>
@@ -397,7 +418,7 @@ export function LeafCanvas(props: LeafState & { limitingLabel?: string }) {
           CO₂ in <strong>{Math.round(carbon)}%</strong>
         </span>
         <span className="leaf-key-sugar">
-          Sugars out <strong>{roundedRate}/100</strong>
+          Sugars out <strong>to the plant</strong>
         </span>
         <span className="leaf-key-oxygen">
           O₂ out <strong>from water</strong>

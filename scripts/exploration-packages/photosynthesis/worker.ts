@@ -69,6 +69,7 @@ function run(i: Input) {
   }
   const result = photosynthesis(light, water, carbon);
   const activity = Math.round(result.rate);
+  const outputActive = result.rate > 0;
   if (i.control === "save") {
     saved = { light, water, carbon, activity };
   }
@@ -187,7 +188,7 @@ function run(i: Input) {
             fill: "none",
             stroke: "#e6c883",
             strokeWidth: 5,
-            opacity: Math.max(0.15, result.rate / 100),
+            opacity: outputActive ? 0.85 : 0.15,
             strokeLinecap: "round",
           },
           children: [],
@@ -201,7 +202,7 @@ function run(i: Input) {
             fontSize: 14,
             fontWeight: "700",
           },
-          children: [`SUGARS OUT · ${activity}/100`],
+          children: ["SUGARS OUT · to plant"],
         },
         {
           tag: "line",
@@ -213,7 +214,7 @@ function run(i: Input) {
             stroke: "#f4bcac",
             strokeWidth: 5,
             strokeDasharray: "3 7",
-            opacity: Math.max(0.15, result.rate / 100),
+            opacity: outputActive ? 0.85 : 0.15,
             strokeLinecap: "round",
           },
           children: [],

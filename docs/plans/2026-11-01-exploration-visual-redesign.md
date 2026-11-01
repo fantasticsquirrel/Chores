@@ -42,5 +42,6 @@ Matched baseline captures are stored under
 - [x] Redesign Chance graphics and compose its instrument, evidence and guided comparisons as one workbench.
 - [x] Redesign Leaf graphics and compose its state-responsive process diagram, evidence and guided investigations.
 - [x] Run relevant web/shared/native/package/security/architecture gates, capture and inspect matched finals, publish comparison media, and record limitations.
+- [x] Resolve the independent final-image review: name the Leaf gauge, remove numeric sugar-flow claims, restore mobile anatomy context, put the visual activity before the mobile challenges, and add ordinary-viewport evidence without navigation overlap.
 
 Verification: `docs/verification/2026-11-01-exploration-visual-redesign.md`.

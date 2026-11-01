@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "photosynthesis-package",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "photosynthesis-package",
@@ -54,7 +54,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "747600c29ab6fbc45a6d64c38bc0ae70541999df6c3aa501d2123dc6a742df19"
+      "sha256": "329882d10f60214f1257a88867a475569f69b432654e389d94ae6a57332326c8"
     },
     {
       "path": "THREE-LICENSE.txt",

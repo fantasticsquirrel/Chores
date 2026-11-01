@@ -89,7 +89,8 @@ it("photosynthesis fallback distinguishes energy from matter flows", () => {
   expect(fallback).toContain("LIGHT ENERGY");
   expect(fallback).toContain("WATER IN");
   expect(fallback).toContain("CO₂ IN");
-  expect(fallback).toContain("SUGARS OUT");
+  expect(fallback).toContain("SUGARS OUT · to plant");
+  expect(fallback).not.toMatch(/SUGARS OUT[^\"]*\/100/);
   expect(fallback).toContain("O₂ OUT");
 }, 30000);
 it("Moon test evidence is invalidated when the observation changes", () => {

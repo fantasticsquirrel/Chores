@@ -13,24 +13,33 @@ export function PhotosynthesisLivePanel({
     <aside className="leaf-live-panel" aria-label="Current model reading">
       <div className="leaf-current-result" role="status" aria-live="polite">
         <div
-          className="leaf-index-gauge"
-          style={
-            {
-              "--leaf-index": `${current.activityIndex * 3.6}deg`,
-            } as CSSProperties
-          }
-          aria-hidden="true"
+          className="leaf-index-reading"
+          role="meter"
+          aria-label="Toy activity index"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={roundIndex(current.activityIndex)}
+          aria-valuetext={`${roundIndex(current.activityIndex)} out of 100`}
         >
-          <div>
-            <strong>{roundIndex(current.activityIndex)}</strong>
-            <span>/ 100</span>
+          <div
+            className="leaf-index-gauge"
+            style={
+              {
+                "--leaf-index": `${current.activityIndex * 3.6}deg`,
+              } as CSSProperties
+            }
+            aria-hidden="true"
+          >
+            <div>
+              <strong>{roundIndex(current.activityIndex)}</strong>
+              <span>/ 100</span>
+            </div>
           </div>
+          <span className="leaf-gauge-name" data-testid="leaf-gauge-name">
+            Toy activity index
+          </span>
         </div>
         <div className="leaf-reading-copy">
-          <span>
-            Toy activity index:{" "}
-            <strong>{roundIndex(current.activityIndex)} / 100</strong>
-          </span>
           <span>
             Model limit(s):{" "}
             <strong>{resourceList(current.limitingResources)}</strong>
