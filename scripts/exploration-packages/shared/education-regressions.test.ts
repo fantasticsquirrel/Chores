@@ -83,6 +83,15 @@ it("photosynthesis keeps fixed-trial evidence separate from open controls", () =
     "Light 30 → index 0; light 100 → index 0",
   );
 }, 30000);
+it("photosynthesis fallback distinguishes energy from matter flows", () => {
+  const result = worker("photosynthesis")();
+  const fallback = JSON.stringify(result.fallbackVector?.nodes ?? []);
+  expect(fallback).toContain("LIGHT ENERGY");
+  expect(fallback).toContain("WATER IN");
+  expect(fallback).toContain("CO₂ IN");
+  expect(fallback).toContain("SUGARS OUT");
+  expect(fallback).toContain("O₂ OUT");
+}, 30000);
 it("Moon test evidence is invalidated when the observation changes", () => {
   const send = worker("moon-phases");
   send();

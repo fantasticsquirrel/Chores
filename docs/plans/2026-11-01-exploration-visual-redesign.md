@@ -39,4 +39,6 @@ Matched baseline captures are stored under
 - [x] Freeze and inspect the matched isolated-fixture baseline.
 - [x] Redesign Chance graphics and compose its instrument, evidence and guided comparisons as one workbench.
 - [x] Redesign Leaf graphics and compose its state-responsive process diagram, evidence and guided investigations.
-- [ ] Run relevant web/shared/native/package/security/architecture gates, capture and inspect matched finals, publish comparison media, and record limitations.
+- [x] Run relevant web/shared/native/package/security/architecture gates, capture and inspect matched finals, publish comparison media, and record limitations.
+
+Verification: `docs/verification/2026-11-01-exploration-visual-redesign.md`.

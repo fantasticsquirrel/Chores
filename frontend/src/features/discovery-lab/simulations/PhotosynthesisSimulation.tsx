@@ -302,9 +302,8 @@ export function PhotosynthesisSimulation() {
           <summary>Model limits</summary>
           <p>
             The index does not measure sugar amount. It omits temperature,
-            species, nutrients, stored water, time and stomatal behavior.
-            Plants respire day and night; this index does not subtract
-            respiration.
+            species, nutrients, stored water, time and stomatal behavior. Plants
+            respire day and night; this index does not subtract respiration.
           </p>
         </details>
       </div>

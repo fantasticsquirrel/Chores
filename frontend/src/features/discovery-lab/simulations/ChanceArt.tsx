@@ -25,8 +25,12 @@ export function ChanceDistribution({
       <header className="chance-distribution-header">
         <h3>Observed vs expected</h3>
         <div className="chance-chart-legend" aria-hidden="true">
-          <span><i className="chance-observed-key" /> observed</span>
-          <span><i className="chance-theory-key" /> expected</span>
+          <span>
+            <i className="chance-observed-key" /> observed
+          </span>
+          <span>
+            <i className="chance-theory-key" /> expected
+          </span>
         </div>
       </header>
       <div className="chance-chart-axis">
@@ -46,7 +50,9 @@ export function ChanceDistribution({
             onClick={() => onSelect(index)}
             style={{ "--chance-color": COLORS[index] } as CSSProperties}
           >
-            <span className={`chance-chart-number chance-chart-pattern-${index + 1}`}>
+            <span
+              className={`chance-chart-number chance-chart-pattern-${index + 1}`}
+            >
               {index + 1}
             </span>
             <span className="chance-chart-body">

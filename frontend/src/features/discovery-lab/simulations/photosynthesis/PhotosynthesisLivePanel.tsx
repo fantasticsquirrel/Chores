@@ -1,7 +1,5 @@
 import type { CSSProperties } from "react";
-import {
-  photosynthesisActivity,
-} from "@family-manager/family-api/discovery-models/photosynthesis";
+import { photosynthesisActivity } from "@family-manager/family-api/discovery-models/photosynthesis";
 import { resourceList, roundIndex } from "./photosynthesisFormat";
 
 type PhotosynthesisResult = ReturnType<typeof photosynthesisActivity>;
@@ -16,9 +14,11 @@ export function PhotosynthesisLivePanel({
       <div className="leaf-current-result" role="status" aria-live="polite">
         <div
           className="leaf-index-gauge"
-          style={{
-            "--leaf-index": `${current.activityIndex * 3.6}deg`,
-          } as CSSProperties}
+          style={
+            {
+              "--leaf-index": `${current.activityIndex * 3.6}deg`,
+            } as CSSProperties
+          }
           aria-hidden="true"
         >
           <div>
@@ -28,24 +28,29 @@ export function PhotosynthesisLivePanel({
         </div>
         <div className="leaf-reading-copy">
           <span>
-            Toy activity index: {" "}
+            Toy activity index:{" "}
             <strong>{roundIndex(current.activityIndex)} / 100</strong>
           </span>
           <span>
-            Model limit(s): {" "}
+            Model limit(s):{" "}
             <strong>{resourceList(current.limitingResources)}</strong>
           </span>
         </div>
-        <div className="leaf-input-readings" aria-label="Current input settings">
-          {([
-            ["Light energy", current.inputs.light, "leaf-input-light"],
-            ["Water", current.inputs.water, "leaf-input-water"],
+        <div
+          className="leaf-input-readings"
+          aria-label="Current input settings"
+        >
+          {(
             [
-              "Carbon dioxide",
-              current.inputs.carbonDioxide,
-              "leaf-input-carbon",
-            ],
-          ] as const).map(([label, value, className]) => (
+              ["Light energy", current.inputs.light, "leaf-input-light"],
+              ["Water", current.inputs.water, "leaf-input-water"],
+              [
+                "Carbon dioxide",
+                current.inputs.carbonDioxide,
+                "leaf-input-carbon",
+              ],
+            ] as const
+          ).map(([label, value, className]) => (
             <div key={label} className={className}>
               <span>{label}</span>
               <strong>{value}%</strong>
@@ -65,4 +70,3 @@ export function PhotosynthesisLivePanel({
     </aside>
   );
 }
-

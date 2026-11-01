@@ -147,6 +147,18 @@ describe("ten independently authored rich explorations", () => {
     expect(o.description).toContain("no possible draw");
     expect(o.description).toContain("0 trials");
   }, 30000);
+  it("chance vector evidence pairs observed bars with expected marks", () => {
+    const send = worker("chance-carnival");
+    send();
+    const output = send("one");
+    const expectedMarks = output.vector?.nodes.filter(
+      (node: any) =>
+        node.tag === "rect" &&
+        node.attrs.fill === "#173f38" &&
+        node.attrs.width === 4,
+    );
+    expect(expectedMarks).toHaveLength(4);
+  }, 30000);
   it("pollinator reach and pollen remain distinct", () => {
     const send = worker("pollinator-express");
     send();

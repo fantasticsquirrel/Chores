@@ -1357,8 +1357,7 @@
   --chance-paper: #fbf7ec;
   --chance-line: #c9bea3;
   background:
-    radial-gradient(circle at 8% 4%, #f4e7c4 0 4%, transparent 24%),
-    #e8e0cb;
+    radial-gradient(circle at 8% 4%, #f4e7c4 0 4%, transparent 24%), #e8e0cb;
 }
 
 .chance-workbench {
@@ -1400,7 +1399,9 @@
 
 .chance-sector-label {
   fill: #193f3a;
-  font: 800 17px/1 system-ui, sans-serif;
+  font:
+    800 17px/1 system-ui,
+    sans-serif;
 }
 
 .chance-pointer {
@@ -1542,15 +1543,25 @@
 }
 
 .chance-chart-pattern-2 {
-  background-image: repeating-linear-gradient(35deg, #ffffff66 0 2px, transparent 2px 7px);
+  background-image: repeating-linear-gradient(
+    35deg,
+    #ffffff66 0 2px,
+    transparent 2px 7px
+  );
 }
 
 .chance-chart-pattern-3 {
-  background-image: linear-gradient(#ffffff4d 1px, transparent 1px), linear-gradient(90deg, #ffffff4d 1px, transparent 1px);
+  background-image:
+    linear-gradient(#ffffff4d 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff4d 1px, transparent 1px);
 }
 
 .chance-chart-pattern-4 {
-  background-image: repeating-linear-gradient(-45deg, #ffffff55 0 2px, transparent 2px 8px);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #ffffff55 0 2px,
+    transparent 2px 8px
+  );
 }
 
 .chance-chart-pattern-5 {
@@ -1558,7 +1569,11 @@
 }
 
 .chance-chart-pattern-6 {
-  background-image: repeating-linear-gradient(90deg, #ffffff4d 0 2px, transparent 2px 7px);
+  background-image: repeating-linear-gradient(
+    90deg,
+    #ffffff4d 0 2px,
+    transparent 2px 7px
+  );
 }
 
 .chance-workbench .chance-chart-track {
@@ -1566,7 +1581,13 @@
   overflow: visible;
   border: 1px solid #b7bda9;
   border-radius: 999px;
-  background: repeating-linear-gradient(to right, #e6e8dc 0, #e6e8dc calc(25% - 1px), #c9cfc1 calc(25% - 1px), #c9cfc1 25%);
+  background: repeating-linear-gradient(
+    to right,
+    #e6e8dc 0,
+    #e6e8dc calc(25% - 1px),
+    #c9cfc1 calc(25% - 1px),
+    #c9cfc1 25%
+  );
 }
 
 .chance-workbench .chance-chart-fill {
@@ -1759,7 +1780,7 @@
 
 .chance-snapshot-bars i {
   color: #4c6258;
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 800;
 }
@@ -1819,7 +1840,7 @@
   border-radius: 5px;
   background: #e7dfc9;
   color: #3c5147;
-  font-size: 11px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 800;
 }
@@ -1857,6 +1878,11 @@
 
 .chance-model-note p {
   margin: 8px 0 0;
+}
+
+.chance-exhibit .tactile-console .dl-range-labels,
+.chance-exhibit .chance-control-note {
+  font-size: 12px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1986,7 +2012,7 @@
 
   .chance-evidence-dock .chance-sample-strip small,
   .chance-evidence-dock .chance-sample-strip span {
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.35;
   }
 

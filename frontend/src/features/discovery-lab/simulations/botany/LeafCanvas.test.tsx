@@ -59,4 +59,3 @@ describe("Leaf Energy process diagram", () => {
     );
   });
 });
-

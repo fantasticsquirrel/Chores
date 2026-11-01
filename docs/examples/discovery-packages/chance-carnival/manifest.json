@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "chance-carnival-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "chance-carnival-package",
@@ -54,7 +54,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "755b1c52161ecded401f7bb0e9eb4b5750507ed80edd98402c7edb33b6e90cbc"
+      "sha256": "c0f740230a85c408506cdf0769d8e7e1037bcc9b6ca732908ed94f88c4a2c381"
     },
     {
       "path": "assets/number-1.png",

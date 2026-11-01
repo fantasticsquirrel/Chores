@@ -127,13 +127,17 @@
 
 .leaf-flow-label-title {
   fill: #24483d;
-  font: 800 13px/1 system-ui, sans-serif;
+  font:
+    800 13px/1 system-ui,
+    sans-serif;
   letter-spacing: 0.04em;
 }
 
 .leaf-flow-label-detail {
   fill: #587064;
-  font: 600 12px/1 system-ui, sans-serif;
+  font:
+    600 12px/1 system-ui,
+    sans-serif;
 }
 
 .leaf-magnify-link {
@@ -212,7 +216,9 @@
 
 .leaf-structure-label text {
   fill: #fffdf1;
-  font: 700 13px/1 system-ui, sans-serif;
+  font:
+    700 13px/1 system-ui,
+    sans-serif;
 }
 
 .leaf-structure-leader {
@@ -227,13 +233,17 @@
 
 .leaf-process-core text:first-of-type {
   fill: #fff7df;
-  font: 800 11px/1 system-ui, sans-serif;
+  font:
+    800 12px/1 system-ui,
+    sans-serif;
   letter-spacing: 0.08em;
 }
 
 .leaf-process-core text:last-of-type {
   fill: #dce8d6;
-  font: 600 12px/1 system-ui, sans-serif;
+  font:
+    600 12px/1 system-ui,
+    sans-serif;
 }
 
 .leaf-mobile-flow-key {
@@ -245,7 +255,7 @@
   margin: 0;
   padding: 0.35rem 0.8rem 0.75rem;
   color: #5c6d62;
-  font-size: 0.75rem;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -255,6 +265,7 @@
   bottom: auto;
   left: auto;
   color: #5c6d62;
+  font-size: 12px;
 }
 
 .leaf-live-panel {
@@ -280,7 +291,10 @@
   place-items: center;
   justify-self: center;
   border-radius: 50%;
-  background: conic-gradient(#d9b557 0 var(--leaf-index), #ffffff26 var(--leaf-index) 360deg);
+  background: conic-gradient(
+    #d9b557 0 var(--leaf-index),
+    #ffffff26 var(--leaf-index) 360deg
+  );
   box-shadow: 0 12px 28px #112e282e;
 }
 
@@ -768,7 +782,7 @@
     border-radius: 5px;
     background: #fffdf5;
     color: #40584e;
-    font-size: 0.72rem;
+    font-size: 12px;
   }
 
   .leaf-key-energy {
@@ -795,7 +809,7 @@
   .leaf-scale {
     padding-right: 0.9rem;
     padding-left: 0.9rem;
-    font-size: 0.75rem;
+    font-size: 12px;
   }
 
   .leaf-live-panel {

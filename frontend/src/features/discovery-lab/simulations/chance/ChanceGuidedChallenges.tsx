@@ -97,7 +97,9 @@ export function ChanceGuidedChallenges({
         </header>
         <div className="chance-trial-sequence">
           <div className="chance-trial-step chance-trial-predict">
-            <span className="chance-step-number" aria-hidden="true">1</span>
+            <span className="chance-step-number" aria-hidden="true">
+              1
+            </span>
             <h4>Predict: 12 trials</h4>
             <div className="dl-actions">
               <button
@@ -117,7 +119,9 @@ export function ChanceGuidedChallenges({
             </div>
           </div>
           <div className="chance-trial-step">
-            <span className="chance-step-number" aria-hidden="true">2</span>
+            <span className="chance-step-number" aria-hidden="true">
+              2
+            </span>
             <h4>Small sample</h4>
             <button
               type="button"
@@ -129,7 +133,9 @@ export function ChanceGuidedChallenges({
             {!prediction && <p>Predict first.</p>}
           </div>
           <div className="chance-trial-step">
-            <span className="chance-step-number" aria-hidden="true">3</span>
+            <span className="chance-step-number" aria-hidden="true">
+              3
+            </span>
             <h4>Larger sample</h4>
             <button
               type="button"
@@ -168,7 +174,10 @@ export function ChanceGuidedChallenges({
             aria-live="polite"
           >
             <SampleDistribution label="12 trials" counts={smallSample.counts} />
-            <SampleDistribution label="1,200 trials" counts={largeSample.counts} />
+            <SampleDistribution
+              label="1,200 trials"
+              counts={largeSample.counts}
+            />
             <p>
               Expected for both: 25% each.{" "}
               {largerWasCloser
@@ -194,7 +203,10 @@ export function ChanceGuidedChallenges({
           </p>
         ) : (
           <div className="chance-weight-test">
-            <div className="chance-weight-ratio" aria-label="Outcome 1 has two of five total weight units">
+            <div
+              className="chance-weight-ratio"
+              aria-label="Outcome 1 has two of five total weight units"
+            >
               <span className="chance-weight-total">Total weight = 5</span>
               <div aria-hidden="true">
                 <i className="chance-weight-one">1</i>

@@ -99,50 +99,88 @@ function run(i: any) {
       {
         title: "Chance results",
         subtitle: "Compare observed and expected shares.",
-        background: ["#efe4cc", "#ded0b3", "#baa483"],
+        background: ["#f8f4e7", "#e7ddc4", "#c9b78f"],
       },
       { pizza: false },
     );
   disposeGroup(exhibit);
+  const palette = [
+    "#c76646",
+    "#2f8782",
+    "#8063a5",
+    "#bd8f28",
+    "#618d53",
+    "#4f789f",
+  ];
   const nodes: any[] = [
     {
       tag: "text",
-      attrs: { x: 15, y: 24, fontSize: 16, fill: "#243b37" },
-      children: ["Solid: observed · Outline: expected"],
+      attrs: { x: 22, y: 28, fontSize: 16, fill: "#193f3a" },
+      children: ["Bar: observed · mark: expected"],
     },
   ];
   for (let n = 0; n < weights.length; n++) {
-    const x = 40 + n * 105,
+    const y = 48 + n * 43,
       p = chances[n],
       observed = total ? counts[n] / total : 0;
     nodes.push(
       {
+        tag: "circle",
+        attrs: { cx: 34, cy: y + 10, r: 13, fill: palette[n] },
+        children: [],
+      },
+      {
+        tag: "text",
+        attrs: {
+          x: 34,
+          y: y + 15,
+          fontSize: 12,
+          fontWeight: "700",
+          textAnchor: "middle",
+          fill: "#fffdf5",
+        },
+        children: [String(n + 1)],
+      },
+      {
         tag: "rect",
         attrs: {
-          x,
-          y: 200 - observed * 150,
-          width: 28,
-          height: observed * 150,
-          fill: "#398b88",
+          x: 62,
+          y: y + 2,
+          width: 430,
+          height: 16,
+          rx: 8,
+          fill: "#e2e5d9",
+          stroke: "#b5bda9",
+          strokeWidth: 1,
         },
         children: [],
       },
       {
         tag: "rect",
         attrs: {
-          x: x + 32,
-          y: 200 - p * 150,
-          width: 28,
-          height: p * 150,
-          fill: "none",
-          stroke: "#9d6737",
-          strokeWidth: 2,
+          x: 62,
+          y: y + 2,
+          width: observed * 430,
+          height: 16,
+          rx: 8,
+          fill: palette[n],
+        },
+        children: [],
+      },
+      {
+        tag: "rect",
+        attrs: {
+          x: 60 + p * 430,
+          y: y,
+          width: 4,
+          height: 20,
+          fill: "#173f38",
         },
         children: [],
       },
       {
         tag: "text",
-        attrs: { x, y: 225, fontSize: 12, fill: "#243b37" },
+        attrs: { x: 510, y: y + 15, fontSize: 12, fill: "#243b37" },
         children: [
           `${n + 1}: ${total ? ((counts[n] / total) * 100).toFixed(1) + "%" : "—"} · expected ${(p * 100).toFixed(1)}%`,
         ],
@@ -153,7 +191,7 @@ function run(i: any) {
     animate: false,
     scene3d,
     vector: {
-      viewBox: [0, 0, 700, 250],
+      viewBox: [0, 0, 700, 330],
       nodes,
       description: `${total} trials. Observed shares ${counts.map((count) => (total ? ((count / total) * 100).toFixed(1) + "%" : "—")).join(", ")}; expected shares ${chances.map((p) => (p * 100).toFixed(1) + "%").join(", ")}.`,
     },

@@ -67,25 +67,77 @@ export function ChanceDeviceGraphic({
         focusable="false"
       >
         <defs>
-          <linearGradient id={`${patternPrefix}-felt`} x1="0" y1="0" x2="1" y2="1">
+          <linearGradient
+            id={`${patternPrefix}-felt`}
+            x1="0"
+            y1="0"
+            x2="1"
+            y2="1"
+          >
             <stop offset="0" stopColor="#315e58" />
             <stop offset="1" stopColor="#173d38" />
           </linearGradient>
-          <filter id={`${patternPrefix}-shadow`} x="-30%" y="-30%" width="160%" height="180%">
-            <feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#142b25" floodOpacity=".3" />
+          <filter
+            id={`${patternPrefix}-shadow`}
+            x="-30%"
+            y="-30%"
+            width="160%"
+            height="180%"
+          >
+            <feDropShadow
+              dx="0"
+              dy="12"
+              stdDeviation="10"
+              floodColor="#142b25"
+              floodOpacity=".3"
+            />
           </filter>
         </defs>
-        <rect x="34" y="28" width="352" height="270" rx="44" fill={`url(#${patternPrefix}-felt)`} />
-        <path d="M61 257C131 287 290 292 359 247" fill="none" stroke="#d4ae62" strokeWidth="3" opacity=".55" />
+        <rect
+          x="34"
+          y="28"
+          width="352"
+          height="270"
+          rx="44"
+          fill={`url(#${patternPrefix}-felt)`}
+        />
+        <path
+          d="M61 257C131 287 290 292 359 247"
+          fill="none"
+          stroke="#d4ae62"
+          strokeWidth="3"
+          opacity=".55"
+        />
         <g
           data-testid="chance-die"
           data-value={sampledValue}
           filter={`url(#${patternPrefix}-shadow)`}
         >
-          <rect x="130" y="70" width="160" height="160" rx="34" fill="#fffaf0" stroke="#d5c8ad" strokeWidth="5" />
-          <path d="M153 91H267" stroke="#fff" strokeWidth="7" strokeLinecap="round" opacity=".9" />
+          <rect
+            x="130"
+            y="70"
+            width="160"
+            height="160"
+            rx="34"
+            fill="#fffaf0"
+            stroke="#d5c8ad"
+            strokeWidth="5"
+          />
+          <path
+            d="M153 91H267"
+            stroke="#fff"
+            strokeWidth="7"
+            strokeLinecap="round"
+            opacity=".9"
+          />
           {pipPositions(sampledValue).map(([cx, cy], index) => (
-            <circle key={`${cx}-${cy}-${index}`} cx={cx} cy={cy} r="12" fill="#193f3a" />
+            <circle
+              key={`${cx}-${cy}-${index}`}
+              cx={cx}
+              cy={cy}
+              r="12"
+              fill="#193f3a"
+            />
           ))}
         </g>
       </svg>
@@ -100,7 +152,7 @@ export function ChanceDeviceGraphic({
     return { share, index, start, middle };
   });
   const pointerMiddle =
-    last === null ? -90 : sectors[last]?.middle ?? sectors[0]?.middle ?? -90;
+    last === null ? -90 : (sectors[last]?.middle ?? sectors[0]?.middle ?? -90);
   const pointerRotation = pointerMiddle + 90;
 
   return (
@@ -111,33 +163,112 @@ export function ChanceDeviceGraphic({
       focusable="false"
     >
       <defs>
-        <filter id={`${patternPrefix}-wheel-shadow`} x="-30%" y="-30%" width="170%" height="190%">
-          <feDropShadow dx="0" dy="11" stdDeviation="9" floodColor="#2b352a" floodOpacity=".32" />
+        <filter
+          id={`${patternPrefix}-wheel-shadow`}
+          x="-30%"
+          y="-30%"
+          width="170%"
+          height="190%"
+        >
+          <feDropShadow
+            dx="0"
+            dy="11"
+            stdDeviation="9"
+            floodColor="#2b352a"
+            floodOpacity=".32"
+          />
         </filter>
-        <pattern id={`${patternPrefix}-p0`} width="13" height="13" patternUnits="userSpaceOnUse">
+        <pattern
+          id={`${patternPrefix}-p0`}
+          width="13"
+          height="13"
+          patternUnits="userSpaceOnUse"
+        >
           <circle cx="3" cy="3" r="1.7" fill="#fff" opacity=".42" />
         </pattern>
-        <pattern id={`${patternPrefix}-p1`} width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+        <pattern
+          id={`${patternPrefix}-p1`}
+          width="12"
+          height="12"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(35)"
+        >
           <path d="M0 1H12" stroke="#fff" strokeWidth="2" opacity=".3" />
         </pattern>
-        <pattern id={`${patternPrefix}-p2`} width="14" height="14" patternUnits="userSpaceOnUse">
-          <path d="M0 7H14M7 0V14" stroke="#fff" strokeWidth="1.5" opacity=".25" />
+        <pattern
+          id={`${patternPrefix}-p2`}
+          width="14"
+          height="14"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M0 7H14M7 0V14"
+            stroke="#fff"
+            strokeWidth="1.5"
+            opacity=".25"
+          />
         </pattern>
-        <pattern id={`${patternPrefix}-p3`} width="16" height="16" patternUnits="userSpaceOnUse">
-          <path d="M0 0L16 16M16 0L0 16" stroke="#fff" strokeWidth="1.5" opacity=".22" />
+        <pattern
+          id={`${patternPrefix}-p3`}
+          width="16"
+          height="16"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M0 0L16 16M16 0L0 16"
+            stroke="#fff"
+            strokeWidth="1.5"
+            opacity=".22"
+          />
         </pattern>
-        <pattern id={`${patternPrefix}-p4`} width="12" height="12" patternUnits="userSpaceOnUse">
+        <pattern
+          id={`${patternPrefix}-p4`}
+          width="12"
+          height="12"
+          patternUnits="userSpaceOnUse"
+        >
           <rect x="2" y="2" width="4" height="4" fill="#fff" opacity=".28" />
         </pattern>
-        <pattern id={`${patternPrefix}-p5`} width="16" height="10" patternUnits="userSpaceOnUse">
-          <path d="M0 5Q4 0 8 5T16 5" fill="none" stroke="#fff" strokeWidth="1.5" opacity=".3" />
+        <pattern
+          id={`${patternPrefix}-p5`}
+          width="16"
+          height="10"
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d="M0 5Q4 0 8 5T16 5"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="1.5"
+            opacity=".3"
+          />
         </pattern>
       </defs>
 
       <g filter={`url(#${patternPrefix}-wheel-shadow)`}>
-        <circle cx={CENTER_X} cy={CENTER_Y} r="146" fill="#3d493c" opacity=".24" />
-        <circle cx={CENTER_X} cy={CENTER_Y} r="143" fill="#d8b569" stroke="#76592c" strokeWidth="3" />
-        <circle cx={CENTER_X} cy={CENTER_Y} r="136" fill="#fff9e8" stroke="#f6e3ae" strokeWidth="3" />
+        <circle
+          cx={CENTER_X}
+          cy={CENTER_Y}
+          r="146"
+          fill="#3d493c"
+          opacity=".24"
+        />
+        <circle
+          cx={CENTER_X}
+          cy={CENTER_Y}
+          r="143"
+          fill="#d8b569"
+          stroke="#76592c"
+          strokeWidth="3"
+        />
+        <circle
+          cx={CENTER_X}
+          cy={CENTER_Y}
+          r="136"
+          fill="#fff9e8"
+          stroke="#f6e3ae"
+          strokeWidth="3"
+        />
         {sectors.map(({ share, index, start, middle }) => {
           if (share <= 0) return null;
           const path = sectorPath(start, share);
@@ -159,14 +290,33 @@ export function ChanceDeviceGraphic({
                 data-testid="chance-sector-pattern"
                 pointerEvents="none"
               />
-              <circle cx={label.x} cy={label.y} r="18" fill="#fffaf0" stroke="#28453f" strokeWidth="2" />
-              <text x={label.x} y={label.y + 6} textAnchor="middle" className="chance-sector-label">
+              <circle
+                cx={label.x}
+                cy={label.y}
+                r="18"
+                fill="#fffaf0"
+                stroke="#28453f"
+                strokeWidth="2"
+              />
+              <text
+                x={label.x}
+                y={label.y + 6}
+                textAnchor="middle"
+                className="chance-sector-label"
+              >
                 {index + 1}
               </text>
             </g>
           );
         })}
-        <circle cx={CENTER_X} cy={CENTER_Y} r="136" fill="none" stroke="#314c45" strokeWidth="3" />
+        <circle
+          cx={CENTER_X}
+          cy={CENTER_Y}
+          r="136"
+          fill="none"
+          stroke="#314c45"
+          strokeWidth="3"
+        />
       </g>
 
       <g
@@ -178,11 +328,34 @@ export function ChanceDeviceGraphic({
           transformOrigin: `${CENTER_X}px ${CENTER_Y}px`,
         }}
       >
-        <path d="M210 166L210 54" stroke="#6d3d2f" strokeWidth="10" strokeLinecap="round" opacity=".28" />
-        <path d="M210 160L210 50" stroke="#f9eee0" strokeWidth="5" strokeLinecap="round" />
-        <path d="M210 35L193 65H227Z" fill="#6d3d2f" stroke="#fff6df" strokeWidth="3" />
+        <path
+          d="M210 166L210 54"
+          stroke="#6d3d2f"
+          strokeWidth="10"
+          strokeLinecap="round"
+          opacity=".28"
+        />
+        <path
+          d="M210 160L210 50"
+          stroke="#f9eee0"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M210 35L193 65H227Z"
+          fill="#6d3d2f"
+          stroke="#fff6df"
+          strokeWidth="3"
+        />
       </g>
-      <circle cx={CENTER_X} cy={CENTER_Y} r="19" fill="#d5a74c" stroke="#503d24" strokeWidth="4" />
+      <circle
+        cx={CENTER_X}
+        cy={CENTER_Y}
+        r="19"
+        fill="#d5a74c"
+        stroke="#503d24"
+        strokeWidth="4"
+      />
       <circle cx={CENTER_X} cy={CENTER_Y} r="7" fill="#173f39" />
     </svg>
   );
