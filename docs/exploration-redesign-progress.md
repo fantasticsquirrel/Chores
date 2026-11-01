@@ -8,12 +8,13 @@ Registry source: `packages/family-api/discovery-explorations.json`
 ## Queue rule and current selection
 
 The queue below is the exact 26-entry registry order at baseline
-`946b71ede04c918f4f109f2fe1dd44f8c35884a3`. Only Chance Carnival and Leaf
-Energy Lab have complete redesign evidence. The first outstanding registry
-entry is therefore **Orbit Workshop** (`orbital-mechanics`), so it is the sole
-module selected for the current run. Completed entries retain their registry
-positions; they are not moved ahead of pending work. No later module may move
-to `in_progress` until the Orbit handoff has been reviewed.
+`946b71ede04c918f4f109f2fe1dd44f8c35884a3`. At selection time, only Chance
+Carnival and Leaf Energy Lab had complete redesign evidence. The first
+outstanding registry entry was therefore **Orbit Workshop**
+(`orbital-mechanics`), and it was the sole module changed in this run.
+Completed entries retain their registry positions; they are not moved ahead of
+pending work. No later module may move to `in_progress` until the Orbit handoff
+has been reviewed.
 
 State meanings:
 
@@ -25,7 +26,7 @@ State meanings:
 
 |   # | ID                      | Title                  | State         | Commit                                                                                                        | Evidence and tests                                                                                                                                                                                                                                                              | Known gaps                                                                                   |
 | --: | ----------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-|   1 | `orbital-mechanics`     | Orbit Workshop         | `in_progress` | —                                                                                                             | Baseline and final evidence to be recorded in this run.                                                                                                                                                                                                                         | Native/offline scope and final verification pending.                                         |
+|   1 | `orbital-mechanics`     | Orbit Workshop         | `complete`    | `33ef97eb59b01ca5d31cf57a71519fa888d49d3f`                                                                    | `docs/orbital-mechanics-copy-research.md` and `docs/orbital-mechanics-redesign-verification.md`; raw matched and focused evidence in `/tmp/ui-captures/exploration-series-orbital-mechanics/2026-11-01/`; staged comparisons/finals in `/root/.openclaw/workspace/media/exploration-series/orbital-mechanics/`; web 831, shared 486, backend 50, package/security/browser gates recorded in verification. | No device/screen-reader session; package retains 3D renderer; full mobile has one unrelated Family Tree failure; independent Chromium OS-sandbox probe cannot launch in this container. |
 |   2 | `reflection-refraction` | Light Bending Studio   | `pending`     | —                                                                                                             | —                                                                                                                                                                                                                                                                               | Await Orbit review.                                                                          |
 |   3 | `gravity`               | Gravity Drop Lab       | `pending`     | —                                                                                                             | —                                                                                                                                                                                                                                                                               | Await Orbit review.                                                                          |
 |   4 | `solar-system`          | Solar System Explorer  | `pending`     | —                                                                                                             | —                                                                                                                                                                                                                                                                               | Await Orbit review.                                                                          |
@@ -52,9 +53,9 @@ State meanings:
 |  25 | `shape-slicer`          | Shape Slicer           | `pending`     | —                                                                                                             | —                                                                                                                                                                                                                                                                               | Await Orbit review.                                                                          |
 |  26 | `adaptation-island`     | Adaptation Island      | `pending`     | —                                                                                                             | —                                                                                                                                                                                                                                                                               | Await Orbit review.                                                                          |
 
-## Current-run completion fields
+## Handoff
 
-When Orbit Workshop is complete, replace its placeholder cells with the exact
-implementation commit, raw and staged screenshot paths, commands and results,
-and honest remaining gaps. Then set its state to `complete`; leave every other
-outstanding entry `pending` and identify `reflection-refraction` as next.
+Orbit Workshop is complete at the implementation commit recorded above. All
+other outstanding entries remain `pending`. The next registry entry is
+`reflection-refraction` (Light Bending Studio), but it must not start until the
+parent has reviewed this checkpoint and visual evidence.
