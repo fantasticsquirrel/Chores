@@ -46,7 +46,7 @@ describe("native offline Moon exhibit", () => {
       },
     );
     expect(mockInject).toHaveBeenLastCalledWith(
-      'window.discoveryScene?.setState({"kind":"moon","angle":90}); true;',
+      'window.discoveryScene?.setState({"kind":"moon","angle":90,"view":"earth"}); true;',
     );
     fireEvent(
       view.getByTestId("moon-webview", { includeHiddenElements: true }),
@@ -61,7 +61,7 @@ describe("native offline Moon exhibit", () => {
       />,
     );
     expect(mockInject).toHaveBeenLastCalledWith(
-      'window.discoveryScene?.setState({"kind":"moon","angle":135}); true;',
+      'window.discoveryScene?.setState({"kind":"moon","angle":135,"view":"earth"}); true;',
     );
     expect(
       view.getByTestId("moon-webview", { includeHiddenElements: true }).props

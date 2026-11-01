@@ -1,8 +1,28 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { ExplorationSimulation } from "./ExplorationSimulation";
 afterEach(cleanup);
 describe("interactive exploration controls", () => {
+  const completeMoonInvestigations = () => {
+    fireEvent.click(screen.getByRole("button", { name: "50%" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Observe first quarter" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Same fraction, opposite sides",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare opposite quarters" }),
+    );
+  };
   it.each(["constructor", "toString", "__proto__", "missing"])(
     "rejects unknown renderer %s",
     (id) => {
@@ -26,7 +46,9 @@ describe("interactive exploration controls", () => {
     render(<ExplorationSimulation explorationId={id} />);
     expect(await screen.findByRole("img")).toBeTruthy();
     if (id === "moon-phases")
-      expect(screen.getByText("01 / PREDICT")).toBeTruthy();
+      expect(
+        screen.getByRole("heading", { name: "Test first quarter" }),
+      ).toBeTruthy();
     else if (id === "castle-defenses")
       expect(screen.getByText("1. Predict")).toBeTruthy();
     else if (id === "photosynthesis")
@@ -86,10 +108,48 @@ describe("interactive exploration controls", () => {
   });
   it("allows direct keyboard-friendly phase selection", () => {
     render(<ExplorationSimulation explorationId="moon-phases" />);
+    expect(screen.getByRole("button", { name: "Full" })).toBeDisabled();
+    completeMoonInvestigations();
     fireEvent.click(screen.getByRole("button", { name: "Full" }));
     expect(screen.getByText("100%")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(screen.getByText("0%")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(screen.getByText("15%")).toBeTruthy();
+  });
+
+  it("gates both Moon comparisons and gives answer-specific evidence", () => {
+    render(<ExplorationSimulation explorationId="moon-phases" />);
+    const quarterAction = screen.getByRole("button", {
+      name: "Observe first quarter",
+    });
+    const oppositeAction = screen.getByRole("button", {
+      name: "Compare opposite quarters",
+    });
+    expect((quarterAction as HTMLButtonElement).disabled).toBe(true);
+    expect((oppositeAction as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "25%" }));
+    fireEvent.click(quarterAction);
+    expect(screen.getByTestId("moon-quarter-feedback").textContent).toContain(
+      "differs from your prediction",
+    );
+    expect(screen.getByTestId("moon-quarter-feedback").textContent).toContain(
+      "50%",
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Same fraction, opposite sides" }),
+    );
+    fireEvent.click(oppositeAction);
+    expect(screen.getByTestId("moon-opposite-feedback").textContent).toContain(
+      "matches your prediction",
+    );
+    expect(screen.getByTestId("moon-opposite-feedback").textContent).toContain(
+      "First quarter: 50% · Last quarter: 50%",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(screen.queryByTestId("moon-quarter-feedback")).toBeNull();
+    expect((oppositeAction as HTMLButtonElement).disabled).toBe(true);
   });
   it("models a missing resource rather than linear light growth", () => {
     render(<ExplorationSimulation explorationId="photosynthesis" />);
@@ -129,6 +189,7 @@ describe("interactive exploration controls", () => {
   });
   it("selects only the current exact Moon phase preset", () => {
     render(<ExplorationSimulation explorationId="moon-phases" />);
+    completeMoonInvestigations();
     fireEvent.click(screen.getByRole("button", { name: /^New$/ }));
     const initial = screen.getByRole("button", { name: "New", pressed: true });
     fireEvent.click(screen.getByRole("button", { name: "Quarter" }));
@@ -139,6 +200,10 @@ describe("interactive exploration controls", () => {
     fireEvent.change(screen.getByLabelText("Orbit position"), {
       target: { value: 135 },
     });
-    expect(screen.queryByRole("button", { pressed: true })).toBeNull();
+    expect(
+      within(screen.getByLabelText("Phase shortcuts")).queryByRole("button", {
+        pressed: true,
+      }),
+    ).toBeNull();
   });
 });

@@ -13,7 +13,7 @@ export function nativeSceneState(
     case "reflection-refraction":
       return { kind: "optics", angle: value, reverse: Boolean(second) };
     case "moon-phases":
-      return { kind: "moon", angle: value };
+      return { kind: "moon", angle: value, view: second ? "orbit" : "earth" };
     case "orbital-mechanics":
       return {
         kind: "orbit",

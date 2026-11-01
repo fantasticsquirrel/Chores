@@ -214,7 +214,11 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
         )
       );
     case "moon":
-      return exact(value, ["kind", "angle"]) && number(value.angle, 0, 360);
+      return (
+        exact(value, ["kind", "angle", "view"]) &&
+        number(value.angle, 0, 360) &&
+        (value.view === "earth" || value.view === "orbit")
+      );
     case "orbit":
       return (
         exact(value, ["kind", "points", "progress"]) &&

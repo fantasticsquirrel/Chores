@@ -115,11 +115,30 @@ describe("native guided experiment controls", () => {
     fireEvent.press(view.getByText("Show sight-line overlay (not structures)"));
     expect(view.getByText(/Sight-line overlay shown/)).toBeTruthy();
   });
-  it("calls the end of a full lunar cycle New Moon", () => {
+  it("runs both controlled Moon comparisons and resets", () => {
     const view = render(<NativeExploration id="moon-phases" />);
-    for (let i = 0; i < 18; i++)
-      fireEvent.press(view.getByText("Increase Moon angle"));
-    expect(view.getByText(/360° orbital angle; 0%.*New Moon/)).toBeTruthy();
+    const quarterAction = view.getByText("Observe first quarter");
+    const oppositeAction = view.getByText("Compare opposite quarters");
+    expect(quarterAction).toBeDisabled();
+    expect(oppositeAction).toBeDisabled();
+    expect(view.queryByText("Open controls")).toBeNull();
+
+    fireEvent.press(view.getByText("25%"));
+    fireEvent.press(quarterAction);
+    expect(view.getByText(/differs from your prediction.*50%/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Same fraction, opposite sides"));
+    fireEvent.press(oppositeAction);
+    expect(view.getByText(/matches your prediction/)).toBeTruthy();
+    expect(
+      view.getByText(/First quarter: 50%.*Last quarter: 50%/),
+    ).toBeTruthy();
+    expect(view.getByText("Open controls")).toBeTruthy();
+
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(quarterAction).toBeDisabled();
+    expect(oppositeAction).toBeDisabled();
+    expect(view.queryByText("Open controls")).toBeNull();
   });
   it("runs the same controlled photosynthesis lesson and resets it", () => {
     const view = render(<NativeExploration id="photosynthesis" />);

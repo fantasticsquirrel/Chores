@@ -27,6 +27,7 @@ export function ExplorationDetail({
     "photosynthesis",
     "reflection-refraction",
     "solar-system",
+    "moon-phases",
   ].includes(detail.id);
   return (
     <>

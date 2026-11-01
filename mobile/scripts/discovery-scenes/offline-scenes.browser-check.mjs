@@ -40,7 +40,7 @@ test("offline Moon renders, changes phase, drags, blocks network and disposes", 
     });
     await page.setContent(html);
     await page.evaluate(() =>
-      window.discoveryScene.setState({ kind: "moon", angle: 0 }),
+      window.discoveryScene.setState({ kind: "moon", angle: 0, view: "earth" }),
     );
     await page.waitForFunction(
       () => document.getElementById("scene")?.dataset.surfaceReady === "true",
@@ -52,7 +52,7 @@ test("offline Moon renders, changes phase, drags, blocks network and disposes", 
     assert.equal(await page.locator("canvas").count(), 1);
     const pixels = async (angle) =>
       page.evaluate((value) => {
-        window.discoveryScene.setState({ kind: "moon", angle: value });
+        window.discoveryScene.setState({ kind: "moon", angle: value, view: "earth" });
         const canvas = document.querySelector("canvas");
         const gl = canvas.getContext("webgl2");
         const data = new Uint8Array(canvas.width * canvas.height * 4);
@@ -93,7 +93,7 @@ test("offline Moon renders, changes phase, drags, blocks network and disposes", 
       "new Moon must not look sunlit",
     );
     await page.evaluate(() =>
-      window.discoveryScene.setState({ kind: "moon", angle: 135 }),
+      window.discoveryScene.setState({ kind: "moon", angle: 135, view: "orbit" }),
     );
     if (screenshotDir) {
       await mkdir(screenshotDir, { recursive: true });
@@ -162,7 +162,7 @@ test("offline Moon reports unavailable when WebGL cannot start", async () => {
     });
     await page.setContent(html);
     await page.evaluate(() =>
-      window.discoveryScene.setState({ kind: "moon", angle: 0 }),
+      window.discoveryScene.setState({ kind: "moon", angle: 0, view: "earth" }),
     );
     assert.deepEqual(await page.evaluate(() => window.moonMessages), [
       { type: "ready" },

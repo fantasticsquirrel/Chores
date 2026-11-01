@@ -86,12 +86,14 @@ const create = (kind, initial) => {
     const scene = createMoonScene(host, {
       colorUrl,
       heightUrl,
+      earthUrl,
       onReady: ready,
       onUnavailable: fail,
     });
     return (
       scene && {
-        update: (next) => scene.setAngle(next.angle),
+        update: (next) =>
+          scene.setState({ angle: next.angle, view: next.view }),
         dispose: scene.dispose,
       }
     );
@@ -208,7 +210,7 @@ const flush = () => {
       Math.round(
         ((drag.angle + (pending.x - drag.x) * 0.65 + 720) % 360) * 100,
       ) / 100;
-    setState({ kind: "moon", angle });
+    setState({ kind: "moon", angle, view: state.view });
     send({ type: "angle", angle });
   } else if (
     ["castle", "river", "pond", "caravan", "garden"].includes(state.kind)

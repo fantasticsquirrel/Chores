@@ -40,6 +40,57 @@ export function MoonDisk({
   );
 }
 
+export function MoonOrbitGeometry({
+  angle,
+  width,
+}: {
+  angle: number;
+  width: number;
+}) {
+  const cx = width / 2 - 18;
+  const cy = 155;
+  const radius = Math.min(92, width * 0.29);
+  const radians = (angle * Math.PI) / 180;
+  return (
+    <>
+      <View
+        style={{
+          position: "absolute",
+          left: cx - radius,
+          top: cy - radius,
+          width: radius * 2,
+          height: radius * 2,
+          borderWidth: 1,
+          borderStyle: "dashed",
+          borderColor: "#7793a7",
+          borderRadius: radius,
+        }}
+      />
+      <Dot x={cx} y={cy} size={48} color="#4da5d6" />
+      <Dot
+        x={cx + Math.cos(radians) * radius}
+        y={cy - Math.sin(radians) * radius}
+        size={24}
+        color="#d8d6cb"
+      />
+      <Dot x={width - 23} y={cy} size={36} color="#ffd27c" />
+      {[-36, 0, 36].map((offset) => (
+        <Line
+          key={offset}
+          x={width - 50}
+          y={cy + offset}
+          x2={width - 105}
+          y2={cy + offset}
+          color="#f0c875"
+        />
+      ))}
+      <DiagramLabel x={12} y={286}>
+        Sunlight fixed from right · geometry not to scale
+      </DiagramLabel>
+    </>
+  );
+}
+
 export function PlanetDiameterComparison({
   index,
   width,

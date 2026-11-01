@@ -47,7 +47,7 @@ export type OfflineSceneState =
       last: number | null;
       selected: number;
     }
-  | { kind: "moon"; angle: number }
+  | { kind: "moon"; angle: number; view: "earth" | "orbit" }
   | { kind: "orbit"; points: { x: number; y: number }[]; progress: number }
   | {
       kind: "solar";

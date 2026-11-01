@@ -39,11 +39,28 @@ for (const viewport of [
       name: "Orbit position",
       exact: true,
     });
+    await expect(orbitControl).toBeDisabled();
+    await page.getByRole("button", { name: "50%", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Observe first quarter", exact: true })
+      .click();
+    await page
+      .getByRole("button", {
+        name: "Same fraction, opposite sides",
+        exact: true,
+      })
+      .click();
+    await page
+      .getByRole("button", {
+        name: "Compare opposite quarters",
+        exact: true,
+      })
+      .click();
+    await expect(orbitControl).toBeEnabled();
     await orbitControl.focus();
     await page.keyboard.press("Home");
-    for (let step = 0; step < 135; step++)
-      await page.keyboard.press("ArrowRight");
-    await expect(page.locator(".moon-exhibit-label h2")).toHaveText(
+    await orbitControl.fill("135");
+    await expect(page.locator(".moon-readout dd").first()).toHaveText(
       "Waxing gibbous",
     );
     await orbitControl.blur();
@@ -60,14 +77,9 @@ for (const viewport of [
       path: path.join(directory, `${viewport.name}-moon-page.png`),
       fullPage: true,
     });
-    await page.getByRole("button", { name: "50%", exact: true }).click();
-    await page
-      .getByRole("button", { name: "Test at first quarter", exact: false })
-      .click();
-    await expect(page.getByText(/Your prediction matches/)).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Quarter", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("moon-quarter-feedback")).toContainText(
+      "result matches your prediction",
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

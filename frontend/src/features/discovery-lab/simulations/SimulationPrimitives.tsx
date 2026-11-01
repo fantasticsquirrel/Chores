@@ -82,6 +82,7 @@ export function Slider({
   max,
   step = 1,
   unit = "",
+  disabled = false,
   onChange,
 }: {
   label: string;
@@ -90,6 +91,7 @@ export function Slider({
   max: number;
   step?: number;
   unit?: string;
+  disabled?: boolean;
   onChange: (value: number) => void;
 }) {
   const id = useId();
@@ -109,6 +111,7 @@ export function Slider({
         max={max}
         step={step}
         value={value}
+        disabled={disabled}
         aria-valuetext={`${value}${unit}`}
         onChange={(e) => onChange(Number(e.target.value))}
       />

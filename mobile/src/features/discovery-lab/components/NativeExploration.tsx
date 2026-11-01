@@ -34,11 +34,12 @@ import { OrbitExploration } from "./OrbitExploration";
 import { OpticsExploration } from "./OpticsExploration";
 import { GravityExploration } from "./GravityExploration";
 import { SolarSystemExploration } from "./SolarSystemExploration";
+import { MoonPhasesExploration } from "./MoonPhasesExploration";
 import { NativeMoonScene } from "./NativeMoonScene";
 import { NativeSceneSurface } from "./NativeSceneSurface";
 import { nativeSceneState } from "../rendering/nativeSceneState";
 /** Deliberately manual time controls: no automatic motion, timers, or reduced-motion exceptions. */
-const supportedIds = new Set(["moon-phases", "castle-defenses"]);
+const supportedIds = new Set(["castle-defenses"]);
 const extendedExplorations: Record<string, ComponentType> = {
   "machine-workshop": MachineExploration,
   "heat-house": HeatExploration,
@@ -63,6 +64,7 @@ const extendedExplorations: Record<string, ComponentType> = {
   "reflection-refraction": OpticsExploration,
   gravity: GravityExploration,
   "solar-system": SolarSystemExploration,
+  "moon-phases": MoonPhasesExploration,
   photosynthesis: PhotosynthesisExploration,
 };
 export function NativeExploration({ id }: { id: string }) {

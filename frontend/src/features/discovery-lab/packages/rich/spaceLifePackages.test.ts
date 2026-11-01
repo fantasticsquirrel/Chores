@@ -173,9 +173,28 @@ describe("complete space and life worker packages", () => {
     expect(diameter.description).toContain("11.21 Earth diameters");
     expect(diameter.sections[1].text).toContain("matches your prediction");
   });
-  it("moon quarter/full/new values and opposite quarters preserve full inset", () => {
+  it("moon gates both comparisons and preserves phase boundaries", () => {
     const run = worker("moon-phases");
-    run();
+    expect(run().buttons.map(({ id }) => id)).not.toContain("runQuarter");
+    expect(run().controls).toHaveLength(0);
+    expect(run("runQuarter").sections[0].text).toContain("Predict first");
+    const quarterPrediction = run("quarter25");
+    expect(quarterPrediction.buttons.map(({ id }) => id)).toContain(
+      "runQuarter",
+    );
+    expect(run("runQuarter").sections[0].text).toContain(
+      "differs from your prediction",
+    );
+    const oppositePrediction = run("oppositeSame");
+    expect(oppositePrediction.buttons.map(({ id }) => id)).toContain(
+      "runOpposite",
+    );
+    const opposite = run("runOpposite");
+    expect(opposite.sections[1].text).toContain("matches your prediction");
+    expect(opposite.sections[1].text).toContain(
+      "First quarter 50%; last quarter 50%",
+    );
+    expect(opposite.controls).toHaveLength(1);
     for (const [angle, percent] of [
       [0, 0],
       [90, 50],
@@ -183,7 +202,7 @@ describe("complete space and life worker packages", () => {
       [270, 50],
     ])
       expect(run("angle", angle).description).toContain(`${percent}%`);
-    expect(JSON.stringify(run("angle", 90).vector)).toContain("radialGradient");
+    expect(JSON.stringify(opposite.vector)).toContain("radialGradient");
   });
   it("leaf challenges preserve gates, ties, and a complete comparison", () => {
     const run = worker("photosynthesis");

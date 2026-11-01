@@ -8,7 +8,7 @@ import {
 } from "@family-manager/discovery-scenes/protocol";
 
 const states: OfflineSceneState[] = [
-  { kind: "moon", angle: 90 },
+  { kind: "moon", angle: 90, view: "earth" },
   { kind: "orbit", points: [{ x: 1, y: 0 }], progress: 0 },
   {
     kind: "solar",
@@ -140,9 +140,9 @@ describe("typed offline scene transport", () => {
       [],
       {},
       { kind: "constructor" },
-      { kind: "moon", angle: NaN },
-      { kind: "moon", angle: 361 },
-      { kind: "moon", angle: "90);alert(1)" },
+      { kind: "moon", angle: NaN, view: "earth" },
+      { kind: "moon", angle: 361, view: "earth" },
+      { kind: "moon", angle: "90);alert(1)", view: "earth" },
       { ...states[1], points: [] },
       {
         ...states[1],

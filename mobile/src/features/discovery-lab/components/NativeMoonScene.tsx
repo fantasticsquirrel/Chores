@@ -1,31 +1,37 @@
 import { useState } from "react";
-import { MoonDisk } from "./NativeAstronomyDiagrams";
+import { MoonDisk, MoonOrbitGeometry } from "./NativeAstronomyDiagrams";
 import { NativeSceneSurface } from "./NativeSceneSurface";
 
 export function NativeMoonScene({
   angle,
+  view = "earth",
   onChange,
   label,
 }: {
   angle: number;
+  view?: "earth" | "orbit";
   onChange: (angle: number) => void;
   label: string;
 }) {
   const [width, setWidth] = useState(280);
   return (
     <NativeSceneSurface
-      state={{ kind: "moon", angle }}
+      state={{ kind: "moon", angle, view }}
       label={label}
       onAngle={onChange}
       onWidthChange={setWidth}
-      height={300}
+      height={340}
       fallback={
-        <MoonDisk
-          angle={angle}
-          x={width / 2}
-          y={150}
-          radius={Math.min(105, width * 0.38)}
-        />
+        view === "earth" ? (
+          <MoonDisk
+            angle={angle}
+            x={width / 2}
+            y={170}
+            radius={Math.min(115, width * 0.38)}
+          />
+        ) : (
+          <MoonOrbitGeometry angle={angle} width={width} />
+        )
       }
     />
   );

@@ -207,30 +207,30 @@
       "sunlight",
       "perspective"
     ],
-    "summary": "Move the Moon around Earth and connect its position to the phase we see.",
-    "question": "Why does the Moon seem to change shape?",
-    "explanation": "Sunlight illuminates half the Moon. As the Moon travels around Earth, we see different amounts of that sunlit half. A phase cycle takes about 29.5 days. The model links orbital position to the illuminated fraction seen from Earth. Objects are enlarged, geometry is simplified, and the fixed viewing direction does not predict your local sky. Eclipses are not included.",
+    "summary": "Change the Moon’s orbital position and compare the sunlit fraction seen from Earth with the Sun–Earth–Moon geometry.",
+    "question": "How does the Moon’s position around Earth change the phase we see?",
+    "explanation": "The Sun illuminates half the Moon. As the Moon travels around Earth, our viewpoint reveals changing portions of that sunlit hemisphere. The mean phase cycle from new Moon to new Moon is about 29.53 days, not the 27.32-day sidereal orbit relative to the stars. The model uses a circular, coplanar orbit with enlarged objects and gaps; it does not predict local sky orientation, libration, eclipses, terrain shadows, or exact timing.",
     "experiments": [
       {
-        "title": "Find a full Moon",
-        "instruction": "Predict the phase when the Moon is on the opposite side of Earth from the Sun. Move it there.",
-        "observe": "The visible illuminated fraction reaches 100%. Explain why the sunlit half faces Earth at full Moon."
+        "title": "Test first quarter",
+        "instruction": "Predict whether 25%, 50%, or 75% of the Earth-view disk will look lit at 90°. Keep the Sun direction and Earth viewpoint fixed, then observe first quarter.",
+        "observe": "The visible disk is 50% lit. Explain how half the visible disk differs from half the whole Moon always receiving sunlight."
       },
       {
-        "title": "A quarter turn",
-        "instruction": "Predict how much of the visible disk will be illuminated a quarter of a cycle after full Moon. Then move the Moon there and compare.",
-        "observe": "Half the visible disk is lit. Explain how that differs from half of the whole Moon always receiving sunlight."
+        "title": "Compare opposite quarters",
+        "instruction": "Predict whether first quarter at 90° or last quarter at 270° has a larger visible lit fraction. Compare them from the same Earth viewpoint.",
+        "observe": "Both disks are 50% lit, on opposite sides. Explain why equal fractions can have different phase names without Earth’s shadow."
       }
     ],
     "misconception": "The usual Moon phases are not Earth’s shadow. Earth’s shadow causes a lunar eclipse, a separate event that does not happen every month.",
     "sources": [
       {
-        "title": "NASA: Phases of the Moon",
-        "url": "https://science.nasa.gov/resource/phases-of-the-moon-2/"
+        "title": "NASA: Moon phases",
+        "url": "https://science.nasa.gov/moon/moon-phases/"
       },
       {
-        "title": "NASA: Moon phases and shadows lesson",
-        "url": "https://assets.science.nasa.gov/content/dam/science/cds/eclips/assets/documents/nasa-spotlite-interactive-lesson-moon-phases-and-shadows-student.pdf"
+        "title": "NASA GSFC: Eclipses and the Moon’s orbit",
+        "url": "https://eclipse.gsfc.nasa.gov/SEhelp/moonorbit.html"
       },
       {
         "title": "Lunar surface imagery: NASA’s Scientific Visualization Studio (LRO CGI Moon Kit)",
