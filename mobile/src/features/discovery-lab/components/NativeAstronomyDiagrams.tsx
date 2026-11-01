@@ -51,6 +51,9 @@ export function PlanetDiameterComparison({
   const earth = planets[2];
   const maxDiameter = Math.max(earth.diameterKm, planet.diameterKm);
   const scale = Math.min(110, (width - 50) / 2) / maxDiameter;
+  const earthSize = earth.diameterKm * scale;
+  const planetSize = planet.diameterKm * scale;
+  const baseline = 215;
   return (
     <>
       <DiagramLabel x={15} y={15}>
@@ -58,23 +61,23 @@ export function PlanetDiameterComparison({
       </DiagramLabel>
       <Dot
         x={width * 0.27}
-        y={115}
-        size={earth.diameterKm * scale}
+        y={baseline - earthSize / 2}
+        size={earthSize}
         color={earth.color}
       />
       <Dot
         x={width * 0.73}
-        y={115}
-        size={planet.diameterKm * scale}
+        y={baseline - planetSize / 2}
+        size={planetSize}
         color={planet.color}
       />
-      <DiagramLabel x={width * 0.27 - 20} y={180}>
+      <DiagramLabel x={width * 0.27 - 20} y={232}>
         Earth
       </DiagramLabel>
-      <DiagramLabel x={width * 0.73 - 25} y={180}>
+      <DiagramLabel x={width * 0.73 - 25} y={232}>
         {planet.name}
       </DiagramLabel>
-      <Line x={20} y={212} x2={width - 20} y2={212} color="#67749a" />
+      <Line x={20} y={baseline} x2={width - 20} y2={baseline} color="#67749a" />
     </>
   );
 }

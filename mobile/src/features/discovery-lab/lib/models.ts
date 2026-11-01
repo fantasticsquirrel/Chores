@@ -1,5 +1,6 @@
 import { photosynthesisActivity } from "@family-manager/family-api/discovery-models/photosynthesis";
 import { orbitActivity } from "@family-manager/family-api/discovery-models/orbit";
+import { SOLAR_PLANETS } from "@family-manager/family-api/discovery-models/solar";
 
 /** Small deterministic native models. Scenes are schematic, not engineering tools. */
 export function dropTime(height: number, gravity: number) {
@@ -35,52 +36,13 @@ export function orbitModel(
           : "Bound orbit",
   };
 }
-export const planets = [
-  {
-    name: "Mercury",
-    diameterKm: 4879,
-    au: 0.387,
-    years: 0.241,
-    color: "#c9b7a2",
-  },
-  {
-    name: "Venus",
-    diameterKm: 12104,
-    au: 0.723,
-    years: 0.615,
-    color: "#f1be7b",
-  },
-  { name: "Earth", diameterKm: 12756, au: 1, years: 1, color: "#63d8f2" },
-  { name: "Mars", diameterKm: 6792, au: 1.524, years: 1.881, color: "#ef8b70" },
-  {
-    name: "Jupiter",
-    diameterKm: 142984,
-    au: 5.203,
-    years: 11.86,
-    color: "#e8bd96",
-  },
-  {
-    name: "Saturn",
-    diameterKm: 120536,
-    au: 9.537,
-    years: 29.45,
-    color: "#e9dba1",
-  },
-  {
-    name: "Uranus",
-    diameterKm: 51118,
-    au: 19.19,
-    years: 84.02,
-    color: "#9ce9e5",
-  },
-  {
-    name: "Neptune",
-    diameterKm: 49528,
-    au: 30.07,
-    years: 164.8,
-    color: "#748df7",
-  },
-];
+export const planets = SOLAR_PLANETS.map((planet) => ({
+  name: planet.name,
+  diameterKm: planet.diameterKm,
+  au: planet.meanDistanceAu,
+  years: planet.orbitalPeriodYears,
+  color: planet.color,
+}));
 
 export function orbitPath(speed: number): Point[] {
   return orbitModel(speed).points;

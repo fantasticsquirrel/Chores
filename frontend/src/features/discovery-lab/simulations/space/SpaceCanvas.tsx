@@ -56,13 +56,17 @@ export function SpaceCanvas(props: Props) {
       role="img"
       aria-label={props.label}
       aria-keyshortcuts={
-        kind === "orbit" || kind === "gravity"
+        kind === "orbit" || kind === "gravity" || kind === "solar"
           ? "ArrowLeft ArrowRight Home End"
           : undefined
       }
-      tabIndex={kind === "orbit" || kind === "gravity" ? 0 : undefined}
+      tabIndex={
+        kind === "orbit" || kind === "gravity" || kind === "solar"
+          ? 0
+          : undefined
+      }
       onKeyDown={(event) => {
-        if (kind !== "orbit" && kind !== "gravity") return;
+        if (kind !== "orbit" && kind !== "gravity" && kind !== "solar") return;
         let next: number | null = null;
         if (event.key === "ArrowLeft") next = props.progress - 0.025;
         if (event.key === "ArrowRight") next = props.progress + 0.025;

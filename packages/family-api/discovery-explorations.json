@@ -152,7 +152,6 @@
     "title": "Solar System Explorer",
     "subject": "Space science",
     "grade_bands": [
-      "K-2",
       "3-5",
       "6-8"
     ],
@@ -162,26 +161,26 @@
       "scale",
       "orbits"
     ],
-    "summary": "Tour the eight planets and compare their distances from the Sun and the lengths of their years.",
-    "question": "How different are the worlds that share our Sun?",
-    "explanation": "The eight planets orbit the Sun, which is a star. Their sizes, distances and orbital periods vary greatly. An astronomical unit, or AU, is about the average Earth–Sun distance. This is a schematic: planet sizes and orbit distances use different scales, paths are simplified circles and positions are illustrative, not today’s sky.",
+    "summary": "Compare the eight planets at equal elapsed time and on one diameter scale.",
+    "question": "What changes when planets are compared for the same elapsed time or on the same diameter scale?",
+    "explanation": "The Sun’s gravity keeps eight planets in orbit. A year is one planet’s complete orbit, so planets with different orbital periods complete different fractions in the same elapsed time. One astronomical unit (AU) is about Earth’s mean distance from the Sun. Planet diameters and Sun–planet gaps differ so greatly that a useful screen model must show them on separate scales.",
     "experiments": [
       {
-        "title": "Near and far",
-        "instruction": "Predict how many Earth–Sun distances fit between the Sun and Neptune. Select both planets and compare AU values.",
-        "observe": "Neptune is about 30 AU from the Sun. Use the numbers to explain why the gaps in a convenient diagram are not equal real distances."
+        "title": "Hold elapsed time fixed",
+        "instruction": "Predict whether Earth, Neptune or both complete the same orbit fraction in one Earth year. Select your prediction, then compare one Earth year.",
+        "observe": "Earth completes 1.000 orbit and Neptune about 0.006 orbit (1/165). Explain why equal elapsed time does not mean equal orbital fractions."
       },
       {
-        "title": "Whose year?",
-        "instruction": "Predict which completes an orbit first: Earth or Jupiter. Advance time and compare their orbital periods.",
-        "observe": "A Jupiter year lasts nearly 12 Earth years. Explain why a year means one orbit, not the same number of days on every planet."
+        "title": "Hold diameter scale fixed",
+        "instruction": "Predict whether Jupiter is about 5, 11 or 50 Earth diameters across. Select your prediction, then compare Earth and Jupiter.",
+        "observe": "Jupiter’s equatorial diameter is about 11.21 Earth diameters. Explain why a separately framed close-up cannot establish this ratio."
       }
     ],
-    "misconception": "Planets are not evenly spaced, and a convenient orbit diagram cannot show both true planet sizes and true gaps at the same scale.",
+    "misconception": "A convenient orbit picture does not show true planet sizes and true gaps on one common scale. The model’s circular paths and starting positions are illustrative, not today’s sky.",
     "sources": [
       {
-        "title": "NASA/JPL: Solar system sizes and distances",
-        "url": "https://www.jpl.nasa.gov/edu/pdfs/scaless_reference.pdf"
+        "title": "NASA/JPL: Make a scale solar system",
+        "url": "https://www.jpl.nasa.gov/edu/resources/project/make-a-scale-solar-system/"
       },
       {
         "title": "NASA: Planetary fact sheet",
@@ -189,7 +188,7 @@
       },
       {
         "title": "NASA: Cosmic distances",
-        "url": "https://science.nasa.gov/solar-system/cosmic-distances/"
+        "url": "https://science.nasa.gov/universe/cosmic-distances/"
       }
     ],
     "duration_minutes": 12

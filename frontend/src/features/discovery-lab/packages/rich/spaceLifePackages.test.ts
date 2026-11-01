@@ -155,14 +155,23 @@ describe("complete space and life worker packages", () => {
       "matches your prediction",
     );
   });
-  it("solar keeps eight shortcuts and common diameter scale", () => {
+  it("solar gates both comparisons and keeps one diameter scale", () => {
     const run = worker("solar-system");
-    expect(run().buttons.filter((b) => b.id.startsWith("planet"))).toHaveLength(
-      8,
+    expect(run().buttons.map(({ id }) => id)).not.toContain("compareOrbit");
+    expect(run("compareOrbit").sections[0].text).toContain("Predict first");
+    const predictedOrbit = run("orbitNeptune");
+    expect(predictedOrbit.buttons.map(({ id }) => id)).toContain(
+      "compareOrbit",
     );
-    run("planet4");
-    expect(run("mode", 1).description).toContain("11.21 Earth diameters");
-    expect(run("test").sections[1].text).toContain("1/165");
+    expect(run("compareOrbit").sections[0].text).toContain(
+      "differs from your prediction",
+    );
+    expect(run("diameter11").buttons.map(({ id }) => id)).toContain(
+      "compareDiameter",
+    );
+    const diameter = run("compareDiameter");
+    expect(diameter.description).toContain("11.21 Earth diameters");
+    expect(diameter.sections[1].text).toContain("matches your prediction");
   });
   it("moon quarter/full/new values and opposite quarters preserve full inset", () => {
     const run = worker("moon-phases");

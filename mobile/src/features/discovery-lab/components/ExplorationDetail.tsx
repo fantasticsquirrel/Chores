@@ -26,6 +26,7 @@ export function ExplorationDetail({
     "orbital-mechanics",
     "photosynthesis",
     "reflection-refraction",
+    "solar-system",
   ].includes(detail.id);
   return (
     <>

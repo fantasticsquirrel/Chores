@@ -43,6 +43,12 @@ describe("interactive exploration controls", () => {
       expect(
         screen.getByRole("heading", { name: "Change only mass" }),
       ).toBeTruthy();
+    else if (id === "solar-system")
+      expect(
+        screen.getByRole("heading", {
+          name: "Which planet completes more of its orbit?",
+        }),
+      ).toBeTruthy();
     else expect(screen.getByText("Try this")).toBeTruthy();
   });
   it("changes orbit physics with launch speed and central mass", () => {

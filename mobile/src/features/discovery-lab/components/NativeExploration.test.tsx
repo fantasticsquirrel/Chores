@@ -9,18 +9,26 @@ describe("native guided experiment controls", () => {
       expect(view.getByRole("alert")).toBeTruthy();
     },
   );
-  it("compares planetary diameters on a common linear scale", () => {
+  it("runs both controlled solar comparisons and resets", () => {
     const view = render(<NativeExploration id="solar-system" />);
-    fireEvent.press(view.getByText("Compare planet diameters"));
-    expect(
-      view.getByText(/Equatorial diameter 12,756 km; 1.00 Earth diameters/),
-    ).toBeTruthy();
-    fireEvent.press(
-      view.getByText("Increase Planet index (Mercury 0 to Neptune 7)"),
-    );
-    expect(
-      view.getByText(/Equatorial diameter 6,792 km; 0.53 Earth diameters/),
-    ).toBeTruthy();
+    const orbitAction = view.getByText("Compare one Earth year");
+    const diameterAction = view.getByText("Compare Earth and Jupiter");
+    expect(orbitAction).toBeDisabled();
+    expect(diameterAction).toBeDisabled();
+
+    fireEvent.press(view.getByText("Neptune"));
+    fireEvent.press(orbitAction);
+    expect(view.getByText(/differs from your prediction/)).toBeTruthy();
+    expect(view.getByText(/Neptune completes 0.006 orbit/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("About 11×"));
+    fireEvent.press(diameterAction);
+    expect(view.getByText(/matches your prediction/)).toBeTruthy();
+    expect(view.getByText(/11.21 Earth diameters/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(orbitAction).toBeDisabled();
+    expect(diameterAction).toBeDisabled();
   });
   it("does not substitute castle content for an unsupported Exploration", () => {
     const view = render(<NativeExploration id="future-topic" />);

@@ -148,32 +148,58 @@ describe("space learning controls", () => {
       screen.getByText("Gravity keeps curving the probe inward."),
     ).toBeTruthy();
   });
-  it("selects eight planets with buttons and preserves one diameter scale", () => {
+  it("gates both solar comparisons, reports evidence and resets", () => {
     render(<SolarSystemSimulation />);
-    expect(screen.getAllByRole("option")).toHaveLength(10);
-    fireEvent.click(screen.getByRole("button", { name: "Jupiter 5" }));
-    expect(
-      (screen.getByLabelText("Choose a planet") as HTMLSelectElement).value,
-    ).toBe("4");
-    fireEvent.change(screen.getByLabelText("View"), {
-      target: { value: "sizes" },
+    const orbitAction = screen.getByRole("button", {
+      name: "Compare one Earth year",
     });
-    expect(screen.getByText("11.21")).toBeTruthy();
-    expect(
-      screen.getByText(/Diameter view uses one scale for both globes/),
-    ).toBeTruthy();
-  });
-  it("tests unequal orbital periods at the same model time", () => {
-    render(<SolarSystemSimulation />);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Advance one Earth year" }),
+    const diameterAction = screen.getByRole("button", {
+      name: "Compare Earth and Jupiter",
+    });
+    expect(orbitAction).toBeDisabled();
+    expect(diameterAction).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Neptune" }));
+    fireEvent.click(orbitAction);
+    expect(screen.getByTestId("solar-orbit-feedback").textContent).toContain(
+      "differs from your prediction",
     );
-    expect(screen.getByRole("status").textContent).toContain("1/165");
+    expect(screen.getByTestId("solar-orbit-feedback").textContent).toContain(
+      "0.006 orbit",
+    );
     expect(
       (screen.getByLabelText("Model time") as HTMLInputElement).value,
     ).toBe("10");
+
+    fireEvent.click(screen.getByRole("button", { name: "About 11×" }));
+    fireEvent.click(diameterAction);
+    expect(screen.getByTestId("solar-diameter-feedback").textContent).toContain(
+      "matches your prediction",
+    );
+    expect(screen.getByTestId("solar-diameter-feedback").textContent).toContain(
+      "11.21 Earth diameters",
+    );
     expect(
       (screen.getByLabelText("Choose a planet") as HTMLSelectElement).value,
-    ).toBe("7");
+    ).toBe("4");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(screen.queryByTestId("solar-orbit-feedback")).toBeNull();
+    expect(screen.queryByTestId("solar-diameter-feedback")).toBeNull();
+    expect(orbitAction).toBeDisabled();
+    expect(diameterAction).toBeDisabled();
+  });
+
+  it("keeps solar motion opt-in and keyboard-scrubbable", async () => {
+    render(<SolarSystemSimulation />);
+    expect(screen.getByRole("button", { name: "Play motion" })).toBeTruthy();
+    const scene = await screen.findByRole("img", {
+      name: /Earth.*1 astronomical unit/i,
+    });
+    const timeline = screen.getByLabelText("Model time") as HTMLInputElement;
+    fireEvent.keyDown(scene, { key: "End" });
+    expect(timeline.value).toBe("100");
+    fireEvent.keyDown(scene, { key: "Home" });
+    expect(timeline.value).toBe("0");
   });
 });
