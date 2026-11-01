@@ -25,6 +25,7 @@ export function ExplorationDetail({
     "chance-carnival",
     "orbital-mechanics",
     "photosynthesis",
+    "reflection-refraction",
   ].includes(detail.id);
   return (
     <>

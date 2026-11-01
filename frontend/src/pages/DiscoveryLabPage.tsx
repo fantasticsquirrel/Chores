@@ -168,6 +168,7 @@ export function DiscoveryExplorationPage() {
     "chance-carnival",
     "orbital-mechanics",
     "photosynthesis",
+    "reflection-refraction",
   ].includes(item?.id ?? "");
   return (
     <div className="discovery-lab discovery-detail">

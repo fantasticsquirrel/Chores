@@ -30,9 +30,14 @@ export function traceOrbit(speed: number, mass = 1) {
 }
 export function refract(degrees: number, n1: number, n2: number) {
   const sine = (n1 / n2) * Math.sin((degrees * Math.PI) / 180);
+  const tir = sine > 1 + 1e-10;
   return {
-    tir: sine > 1,
-    angle: sine > 1 ? null : (Math.asin(Math.min(1, sine)) * 180) / Math.PI,
+    tir,
+    angle: tir
+      ? null
+      : Math.abs(n1 - n2) <= 1e-10
+        ? degrees
+        : (Math.asin(Math.max(-1, Math.min(1, sine))) * 180) / Math.PI,
   };
 }
 export function gravityDrop(height: number, g: number) {

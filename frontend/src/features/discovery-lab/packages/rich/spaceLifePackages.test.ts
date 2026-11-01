@@ -198,11 +198,39 @@ describe("complete space and life worker packages", () => {
       "Complete the zero-water comparison first",
     );
   });
-  it("optics equal index and critical-angle TIR preserve detailed diagram", () => {
+  it("optics preserves both guided comparisons, boundaries, and detailed diagram", () => {
     const run = worker("reflection-refraction");
-    run();
-    expect(run("n2", 1).description).toContain("No reflection");
-    expect(run("test").description).toContain("Total internal reflection");
-    expect(JSON.stringify(run().vector)).toContain("pattern");
+    expect(run().buttons.map(({ id }) => id)).not.toContain("runDirection");
+    expect(run().buttons.map(({ id }) => id)).not.toContain("runCritical");
+    expect(run("n1", 1).description).toContain("No reflection");
+    const selectedCritical = run("criticalRemains");
+    expect(selectedCritical.buttons.map(({ id }) => id)).toContain(
+      "runCritical",
+    );
+    const critical = run("runCritical");
+    expect(critical.sections[0].text).toContain("differs from your prediction");
+    expect(critical.buttons.map(({ id }) => id)).toContain("directionOpposite");
+    expect(critical.buttons.map(({ id }) => id)).toContain("showCritical40");
+    expect(run("showCritical40").description).toContain(
+      "Refraction angle 74.6°",
+    );
+    run("directionOpposite");
+    const direction = run("runDirection");
+    expect(direction.sections[1].text).toContain(
+      "Air → glass: 19.5°; glass → air: 48.6°",
+    );
+    expect(direction.sections[1].text).toContain("matches your prediction");
+    expect(direction.buttons.map(({ id }) => id)).toContain(
+      "showDirectionAirGlass",
+    );
+    expect(run("showDirectionAirGlass").description).toContain(
+      "Refraction angle 19.5°",
+    );
+    run("n1", 1);
+    run("n2", 1.5);
+    expect(run("angle", 80).description).not.toContain(
+      "Total internal reflection",
+    );
+    expect(JSON.stringify(direction.vector)).toContain("pattern");
   });
 });

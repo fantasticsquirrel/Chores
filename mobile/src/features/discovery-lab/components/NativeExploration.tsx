@@ -31,12 +31,12 @@ import { PollinatorExploration } from "./PollinatorExploration";
 import { ChanceExploration } from "./ChanceExploration";
 import { PhotosynthesisExploration } from "./PhotosynthesisExploration";
 import { OrbitExploration } from "./OrbitExploration";
+import { OpticsExploration } from "./OpticsExploration";
 import { NativeMoonScene } from "./NativeMoonScene";
 import { NativeSceneSurface } from "./NativeSceneSurface";
 import { nativeSceneState } from "../rendering/nativeSceneState";
 /** Deliberately manual time controls: no automatic motion, timers, or reduced-motion exceptions. */
 const supportedIds = new Set([
-  "reflection-refraction",
   "gravity",
   "solar-system",
   "moon-phases",
@@ -63,6 +63,7 @@ const extendedExplorations: Record<string, ComponentType> = {
   "pollinator-express": PollinatorExploration,
   "chance-carnival": ChanceExploration,
   "orbital-mechanics": OrbitExploration,
+  "reflection-refraction": OpticsExploration,
   photosynthesis: PhotosynthesisExploration,
 };
 export function NativeExploration({ id }: { id: string }) {

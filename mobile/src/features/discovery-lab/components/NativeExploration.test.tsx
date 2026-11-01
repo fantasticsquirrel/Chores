@@ -54,11 +54,28 @@ describe("native guided experiment controls", () => {
     fireEvent.press(view.getByText("Reset experiment"));
     expect(compareSpeed).toBeDisabled();
   });
-  it("uses water in both optical directions", () => {
+  it("runs both controlled optics comparisons and resets", () => {
     const view = render(<NativeExploration id="reflection-refraction" />);
-    expect(view.getByText(/Air → water/)).toBeTruthy();
-    fireEvent.press(view.getByText("Swap materials"));
-    expect(view.getByText(/Water → air/)).toBeTruthy();
+    const criticalAction = view.getByText("Compare 40° and 43°");
+    expect(criticalAction).toBeDisabled();
+    fireEvent.press(view.getByText("Transmitted ray remains"));
+    fireEvent.press(criticalAction);
+    expect(view.getByText(/differs from your prediction/)).toBeTruthy();
+    expect(view.getByText(/critical angle is 41.8°/)).toBeTruthy();
+    fireEvent.press(view.getByText("Show 40° · refracted 74.6°"));
+    expect(view.getByText(/incident 40.0°/)).toBeTruthy();
+
+    const directionAction = view.getByText("Compare both directions");
+    expect(directionAction).toBeDisabled();
+    fireEvent.press(view.getByText("Toward in glass; away in air"));
+    fireEvent.press(directionAction);
+    expect(view.getByText(/Air → glass: 19.5°/)).toBeTruthy();
+    expect(view.getByText(/Glass → air: 48.6°/)).toBeTruthy();
+    fireEvent.press(view.getByText("Show air → glass · refracted 19.5°"));
+    expect(view.getByText(/Air → Glass · incident 30.0°/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(criticalAction).toBeDisabled();
   });
   it("opens the gate and explicitly reveals sight lines", () => {
     const view = render(<NativeExploration id="castle-defenses" />);

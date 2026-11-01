@@ -35,6 +35,10 @@ describe("interactive exploration controls", () => {
       expect(
         screen.getByRole("heading", { name: "Change sideways speed" }),
       ).toBeTruthy();
+    else if (id === "reflection-refraction")
+      expect(
+        screen.getByRole("heading", { name: "Cross the critical angle" }),
+      ).toBeTruthy();
     else expect(screen.getByText("Try this")).toBeTruthy();
   });
   it("changes orbit physics with launch speed and central mass", () => {
@@ -56,11 +60,19 @@ describe("interactive exploration controls", () => {
   });
   it("computes total internal reflection when materials are swapped", () => {
     render(<ExplorationSimulation explorationId="reflection-refraction" />);
-    fireEvent.click(screen.getByRole("button", { name: "Swap materials" }));
-    fireEvent.change(screen.getByLabelText("Incident angle"), {
-      target: { value: 60 },
+    fireEvent.click(screen.getByText("Open controls", { exact: true }));
+    fireEvent.change(screen.getByLabelText("From material"), {
+      target: { value: "glass" },
     });
-    expect(screen.getByText("Total internal reflection")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("To material"), {
+      target: { value: "air" },
+    });
+    fireEvent.change(screen.getByLabelText("Incident angle"), {
+      target: { value: 43 },
+    });
+    expect(screen.getByTestId("optics-current-outcome")).toHaveTextContent(
+      "Total internal reflection",
+    );
   });
   it("allows direct keyboard-friendly phase selection", () => {
     render(<ExplorationSimulation explorationId="moon-phases" />);

@@ -65,23 +65,27 @@
       "reflection",
       "refraction"
     ],
-    "summary": "Aim a beam, swap materials and discover when light bends or reflects.",
-    "question": "What happens when light reaches a different material?",
-    "explanation": "Reflection sends light back into its first material. Refraction can bend light as it crosses into a material where it travels at a different speed. Measure angles from the normal: the line at right angles to the surface. From air into water, a slanting ray bends toward the normal. This single-color ray model leaves out changes in brightness and the separation of colors.",
+    "summary": "Compare reflection and refraction, then find when a higher-index material keeps a ray inside.",
+    "question": "How do angle and travel direction change a ray at a boundary?",
+    "explanation": "Reflection stays in the first medium and leaves at the incident angle. Refraction crosses the boundary; Snell’s law relates both angles to the materials’ refractive indices. Refractive index compares light’s speed in vacuum with its speed in a material, so a higher index means slower light. Measure every angle from the normal, the line perpendicular to the boundary. Entering a higher index bends a slanting ray toward the normal; entering a lower index bends it away. Above the critical angle, a higher-to-lower-index ray undergoes total internal reflection.",
     "experiments": [
       {
-        "title": "Air meets water",
-        "instruction": "Predict whether the ray bends toward or away from the normal. Select air to water and change the angle.",
-        "observe": "Compare the incident and refracted angles. Explain why the ray bends toward the normal from air into water, but stays straight at an incident angle of 0°."
+        "title": "Cross the critical angle",
+        "instruction": "Keep glass to air fixed. Predict whether a transmitted ray remains when only the incident angle changes from 40° to 43°.",
+        "observe": "Compare the 40° transmitted ray with its absence at 43°. Relate the change to the 41.8° critical angle."
       },
       {
-        "title": "Trap the light",
-        "instruction": "Switch to water to air. Predict what happens as the incident angle grows.",
-        "observe": "Find the angle where the refracted ray disappears. Explain why this happens from water into air, but not from air into water."
+        "title": "Reverse the boundary",
+        "instruction": "Keep the incident angle at 30°. Predict how the refracted ray changes between air to glass and glass to air.",
+        "observe": "Compare the 19.5° and 48.6° refracted angles while the reflected angle remains 30°. Explain toward-versus-away bending."
       }
     ],
-    "misconception": "Total internal reflection is possible only from a higher to a lower refractive index, above the critical angle. It does not happen at every boundary.",
+    "misconception": "A ray does not totally reflect merely because it meets a boundary. Total internal reflection requires travel from higher to lower refractive index and an incident angle above that pair’s critical angle.",
     "sources": [
+      {
+        "title": "OpenStax: The law of reflection",
+        "url": "https://openstax.org/books/university-physics-volume-3/pages/1-2-the-law-of-reflection"
+      },
       {
         "title": "OpenStax: Refraction",
         "url": "https://openstax.org/books/university-physics-volume-3/pages/1-3-refraction"

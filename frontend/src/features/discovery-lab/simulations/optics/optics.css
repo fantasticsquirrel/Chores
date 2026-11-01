@@ -1,0 +1,671 @@
+.optics-lab {
+  --optics-ink: #102f35;
+  --optics-coral: #df5b48;
+  --optics-mint: #dff0dd;
+  --optics-paper: #fffdf6;
+  display: grid;
+  gap: 20px;
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  color: var(--optics-ink);
+}
+
+.optics-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px 10px 18px;
+  border: 1px solid #c8d6c4;
+  border-radius: 18px;
+  background: #f3f8e9;
+}
+
+.optics-toolbar p,
+.optics-open-controls > p,
+.optics-model-note p,
+.optics-challenge-heading p,
+.optics-evidence p,
+.optics-lock-note {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.optics-toolbar button,
+.optics-swap,
+.optics-choices button,
+.optics-run,
+.optics-trial {
+  min-height: 44px;
+  border: 1px solid #b8c9bd;
+  border-radius: 14px;
+  color: var(--optics-ink);
+  font: inherit;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.optics-toolbar button,
+.optics-swap {
+  padding: 0 18px;
+  background: var(--optics-paper);
+}
+
+.optics-toolbar button:hover,
+.optics-swap:hover,
+.optics-choices button:hover:not(:disabled),
+.optics-trial:hover {
+  border-color: var(--optics-coral);
+  transform: translateY(-1px);
+}
+
+.optics-toolbar button:focus-visible,
+.optics-swap:focus-visible,
+.optics-choices button:focus-visible,
+.optics-run:focus-visible,
+.optics-trial:focus-visible,
+.optics-open-controls summary:focus-visible,
+.optics-open-controls select:focus-visible,
+.optics-open-controls input:focus-visible {
+  outline: 3px solid #4b78c6;
+  outline-offset: 3px;
+}
+
+.optics-instrument {
+  overflow: hidden;
+  margin: 0;
+  border-radius: 28px;
+  background: #07131e;
+  box-shadow:
+    0 22px 50px rgb(10 36 38 / 20%),
+    0 3px 0 rgb(255 255 255 / 55%) inset;
+}
+
+.optics-instrument svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 960 / 610;
+}
+
+.optics-medium-label {
+  fill: #d9edf0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+
+.optics-medium-label text:nth-child(even) {
+  fill: #a9c5cc;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.optics-ticks line,
+.optics-ticks path {
+  fill: none;
+  stroke: #b8d1d6;
+  stroke-opacity: 0.5;
+  stroke-width: 1.5;
+}
+
+.optics-normal {
+  stroke: #d4e6e6;
+  stroke-dasharray: 8 8;
+  stroke-opacity: 0.7;
+  stroke-width: 2;
+}
+
+.optics-normal-label rect {
+  fill: #091824;
+  stroke: #9db7bd;
+  stroke-opacity: 0.55;
+}
+
+.optics-normal-label text {
+  fill: #e4f1ee;
+  font:
+    700 13px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+}
+
+.optics-boundary {
+  stroke: #c3edf0;
+  stroke-opacity: 0.75;
+  stroke-width: 3;
+}
+
+.optics-critical-mark line {
+  stroke: #f8f1a5;
+  stroke-width: 3;
+}
+
+.optics-critical-mark text {
+  fill: #fff6ad;
+  font:
+    800 16px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+.optics-ray,
+.optics-ray-glow,
+.optics-angle {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.optics-ray {
+  stroke-width: 5;
+}
+
+.optics-ray-glow {
+  stroke-width: 20;
+  opacity: 0.19;
+}
+
+.optics-ray--incident,
+.optics-ray-glow--incident,
+.optics-angle--incident {
+  stroke: #ffd27a;
+}
+
+.optics-ray--reflected,
+.optics-ray-glow--reflected,
+.optics-angle--reflected {
+  stroke: #ff9cae;
+}
+
+.optics-ray--refracted,
+.optics-ray-glow--refracted,
+.optics-angle--refracted {
+  stroke: #8fffe1;
+}
+
+.optics-angle {
+  stroke-width: 2.5;
+  stroke-dasharray: 4 4;
+}
+
+.optics-angle-label {
+  fill: #f7fbf7;
+  font:
+    800 17px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  paint-order: stroke;
+  stroke: #081722;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+.optics-emitter-shadow {
+  fill: #02080e;
+  opacity: 0.7;
+  transform: translate(7px, 8px);
+}
+
+.optics-emitter-body {
+  fill: #8497a0;
+  stroke: #d4e3e3;
+  stroke-width: 2;
+}
+
+.optics-emitter path {
+  stroke: #40535e;
+  stroke-width: 4;
+}
+
+.optics-emitter-neck {
+  fill: #0c1a24;
+  stroke: #a8bbc0;
+}
+
+.optics-emitter-light,
+.optics-impact {
+  fill: #fff8ce;
+}
+
+.optics-impact-glow {
+  fill: #ffe39a;
+  opacity: 0.28;
+}
+
+.optics-tir-badge rect {
+  fill: #1b1922;
+  stroke: #ff9cae;
+  stroke-width: 2;
+}
+
+.optics-tir-badge text:first-of-type {
+  fill: #ffc1cc;
+  font:
+    850 15px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.06em;
+}
+
+.optics-tir-badge text:last-of-type {
+  fill: #f3e9e6;
+  font:
+    650 14px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+.optics-screw circle {
+  fill: #879ba4;
+  stroke: #d3dddd;
+}
+
+.optics-screw path {
+  stroke: #2a3b45;
+  stroke-width: 2;
+}
+
+.optics-instrument figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  align-items: center;
+  padding: 12px 20px 15px;
+  border-top: 1px solid rgb(170 203 209 / 18%);
+  color: #d7e6e5;
+  font-size: 0.88rem;
+}
+
+.optics-instrument figcaption span {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.optics-instrument figcaption span:last-child {
+  margin-left: auto;
+  color: #a9c0c3;
+}
+
+.optics-instrument figcaption i {
+  width: 20px;
+  height: 3px;
+  border-radius: 999px;
+}
+
+.optics-instrument figcaption .is-incident {
+  background: #ffd27a;
+}
+
+.optics-instrument figcaption .is-reflected {
+  background: #ff9cae;
+}
+
+.optics-instrument figcaption .is-refracted {
+  background: #8fffe1;
+}
+
+.optics-current {
+  display: grid;
+  grid-template-columns: 0.7fr 0.7fr 1.25fr 1.35fr;
+  overflow: hidden;
+  border: 1px solid #c8d6c4;
+  border-radius: 18px;
+  background: var(--optics-paper);
+}
+
+.optics-current span {
+  display: grid;
+  gap: 3px;
+  align-content: center;
+  min-width: 0;
+  min-height: 72px;
+  padding: 12px 16px;
+  border-right: 1px solid #dbe4d5;
+}
+
+.optics-current span:last-child {
+  border-right: 0;
+}
+
+.optics-current small {
+  color: #5a706d;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.optics-current strong {
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+}
+
+.optics-current .is-tir {
+  background: #fff0ed;
+  color: #8f3027;
+}
+
+.optics-challenges {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.optics-challenges > section {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 22px;
+  border: 1px solid #cbd9c7;
+  border-radius: 22px;
+  background: var(--optics-paper);
+  box-shadow: 0 12px 30px rgb(28 66 58 / 9%);
+}
+
+.optics-challenges > section.is-locked {
+  background: #f5f5eb;
+}
+
+.optics-challenge-heading {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.optics-challenge-heading > span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--optics-ink);
+  color: white;
+  font:
+    800 0.78rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+.optics-challenge-heading h3,
+.optics-model-note h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.23rem;
+}
+
+.optics-challenges fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.optics-challenges legend {
+  margin-bottom: 10px;
+  font-weight: 760;
+}
+
+.optics-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.optics-choices button {
+  padding: 10px 12px;
+  background: #f5f7ef;
+  text-align: left;
+}
+
+.optics-choices button[aria-pressed="true"] {
+  border-color: var(--optics-coral);
+  background: #fff0e9;
+  box-shadow: 0 0 0 2px rgb(223 91 72 / 18%);
+}
+
+.optics-run {
+  width: 100%;
+  padding: 10px 16px;
+  border-color: var(--optics-ink);
+  background: var(--optics-ink);
+  color: white;
+}
+
+.optics-run:disabled {
+  border-color: #c6cec4;
+  background: #e4e9df;
+  color: #68766d;
+  cursor: not-allowed;
+}
+
+.optics-evidence {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #d5dfd0;
+}
+
+.optics-evidence p {
+  padding: 13px 14px;
+  border-left: 3px solid var(--optics-coral);
+  border-radius: 0 12px 12px 0;
+  background: #edf4e7;
+}
+
+.optics-trials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.optics-trial {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #102f35;
+  color: white;
+  text-align: left;
+}
+
+.optics-trial span {
+  color: #bfd1d0;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.optics-trial strong {
+  overflow-wrap: anywhere;
+  font-size: 0.88rem;
+}
+
+.optics-lock-note {
+  padding: 13px 14px;
+  border-radius: 12px;
+  background: #e8ece3;
+  color: #52645d;
+}
+
+.optics-open-controls {
+  padding: 18px 20px;
+  border: 1px solid #c8d6c4;
+  border-radius: 20px;
+  background: #eef5e8;
+}
+
+.optics-open-controls summary {
+  min-height: 30px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.optics-open-controls[open] summary {
+  margin-bottom: 8px;
+}
+
+.optics-control-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.optics-control-grid > label {
+  display: grid;
+  gap: 8px;
+  font-weight: 760;
+}
+
+.optics-control-grid select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #aebfb1;
+  border-radius: 12px;
+  background: white;
+  color: var(--optics-ink);
+  font: inherit;
+}
+
+.optics-control-grid .dl-slider {
+  padding: 0;
+  background: transparent;
+}
+
+.optics-control-grid .dl-range-labels {
+  font-size: 0.75rem;
+}
+
+.optics-swap {
+  margin-top: 14px;
+}
+
+.optics-model-note {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-left: 4px solid var(--optics-coral);
+  border-radius: 0 18px 18px 0;
+  background: #f3f0e6;
+}
+
+@media (max-width: 760px) {
+  .optics-lab {
+    gap: 16px;
+  }
+
+  .optics-toolbar {
+    align-items: flex-start;
+  }
+
+  .optics-toolbar p {
+    max-width: 220px;
+  }
+
+  .optics-instrument {
+    border-radius: 20px;
+  }
+
+  .optics-medium-label {
+    font-size: 40px;
+    letter-spacing: 0.035em;
+  }
+
+  .optics-medium-label text:nth-child(even) {
+    font-size: 40px;
+  }
+
+  .optics-angle-label {
+    font-size: 40px;
+    stroke-width: 10px;
+  }
+
+  .optics-critical-mark text {
+    font-size: 40px;
+  }
+
+  .optics-normal-label text {
+    font-size: 40px;
+    letter-spacing: 0.02em;
+  }
+
+  .optics-tir-badge text:first-of-type {
+    font-size: 40px;
+    letter-spacing: 0.025em;
+  }
+
+  .optics-tir-badge text:last-of-type {
+    font-size: 40px;
+  }
+
+  .optics-instrument figcaption {
+    gap: 9px 15px;
+    padding: 11px 14px 13px;
+    font-size: 0.78rem;
+  }
+
+  .optics-instrument figcaption span:last-child {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .optics-current {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .optics-current span:nth-child(2) {
+    border-right: 0;
+  }
+
+  .optics-current span:nth-child(-n + 2) {
+    border-bottom: 1px solid #dbe4d5;
+  }
+
+  .optics-challenges {
+    grid-template-columns: 1fr;
+  }
+
+  .optics-challenges > section {
+    padding: 18px 16px;
+  }
+
+  .optics-choices,
+  .optics-trials,
+  .optics-control-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .optics-choices button,
+  .optics-trial {
+    text-align: center;
+  }
+
+  .optics-model-note {
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .optics-toolbar button,
+  .optics-swap,
+  .optics-choices button,
+  .optics-trial {
+    transition: none;
+  }
+}

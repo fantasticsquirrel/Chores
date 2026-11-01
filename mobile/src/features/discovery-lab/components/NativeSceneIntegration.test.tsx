@@ -38,7 +38,6 @@ const scenes = [
     "adaptation-island",
   ].map((id) => [id, id]),
   ["orbital-mechanics", "orbit"],
-  ["reflection-refraction", "optics"],
   ["gravity", "gravity"],
   ["solar-system", "solar"],
   ["moon-phases", "moon"],
@@ -86,6 +85,18 @@ describe("all native educational models use bounded offline visuals", () => {
       view.unmount();
     },
   );
+  it("uses the shared optics model in a native schematic without the legacy offline surface", () => {
+    const view = render(<NativeExploration id="reflection-refraction" />);
+    expect(
+      view.queryByTestId("offline-scene-webview", {
+        includeHiddenElements: true,
+      }),
+    ).toBeNull();
+    expect(view.getByRole("image").props.accessibilityLabel).toContain(
+      "Glass to Air",
+    );
+    expect(view.getByText("Compare 40° and 43°")).toBeTruthy();
+  });
   it("sends the actual final Chance outcome without adding random draws", () => {
     const view = render(<NativeExploration id="chance-carnival" />);
     fireEvent(

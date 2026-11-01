@@ -21,6 +21,16 @@ export function OpticsBench({
 }) {
   const uid = useId().replace(/:/g, ""),
     dragging = useRef(false);
+  const mediumFill = (index: number) =>
+    index <= 1.05 ? "#142630" : index <= 1.4 ? "#18556d" : "#31576a";
+  const mediumName = (index: number) =>
+    Math.abs(index - 1) < 0.005
+      ? "AIR"
+      : Math.abs(index - 1.333) < 0.005
+        ? "WATER"
+        : Math.abs(index - 1.5) < 0.005
+          ? "GLASS"
+          : "CUSTOM";
   const reflects = Math.abs(n1 - n2) > 1e-9;
   const result = refract(angle, n1, n2),
     theta = (angle * Math.PI) / 180,
@@ -167,15 +177,17 @@ export function OpticsBench({
         </text>
       ))}
       <path
-        d={`M${cx - 195} ${cy + 8}h390a195 195 0 0 1-390 0`}
-        fill="#31576a"
-        stroke="#80b9c5"
-        strokeOpacity=".5"
+        d={`M${cx - 195} ${cy}h390a195 195 0 0 0-390 0`}
+        fill={mediumFill(n1)}
+        stroke="#b4eeee"
+        strokeOpacity=".55"
+        strokeWidth="1.5"
       />
       <path
         d={`M${cx - 195} ${cy}h390a195 195 0 0 1-390 0`}
-        fill={`url(#${uid}-glass)`}
+        fill={mediumFill(n2)}
         stroke="#b4eeee"
+        strokeOpacity=".55"
         strokeWidth="1.5"
       />
       <path
@@ -276,11 +288,11 @@ export function OpticsBench({
         <text x="32" y="578">
           Drag the laser or adjust the angle below.
         </text>
-        <text x="650" y="275">
-          n₁ = {n1.toFixed(2)}
+        <text x="585" y="275">
+          FROM · {mediumName(n1)} · n₁ {n1.toFixed(2)}
         </text>
-        <text x="650" y="341">
-          n₂ = {n2.toFixed(2)}
+        <text x="585" y="341">
+          TO · {mediumName(n2)} · n₂ {n2.toFixed(2)}
         </text>
       </g>
       {[

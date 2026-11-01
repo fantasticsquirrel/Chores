@@ -49,6 +49,12 @@ const leaf = {
   tags: ["plants"],
   summary: "Explore how plants make sugar.",
 };
+const optics = {
+  ...orbit,
+  id: "reflection-refraction",
+  title: "Light Bending Studio",
+  question: "How does a ray change at a boundary?",
+};
 const context: AuthContextValue = {
   status: "authenticated",
   user: {
@@ -218,6 +224,20 @@ describe("Discovery Lab", () => {
     expect(screen.queryByText("Repeated registry explanation.")).toBeNull();
     expect(screen.queryByText("Repeated experiment")).toBeNull();
     expect(screen.queryByText("Repeated misconception.")).toBeNull();
+    expect(screen.getByText("Sources")).toBeVisible();
+  });
+  it("keeps the optics lesson in the activity without repeated registry prose", async () => {
+    vi.mocked(apiClient.getDiscoveryExploration).mockResolvedValue(optics);
+    show("/discovery-lab/reflection-refraction");
+    expect(
+      await screen.findByRole("heading", { name: optics.title }),
+    ).toBeVisible();
+    expect(screen.getByTestId("simulation")).toHaveTextContent(
+      "reflection-refraction",
+    );
+    expect(screen.queryByText(optics.explanation)).toBeNull();
+    expect(screen.queryByText(optics.experiments[0].title)).toBeNull();
+    expect(screen.queryByText(optics.misconception)).toBeNull();
     expect(screen.getByText("Sources")).toBeVisible();
   });
   it("does not mount a simulation when direct access is denied", async () => {
