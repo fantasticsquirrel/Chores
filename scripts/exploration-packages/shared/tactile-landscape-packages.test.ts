@@ -6,6 +6,18 @@ import {
   parseScene,
   type Scene,
 } from "../../../frontend/src/features/discovery-lab/packages/bridge";
+import {
+  SOUND_DEFAULT_INPUTS as SHARED_SOUND_DEFAULTS,
+  normalizeSoundInputs as normalizeSharedSound,
+  soundActivity as sharedSoundActivity,
+} from "../../../packages/family-api/src/discovery-models/sound";
+import {
+  SOUND_DEFAULT_INPUTS as PACKAGE_SOUND_DEFAULTS,
+  normalizeSoundInputs as normalizePackageSound,
+  soundActivity as packageSoundActivity,
+} from "../sound-playground/model";
+import { createSoundScene as createWebSoundScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/soundScene";
+import { createSoundScene as createPackageSoundScene } from "../sound-playground/soundScene";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -92,22 +104,129 @@ describe("ten independently authored rich explorations", () => {
       expect(reset.description).toBe(initial.description);
     }, 30000);
   }
-  it("sound separates pitch from amplitude and preserves audio/animation", () => {
+  it("sound gates comparisons, separates pitch from amplitude and preserves opt-in audio/animation", () => {
     const send = worker("sound-playground");
     const initial = send();
-    const amplitude = send("amplitude", 6);
-    expect(amplitude.description).toContain("36.0");
-    expect(amplitude.audio[0].frequency).toBe(initial.audio[0].frequency);
-    expect(send("length", 120).audio[0].frequency).toBeCloseTo(
-      initial.audio[0].frequency / 2,
+    expect(initial.controls).toHaveLength(0);
+    expect(initial.audio).toHaveLength(0);
+    expect(
+      initial.buttons.find((button: any) => button.id === "compareLength")
+        .disabled,
+    ).toBe(true);
+    send("lengthHalf");
+    let compared = send("compareLength");
+    expect(compared.description).toContain("Fundamental 117.9 Hz");
+    expect(compared.sections[0].text).toContain("matches your prediction");
+    compared = send("lengthSame");
+    expect(compared.sections[0].text).not.toContain("matches your prediction");
+    expect(compared.controls).toHaveLength(0);
+    send("lengthHalf");
+    send("compareLength");
+    send("amplitudeDouble");
+    compared = send("compareAmplitude");
+    const unlockedFrequency = compared.audio[0].frequency;
+    expect(compared.sections[1].text).toContain("differs from your prediction");
+    expect(compared.sections[1].text).toContain("index 9 → 36");
+    compared = send("amplitudeSame");
+    expect(compared.sections[1].text).not.toContain(
+      "differs from your prediction",
     );
+    expect(compared.controls).toHaveLength(0);
+    compared = send("compareAmplitude");
+    expect(compared.sections[1].text).toContain(
+      "Held: 60 cm length · 80 N tension · 1 g/m linear density",
+    );
+    expect(
+      send("phase", 90).controls.find((c: any) => c.id === "phase").value,
+    ).toBe(90);
+    expect(
+      send("showAmplitudeSmall").controls.find((c: any) => c.id === "phase")
+        .value,
+    ).toBe(0);
+    send("phase", 90);
+    expect(
+      send("showAmplitudeLarge").controls.find((c: any) => c.id === "phase")
+        .value,
+    ).toBe(0);
+    const amplitude = send("amplitude", 6);
+    expect(amplitude.description).toContain("index 36");
+    expect(amplitude.audio[0].frequency).toBe(unlockedFrequency);
+    expect(send("length", 120).audio[0].frequency).toBeCloseTo(
+      amplitude.audio[0].frequency / 2,
+    );
+    expect(amplitude.audio[0].gain).toBeLessThanOrEqual(0.018);
     expect(send("play").animate).toBe(true);
     expect(
       send(undefined, undefined, "step", { dt: 0.05 }).controls.find(
         (c: any) => c.id === "phase",
       ).value,
     ).toBeGreaterThan(0);
+    const relocked = send("lengthSame");
+    expect(relocked.animate).toBe(false);
+    expect(relocked.audio).toHaveLength(0);
+    expect(relocked.controls).toHaveLength(0);
     expect(send(undefined, undefined, "reset").animate).toBe(false);
+  });
+
+  it("sound package model exactly mirrors shared boundaries and outputs", () => {
+    expect(PACKAGE_SOUND_DEFAULTS).toEqual(SHARED_SOUND_DEFAULTS);
+    for (const inputs of [
+      SHARED_SOUND_DEFAULTS,
+      { lengthCm: 120, tensionN: 20, amplitudeMm: 0 },
+      { lengthCm: -10, tensionN: 999, amplitudeMm: 99 },
+      { lengthCm: Number.NaN, tensionN: Infinity, amplitudeMm: -2 },
+    ]) {
+      expect(normalizePackageSound(inputs)).toEqual(
+        normalizeSharedSound(inputs),
+      );
+      expect(packageSoundActivity(inputs)).toEqual(sharedSoundActivity(inputs));
+    }
+  });
+  it("sound package and web preserve the same dimensional scene geometry", () => {
+    const state = {
+      kind: "sound" as const,
+      length: 60,
+      tension: 80,
+      amplitude: 3,
+      progress: 0.25,
+    };
+    const web = createWebSoundScene(state);
+    const packaged = createPackageSoundScene(state);
+    const signature = (scene: typeof web) => {
+      const objects: unknown[] = [];
+      scene.group.traverse((object) => {
+        const mesh = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: {
+            color?: { getHexString(): string };
+            emissive?: { getHexString(): string };
+          };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+          scale: object.scale.toArray(),
+          geometry: mesh.geometry?.type,
+          vertices: mesh.geometry?.attributes?.position?.count,
+          color: mesh.material?.color?.getHexString(),
+          emissive: mesh.material?.emissive?.getHexString(),
+          visible: object.visible,
+        });
+      });
+      return { objects, labels: scene.labels?.(), view: scene.view };
+    };
+    expect(signature(packaged)).toEqual(signature(web));
+    const next = { ...state, length: 120, amplitude: 6, progress: 0.63 };
+    web.update(next);
+    packaged.update(next);
+    expect(signature(packaged)).toEqual(signature(web));
+    web.dispose();
+    packaged.dispose();
   });
   it("river soil is conserved through repeated storms and restore preserves controls", () => {
     const send = worker("river-sculptor");
@@ -226,6 +345,10 @@ describe("ten independently authored rich explorations", () => {
   it("sound ruler drag stays captured without repeatedly plucking", () => {
     const send = worker("sound-playground");
     send();
+    send("lengthHalf");
+    send("compareLength");
+    send("amplitudeSame");
+    send("compareAmplitude");
     const ray = (phase: string, x: number, z: number) =>
       send(undefined, undefined, "pointer", {
         pointer: { phase, rayOrigin: [x, 10, z], rayDirection: [0, -1, 0] },

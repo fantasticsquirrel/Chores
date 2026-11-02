@@ -3,7 +3,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 import { NativeExploration } from "./NativeExploration";
 
 const controls: [string, string][] = [
-  ["sound-playground", "Increase String length (cm)"],
+  ["sound-playground", "Half as many cycles per second"],
   ["bridge-builder", "Increase Vehicle load"],
   ["river-sculptor", "Increase Rainfall"],
   ["circuit-city", "Open house A switch"],
@@ -30,9 +30,9 @@ describe("native learning explorations", () => {
 
   it("starts a fresh model when navigation changes topics", () => {
     const view = render(<NativeExploration id="sound-playground" />);
-    fireEvent.press(view.getByText("Increase String length (cm)"));
+    fireEvent.press(view.getByText("Half as many cycles per second"));
     view.rerender(<NativeExploration id="fraction-feast" />);
-    expect(view.queryByText("Increase String length (cm)")).toBeNull();
+    expect(view.queryByText("Half as many cycles per second")).toBeNull();
     expect(view.getByText("Increase Equal slices")).toBeTruthy();
     view.rerender(<NativeExploration id="future-topic" />);
     expect(view.getByRole("alert")).toBeTruthy();

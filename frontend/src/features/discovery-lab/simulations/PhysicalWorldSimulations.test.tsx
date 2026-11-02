@@ -18,12 +18,26 @@ describe("physical world exploration controls", () => {
     render(<Simulation />);
     expect(screen.getByRole("img")).toBeTruthy();
     expect(screen.getByText("Try this")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Reset" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /^Reset(?: lesson)?$/ }),
+    ).toBeTruthy();
   });
   it("changes pitch with length but not pluck amplitude", () => {
     render(<SoundPlaygroundSimulation />);
     const before = screen.getByLabelText("Frequency").textContent;
-    fireEvent.change(screen.getByLabelText("Pluck amplitude"), {
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Half as many cycles per second",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare string lengths" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Same frequency" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare pluck amplitudes" }),
+    );
+    fireEvent.change(screen.getByLabelText("Model amplitude"), {
       target: { value: 8 },
     });
     expect(screen.getByLabelText("Frequency").textContent).toBe(before);
@@ -31,7 +45,9 @@ describe("physical world exploration controls", () => {
       target: { value: 120 },
     });
     expect(screen.getByLabelText("Frequency").textContent).not.toBe(before);
-    expect(screen.getByRole("button", { name: "Play motion" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Play slowed motion" }),
+    ).toBeTruthy();
   });
   it("adds and removes bracing with keyboard-accessible buttons", () => {
     render(<BridgeBuilderSimulation />);

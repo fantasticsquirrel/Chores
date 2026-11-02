@@ -12,7 +12,7 @@ describe("physical world teaching models", () => {
   it("separates string pitch from amplitude and follows length and tension ratios", () => {
     const base = stringWave(60, 80, 2);
     expect(stringWave(120, 80, 2).frequency).toBeCloseTo(base.frequency / 2);
-    expect(stringWave(60, 320, 2).frequency).toBeCloseTo(base.frequency * 2);
+    expect(stringWave(60, 180, 2).frequency).toBeCloseTo(base.frequency * 1.5);
     expect(stringWave(60, 80, 4).frequency).toBe(base.frequency);
     expect(stringWave(60, 80, 4).relativeEnergy).toBe(base.relativeEnergy * 4);
     expect(stringWave(60, 80, 0).relativeEnergy).toBe(0);

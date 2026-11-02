@@ -46,6 +46,9 @@
   font-size: 0.8rem;
 }
 @media (max-width: 600px) {
+  .package-rich-readouts {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
   .package-rich-stat {
     top: 18px;
     right: 12px;

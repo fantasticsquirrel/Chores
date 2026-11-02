@@ -353,26 +353,38 @@
       "waves",
       "measurement"
     ],
-    "summary": "Change a string’s length, tension and vibration size to investigate pitch and energy.",
-    "question": "Why can two plucks sound equally high but have different strengths?",
-    "explanation": "A vibrating string can make the air vibrate, producing sound. Frequency counts vibrations per second and helps determine pitch. A shorter string or greater tension produces a higher frequency when the string’s mass per length stays fixed. Amplitude is the size of a vibration; increasing it adds energy without changing this model’s pitch. The model shows an ideal string’s lowest vibration pattern, not every vibration in a real instrument. The drawing slows or stops the motion so you can inspect the string’s shape.",
+    "summary": "Predict and compare how string length and modeled displacement change frequency and wave height.",
+    "question": "How can two plucks keep the same modeled frequency while their vibration heights differ?",
+    "explanation": "Frequency counts cycles per second and strongly influences perceived pitch, but frequency and pitch are not identical. For this ideal uniform string’s fixed-end fundamental, doubling length while holding tension and mass per length fixed halves frequency. Doubling the modeled displacement does not change that natural frequency; it quadruples an A² comparison index. That index is not a decibel or loudness reading. Real musical sounds also depend on harmonics, the instrument body and how the sound changes over time.",
     "experiments": [
       {
-        "title": "Shorten the string",
-        "instruction": "Keep tension and amplitude fixed. Predict what happens to frequency when you halve the string length, then compare the readings at each length.",
-        "observe": "Compare the frequency readings: halving the length doubles the frequency here. Explain how that changes pitch."
+        "title": "Compare string lengths",
+        "instruction": "Keep tension and model displacement fixed. Predict what happens when vibrating length doubles from 60 to 120 cm, then run the fixed comparison.",
+        "observe": "The longer trial has half as many cycles per second. Use the unchanged-variable list to explain why length caused the difference."
       },
       {
-        "title": "Change the pluck, not the pitch",
-        "instruction": "Keep length and tension fixed. Predict whether a larger amplitude changes frequency, then compare two amplitude settings.",
-        "observe": "The vibration gets larger and its energy increases while frequency stays the same. Explain the difference between vibration size and vibration rate."
+        "title": "Compare model displacements",
+        "instruction": "Keep length and tension fixed. Predict whether changing modeled displacement from 3 to 6 mm changes frequency, then run the fixed comparison.",
+        "observe": "Frequency stays the same while wave height and the relative A² index change. Explain why this is not a loudness measurement."
       }
     ],
-    "misconception": "A larger vibration is not the same as a higher pitch. Pitch depends mainly on frequency, not amplitude.",
+    "misconception": "A taller modeled wave is not automatically a higher pitch or a direct loudness reading. Frequency strongly influences pitch; perceived loudness depends on sound level, frequency, hearing and listening conditions.",
     "sources": [
       {
         "title": "OpenStax: Standing waves on strings",
         "url": "https://openstax.org/books/university-physics-volume-1/pages/16-6-standing-waves-and-resonance"
+      },
+      {
+        "title": "OpenStax Psychology: Waves and wavelengths",
+        "url": "https://openstax.org/books/psychology/pages/5-2-waves-and-wavelengths"
+      },
+      {
+        "title": "NIDCD: How is sound measured?",
+        "url": "https://www.nidcd.nih.gov/health/how-sound-measured"
+      },
+      {
+        "title": "UNSW Music Acoustics: Musical sounds and instruments",
+        "url": "https://phys.unsw.edu.au/jw/musical-sounds-musical-instruments.html"
       }
     ],
     "duration_minutes": 12

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DiscoveryPackagePayload } from "@family-manager/family-api/models";
 import { parseScene, sandboxDocument, type Scene } from "./bridge";
 import { loadRasterAssets, type RasterAssets } from "./rich/rasterAssets";
-import { createTonePlayer } from "./rich/audio";
+import { useTonePlayer } from "./rich/useTonePlayer";
 import { Drawing, type PointerInput } from "./PackageDrawing";
 type InputIntent = {
   type: "step" | "reset" | "control" | "pointer" | "resize";
@@ -41,8 +41,7 @@ export function WorkerRuntime({
 }: {
   payload: DiscoveryPackagePayload;
 }) {
-  // PackagePreview keys this component by checksum. Fresh authorization responses
-  // must not restart the same immutable worker or replace its raster identities.
+  // Checksum keys prevent fresh authorization from replacing immutable worker resources.
   const payload = useRef(authorizedPayload).current;
   const frame = useRef<HTMLIFrameElement>(null);
   const viewport = useRef<HTMLDivElement>(null);
@@ -62,8 +61,7 @@ export function WorkerRuntime({
   const previousScene = useRef<Scene | null>(null);
   const [error, setError] = useState("");
   const [audioError, setAudioError] = useState("");
-  const tonePlayer = useRef<ReturnType<typeof createTonePlayer> | null>(null);
-  useEffect(() => () => tonePlayer.current?.dispose(), []);
+  const { playTone, disposeTone, syncTones } = useTonePlayer();
   const [paused, setPaused] = useState(false);
   const values = useRef<Record<string, number>>({});
   const time = useRef(0);
@@ -176,6 +174,7 @@ export function WorkerRuntime({
           setError("The simulation returned an unsupported drawing.");
           return;
         }
+        syncTones(previousScene.current?.audio, parsed.audio);
         previousScene.current = parsed;
         inFlight.current = false;
         const next = queued.current.shift();
@@ -224,7 +223,7 @@ export function WorkerRuntime({
       previousScene.current = null;
       window.removeEventListener("message", onMessage);
     };
-  }, [encoded, input, mode, payload, assetNames]);
+  }, [encoded, input, mode, payload, assetNames, syncTones]);
   const hasScene = scene !== null;
   useEffect(() => {
     if (
@@ -275,8 +274,7 @@ export function WorkerRuntime({
   const pressButton = (id: string) => {
     const tone = scene?.audio?.find((t) => t.buttonId === id);
     if (tone) {
-      tonePlayer.current ??= createTonePlayer();
-      if (!tonePlayer.current.play(tone))
+      if (!playTone(tone))
         setAudioError(
           "Audio is unavailable. The visual model remains interactive.",
         );
@@ -386,6 +384,8 @@ export function WorkerRuntime({
       )}{" "}
       <button
         onClick={() => {
+          disposeTone();
+          setAudioError("");
           time.current = 0;
           values.current = {};
           input("reset");

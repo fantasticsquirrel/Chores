@@ -170,6 +170,7 @@ export function DiscoveryExplorationPage() {
     "orbital-mechanics",
     "photosynthesis",
     "reflection-refraction",
+    "sound-playground",
   ].includes(item?.id ?? "");
   return (
     <div className="discovery-lab discovery-detail">

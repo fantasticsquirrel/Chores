@@ -1,3 +1,5 @@
+import { soundActivity } from "./sound";
+
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
 
@@ -7,13 +9,12 @@ export function stringWave(
   tensionN: number,
   amplitudeMm: number,
 ) {
-  const length = Math.max(0.01, lengthCm / 100);
-  const frequency = Math.sqrt(Math.max(0, tensionN) / 0.001) / (2 * length);
+  const activity = soundActivity({ lengthCm, tensionN, amplitudeMm });
   return {
-    frequency,
-    wavelength: frequency > 0 ? 343 / frequency : 0,
+    frequency: activity.fundamentalFrequencyHz,
+    wavelength: activity.airWavelengthMeters,
     // Energy comparison is at fixed frequency, string length, and tension.
-    relativeEnergy: Math.max(0, amplitudeMm) ** 2,
+    relativeEnergy: activity.relativeVibrationIndex,
   };
 }
 

@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { stringWave } from "@family-manager/family-api/discovery-models/physical-world";
-import { Playback, Slider } from "./SimulationPrimitives";
+import { useEffect, useMemo, useState } from "react";
+import {
+  SOUND_DEFAULT_INPUTS,
+  soundActivity,
+  type SoundInputs,
+} from "@family-manager/family-api/discovery-models/sound";
 import { usePlayback } from "./usePlayback";
 import { useStringAudio } from "./useStringAudio";
 import { SoundDrawing } from "./SoundDrawing";
@@ -8,18 +11,53 @@ import {
   PhysicalLayout,
   PhysicalStage,
 } from "./physical-exhibits/PhysicalStage";
+import { SoundExploreControls } from "./sound/SoundExploreControls";
+import { SoundPredictionTrials } from "./sound/SoundPredictionTrials";
+import { useSoundLesson } from "./sound/useSoundLesson";
 import "./physical-exhibits/physical-exhibits.css";
+
+const formatFrequency = (value: number) => `${value.toFixed(1)} Hz`;
+
 export function SoundPlaygroundSimulation() {
-  const [length, setLength] = useState(60),
-    [tension, setTension] = useState(80),
-    [amplitude, setAmplitude] = useState(3);
-  const playback = usePlayback(2),
-    audio = useStringAudio(),
-    result = stringWave(length, tension, amplitude);
+  const [length, setLength] = useState(SOUND_DEFAULT_INPUTS.lengthCm);
+  const [tension, setTension] = useState(SOUND_DEFAULT_INPUTS.tensionN);
+  const [amplitude, setAmplitude] = useState(SOUND_DEFAULT_INPUTS.amplitudeMm);
+  const lesson = useSoundLesson();
+  const playback = usePlayback(2);
+  const audio = useStringAudio();
+  const result = useMemo(
+    () =>
+      soundActivity({
+        lengthCm: length,
+        tensionN: tension,
+        amplitudeMm: amplitude,
+      }),
+    [length, tension, amplitude],
+  );
+  const freeExploration = lesson.freeExploration;
+
+  useEffect(() => {
+    const pauseWhenHidden = () => {
+      if (document.hidden) playback.pause();
+    };
+    document.addEventListener("visibilitychange", pauseWhenHidden);
+    return () =>
+      document.removeEventListener("visibilitychange", pauseWhenHidden);
+  }, [playback]);
+
+  const showTrial = (trial: SoundInputs) => {
+    audio.stop();
+    playback.pause();
+    playback.setProgress(0);
+    setLength(trial.lengthCm);
+    setTension(trial.tensionN);
+    setAmplitude(trial.amplitudeMm);
+  };
   const reset = () => {
-    setLength(60);
-    setTension(80);
-    setAmplitude(3);
+    setLength(SOUND_DEFAULT_INPUTS.lengthCm);
+    setTension(SOUND_DEFAULT_INPUTS.tensionN);
+    setAmplitude(SOUND_DEFAULT_INPUTS.amplitudeMm);
+    lesson.resetLesson();
     playback.reset();
     audio.stop();
   };
@@ -30,109 +68,86 @@ export function SoundPlaygroundSimulation() {
   const pressure = Array.from(
     { length: 361 },
     (_, i) =>
-      `${i ? "L" : "M"}${i * 2},${45 - Math.sin((i / 360) * result.frequency * 0.01 * Math.PI * 2 - playback.progress * Math.PI * 2) * amplitude * 4.7}`,
+      `${i ? "L" : "M"}${i * 2},${45 - Math.sin((i / 360) * result.cyclesPerTenMilliseconds * Math.PI * 2 - playback.progress * Math.PI * 2) * amplitude * 4.7}`,
   ).join(" ");
   return (
     <PhysicalLayout
-      question="Predict the pitch after doubling length while tension stays fixed. Reset, then double only the amplitude. Compare frequency, wave height and vibration energy. Which change produces more cycles in 10 milliseconds?"
-      explanation="A longer string has a lower fundamental frequency; greater tension raises it. A larger pluck makes a taller vibration and increases energy without changing this ideal string’s natural frequency. The pressure trace shows the resulting cycles at one point in the air."
-      caveat="Uniform ideal string, linear density 1 g/m, fundamental mode only. String displacement is enlarged and motion slowed; visible speed is not audio frequency. Energy index is amplitude² and is comparable only at fixed length and tension. The pressure trace is schematic, not a microphone measurement. Air sound speed is held at 343 m/s."
+      question="After the two fixed trials, change one control at a time. Can you make the trace show more cycles without changing the model amplitude?"
+      explanation="For an ideal fixed string, fundamental frequency increases with tension and decreases with vibrating length. A larger pluck changes the string’s displacement, not that natural frequency. Pitch and loudness are perceptions: frequency strongly influences pitch, while loudness also depends on sound level, frequency, hearing, the instrument body and the room."
+      caveat="Model boundary: a uniform 1 g/m string vibrating in its fundamental mode, with air sound speed fixed at 343 m/s. String displacement is enlarged and motion is slowed. The pressure trace is a visual comparison, not a microphone or decibel reading; the A² index is relative only when length, tension and density stay fixed. The optional sound is a low-gain pure tone, not the wooden instrument, and actual volume depends on your device settings."
       controls={
         <>
-          <div className="dl-physical-control-group">
-            <Slider
-              label="String length"
-              value={length}
-              min={20}
-              max={120}
-              unit=" cm"
-              onChange={setLength}
-            />
-            <Slider
-              label="String tension"
-              value={tension}
-              min={20}
-              max={200}
-              unit=" N"
-              onChange={setTension}
-            />
-          </div>
-          <div className="dl-physical-control-group">
-            <Slider
-              label="Pluck amplitude"
-              value={amplitude}
-              min={0}
-              max={8}
-              step={0.5}
-              unit=" mm"
-              onChange={setAmplitude}
-            />
-            <Slider
-              label="Cycle position"
-              value={Math.round(playback.progress * 360)}
-              min={0}
-              max={360}
-              unit="°"
-              onChange={(value) => playback.setProgress(value / 360)}
-            />
-          </div>
-          <div className="dl-physical-control-group">
-            <Playback
-              playing={playback.playing}
-              toggle={playback.toggle}
-              reset={reset}
-            />
-            <div className="dl-physical-shortcuts">
-              <button
-                type="button"
-                onClick={() => setLength(length * 2)}
-                disabled={length > 60}
-              >
-                Double length
-              </button>
-              <button
-                type="button"
-                onClick={() => setAmplitude(amplitude * 2)}
-                disabled={amplitude > 4 || amplitude === 0}
-              >
-                Double amplitude
-              </button>
-              <button type="button" onClick={pluck}>
-                Pluck string
-              </button>
-              <button
-                type="button"
-                onClick={() => void audio.play(result.frequency, amplitude)}
-                disabled={amplitude === 0 || audio.playing}
-              >
-                Hear this note
-              </button>
-            </div>
-            <p className="dl-physical-audio-error">
-              {audio.error ||
-                "Audio plays only when requested: a quiet pure tone, not a recorded instrument."}
-            </p>
-          </div>
+          <SoundPredictionTrials
+            lesson={lesson}
+            onShowTrial={showTrial}
+            onPredictionChange={() => {
+              playback.pause();
+              audio.stop();
+            }}
+          />
+          <SoundExploreControls
+            unlocked={freeExploration}
+            length={length}
+            tension={tension}
+            amplitude={amplitude}
+            progress={playback.progress}
+            playing={playback.playing}
+            audioPlaying={audio.playing}
+            audioError={audio.error}
+            onLength={(value) => {
+              audio.stop();
+              setLength(value);
+            }}
+            onTension={(value) => {
+              audio.stop();
+              setTension(value);
+            }}
+            onAmplitude={(value) => {
+              audio.stop();
+              setAmplitude(value);
+            }}
+            onProgress={(value) => playback.setProgress(value)}
+            onToggleMotion={playback.toggle}
+            onPluck={pluck}
+            onToggleAudio={() =>
+              audio.playing
+                ? audio.stop()
+                : void audio.play(result.fundamentalFrequencyHz, amplitude)
+            }
+            onReset={reset}
+          />
         </>
       }
       readout={
         <>
+          <span aria-label="Fundamental frequency">
+            Fundamental frequency:{" "}
+            <strong>{formatFrequency(result.fundamentalFrequencyHz)}</strong>
+          </span>
           <span>
-            Period: <strong>{(1000 / result.frequency).toFixed(2)} ms</strong>
+            Period: <strong>{result.periodMilliseconds.toFixed(2)} ms</strong>
+          </span>
+          <span>
+            String fundamental wavelength:{" "}
+            <strong>
+              {result.stringFundamentalWavelengthMeters.toFixed(2)} m
+            </strong>
           </span>
           <span>
             Sound wavelength in air:{" "}
-            <strong>{result.wavelength.toFixed(2)} m</strong>
+            <strong>{result.airWavelengthMeters.toFixed(2)} m</strong>
           </span>
-          <span>
-            Relative vibration energy:{" "}
-            <strong>
-              <output aria-label="Relative vibration energy">
-                {result.relativeEnergy}
-              </output>
-            </strong>
+          <span aria-label="Relative vibration index">
+            Relative vibration index:{" "}
+            <strong>{result.relativeVibrationIndex}</strong>
           </span>
           <span>f = (1 ÷ 2L) × √(T ÷ μ)</span>
+          {!result.hasVibration && (
+            <span className="dl-sound-silent">
+              The string still has a modeled natural frequency, but at 0 mm no
+              vibration is being shown or played.
+            </span>
+          )}
         </>
       }
     >
@@ -145,16 +160,20 @@ export function SoundPlaygroundSimulation() {
           progress: playback.progress,
         }}
         onAction={(action) => {
-          if (action.type === "length") setLength(action.value);
-          if (action.type === "pluck") pluck();
+          if (!freeExploration) return;
+          if (action.type === "length") {
+            audio.stop();
+            setLength(action.value);
+          }
+          if (action.type === "pluck" && amplitude > 0) pluck();
         }}
-        description={`Mounted string instrument. The movable bridge sets a ${length} centimeter vibrating length at ${tension} newtons of tension. Natural frequency ${result.frequency.toFixed(1)} hertz; pluck amplitude ${amplitude} millimeters. Motion is slowed and displacement enlarged.`}
+        description={`Mounted string instrument. The movable bridge sets a ${length} centimeter vibrating length at ${tension} newtons. The ideal fundamental is ${result.fundamentalFrequencyHz.toFixed(1)} hertz and the model displacement is ${amplitude} millimeters. ${result.hasVibration ? "The visible motion is enlarged and slowed." : "At zero displacement, the string is stationary."}`}
         fallback={
           <SoundDrawing
             length={length}
             amplitude={amplitude}
             progress={playback.progress}
-            frequency={result.frequency}
+            frequency={result.fundamentalFrequencyHz}
           />
         }
         header={
@@ -162,25 +181,27 @@ export function SoundPlaygroundSimulation() {
             <div>
               <h3>
                 <output aria-label="Frequency">
-                  {result.frequency.toFixed(1)} Hz
+                  {formatFrequency(result.fundamentalFrequencyHz)}
                 </output>
               </h3>
               <p>
-                Drag the movable bridge to change vibrating length. Tap the
-                string to pluck it.
+                Use the fixed trials first. Afterward, drag the bridge or use
+                the keyboard-accessible sliders and buttons.
               </p>
             </div>
             <div className="dl-physical-number">
               <strong>{length} cm</strong>
-              <small>between the fixed ends</small>
+              <small>vibrating length</small>
             </div>
           </div>
         }
       >
         <div className="dl-physical-trace">
           <div className="dl-physical-trace-heading">
-            <strong>Air pressure at one point</strong>
-            <span>{(result.frequency * 0.01).toFixed(2)} cycles / 10 ms</span>
+            <strong>Modeled pressure pattern at one point</strong>
+            <span>
+              {result.cyclesPerTenMilliseconds.toFixed(2)} cycles / 10 ms
+            </span>
           </div>
           <svg
             viewBox="0 0 720 90"
@@ -217,8 +238,9 @@ export function SoundPlaygroundSimulation() {
             <span>10 ms</span>
           </div>
           <p>
-            More cycles in this time window means higher pitch. A taller wave
-            means greater amplitude.
+            Count cycles for frequency; compare height for the model amplitude.
+            Shape and height do not by themselves measure perceived pitch or
+            loudness.
           </p>
         </div>
       </PhysicalStage>

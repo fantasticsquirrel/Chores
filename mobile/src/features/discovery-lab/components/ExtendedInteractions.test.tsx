@@ -7,13 +7,46 @@ afterEach(() => {
 });
 
 describe("native predictions and evidence", () => {
-  it("separates amplitude from pitch and changes pitch with length", () => {
+  it("gates sound comparisons behind predictions and records controlled evidence", () => {
     const view = render(<NativeExploration id="sound-playground" />);
-    expect(view.getByText(/Frequency 200.0 Hz/)).toBeTruthy();
-    fireEvent.press(view.getByText("Increase Amplitude (mm)"));
-    expect(view.getByText(/Frequency 200.0 Hz.*amplitude 4 mm/)).toBeTruthy();
+    expect(view.getByText("Compare string lengths")).toBeDisabled();
+    fireEvent.press(view.getByText("Half as many cycles per second"));
+    fireEvent.press(view.getByText("Compare string lengths"));
+    expect(
+      view.getByText(
+        /matches your prediction.*60 cm: 235.7 Hz.*120 cm: 117.9 Hz/,
+      ),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("Same number of cycles per second"));
+    expect(
+      view.queryByText(/matches your prediction.*60 cm: 235.7 Hz/),
+    ).toBeNull();
+    fireEvent.press(view.getByText("Half as many cycles per second"));
+    fireEvent.press(view.getByText("Compare string lengths"));
+    fireEvent.press(view.getByText("Same frequency"));
+    fireEvent.press(view.getByText("Compare model amplitudes"));
+    expect(
+      view.getByText(
+        /matches your prediction.*3 mm: 235.7 Hz.*6 mm: 235.7 Hz.*index 9 → 36/,
+      ),
+    ).toBeTruthy();
+    expect(
+      view.getByText(
+        /Held: 60 cm length · 80 N tension · 1 g\/m linear density/,
+      ),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("Increase Slowed-motion phase"));
+    expect(view.getByText("Slowed-motion phase: 1")).toBeTruthy();
+    fireEvent.press(view.getByText("Show 3 mm evidence"));
+    expect(view.getByText("Slowed-motion phase: 0")).toBeTruthy();
+    fireEvent.press(view.getByText("Double frequency"));
+    expect(
+      view.queryByText(/matches your prediction.*3 mm: 235.7 Hz/),
+    ).toBeNull();
+    fireEvent.press(view.getByText("Same frequency"));
+    fireEvent.press(view.getByText("Compare model amplitudes"));
     fireEvent.press(view.getByText("Increase String length (cm)"));
-    expect(view.getByText(/Frequency 166.7 Hz/)).toBeTruthy();
+    expect(view.getByText(/Fundamental 202.0 Hz/)).toBeTruthy();
   });
 
   it("changes bridge stress and spending with reinforcement", () => {

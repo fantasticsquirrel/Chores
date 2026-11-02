@@ -371,6 +371,9 @@
   margin: 0;
 }
 @media (max-width: 720px) {
+  .dl-physical-stage--sound .dl-physical-model-label:nth-of-type(3) {
+    display: none;
+  }
   .dl-physical-header {
     padding: 22px 19px 0;
     gap: 15px;
@@ -474,4 +477,124 @@
   line-height: 1.2;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.dl-sound-trial {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.dl-sound-trial legend,
+.dl-sound-explore > strong {
+  color: #f2edda;
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+.dl-sound-trial > p,
+.dl-sound-explore > p {
+  min-height: 3.9em;
+  margin: 9px 0 14px;
+  color: #b9cccf;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.dl-sound-choices {
+  display: grid;
+  gap: 7px;
+}
+.dl-sound-choices button,
+.dl-sound-compare,
+.dl-sound-evidence-actions button {
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #657c80;
+  border-radius: 8px;
+  background: #17303a;
+  color: #e6eee9;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.dl-sound-choices button[aria-pressed="true"] {
+  border-color: #f0d28e;
+  background: #405242;
+  box-shadow: inset 4px 0 #f0d28e;
+}
+.dl-sound-compare {
+  width: 100%;
+  margin-top: 10px;
+  background: #d9eadb;
+  color: #17352e;
+  font-weight: 700;
+  text-align: center;
+}
+.dl-sound-compare:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+.dl-sound-feedback {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #7d918d;
+  border-left: 5px solid #f0d28e;
+  border-radius: 8px;
+  background: #10252d;
+  color: #c9d8d6;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.dl-sound-feedback[data-result="match"] {
+  border-left-color: #8fd3b8;
+}
+.dl-sound-feedback[data-result="revise"] {
+  border-left-color: #f0bc7d;
+}
+.dl-sound-feedback strong {
+  color: #f4edd2;
+  font-size: 13px;
+}
+.dl-sound-evidence-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 2px;
+}
+.dl-sound-evidence-actions button {
+  min-height: 38px;
+  padding: 7px 8px;
+  text-align: center;
+}
+.dl-sound-explore .dl-slider {
+  padding-top: 2px;
+}
+.dl-sound-silent {
+  flex-basis: 100%;
+  padding-left: 11px;
+  border-left: 4px solid #f0bc7d;
+  color: #f5d6ab;
+}
+
+@media (max-width: 980px) {
+  .dl-physical-stage--sound + .dl-physical-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .dl-sound-explore {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 720px) {
+  .dl-physical-stage--sound + .dl-physical-controls {
+    grid-template-columns: 1fr;
+  }
+  .dl-sound-explore {
+    grid-column: auto;
+  }
+  .dl-sound-trial > p,
+  .dl-sound-explore > p {
+    min-height: 0;
+  }
 }

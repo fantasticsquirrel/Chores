@@ -84,11 +84,46 @@ export function createSoundScene(initial: SoundSceneState): PhysicalSceneModel {
     }),
   );
   group.add(baseline);
+  const nodeMaterial = material("#f4d395", 0.5, 0.28);
+  const fixedNode = new THREE.Mesh(
+    new THREE.SphereGeometry(0.075, 16, 12),
+    nodeMaterial,
+  );
+  const movingNode = new THREE.Mesh(
+    new THREE.SphereGeometry(0.075, 16, 12),
+    nodeMaterial,
+  );
+  fixedNode.name = "sound-fixed-node";
+  movingNode.name = "sound-moving-node";
+  fixedNode.position.set(-4.8, 1.02, 0);
+  group.add(fixedNode, movingNode);
+  const antinodeMaterial = new THREE.MeshStandardMaterial({
+    color: "#9de3d4",
+    emissive: "#3a9c8c",
+    emissiveIntensity: 0.45,
+    metalness: 0.15,
+    roughness: 0.3,
+  });
+  const antinode = new THREE.Mesh(
+    new THREE.SphereGeometry(0.09, 18, 14),
+    antinodeMaterial,
+  );
+  antinode.name = "sound-antinode";
+  group.add(antinode);
   let previous = "";
   const update = (s: SoundSceneState) => {
     const end = stringEndX(s.length);
     movingBridge.position.x = end;
     tuning.rotation.y = s.tension / 25;
+    movingNode.position.set(end, 1.02, 0);
+    const midpointDisplacement =
+      s.amplitude * 0.1 * Math.cos(s.progress * Math.PI * 2);
+    antinode.position.set((-4.8 + end) / 2, 1.02 + midpointDisplacement, 0);
+    antinode.visible = s.amplitude > 0;
+    const emphasis = 0.78 + Math.abs(midpointDisplacement) * 0.3;
+    antinode.scale.setScalar(emphasis);
+    antinodeMaterial.emissiveIntensity =
+      0.32 + Math.abs(midpointDisplacement) * 0.8;
     const key = `${s.length}:${s.amplitude}:${s.progress}`;
     if (key !== previous) {
       const points = Array.from(
@@ -130,8 +165,20 @@ export function createSoundScene(initial: SoundSceneState): PhysicalSceneModel {
   return {
     group,
     labels: () => [
-      { text: "Fixed end", at: [-4.8, 1.55, 0] },
-      { text: "Movable bridge", at: [movingBridge.position.x, 1.55, 0] },
+      { text: "Fixed node", at: [-4.8, 1.55, 0] },
+      { text: "Movable node", at: [movingBridge.position.x, 1.55, 0] },
+      ...(antinode.visible
+        ? [
+            {
+              text: "Largest motion",
+              at: [antinode.position.x, antinode.position.y + 0.4, 0] as [
+                number,
+                number,
+                number,
+              ],
+            },
+          ]
+        : []),
     ],
     view: {
       position: [6.4, 8.7, 12],

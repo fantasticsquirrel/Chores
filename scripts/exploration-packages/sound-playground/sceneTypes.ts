@@ -1,15 +1,4 @@
 import type { Group, Vector3 } from "three";
-import type { BridgeMaterial, CircuitMode } from "./model";
-export type BridgeSceneState = {
-  kind: "bridge";
-  material: BridgeMaterial;
-  braces: boolean[];
-  load: number;
-  position: number;
-  utilization: number[];
-  leftReaction: number;
-  rightReaction: number;
-};
 export type SoundSceneState = {
   kind: "sound";
   length: number;
@@ -17,21 +6,9 @@ export type SoundSceneState = {
   amplitude: number;
   progress: number;
 };
-export type CircuitSceneState = {
-  kind: "circuit";
-  mode: CircuitMode;
-  switches: boolean[];
-  power: number[];
-  current: number[];
-  voltage: number;
-};
-export type PhysicalSceneState =
-  | BridgeSceneState
-  | SoundSceneState
-  | CircuitSceneState;
+export type PhysicalSceneState = SoundSceneState;
 export type PhysicalAction =
-  | { type: "position" | "length"; value: number }
-  | { type: "switch"; index: number }
+  | { type: "length"; value: number }
   | { type: "pluck" };
 /** Pure Three scene model: no DOM, browser renderer, audio or application state. */
 export interface PhysicalSceneModel {

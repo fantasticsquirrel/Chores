@@ -54,6 +54,10 @@ describe("pure physical exhibit models", () => {
     expect(model.interact("pluck", new Vector3(), false)).toEqual({
       type: "pluck",
     });
+    expect(model.group.getObjectByName("sound-fixed-node")?.position.x).toBe(
+      -4.8,
+    );
+    expect(model.group.getObjectByName("sound-antinode")?.visible).toBe(true);
     model.update({
       kind: "sound",
       length: 120,
@@ -61,6 +65,10 @@ describe("pure physical exhibit models", () => {
       amplitude: 0,
       progress: 0.5,
     });
+    expect(model.group.getObjectByName("sound-moving-node")?.position.x).toBe(
+      stringEndX(120),
+    );
+    expect(model.group.getObjectByName("sound-antinode")?.visible).toBe(false);
     model.dispose();
   });
   it("maps all switch hits to the correct controlled branch", () => {

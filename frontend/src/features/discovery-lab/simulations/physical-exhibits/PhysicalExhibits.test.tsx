@@ -23,14 +23,22 @@ describe("physical exhibits: direct investigation equivalents", () => {
   it("compares amplitude without changing natural frequency", () => {
     render(<SoundPlaygroundSimulation />);
     const frequency = screen.getByLabelText("Frequency").textContent;
-    fireEvent.click(screen.getByRole("button", { name: "Double amplitude" }));
-    expect(screen.getByLabelText("Pluck amplitude")).toHaveValue("6");
+    fireEvent.click(screen.getByRole("button", { name: "Same frequency" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare pluck amplitudes" }),
+    );
     expect(screen.getByLabelText("Frequency").textContent).toBe(frequency);
-    expect(
-      screen.getByLabelText("Relative vibration energy"),
-    ).toHaveTextContent("36");
-    fireEvent.click(screen.getByRole("button", { name: "Double length" }));
-    expect(screen.getByLabelText("String length")).toHaveValue("120");
+    expect(screen.getByLabelText("Relative vibration index")).toHaveTextContent(
+      "36",
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Half as many cycles per second",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare string lengths" }),
+    );
     expect(screen.getByLabelText("Frequency").textContent).not.toBe(frequency);
   });
   it("toggles a house from its exhibit card with correct path behavior", () => {
