@@ -13,7 +13,7 @@ describe("physical world exploration controls", () => {
     [BridgeBuilderSimulation, "Try this"],
     [RiverSculptorSimulation, "Try this"],
     [CircuitCitySimulation, "Units used in the evidence"],
-    [FoodWebSimulation, "Try this"],
+    [FoodWebSimulation, "1 · Remove a consumer"],
   ] as const)(
     "renders a labeled exhibit and experiment prompt",
     (Simulation, prompt) => {
@@ -152,13 +152,27 @@ describe("physical world exploration controls", () => {
   });
   it("steps the pond explicitly and holds removed species at zero", () => {
     render(<FoodWebSimulation />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Zooplankton rises and algae falls",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare fish present and absent" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Fish and oxygen both finish lower" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare low and high nutrients" }),
+    );
     fireEvent.click(screen.getByLabelText("Fish present"));
     fireEvent.click(screen.getByRole("button", { name: "Advance one week" }));
     expect(screen.getByLabelText("Fish population index").textContent).toBe(
       "0.0",
     );
-    expect(screen.getByText("Week 1")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getByText("Week 9")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
     expect(screen.getByLabelText("Fish population index").textContent).toBe(
       "20.0",
     );

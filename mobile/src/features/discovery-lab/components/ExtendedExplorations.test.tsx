@@ -7,7 +7,7 @@ const controls: [string, string][] = [
   ["bridge-builder", "Left support carries more"],
   ["river-sculptor", "Runoff and soil export both decrease"],
   ["circuit-city", "All off in series; houses A and C on in parallel"],
-  ["food-web-rescue", "Advance one week"],
+  ["food-web-rescue", "Zooplankton rises and algae falls"],
   ["fraction-feast", "Increase Equal slices"],
   ["pattern-palace", "Rotate a quarter turn"],
   ["caravan-crossroads", "Wet season"],

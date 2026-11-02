@@ -52,6 +52,49 @@ function fish(group: T.Object3D, x: number, y: number, z: number, i: number) {
     );
   }
 }
+function energyArrow(
+  group: T.Object3D,
+  name: string,
+  start: T.Vector3,
+  end: T.Vector3,
+  phase: number,
+) {
+  const arrow = new T.Group();
+  arrow.name = name;
+  group.add(arrow);
+  const direction = end.clone().sub(start).normalize();
+  line(arrow, [start, end], "#e3b94f", 0.065);
+  const head = mesh(
+    arrow,
+    new T.ConeGeometry(0.19, 0.42, 16),
+    new T.MeshStandardMaterial({
+      color: "#f1cc61",
+      emissive: "#6c4b08",
+      emissiveIntensity: 0.28,
+      roughness: 0.3,
+    }),
+    end.x,
+    end.y,
+    end.z,
+  );
+  head.name = `${name}-head`;
+  head.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), direction);
+  const markerPosition = start.clone().lerp(end, phase);
+  const marker = mesh(
+    arrow,
+    new T.SphereGeometry(0.12, 8, 6),
+    new T.MeshStandardMaterial({
+      color: "#fff1a8",
+      emissive: "#d99111",
+      emissiveIntensity: 0.75,
+      roughness: 0.2,
+    }),
+    markerPosition.x,
+    markerPosition.y,
+    markerPosition.z,
+  );
+  marker.name = `${name}-marker`;
+}
 export function buildPond(state: PondSceneState): BuiltLandscape {
   const group = new T.Group(),
     level = 1.1 - state.drought * 0.012;
@@ -208,6 +251,21 @@ export function buildPond(state: PondSceneState): BuiltLandscape {
       -0.6 + ((i * 0.97) % 3.3),
       i,
     );
+  const detritus = new T.Group();
+  detritus.name = "detritus";
+  group.add(detritus);
+  for (let i = 0; i < Math.ceil(state.detritus / 2.2); i++) {
+    const particle = mesh(
+      detritus,
+      new T.SphereGeometry(1, 7, 5),
+      material(i % 2 ? "#8b633b" : "#b88b4c"),
+      -4.8 + ((i * 1.49) % 9.6),
+      -0.96 + (i % 3) * 0.035,
+      -1.9 + ((i * 0.91) % 4.8),
+    );
+    particle.scale.set(0.075 + (i % 3) * 0.025, 0.025, 0.055);
+    particle.rotation.y = i * 0.73;
+  }
   for (let i = 0; i < Math.floor(state.oxygen / 5); i++) {
     const bubble = mesh(
       group,
@@ -224,27 +282,49 @@ export function buildPond(state: PondSceneState): BuiltLandscape {
     );
     bubble.castShadow = false;
   }
+  const flowPhase = ((state.energyFlowPhase % 1) + 1) % 1;
+  if (state.algae > 0 && state.zooplankton > 0)
+    energyArrow(
+      group,
+      "energy-flow-algae-to-zooplankton",
+      v(-3.7, level + 0.53, 3.6),
+      v(-0.45, level + 0.15, 3.6),
+      flowPhase,
+    );
+  if (state.zooplankton > 0 && state.fish > 0)
+    energyArrow(
+      group,
+      "energy-flow-zooplankton-to-fish",
+      v(0.15, level + 0.08, 3.6),
+      v(3.45, level - 0.35, 3.6),
+      flowPhase,
+    );
   return {
     group,
     labels: [
       {
-        text: state.algae > 0 ? "Algae · producer" : "Algae absent",
+        text: state.algae > 0 ? "Algae" : "Algae absent",
         x: -2.9,
         y: level + 0.35,
         z: -0.8,
       },
       {
-        text:
-          state.zooplankton > 0 ? "Zooplankton · grazer" : "Zooplankton absent",
+        text: state.zooplankton > 0 ? "Grazers" : "Grazers absent",
         x: 2.3,
         y: level,
         z: 1.3,
       },
       {
-        text: state.fish > 0 ? "Fish · consumer" : "Fish absent",
-        x: -1.8,
-        y: level - 0.4,
-        z: 2.5,
+        text: state.fish > 0 ? "Fish" : "Fish absent",
+        x: 3.15,
+        y: level - 0.28,
+        z: 2.85,
+      },
+      {
+        text: "Resource → consumer",
+        x: 0,
+        y: level + 1.02,
+        z: 3.6,
       },
     ],
   };

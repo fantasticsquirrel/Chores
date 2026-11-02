@@ -18,8 +18,10 @@ export type PondSceneState = {
   zooplankton: number;
   fish: number;
   oxygen: number;
+  detritus: number;
   drought: number;
   nutrients: number;
+  energyFlowPhase: number;
 };
 export type CaravanSceneState = {
   kind: "caravan";

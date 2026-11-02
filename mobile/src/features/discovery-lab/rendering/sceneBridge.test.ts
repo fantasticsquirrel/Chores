@@ -95,8 +95,10 @@ const states: OfflineSceneState[] = [
     zooplankton: 45,
     fish: 50,
     oxygen: 80,
+    detritus: 10,
     drought: 0,
     nutrients: 30,
+    energyFlowPhase: 0,
   },
   {
     kind: "caravan",
@@ -161,6 +163,11 @@ describe("typed offline scene transport", () => {
       { ...states[4], water: -1 },
       { ...states[5], wallHeightMeters: 100 },
       { ...states[5], gate: "yes" },
+      { ...states.find((state) => state.kind === "pond")!, detritus: 101 },
+      {
+        ...states.find((state) => state.kind === "pond")!,
+        energyFlowPhase: 1.01,
+      },
     ]) {
       expect(validSceneState(value)).toBe(false);
       expect(sceneStateScript(value as OfflineSceneState)).toBeNull();

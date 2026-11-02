@@ -3,6 +3,8 @@ import { riverActivity } from "./river";
 import { circuitActivity, type CircuitMode } from "./circuit";
 
 export type { CircuitMode } from "./circuit";
+export { initialPond, pondWeek } from "./pond";
+export type { PondConditions, PondState } from "./pond";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
@@ -107,54 +109,4 @@ export function riverStorm(
     deposited: result.depositedKilograms,
     floodVolume: result.channelCapacityExcessCubicMeters,
   };
-}
-
-export interface PondState {
-  algae: number;
-  zooplankton: number;
-  fish: number;
-  oxygen: number;
-}
-export interface PondConditions {
-  nutrients: number;
-  drought: number;
-}
-export const initialPond: PondState = {
-  algae: 45,
-  zooplankton: 35,
-  fish: 20,
-  oxygen: 80,
-};
-/** Bounded food-web indices; one step is an illustrative week, not a field prediction. */
-export function pondWeek(
-  state: PondState,
-  conditions: PondConditions,
-): PondState {
-  let { algae, zooplankton, fish, oxygen } = state;
-  const nutrients = clamp(conditions.nutrients),
-    drought = clamp(conditions.drought);
-  const capacity = 20 + nutrients * 0.8;
-  for (let i = 0; i < 10; i++) {
-    const grazing = (0.018 * algae * zooplankton) / (1 + algae / 35);
-    const predation = (0.012 * zooplankton * fish) / (1 + zooplankton / 35);
-    const oxygenTarget = clamp(100 - 0.65 * algae - 0.5 * drought);
-    const oxygenStress = Math.max(0, 40 - oxygen) / 100;
-    algae = clamp(
-      algae +
-        0.1 *
-          (0.5 * algae * (1 - algae / capacity) -
-            grazing -
-            drought * 0.0007 * algae),
-    );
-    zooplankton = clamp(
-      zooplankton +
-        0.1 *
-          (0.4 * grazing - predation - (0.025 + oxygenStress) * zooplankton),
-    );
-    fish = clamp(
-      fish + 0.1 * (0.3 * predation - (0.035 + oxygenStress * 1.7) * fish),
-    );
-    oxygen = clamp(oxygen + 0.1 * (oxygenTarget - oxygen) * 0.8);
-  }
-  return { algae, zooplankton, fish, oxygen };
 }

@@ -202,6 +202,30 @@ for (const viewport of [
           .click();
       } else if (id === "food-web-rescue") {
         await page
+          .getByRole("button", {
+            name: "Zooplankton rises and algae falls",
+            exact: true,
+          })
+          .click();
+        await page
+          .getByRole("button", {
+            name: "Compare fish present and absent",
+            exact: true,
+          })
+          .click();
+        await page
+          .getByRole("button", {
+            name: "Fish and oxygen both finish lower",
+            exact: true,
+          })
+          .click();
+        await page
+          .getByRole("button", {
+            name: "Compare low and high nutrients",
+            exact: true,
+          })
+          .click();
+        await page
           .getByRole("button", { name: "Advance one week", exact: true })
           .click();
       } else {

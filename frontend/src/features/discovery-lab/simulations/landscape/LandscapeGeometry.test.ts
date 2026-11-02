@@ -50,8 +50,10 @@ describe("landscape scene geometry", () => {
       zooplankton: 35,
       fish: 0,
       oxygen: 80,
+      detritus: 10,
       drought: 0,
       nutrients: 50,
+      energyFlowPhase: 0,
     });
     expect(scene.group.getObjectByName("fish-0")).toBeUndefined();
     expect(scene.labels.some((label) => label.text === "Fish absent")).toBe(

@@ -72,6 +72,30 @@ import {
 } from "../circuit-city/model";
 import { createCircuitScene as createWebCircuitScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/circuitScene";
 import { createCircuitScene as createPackageCircuitScene } from "../circuit-city/circuitScene";
+import {
+  POND_DEFAULT_CONDITIONS as SHARED_POND_CONDITIONS,
+  POND_INITIAL_STATE as SHARED_POND_INITIAL,
+  POND_NUTRIENT_COMPARISON as SHARED_POND_NUTRIENT_COMPARISON,
+  POND_PREDATOR_COMPARISON as SHARED_POND_PREDATOR_COMPARISON,
+  advancePondWeek as advanceSharedPond,
+  normalizePondConditions as normalizeSharedPondConditions,
+  normalizePondState as normalizeSharedPondState,
+  pondStateAtPhase as sharedPondStateAtPhase,
+  runPondTrial as runSharedPondTrial,
+} from "../../../packages/family-api/src/discovery-models/pond";
+import {
+  POND_DEFAULT_CONDITIONS as PACKAGE_POND_CONDITIONS,
+  POND_INITIAL_STATE as PACKAGE_POND_INITIAL,
+  POND_NUTRIENT_COMPARISON as PACKAGE_POND_NUTRIENT_COMPARISON,
+  POND_PREDATOR_COMPARISON as PACKAGE_POND_PREDATOR_COMPARISON,
+  advancePondWeek as advancePackagePond,
+  normalizePondConditions as normalizePackagePondConditions,
+  normalizePondState as normalizePackagePondState,
+  pondStateAtPhase as packagePondStateAtPhase,
+  runPondTrial as runPackagePondTrial,
+} from "../food-web-rescue/model";
+import { buildPond as buildWebPond } from "../../../packages/discovery-scenes/src/landscape/pond";
+import { buildPond as buildPackagePond } from "../food-web-rescue/pond";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -721,6 +745,130 @@ describe("ten independently authored rich explorations", () => {
     );
     expect(send("play").animate).toBe(true);
     expect(send("phase", 90).animate).toBe(false);
+    expect(send(undefined, undefined, "reset").controls).toHaveLength(0);
+  }, 30000);
+  it("food-web package exactly mirrors shared bounded model and comparisons", () => {
+    expect(PACKAGE_POND_INITIAL).toEqual(SHARED_POND_INITIAL);
+    expect(PACKAGE_POND_CONDITIONS).toEqual(SHARED_POND_CONDITIONS);
+    expect(PACKAGE_POND_PREDATOR_COMPARISON).toEqual(
+      SHARED_POND_PREDATOR_COMPARISON,
+    );
+    expect(PACKAGE_POND_NUTRIENT_COMPARISON).toEqual(
+      SHARED_POND_NUTRIENT_COMPARISON,
+    );
+    for (const state of [
+      SHARED_POND_INITIAL,
+      { algae: 0, zooplankton: 0, fish: 0, oxygen: 0, detritus: 0 },
+      {
+        algae: 999,
+        zooplankton: -1,
+        fish: 40,
+        oxygen: Infinity,
+        detritus: Number.NaN,
+      },
+    ]) {
+      expect(normalizePackagePondState(state)).toEqual(
+        normalizeSharedPondState(state),
+      );
+      expect(advancePackagePond(state, { nutrients: 77, drought: 44 })).toEqual(
+        advanceSharedPond(state, { nutrients: 77, drought: 44 }),
+      );
+    }
+    const malformed = { nutrients: Number.NaN, drought: Infinity };
+    expect(normalizePackagePondConditions(malformed)).toEqual(
+      normalizeSharedPondConditions(malformed),
+    );
+    for (const scenario of [
+      ...SHARED_POND_PREDATOR_COMPARISON,
+      ...SHARED_POND_NUTRIENT_COMPARISON,
+    ])
+      expect(runPackagePondTrial(scenario)).toEqual(
+        runSharedPondTrial(scenario),
+      );
+    expect(
+      packagePondStateAtPhase(
+        PACKAGE_POND_INITIAL,
+        PACKAGE_POND_CONDITIONS,
+        2.25,
+      ),
+    ).toEqual(
+      sharedPondStateAtPhase(SHARED_POND_INITIAL, SHARED_POND_CONDITIONS, 2.25),
+    );
+  });
+  it("food-web package and web preserve identical dimensional pond geometry", () => {
+    const visual = sharedPondStateAtPhase(
+      SHARED_POND_INITIAL,
+      SHARED_POND_CONDITIONS,
+      0.42,
+    );
+    const state = { kind: "pond" as const, ...visual };
+    const web = buildWebPond(state);
+    const packaged = buildPackagePond(state);
+    const signature = (built: typeof web) => {
+      const objects: unknown[] = [];
+      built.group.traverse((object) => {
+        const mesh = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: {
+            color?: { getHexString(): string };
+            emissive?: { getHexString(): string };
+            emissiveIntensity?: number;
+          };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          quaternion: object.quaternion.toArray(),
+          scale: object.scale.toArray(),
+          geometry: mesh.geometry?.type,
+          vertices: mesh.geometry?.attributes?.position?.count,
+          color: mesh.material?.color?.getHexString(),
+          emissive: mesh.material?.emissive?.getHexString(),
+          emissiveIntensity: mesh.material?.emissiveIntensity,
+        });
+      });
+      return { objects, labels: built.labels };
+    };
+    expect(signature(packaged)).toEqual(signature(web));
+    web.group.clear();
+    packaged.group.clear();
+  });
+  it("food-web package gates two fair comparisons and supports static or opt-in flow markers", () => {
+    const send = worker("food-web-rescue");
+    const initial = send();
+    expect(initial.controls).toHaveLength(0);
+    expect(
+      initial.buttons.find((button: any) => button.id === "comparePredator")
+        .disabled,
+    ).toBe(true);
+    send("predatorCascade");
+    let output = send("comparePredator");
+    expect(output.sections[0].text).toContain("matches your prediction");
+    expect(output.sections[0].text).toContain(
+      "Fish absent: algae 10.6 · zooplankton 56.6",
+    );
+    expect(output.sections[0].text).toContain("Changed: fish presence");
+    send("nutrientFishLower");
+    output = send("compareNutrients");
+    expect(output.sections[1].text).toContain("matches your prediction");
+    expect(output.sections[1].text).toContain("High nutrients: algae 40.9");
+    expect(output.sections[1].text).toContain("oxygen 45.7");
+    expect(output.controls.map((control: any) => control.id)).toEqual([
+      "nutrients",
+      "drought",
+      "algae",
+      "zooplankton",
+      "fish",
+      "phase",
+    ]);
+    expect(send("play").animate).toBe(true);
+    expect(send("phase", 70).animate).toBe(false);
+    expect(send("fish", 0).description).toContain("fish 0.0");
+    expect(send("advanceWeek").description).toContain("model week 9");
     expect(send(undefined, undefined, "reset").controls).toHaveLength(0);
   }, 30000);
   it("fractions preserve sparse slices under splitting and show sums beyond one", () => {

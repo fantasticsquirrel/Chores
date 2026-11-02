@@ -167,15 +167,29 @@ describe("native predictions and evidence", () => {
     ).toBeTruthy();
   });
 
-  it("does not recreate removed pond populations after advancing time", () => {
+  it("gates pond controls behind two fair comparisons and preserves absence", () => {
     const view = render(<NativeExploration id="food-web-rescue" />);
+    expect(view.getByText("Compare fish present and absent")).toBeDisabled();
+    expect(view.queryByText("Nutrient supply index: 50")).toBeNull();
+    fireEvent.press(view.getByText("Zooplankton rises and algae falls"));
+    fireEvent.press(view.getByText("Compare fish present and absent"));
+    expect(
+      view.getByText(/Fish absent: algae 10\.6.*zooplankton 56\.6/),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("Fish and oxygen both finish lower"));
+    fireEvent.press(view.getByText("Compare low and high nutrients"));
+    expect(
+      view.getByText(/High nutrients: algae 40\.9.*oxygen 45\.7/),
+    ).toBeTruthy();
+    expect(view.getByText("Nutrient supply index: 100")).toBeTruthy();
     fireEvent.press(view.getByText("Remove fish"));
-    for (let i = 0; i < 5; i++)
-      fireEvent.press(view.getByText("Advance one week"));
+    fireEvent.press(view.getByText("Advance one week"));
     expect(view.getByText("Fish population index: 0.0")).toBeTruthy();
-    expect(view.getByText(/Week 5./)).toBeTruthy();
+    expect(view.getByText(/Week 9\./)).toBeTruthy();
     fireEvent.press(view.getByText("Restore fish"));
     expect(view.getByText("Fish population index: 20.0")).toBeTruthy();
+    fireEvent.press(view.getByText("Reset experiment"));
+    expect(view.queryByText("Nutrient supply index: 50")).toBeNull();
   });
 
   it("splits every slice without changing the fraction and adds unlike denominators", () => {

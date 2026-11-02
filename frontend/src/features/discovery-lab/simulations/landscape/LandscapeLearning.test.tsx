@@ -1,7 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { RiverSculptorSimulation } from "../RiverSculptorSimulation";
-import { FoodWebSimulation } from "../FoodWebSimulation";
 import { CaravanSimulation } from "../CaravanSimulation";
 import { PollinatorSimulation } from "../PollinatorSimulation";
 import { gardenFlowers } from "@family-manager/discovery-scenes/landscape/garden";
@@ -10,7 +9,7 @@ afterEach(cleanup);
 const change = (label: string, value: number | string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 describe("landscape investigations", () => {
-  it.each([FoodWebSimulation, CaravanSimulation, PollinatorSimulation])(
+  it.each([CaravanSimulation, PollinatorSimulation])(
     "keeps two prediction and comparison investigations",
     (Component) => {
       render(<Component />);

@@ -159,17 +159,21 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
           "zooplankton",
           "fish",
           "oxygen",
+          "detritus",
           "drought",
           "nutrients",
+          "energyFlowPhase",
         ]) &&
         [
           value.algae,
           value.zooplankton,
           value.fish,
           value.oxygen,
+          value.detritus,
           value.drought,
           value.nutrients,
-        ].every((v) => number(v, 0, 100))
+        ].every((v) => number(v, 0, 100)) &&
+        number(value.energyFlowPhase, 0, 1)
       );
     case "caravan":
       return (

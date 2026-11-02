@@ -230,8 +230,10 @@ cases.push(
         zooplankton: 45,
         fish: 50,
         oxygen: 80,
+        detritus: 10,
         drought: 0,
         nutrients: 30,
+        energyFlowPhase: 0,
       },
       changed: {
         kind: "pond",
@@ -239,8 +241,10 @@ cases.push(
         zooplankton: 20,
         fish: 15,
         oxygen: 20,
+        detritus: 35,
         drought: 60,
         nutrients: 100,
+        energyFlowPhase: 0.5,
       },
     },
     {

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "food-web-rescue-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "food-web-rescue-package",
@@ -17,26 +17,38 @@
       "ponds",
       "systems"
     ],
-    "summary": "Change a pond’s food supply and organisms, then follow populations and oxygen over time.",
+    "summary": "Predict how removing fish or increasing nutrients changes a bounded pond model, then compare controlled trials.",
     "question": "Can adding more nutrients make conditions worse for fish?",
-    "explanation": "Algae capture light energy. Tiny animals called zooplankton eat algae, and some fish eat zooplankton. This chain is one part of a larger food web. Extra nutrients can encourage algal growth, but respiration and decomposition can use up dissolved oxygen that animals need. The model tracks relative population and oxygen indices, not animal counts or measured oxygen. Each step represents an illustrative week; many species, daily oxygen changes and real pond conditions are left out.",
+    "explanation": "Algae capture light energy, zooplankton graze algae, and fish can eat zooplankton. Food-web arrows point from resource or prey toward consumer because they trace energy flow; they do not show organisms moving. This chain is one path inside a larger web, so changing a consumer can affect a producer indirectly. Added nutrients can support algal growth, while respiration and decomposition can consume dissolved oxygen. The model uses invented 0–100 population, nutrient, oxygen and detritus indices, illustrative weekly steps and uncalibrated coefficients. It is designed to show qualitative interactions, not to forecast a real pond. Temperature, light, mixing, nutrient form, daily oxygen cycles, species differences and many other processes are omitted.",
     "experiments": [
       {
-        "title": "Remove a link",
-        "instruction": "Record your nutrients and drought settings. Predict how removing zooplankton changes algae and fish. Run several weeks with all groups present, then reset the pond, restore the recorded settings and remove zooplankton. Compare the same number of weeks.",
-        "observe": "Compare the algae and fish trends. Explain how removing one group changes both the food it eats and the animals that eat it."
+        "title": "Remove a consumer",
+        "instruction": "Predict what changes when fish are absent. Compare 6 illustrative weeks with fish present versus fish absent. Hold nutrient supply at index 50, drought at 0%, and the algae, zooplankton, oxygen and detritus starting indices fixed.",
+        "observe": "The fish-absent trial finishes with a higher zooplankton index and lower algae index in this model. Use the resource-to-consumer links to explain the indirect response, and identify the changed and held variables."
       },
       {
-        "title": "More nutrients, less oxygen?",
-        "instruction": "Reset the pond and leave drought at zero. Predict what happens with high nutrients, then step through several weeks. Reset again, keep drought at zero and use lower nutrients. Compare the same number of weeks.",
-        "observe": "Compare algae, fish and oxygen rather than algae alone. Explain why more of one food source does not always mean better conditions for the whole pond."
+        "title": "Increase nutrient supply",
+        "instruction": "Predict what changes from nutrient index 20 to 100. Compare 8 illustrative weeks while holding drought at 60%, keeping every population present, and using the same algae, zooplankton, fish, oxygen and detritus starting indices.",
+        "observe": "The high-nutrient trial finishes with higher algae and detritus indices but lower oxygen and fish indices in this model. Explain why more nutrients do not guarantee that every index rises, without treating the values as a field forecast."
       }
     ],
-    "misconception": "A food web is not a ladder where only the top animal matters. Changes can spread through feeding links and through shared conditions such as oxygen.",
+    "misconception": "Food-web arrows do not show which way animals travel; they point from resource or prey to consumer to trace energy flow. A web is not a ladder where only the top animal matters, and more nutrients do not necessarily improve conditions for every organism.",
     "sources": [
       {
         "title": "US EPA: Nutrients, algal growth and dissolved oxygen",
         "url": "https://www.epa.gov/system/files/documents/2021-07/parameter-factsheet_nutrients.pdf"
+      },
+      {
+        "title": "NOAA: Aquatic Food Webs",
+        "url": "https://www.noaa.gov/education/resource-collections/marine-life/aquatic-food-webs"
+      },
+      {
+        "title": "US EPA: Dissolved Oxygen",
+        "url": "https://www.epa.gov/caddis/dissolved-oxygen"
+      },
+      {
+        "title": "USGS: Nutrients and Eutrophication",
+        "url": "https://www.usgs.gov/mission-areas/water-resources/science/nutrients-and-eutrophication"
       }
     ],
     "duration_minutes": 15
@@ -46,7 +58,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "201a10c247570f6e0b17b2dda4676b414666a4055ce34a8cd7bd621b28efa212"
+      "sha256": "2833bbbe4327397d4076aa0fe7a866f607337b9a0507d9b2dace009c51399407"
     },
     {
       "path": "THREE-LICENSE.txt",

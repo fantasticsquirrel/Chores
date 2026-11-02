@@ -3,17 +3,8 @@
     "id": "orbital-mechanics",
     "title": "Orbit Workshop",
     "subject": "Physics",
-    "grade_bands": [
-      "3-5",
-      "6-8",
-      "9-12"
-    ],
-    "tags": [
-      "space",
-      "gravity",
-      "motion",
-      "orbits"
-    ],
+    "grade_bands": ["3-5", "6-8", "9-12"],
+    "tags": ["space", "gravity", "motion", "orbits"],
     "summary": "Compare collisions, orbits and escapes by changing one launch variable at a time.",
     "question": "How does sideways launch speed change a falling path?",
     "explanation": "Gravity accelerates a probe toward the central body while sideways motion carries it forward. At one starting radius in this model, too little sideways speed intersects the drawn surface, the baseline speed makes a circular orbit, and at least √2 times that baseline escapes. Doubling central mass raises the circular speed to √2 times the original baseline, so an unchanged launch curves into a tighter ellipse. Gravity continues to act along bound and escape paths.",
@@ -54,17 +45,8 @@
     "id": "reflection-refraction",
     "title": "Light Bending Studio",
     "subject": "Physics",
-    "grade_bands": [
-      "3-5",
-      "6-8",
-      "9-12"
-    ],
-    "tags": [
-      "light",
-      "optics",
-      "reflection",
-      "refraction"
-    ],
+    "grade_bands": ["3-5", "6-8", "9-12"],
+    "tags": ["light", "optics", "reflection", "refraction"],
     "summary": "Compare reflection and refraction, then find when a higher-index material keeps a ray inside.",
     "question": "How do angle and travel direction change a ray at a boundary?",
     "explanation": "Reflection stays in the first medium and leaves at the incident angle. Refraction crosses the boundary; Snell’s law relates both angles to the materials’ refractive indices. Refractive index compares light’s speed in vacuum with its speed in a material, so a higher index means slower light. Measure every angle from the normal, the line perpendicular to the boundary. Entering a higher index bends a slanting ray toward the normal; entering a lower index bends it away. Above the critical angle, a higher-to-lower-index ray undergoes total internal reflection.",
@@ -101,16 +83,8 @@
     "id": "gravity",
     "title": "Gravity Drop Lab",
     "subject": "Physics",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "gravity",
-      "forces",
-      "mass",
-      "measurement"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["gravity", "forces", "mass", "measurement"],
     "summary": "Compare how object mass and local gravity affect a vacuum drop.",
     "question": "What changes a vacuum drop: object mass or local gravity?",
     "explanation": "Mass is the amount of matter in an object; weight is the gravitational force on it. In a vacuum at one location, objects released together from the same height have the same acceleration regardless of mass. Changing local gravity changes acceleration and weight, while mass stays fixed. This near-surface model uses constant local gravity.",
@@ -151,16 +125,8 @@
     "id": "solar-system",
     "title": "Solar System Explorer",
     "subject": "Space science",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "planets",
-      "space",
-      "scale",
-      "orbits"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["planets", "space", "scale", "orbits"],
     "summary": "Compare the eight planets at equal elapsed time and on one diameter scale.",
     "question": "What changes when planets are compared for the same elapsed time or on the same diameter scale?",
     "explanation": "The Sun’s gravity keeps eight planets in orbit. A year is one planet’s complete orbit, so planets with different orbital periods complete different fractions in the same elapsed time. One astronomical unit (AU) is about Earth’s mean distance from the Sun. Planet diameters and Sun–planet gaps differ so greatly that a useful screen model must show them on separate scales.",
@@ -197,16 +163,8 @@
     "id": "moon-phases",
     "title": "Moon Phase Observatory",
     "subject": "Space science",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "moon",
-      "patterns",
-      "sunlight",
-      "perspective"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["moon", "patterns", "sunlight", "perspective"],
     "summary": "Change the Moon’s orbital position and compare the sunlit fraction seen from Earth with the Sun–Earth–Moon geometry.",
     "question": "How does the Moon’s position around Earth change the phase we see?",
     "explanation": "The Sun illuminates half the Moon. As the Moon travels around Earth, our viewpoint reveals changing portions of that sunlit hemisphere. The mean phase cycle from new Moon to new Moon is about 29.53 days, not the 27.32-day sidereal orbit relative to the stars. The model uses a circular, coplanar orbit with enlarged objects and gaps; it does not predict local sky orientation, libration, eclipses, terrain shadows, or exact timing.",
@@ -243,16 +201,8 @@
     "id": "photosynthesis",
     "title": "Leaf Energy Lab",
     "subject": "Biology",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "plants",
-      "energy",
-      "photosynthesis",
-      "systems"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["plants", "energy", "photosynthesis", "systems"],
     "summary": "Test why extra light cannot replace water or carbon dioxide in photosynthesis.",
     "question": "Can extra light replace water as an input to photosynthesis?",
     "explanation": "Photosynthesis uses light energy to make sugars from water and carbon dioxide. The released oxygen comes from water. One required input cannot replace another, and real responses depend on more than this activity’s invented settings. Plants also respire day and night.",
@@ -289,16 +239,8 @@
     "id": "castle-defenses",
     "title": "Castle Design Lab",
     "subject": "History",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "history",
-      "castles",
-      "engineering",
-      "design"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["history", "castles", "engineering", "design"],
     "summary": "Test how a gate, ditch and projecting tower change routes and wall-side views.",
     "question": "How did separate defenses change an approach to a stone castle?",
     "explanation": "This 13th-century English-inspired composite is not a reconstruction of one castle. Gatehouses controlled passage, ditches interrupted approaches, projecting towers changed viewing positions along wall faces, and multiple wall lines could add successive barriers. Castles also housed households, workers and administrators. Designs varied by period, site, terrain and resources; this controlled model compares routes and illustrated viewing directions, not weapon ranges or the outcome of a siege.",
@@ -343,16 +285,8 @@
     "id": "sound-playground",
     "title": "Sound Playground",
     "subject": "Physics",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "sound",
-      "vibrations",
-      "waves",
-      "measurement"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["sound", "vibrations", "waves", "measurement"],
     "summary": "Predict and compare how string length and modeled midpoint displacement change frequency.",
     "question": "How can two plucks keep the same modeled frequency while their midpoint displacement amplitudes differ?",
     "explanation": "Frequency counts cycles per second and strongly influences perceived pitch, but frequency and pitch are not identical. For this ideal uniform string’s fixed-end fundamental, doubling length while holding tension and mass per length fixed halves frequency. Doubling the modeled midpoint displacement does not change that natural frequency; it quadruples an A² comparison index. That index is not a decibel or loudness reading. No acoustic radiation is calculated. Real musical sounds also depend on harmonics, the instrument body and how the sound changes over time.",
@@ -393,15 +327,8 @@
     "id": "bridge-builder",
     "title": "Bridge Builder",
     "subject": "Engineering",
-    "grade_bands": [
-      "6-8"
-    ],
-    "tags": [
-      "bridges",
-      "forces",
-      "structures",
-      "design"
-    ],
+    "grade_bands": ["6-8"],
+    "tags": ["bridges", "forces", "structures", "design"],
     "summary": "Move one static point load and compare support reactions, bending moment and modeled beam deflection.",
     "question": "How do load position and load size change the forces and bending of a simply supported beam?",
     "explanation": "Static equilibrium requires the upward support reactions to equal the downward point load and their torques to balance. Moving the load changes how the two supports share it. This activity also calculates peak bending moment and small deflection for a 10 m equivalent beam with a fixed flexural rigidity EI. The timber truss is explanatory artwork, not the structure being solved. Brace buttons change only an invented comparison index; they do not calculate truss forces, member capacity or a safe load.",
@@ -442,16 +369,8 @@
     "id": "river-sculptor",
     "title": "River Sculptor",
     "subject": "Earth science",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "rivers",
-      "erosion",
-      "water",
-      "landforms"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["rivers", "erosion", "water", "landforms"],
     "summary": "Compare vegetation and slope, then account for soil that stays, deposits or exits downstream.",
     "question": "How do vegetation and catchment slope change runoff and soil transport in this model?",
     "explanation": "Water erosion detaches and transports soil. Sediment can settle where flow slows or continue downstream. Vegetation and stable soil structure can increase infiltration and reduce runoff, while long, steep slopes can increase the power of water to erode and transport soil. This one-hour, one-hectare teaching model holds many real conditions fixed so you can compare one variable at a time. Its runoff, erosion, export and channel-capacity coefficients are invented; the results are not field measurements or a flood forecast.",
@@ -484,16 +403,8 @@
     "id": "circuit-city",
     "title": "Circuit City",
     "subject": "Physics",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "electricity",
-      "circuits",
-      "energy",
-      "systems"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["electricity", "circuits", "energy", "systems"],
     "summary": "Compare one series path with parallel branches, then measure how voltage changes current, power and energy.",
     "question": "How do circuit paths and source voltage control charge flow and energy transfer?",
     "explanation": "Current is charge flow rate (A = C/s), voltage is energy transferred per charge (V = J/C), and power is energy-transfer rate (W = J/s). For each fixed 12 Ω resistor in this ideal direct-current model, V = IR and P = VI. The same current passes through every load in series, while parallel branch currents add at the source. Charge is conserved around a complete circuit; the source transfers energy to the loads. The model uses an ideal 0–18 V source, zero-resistance wires and fixed resistors. It omits heating, transients, source sag, component limits and protective devices and is not guidance for household mains wiring.",
@@ -526,36 +437,40 @@
     "id": "food-web-rescue",
     "title": "Food Web Rescue",
     "subject": "Biology",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "ecology",
-      "food-webs",
-      "ponds",
-      "systems"
-    ],
-    "summary": "Change a pond’s food supply and organisms, then follow populations and oxygen over time.",
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["ecology", "food-webs", "ponds", "systems"],
+    "summary": "Predict how removing fish or increasing nutrients changes a bounded pond model, then compare controlled trials.",
     "question": "Can adding more nutrients make conditions worse for fish?",
-    "explanation": "Algae capture light energy. Tiny animals called zooplankton eat algae, and some fish eat zooplankton. This chain is one part of a larger food web. Extra nutrients can encourage algal growth, but respiration and decomposition can use up dissolved oxygen that animals need. The model tracks relative population and oxygen indices, not animal counts or measured oxygen. Each step represents an illustrative week; many species, daily oxygen changes and real pond conditions are left out.",
+    "explanation": "Algae capture light energy, zooplankton graze algae, and fish can eat zooplankton. Food-web arrows point from resource or prey toward consumer because they trace energy flow; they do not show organisms moving. This chain is one path inside a larger web, so changing a consumer can affect a producer indirectly. Added nutrients can support algal growth, while respiration and decomposition can consume dissolved oxygen. The model uses invented 0–100 population, nutrient, oxygen and detritus indices, illustrative weekly steps and uncalibrated coefficients. It is designed to show qualitative interactions, not to forecast a real pond. Temperature, light, mixing, nutrient form, daily oxygen cycles, species differences and many other processes are omitted.",
     "experiments": [
       {
-        "title": "Remove a link",
-        "instruction": "Record your nutrients and drought settings. Predict how removing zooplankton changes algae and fish. Run several weeks with all groups present, then reset the pond, restore the recorded settings and remove zooplankton. Compare the same number of weeks.",
-        "observe": "Compare the algae and fish trends. Explain how removing one group changes both the food it eats and the animals that eat it."
+        "title": "Remove a consumer",
+        "instruction": "Predict what changes when fish are absent. Compare 6 illustrative weeks with fish present versus fish absent. Hold nutrient supply at index 50, drought at 0%, and the algae, zooplankton, oxygen and detritus starting indices fixed.",
+        "observe": "The fish-absent trial finishes with a higher zooplankton index and lower algae index in this model. Use the resource-to-consumer links to explain the indirect response, and identify the changed and held variables."
       },
       {
-        "title": "More nutrients, less oxygen?",
-        "instruction": "Reset the pond and leave drought at zero. Predict what happens with high nutrients, then step through several weeks. Reset again, keep drought at zero and use lower nutrients. Compare the same number of weeks.",
-        "observe": "Compare algae, fish and oxygen rather than algae alone. Explain why more of one food source does not always mean better conditions for the whole pond."
+        "title": "Increase nutrient supply",
+        "instruction": "Predict what changes from nutrient index 20 to 100. Compare 8 illustrative weeks while holding drought at 60%, keeping every population present, and using the same algae, zooplankton, fish, oxygen and detritus starting indices.",
+        "observe": "The high-nutrient trial finishes with higher algae and detritus indices but lower oxygen and fish indices in this model. Explain why more nutrients do not guarantee that every index rises, without treating the values as a field forecast."
       }
     ],
-    "misconception": "A food web is not a ladder where only the top animal matters. Changes can spread through feeding links and through shared conditions such as oxygen.",
+    "misconception": "Food-web arrows do not show which way animals travel; they point from resource or prey to consumer to trace energy flow. A web is not a ladder where only the top animal matters, and more nutrients do not necessarily improve conditions for every organism.",
     "sources": [
       {
         "title": "US EPA: Nutrients, algal growth and dissolved oxygen",
         "url": "https://www.epa.gov/system/files/documents/2021-07/parameter-factsheet_nutrients.pdf"
+      },
+      {
+        "title": "NOAA: Aquatic Food Webs",
+        "url": "https://www.noaa.gov/education/resource-collections/marine-life/aquatic-food-webs"
+      },
+      {
+        "title": "US EPA: Dissolved Oxygen",
+        "url": "https://www.epa.gov/caddis/dissolved-oxygen"
+      },
+      {
+        "title": "USGS: Nutrients and Eutrophication",
+        "url": "https://www.usgs.gov/mission-areas/water-resources/science/nutrients-and-eutrophication"
       }
     ],
     "duration_minutes": 15
@@ -564,15 +479,8 @@
     "id": "fraction-feast",
     "title": "Fraction Feast",
     "subject": "Mathematics",
-    "grade_bands": [
-      "3-5"
-    ],
-    "tags": [
-      "fractions",
-      "equivalence",
-      "addition",
-      "number-sense"
-    ],
+    "grade_bands": ["3-5"],
+    "tags": ["fractions", "equivalence", "addition", "number-sense"],
     "summary": "Divide equal-sized plates into equal parts, compare portions and combine fractions.",
     "question": "How can two different fractions describe the same amount?",
     "explanation": "A fraction describes equal parts of a whole. The denominator tells how many equal parts make the whole; the numerator counts the parts selected. One half and two quarters cover the same amount of an equal-sized plate. To add fractions with different denominators, describe them using equal-sized pieces first. Every plate here represents the same whole, and every cut makes equal portions. The total can be greater than one plate.",
@@ -601,16 +509,8 @@
     "id": "pattern-palace",
     "title": "Pattern Palace",
     "subject": "Mathematics",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "geometry",
-      "symmetry",
-      "patterns",
-      "angles"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["geometry", "symmetry", "patterns", "angles"],
     "summary": "Rotate and reflect a motif, then test how regular polygons fit around a point.",
     "question": "Why do some repeated shapes leave a gap while others fit exactly?",
     "explanation": "A rotation turns a shape around a point. A reflection flips it across a line; both preserve lengths and angles. A full turn is 360°. Equal regular polygons can meet without a gap or overlap only when their corner angles fill that turn. Six equilateral triangles, four squares or three regular hexagons do so. This model checks one meeting point; a successful corner test alone is not a proof that any proposed pattern tiles an entire floor.",
@@ -643,16 +543,8 @@
     "id": "caravan-crossroads",
     "title": "Caravan Crossroads",
     "subject": "History",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "history",
-      "trade",
-      "geography",
-      "resources"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["history", "trade", "geography", "resources"],
     "summary": "Plan a caravan’s route and supplies, then compare how terrain and seasons change a journey.",
     "question": "Why might travelers choose a longer route instead of the shortest one?",
     "explanation": "Trading routes connected communities and carried ideas and skills as well as goods. The Silk Roads were a changing network of land and sea routes, not a single road or one journey made by every merchant. Travelers had to consider terrain, water, seasons and supplies. This fictional journey borrows those general trade-offs. Its routes, prices, cargo losses and travel times are invented for comparison, not a reconstruction of a particular culture, place or century.",
@@ -685,16 +577,8 @@
     "id": "pollinator-express",
     "title": "Pollinator Express",
     "subject": "Biology",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "plants",
-      "pollination",
-      "habitats",
-      "ecology"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["plants", "pollination", "habitats", "ecology"],
     "summary": "Guide a bee between flowers and test when a visit transfers compatible pollen.",
     "question": "Is visiting any flower enough to pollinate it?",
     "explanation": "Pollination moves pollen to the receptive part of a flower and can allow seeds to develop. Animals may carry pollen while gathering food. In this model, a bee transfers pollen only between different flowers of the same species. Added habitat flowers can help it cross a gap. The bee carries pollen from only its last visit; flight limits and flower types are invented. Real pollination can involve mixed pollen, self-pollination, wind and other animals, and does not always result in seeds.",
@@ -723,16 +607,8 @@
     "id": "chance-carnival",
     "title": "Chance Carnival",
     "subject": "Mathematics",
-    "grade_bands": [
-      "3-5",
-      "6-8"
-    ],
-    "tags": [
-      "probability",
-      "data",
-      "fractions",
-      "sampling"
-    ],
+    "grade_bands": ["3-5", "6-8"],
+    "tags": ["probability", "data", "fractions", "sampling"],
     "summary": "Test how observed results compare with expected chances.",
     "question": "Can fair chances give uneven results?",
     "explanation": "Expected chance is an outcome’s weight divided by total weight; observed share comes from one sample. Equal weights give equal chances, not equal counts. A zero weight makes an outcome impossible. Larger samples usually settle nearer the expected shares, but a particular larger sample can be farther away. Each computer draw is independent, so a streak does not change the next draw.",

@@ -1,4 +1,4 @@
-import type { PondState } from "@family-manager/family-api/discovery-models/physical-world";
+import type { PondState } from "@family-manager/family-api/discovery-models/pond";
 const traces = [
   { key: "algae", label: "Algae", color: "#6f8c35" },
   { key: "zooplankton", label: "Zooplankton", color: "#367d8c" },
@@ -12,8 +12,16 @@ export function PondTrend({
   trail: PondState[];
   week: number;
 }) {
+  const first = trail[0];
+  const last = trail[trail.length - 1];
+  const summary = traces
+    .map(
+      (trace) =>
+        `${trace.label} ${first[trace.key].toFixed(1)} to ${last[trace.key].toFixed(1)}`,
+    )
+    .join("; ");
   return (
-    <div className="landscape-trend">
+    <div className="landscape-trend" aria-label={`Model trend. ${summary}.`}>
       <div className="landscape-trend-key">
         {traces.map((trace) => (
           <span key={trace.key}>
@@ -54,6 +62,7 @@ export function PondTrend({
         Week {Math.max(0, week - trail.length + 1)} → {week} · Vertical range
         0–100 · Relative indices, not animal counts
       </p>
+      <p className="landscape-trend-summary">{summary}.</p>
     </div>
   );
 }
