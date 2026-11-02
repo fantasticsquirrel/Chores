@@ -61,14 +61,18 @@ export function rigidTransformPoint(
   )
     return null;
   const reflectedX = transform.reflectAcrossVertical ? -point.x : point.x;
-  const angle = (transform.rotationDegreesClockwise * Math.PI) / 180;
-  const x = reflectedX * Math.cos(angle) - point.y * Math.sin(angle);
-  const y = reflectedX * Math.sin(angle) + point.y * Math.cos(angle);
-  const normalize = (value: number) => {
-    const rounded = Math.round(value * 1_000_000) / 1_000_000;
-    return Object.is(rounded, -0) ? 0 : rounded;
+  const transformed =
+    transform.rotationDegreesClockwise === 0
+      ? { x: reflectedX, y: point.y }
+      : transform.rotationDegreesClockwise === 90
+        ? { x: -point.y, y: reflectedX }
+        : transform.rotationDegreesClockwise === 180
+          ? { x: -reflectedX, y: -point.y }
+          : { x: point.y, y: -reflectedX };
+  return {
+    x: transformed.x === 0 ? 0 : transformed.x,
+    y: transformed.y === 0 ? 0 : transformed.y,
   };
-  return { x: normalize(x), y: normalize(y) };
 }
 
 export function patternMarkerComparison() {
@@ -103,12 +107,13 @@ export function regularPolygonVertices(
     !Number.isFinite(startAngleDegrees)
   )
     return null;
+  const normalizedStartAngle = ((startAngleDegrees % 360) + 360) % 360;
   const vertices: PatternPoint[] = [{ x: 0, y: 0 }];
   let x = 0;
   let y = 0;
   for (let index = 0; index < sides - 1; index += 1) {
     const heading =
-      ((startAngleDegrees + (index * 360) / sides) * Math.PI) / 180;
+      ((normalizedStartAngle + (index * 360) / sides) * Math.PI) / 180;
     x += sideLength * Math.cos(heading);
     y += sideLength * Math.sin(heading);
     vertices.push({ x, y });

@@ -142,3 +142,95 @@ the clipped offline motif caption before the final 26-case browser run.
   built-in lesson, while the instructional model and workflow remain aligned.
 - This checkpoint does not authorize merge, deploy, publication, production
   services, or production database access.
+
+## Independent-review correction checkpoint
+
+Correction verified: 2026-11-02
+
+An independent supervisor found two numerical boundary defects and one visible
+collision after the original redesign checkpoint. This correction remains
+limited to Pattern Palace.
+
+### Numerical corrections
+
+- `rigidTransformPoint` still accepts every finite point, but quarter-turns now
+  use exact coordinate swaps and sign changes after the optional reflection.
+  It no longer uses trigonometric cross terms or six-decimal rounding. Thus
+  tiny finite coordinates are retained, `Number.MAX_VALUE` stays finite, and
+  only negative zero is normalized to zero.
+- The shared-model regression covers all eight combinations of 0°, 90°, 180°,
+  and 270° with and without vertical reflection. It uses ordinary, tiny, and
+  huge finite coordinates; checks exact results, inverse and pairwise
+  composition, coordinate-magnitude invariance, finite output, and negative
+  zero; and rejects non-finite points, non-quarter-turn rotations, out-of-range
+  rotations, and non-boolean reflection flags.
+- `regularPolygonVertices` now reduces every finite starting angle modulo 360°
+  before converting it to radians. Tests compare extreme positive and negative
+  finite angles with their normalized equivalents and assert that every vertex
+  remains finite. Existing side-count and side-length boundaries, including
+  the 1,000-unit maximum, remain enforced.
+- The sandbox package model has the same implementation and direct parity
+  cases for extreme finite points and angles, invalid values, and all retained
+  polygon boundaries.
+
+Test-first failures are retained at
+`/tmp/pattern-correction-verification/shared-model-red.log`,
+`web-layout-red.log`, and `package-parity-red.log`.
+
+### Visible correction
+
+The bottom 180° cardinal scale label was redundant with the result plaque and
+intersected that plaque and the bronze frame in the desktop scene. The label is
+omitted in the web workbench and package workbench while 0°, 90°, and 270°
+remain. The native atlas was regenerated from the corrected shared workbench.
+The ceramic texture, inlaid arch, bronze border, rosettes, depth, tile labels,
+result plaque, and all instructional evidence remain intact. Web and package
+tests assert the corrected scale-label set.
+
+### Correction verification
+
+| Area                                     |                      Final result | Log                                                                         |
+| ---------------------------------------- | --------------------------------: | --------------------------------------------------------------------------- |
+| Shared Pattern model                     |                               5/5 | `/tmp/pattern-correction-verification/shared-model-focused.log`             |
+| Focused web interactions/layout          |                             19/19 | `/tmp/pattern-correction-verification/web-focused.log`                      |
+| Focused rich package                     |         1/1; 46 skipped by filter | `/tmp/pattern-correction-verification/package-focused-final.log`            |
+| Shared API gate                          |               557/557 in 42 files | `/tmp/pattern-correction-verification/shared-api-gate.log`                  |
+| Module contracts                         |                             10/10 | `/tmp/pattern-correction-verification/modules-validate.log`                 |
+| Full frontend, two-worker final run      |              872/872 in 161 files | `/tmp/pattern-correction-verification/frontend-full-final-conservative.log` |
+| Broad rich-package final run             |                             47/47 | `/tmp/pattern-correction-verification/package-broad-final-conservative.log` |
+| Native unit                              |               296/296 in 32 files | `/tmp/pattern-correction-verification/native-unit.log`                      |
+| Native UI                                |              532/532 in 63 suites | `/tmp/pattern-correction-verification/native-ui.log`                        |
+| Native typecheck and generated freshness | pass; offline SVG 1,068,075 bytes | `/tmp/pattern-correction-verification/native-typecheck.log`                 |
+| Native dependency check                  |                              pass | `/tmp/pattern-correction-verification/native-dependencies.log`              |
+| Sandboxed native browser                 |          26/26; all 74 SVG states | `/tmp/pattern-correction-verification/native-browser.log`                   |
+| Frontend lint                            |               pass; zero warnings | `/tmp/pattern-correction-verification/frontend-lint.log`                    |
+| Frontend production build                |                              pass | `/tmp/pattern-correction-verification/frontend-build.log`                   |
+| Strict architecture                      |             0 boundary violations | `/tmp/pattern-correction-verification/architecture-strict.log`              |
+| Security backports                       |                             51/51 | `/tmp/pattern-correction-verification/security-backports.log`               |
+| Package build/validation                 | two valid byte-identical archives | `/tmp/pattern-correction-verification/package-sha256.log`                   |
+
+The final frontend and broad package gates ran sequentially after the last
+source and generated-artifact change. Their first default-timing attempt is
+also retained: an unrelated dashboard mock called its local reject callback
+before assignment (871/872), and an unrelated Fraction Feast case exceeded
+its 5-second default by 0.958 seconds (46/47). No unrelated source was changed.
+The final run limited frontend concurrency to two workers and used a 10-second
+per-test ceiling for the package suite; it passed 872/872 and then 47/47.
+
+The two validated package archives are byte-identical with SHA-256
+`d15830972d22a6bb36b35771a47d20b552e810f193740efe669fb580887ede14`.
+The generated worker SHA-256 is
+`ae39769906f7896757ffc207456d0c180343cf4044d32b8eedbd9ce14bc5759e`,
+and the manifest SHA-256 is
+`9b78e205d5047a9a2c1a11c9aee8b0ef52bb015b7f8c510c539161c955564a2b`.
+
+Backend code, routes, schemas, migrations, and fixtures are unchanged. The
+original isolated discovery-backend result (61/61) is reused from
+`/tmp/pattern-verification/backend-isolated.log`; no backend or production
+database command was rerun for this frontend/shared-model correction.
+
+The existing evidence gaps remain: no physical-device session and no real
+screen-reader session were performed. The final sandboxed native images and
+the final built-in/package desktop and mobile matrices are visually inspected
+in the correction report. This checkpoint still does not authorize merge,
+deployment, publication, production services, or production database access.

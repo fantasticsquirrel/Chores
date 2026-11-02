@@ -7,6 +7,35 @@ import {
   rigidTransformPoint,
 } from "./patterns";
 
+const quarterTurns = [0, 90, 180, 270] as const;
+const reflections = [false, true] as const;
+const finitePoints = [
+  { x: 13.25, y: -91.5 },
+  { x: 1e-9, y: -Number.MIN_VALUE },
+  { x: Number.MAX_VALUE, y: -Number.MAX_VALUE / 2 },
+] as const;
+
+const exactQuarterTurn = (
+  point: (typeof finitePoints)[number],
+  rotationDegreesClockwise: (typeof quarterTurns)[number],
+  reflectAcrossVertical: boolean,
+) => {
+  const x = reflectAcrossVertical ? -point.x : point.x;
+  const y = point.y;
+  const transformed =
+    rotationDegreesClockwise === 0
+      ? { x, y }
+      : rotationDegreesClockwise === 90
+        ? { x: -y, y: x }
+        : rotationDegreesClockwise === 180
+          ? { x: -x, y: -y }
+          : { x: y, y: -x };
+  return {
+    x: transformed.x === 0 ? 0 : transformed.x,
+    y: transformed.y === 0 ? 0 : transformed.y,
+  };
+};
+
 describe("pattern geometry model", () => {
   it("rejects invalid and out-of-bound polygon inputs", () => {
     for (const [sides, copies] of [
@@ -18,8 +47,30 @@ describe("pattern geometry model", () => {
       [Number.NaN, 4],
     ])
       expect(patternVertexFit(sides, copies)).toBeNull();
-    expect(regularPolygonVertices(4, 0, 0)).toBeNull();
-    expect(regularPolygonVertices(4, Number.POSITIVE_INFINITY, 0)).toBeNull();
+    for (const [sides, sideLength, startAngle] of [
+      [2, 80, 0],
+      [13, 80, 0],
+      [4.5, 80, 0],
+      [4, 0, 0],
+      [4, -1, 0],
+      [4, 1_000.001, 0],
+      [4, Number.NaN, 0],
+      [4, Number.POSITIVE_INFINITY, 0],
+      [4, 80, Number.NaN],
+      [4, 80, Number.NEGATIVE_INFINITY],
+      [4, 80, Number.POSITIVE_INFINITY],
+    ])
+      expect(regularPolygonVertices(sides, sideLength, startAngle)).toBeNull();
+
+    for (const sideLength of [Number.MIN_VALUE, 1_000]) {
+      const vertices = regularPolygonVertices(12, sideLength, 0);
+      expect(vertices).toHaveLength(12);
+      expect(
+        vertices!.every(
+          (point) => Number.isFinite(point.x) && Number.isFinite(point.y),
+        ),
+      ).toBe(true);
+    }
   });
 
   it("computes exact regular-polygon corner fits and boundaries", () => {
@@ -67,6 +118,24 @@ describe("pattern geometry model", () => {
         8,
       );
     }
+
+    for (const startAngle of [
+      Number.MAX_VALUE,
+      -Number.MAX_VALUE,
+      Number.MAX_SAFE_INTEGER,
+      -Number.MAX_SAFE_INTEGER,
+    ]) {
+      const normalizedAngle = ((startAngle % 360) + 360) % 360;
+      const vertices = regularPolygonVertices(12, 1_000, startAngle);
+      expect(vertices).toEqual(
+        regularPolygonVertices(12, 1_000, normalizedAngle),
+      );
+      expect(
+        vertices!.every(
+          (point) => Number.isFinite(point.x) && Number.isFinite(point.y),
+        ),
+      ).toBe(true);
+    }
   });
 
   it("distinguishes a clockwise quarter-turn from a vertical reflection", () => {
@@ -93,6 +162,44 @@ describe("pattern geometry model", () => {
         rotationDegreesClockwise: 45.5,
         reflectAcrossVertical: false,
       }),
+    ).toBeNull();
+    for (const point of [
+      { x: Number.NaN, y: 0 },
+      { x: 0, y: Number.NaN },
+      { x: Number.POSITIVE_INFINITY, y: 0 },
+      { x: 0, y: Number.NEGATIVE_INFINITY },
+    ])
+      expect(
+        rigidTransformPoint(point, {
+          rotationDegreesClockwise: 0,
+          reflectAcrossVertical: false,
+        }),
+      ).toBeNull();
+    for (const rotationDegreesClockwise of [
+      -90,
+      45,
+      90.5,
+      360,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+    ])
+      expect(
+        rigidTransformPoint(
+          { x: 1, y: 2 },
+          {
+            rotationDegreesClockwise,
+            reflectAcrossVertical: false,
+          },
+        ),
+      ).toBeNull();
+    expect(
+      rigidTransformPoint(
+        { x: 1, y: 2 },
+        {
+          rotationDegreesClockwise: 0,
+          reflectAcrossVertical: 1 as unknown as boolean,
+        },
+      ),
     ).toBeNull();
   });
 
@@ -141,5 +248,68 @@ describe("pattern geometry model", () => {
     expect(Math.sign(signedArea(reflection))).toBe(
       -Math.sign(signedArea(motif)),
     );
+
+    const transforms = quarterTurns.flatMap((rotationDegreesClockwise) =>
+      reflections.map((reflectAcrossVertical) => ({
+        rotationDegreesClockwise,
+        reflectAcrossVertical,
+      })),
+    );
+    const coordinateMagnitudes = (point: { x: number; y: number }) =>
+      [Math.abs(point.x), Math.abs(point.y)].sort((left, right) =>
+        left < right ? -1 : left > right ? 1 : 0,
+      );
+
+    for (const point of finitePoints) {
+      for (const transform of transforms) {
+        const transformed = rigidTransformPoint(point, transform)!;
+        expect(transformed).toEqual(
+          exactQuarterTurn(
+            point,
+            transform.rotationDegreesClockwise,
+            transform.reflectAcrossVertical,
+          ),
+        );
+        expect(Number.isFinite(transformed.x)).toBe(true);
+        expect(Number.isFinite(transformed.y)).toBe(true);
+        expect(Object.is(transformed.x, -0)).toBe(false);
+        expect(Object.is(transformed.y, -0)).toBe(false);
+        expect(coordinateMagnitudes(transformed)).toEqual(
+          coordinateMagnitudes(point),
+        );
+
+        const inverse = transform.reflectAcrossVertical
+          ? transform
+          : {
+              rotationDegreesClockwise: ((360 -
+                transform.rotationDegreesClockwise) %
+                360) as (typeof quarterTurns)[number],
+              reflectAcrossVertical: false,
+            };
+        expect(rigidTransformPoint(transformed, inverse)).toEqual(point);
+      }
+
+      for (const first of transforms) {
+        for (const second of transforms) {
+          const sequential = rigidTransformPoint(
+            rigidTransformPoint(point, first)!,
+            second,
+          );
+          const composedRotation = ((second.rotationDegreesClockwise +
+            (second.reflectAcrossVertical
+              ? -first.rotationDegreesClockwise
+              : first.rotationDegreesClockwise) +
+            360) %
+            360) as (typeof quarterTurns)[number];
+          expect(sequential).toEqual(
+            rigidTransformPoint(point, {
+              rotationDegreesClockwise: composedRotation,
+              reflectAcrossVertical:
+                first.reflectAcrossVertical !== second.reflectAcrossVertical,
+            }),
+          );
+        }
+      }
+    }
   });
 });

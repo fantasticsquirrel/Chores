@@ -93,7 +93,13 @@ describe("tactile mathematical exhibits", () => {
     expect(screen.getByText(/selected amount did not/)).toBeTruthy();
   });
   it("gates exact transformation and corner-fit evidence behind predictions", () => {
-    render(<PatternPalaceSimulation />);
+    const { container } = render(<PatternPalaceSimulation />);
+    const scaleLabels = Array.from(
+      container.querySelectorAll(".pattern-tile-board svg text"),
+      (label) => label.textContent,
+    );
+    expect(scaleLabels).toEqual(expect.arrayContaining(["0°", "90°", "270°"]));
+    expect(scaleLabels).not.toContain("180°");
     fireEvent.click(screen.getByRole("button", { name: "Reflection" }));
     fireEvent.click(
       screen.getByRole("button", {

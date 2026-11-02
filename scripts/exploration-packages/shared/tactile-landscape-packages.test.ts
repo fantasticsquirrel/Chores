@@ -220,22 +220,106 @@ describe("ten independently authored rich explorations", () => {
       expect(packagePatternVertexFit(sides, copies)).toEqual(
         sharedPatternVertexFit(sides, copies),
       );
-    expect(packageRegularPolygonVertices(5, 80, -90)).toEqual(
-      sharedRegularPolygonVertices(5, 80, -90),
-    );
-    for (const transform of [
-      { rotationDegreesClockwise: 0, reflectAcrossVertical: false },
-      { rotationDegreesClockwise: 90, reflectAcrossVertical: false },
-      { rotationDegreesClockwise: 180, reflectAcrossVertical: true },
-      { rotationDegreesClockwise: 45.5, reflectAcrossVertical: false },
-      { rotationDegreesClockwise: 360, reflectAcrossVertical: false },
+    for (const [sides, sideLength, startAngle] of [
+      [5, 80, -90],
+      [3, Number.MIN_VALUE, Number.MAX_VALUE],
+      [12, 1_000, -Number.MAX_VALUE],
+      [2, 80, 0],
+      [13, 80, 0],
+      [4.5, 80, 0],
+      [4, 0, 0],
+      [4, -1, 0],
+      [4, 1_000.001, 0],
+      [4, Number.NaN, 0],
+      [4, Number.POSITIVE_INFINITY, 0],
+      [4, 80, Number.NaN],
+      [4, 80, Number.NEGATIVE_INFINITY],
+      [4, 80, Number.POSITIVE_INFINITY],
+    ]) {
+      const packageVertices = packageRegularPolygonVertices(
+        sides,
+        sideLength,
+        startAngle,
+      );
+      expect(packageVertices).toEqual(
+        sharedRegularPolygonVertices(sides, sideLength, startAngle),
+      );
+      if (packageVertices) {
+        expect(
+          packageVertices.every(
+            (point) => Number.isFinite(point.x) && Number.isFinite(point.y),
+          ),
+        ).toBe(true);
+        expect(packageVertices).toEqual(
+          packageRegularPolygonVertices(
+            sides,
+            sideLength,
+            ((startAngle % 360) + 360) % 360,
+          ),
+        );
+      }
+    }
+
+    for (const point of [
+      { x: -30, y: -18 },
+      { x: 1e-9, y: -Number.MIN_VALUE },
+      { x: Number.MAX_VALUE, y: -Number.MAX_VALUE / 2 },
+      { x: Number.NaN, y: 0 },
+      { x: 0, y: Number.POSITIVE_INFINITY },
     ])
-      expect(packageRigidTransformPoint({ x: -30, y: -18 }, transform)).toEqual(
-        sharedRigidTransformPoint({ x: -30, y: -18 }, transform),
+      for (const rotationDegreesClockwise of [0, 90, 180, 270])
+        for (const reflectAcrossVertical of [false, true]) {
+          const packagePoint = packageRigidTransformPoint(point, {
+            rotationDegreesClockwise,
+            reflectAcrossVertical,
+          });
+          expect(packagePoint).toEqual(
+            sharedRigidTransformPoint(point, {
+              rotationDegreesClockwise,
+              reflectAcrossVertical,
+            }),
+          );
+          if (Number.isFinite(point.x) && Number.isFinite(point.y)) {
+            expect(Number.isFinite(packagePoint!.x)).toBe(true);
+            expect(Number.isFinite(packagePoint!.y)).toBe(true);
+            expect(
+              [Math.abs(packagePoint!.x), Math.abs(packagePoint!.y)].sort(),
+            ).toEqual([Math.abs(point.x), Math.abs(point.y)].sort());
+          }
+        }
+    for (const rotationDegreesClockwise of [
+      -90,
+      45,
+      90.5,
+      360,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+    ])
+      expect(
+        packageRigidTransformPoint(
+          { x: 1, y: 2 },
+          { rotationDegreesClockwise, reflectAcrossVertical: false },
+        ),
+      ).toEqual(
+        sharedRigidTransformPoint(
+          { x: 1, y: 2 },
+          { rotationDegreesClockwise, reflectAcrossVertical: false },
+        ),
       );
 
     const send = worker("pattern-palace");
     let frame = send();
+    const textContent = (node: any): string =>
+      typeof node === "string"
+        ? node
+        : (node?.children ?? []).map(textContent).join("");
+    const textLabels = (node: any): string[] =>
+      node?.tag === "text"
+        ? [textContent(node)]
+        : (node?.children ?? []).flatMap(textLabels);
+    const scaleLabels = frame.vector.nodes.flatMap(textLabels);
+    expect(scaleLabels).toEqual(expect.arrayContaining(["0°", "90°", "270°"]));
+    expect(scaleLabels).not.toContain("180°");
     expect(
       frame.buttons.find((button: any) => button.id === "compareTransform")
         .disabled,

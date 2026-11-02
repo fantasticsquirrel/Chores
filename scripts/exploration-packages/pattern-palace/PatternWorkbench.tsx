@@ -242,7 +242,7 @@ export function PatternWorkbench({
               />
             );
           })}
-          {[0, 90, 180, 270].map((angle) => (
+          {[0, 90, 270].map((angle) => (
             <text
               key={angle}
               x={320 + Math.sin((angle * Math.PI) / 180) * 238}
