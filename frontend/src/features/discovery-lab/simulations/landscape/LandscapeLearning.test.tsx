@@ -4,23 +4,17 @@ import { RiverSculptorSimulation } from "../RiverSculptorSimulation";
 import { CaravanSimulation } from "../CaravanSimulation";
 import { PollinatorSimulation } from "../PollinatorSimulation";
 import { gardenFlowers } from "@family-manager/discovery-scenes/landscape/garden";
-import { POLLINATOR_FLOWERS } from "@family-manager/family-api/discovery-models/math-life";
+import { POLLINATOR_FLOWERS } from "@family-manager/family-api/discovery-models/pollinators";
 afterEach(cleanup);
 const change = (label: string, value: number | string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 describe("landscape investigations", () => {
-  it("keeps two tabbed pollinator prediction and comparison investigations", () => {
+  it("keeps two controlled pollinator prediction and comparison investigations", () => {
     render(<PollinatorSimulation />);
-    const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(2);
-    expect(screen.getByText("1. Predict")).toBeTruthy();
-    expect(screen.getByText("2. Compare")).toBeTruthy();
-    expect(screen.getByText("3. Explain")).toBeTruthy();
-    fireEvent.click(tabs[1]);
-    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
-    expect(
-      screen.getAllByRole("button", { pressed: false }).length,
-    ).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("1 · Change the second flower")).toBeTruthy();
+    expect(screen.getByText("2 · Add a bridge habitat patch")).toBeTruthy();
+    expect(screen.getByText(/Pollination is pollen transfer/)).toBeTruthy();
+    expect(screen.getByText(/Seed dispersal moves formed seeds/)).toBeTruthy();
   });
 
   it("keeps two controlled Caravan prediction and comparison investigations", () => {
@@ -127,8 +121,13 @@ describe("landscape investigations", () => {
   });
   it("reports species mismatch separately from a successful flight", () => {
     render(<PollinatorSimulation />);
-    fireEvent.click(screen.getByRole("button", { name: "Visit Gold 1" }));
-    fireEvent.click(screen.getByRole("button", { name: "Visit Violet 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gold trial flower" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare the two second flowers" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show Violet trial evidence" }),
+    );
     expect(screen.getByRole("status")).toHaveTextContent(
       "Different flower species",
     );

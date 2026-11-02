@@ -1,121 +1,6 @@
-/** Deterministic teaching models. Distances, cargo prices and route timings are illustrative. */
-export function simplifyFraction(numerator: number, denominator: number) {
-  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-  const divisor = gcd(Math.abs(numerator), denominator);
-  return { numerator: numerator / divisor, denominator: denominator / divisor };
-}
-export function addFractions(a: number, b: number, c: number, d: number) {
-  return simplifyFraction(a * d + c * b, b * d);
-}
-export function vertexFit(sides: number, copies: number) {
-  const angle = ((sides - 2) * 180) / sides;
-  const occupied = angle * copies;
-  return {
-    angle,
-    gap: Math.max(0, 360 - occupied),
-    overlap: Math.max(0, occupied - 360),
-  };
-}
-export function transformPoint(
-  x: number,
-  y: number,
-  degrees: number,
-  reflected: boolean,
-) {
-  const angle = (degrees * Math.PI) / 180;
-  const horizontal = reflected ? -x : x;
-  return {
-    x: horizontal * Math.cos(angle) - y * Math.sin(angle),
-    y: horizontal * Math.sin(angle) + y * Math.cos(angle),
-  };
-}
-export function regularTile(sides: number, side: number, rotation = 0) {
-  const vertices = [{ x: 0, y: 0 }];
-  let x = 0,
-    y = 0;
-  for (let i = 0; i < sides - 1; i++) {
-    const heading = (rotation * Math.PI) / 180 + (i * 2 * Math.PI) / sides;
-    x += side * Math.cos(heading);
-    y += side * Math.sin(heading);
-    vertices.push({ x, y });
-  }
-  return vertices;
-}
-export const CARAVAN_ROUTES = {
-  ridge: {
-    name: "Mountain pass",
-    dry: 9,
-    wet: 13,
-    toll: 8,
-    description: "Short in dry weather; steep paths can break pottery.",
-  },
-  river: {
-    name: "River road",
-    dry: 14,
-    wet: 8,
-    toll: 12,
-    description:
-      "Wet-season water helps boats; low water slows the dry-season journey.",
-  },
-  oasis: {
-    name: "Oasis trail",
-    dry: 12,
-    wet: 11,
-    toll: 3,
-    description:
-      "A longer route with low tolls; more travel days need more supplies.",
-  },
-} as const;
-export const CARAVAN_CARGO = {
-  grain: { name: "Grain", weight: 6, buy: 4, sell: 7 },
-  cloth: { name: "Cloth", weight: 3, buy: 8, sell: 12 },
-  pottery: { name: "Pottery", weight: 7, buy: 5, sell: 10 },
-} as const;
-export type CaravanRoute = keyof typeof CARAVAN_ROUTES;
-export type CaravanCargo = keyof typeof CARAVAN_CARGO;
-export type CaravanSeason = "dry" | "wet";
-export function caravanJourney(
-  route: CaravanRoute,
-  season: CaravanSeason,
-  cargo: CaravanCargo,
-  units: number,
-  supplyDays: number,
-) {
-  const road = CARAVAN_ROUTES[route],
-    goods = CARAVAN_CARGO[cargo];
-  const days = road[season];
-  const spoiled = cargo === "grain" && days > 10 ? Math.ceil(units * 0.25) : 0;
-  const broken =
-    cargo === "pottery" && route === "ridge" ? Math.ceil(units * 0.15) : 0;
-  const delivered = units - spoiled - broken;
-  const load = units * goods.weight + supplyDays * 2;
-  const shortfall = Math.max(0, days - supplyDays);
-  const costs = units * goods.buy + supplyDays + road.toll;
-  const revenue = delivered * goods.sell;
-  return {
-    days,
-    spoiled,
-    broken,
-    delivered,
-    load,
-    shortfall,
-    overCapacity: load > 100,
-    toll: road.toll,
-    costs,
-    revenue,
-    margin: revenue - costs,
-    viable: load <= 100 && shortfall === 0,
-  };
-}
+/** Standalone deterministic package model. All distances are invented garden units. */
 export type FlowerSpecies = "gold" | "violet";
-export const POLLINATOR_FLOWERS: ReadonlyArray<{
-  id: string;
-  name: string;
-  species: FlowerSpecies;
-  x: number;
-  y: number;
-  bridge?: boolean;
-}> = [
+export const POLLINATOR_FLOWERS = [
   { id: "a", name: "Gold 1", species: "gold", x: 140, y: 250 },
   { id: "b", name: "Gold 2", species: "gold", x: 230, y: 195 },
   { id: "c", name: "Violet 1", species: "violet", x: 180, y: 145 },
@@ -138,27 +23,218 @@ export const POLLINATOR_FLOWERS: ReadonlyArray<{
   { id: "d", name: "Gold 3", species: "gold", x: 490, y: 235 },
   { id: "e", name: "Violet 2", species: "violet", x: 570, y: 160 },
   { id: "f", name: "Gold 4", species: "gold", x: 590, y: 300 },
-];
+] as const;
+export const POLLINATOR_COMPATIBILITY_TARGETS = Object.freeze({
+  gold: Object.freeze({
+    id: "trial-gold",
+    name: "Gold trial flower",
+    species: "gold",
+    x: 230,
+    y: 195,
+    trial: true,
+  }),
+  violet: Object.freeze({
+    id: "trial-violet",
+    name: "Violet trial flower",
+    species: "violet",
+    x: 230,
+    y: 195,
+    trial: true,
+  }),
+} as const);
+export type PollinatorFlower =
+  | (typeof POLLINATOR_FLOWERS)[number]
+  | (typeof POLLINATOR_COMPATIBILITY_TARGETS)[FlowerSpecies];
+export type PollinatorFlowerId = PollinatorFlower["id"];
+const BY_ID: Readonly<Record<PollinatorFlowerId, PollinatorFlower>> = {
+  a: POLLINATOR_FLOWERS[0],
+  b: POLLINATOR_FLOWERS[1],
+  c: POLLINATOR_FLOWERS[2],
+  "bridge-a": POLLINATOR_FLOWERS[3],
+  "bridge-b": POLLINATOR_FLOWERS[4],
+  d: POLLINATOR_FLOWERS[5],
+  e: POLLINATOR_FLOWERS[6],
+  f: POLLINATOR_FLOWERS[7],
+  "trial-gold": POLLINATOR_COMPATIBILITY_TARGETS.gold,
+  "trial-violet": POLLINATOR_COMPATIBILITY_TARGETS.violet,
+};
+export const POLLINATOR_TEACHING_ASSUMPTIONS = Object.freeze({
+  nest: Object.freeze({ x: 70, y: 320 }),
+  comparisonReach: 170,
+  minimumReach: 80,
+  maximumReach: 240,
+  reachStep: 10,
+  maximumRouteStops: 24,
+  pollenLoadsRemembered: 1,
+});
 export type PollinatorState = {
   x: number;
   y: number;
-  pollen: { species: FlowerSpecies; sourceId: string } | null;
+  pollen: { species: FlowerSpecies; sourceId: PollinatorFlowerId } | null;
   visits: number;
   transfers: number;
-  pollinated: string[];
+  pollinated: PollinatorFlowerId[];
   path: { x: number; y: number }[];
   message: string;
 };
+export type PollinatorRouteInput = {
+  reach: number;
+  habitat: boolean;
+  flowerIds: readonly string[];
+  trialSpecies?: FlowerSpecies;
+};
+export type PollinatorRouteResult = {
+  state: PollinatorState;
+  visits: number;
+  transfers: number;
+  receivedCount: number;
+  blockedAttempts: number;
+  reachedTarget: boolean;
+};
+const owns = (value: object, key: PropertyKey) =>
+  Object.prototype.hasOwnProperty.call(value, key);
+export const isPollinatorFlowerId = (
+  value: unknown,
+): value is PollinatorFlowerId =>
+  typeof value === "string" && owns(BY_ID, value);
+const isReach = (value: unknown): value is number =>
+  typeof value === "number" &&
+  Number.isFinite(value) &&
+  Number.isInteger(value) &&
+  value >= POLLINATOR_TEACHING_ASSUMPTIONS.minimumReach &&
+  value <= POLLINATOR_TEACHING_ASSUMPTIONS.maximumReach &&
+  value % POLLINATOR_TEACHING_ASSUMPTIONS.reachStep === 0;
+const isSpecies = (value: unknown): value is FlowerSpecies =>
+  value === "gold" || value === "violet";
+const isKnownPoint = (point: unknown): point is { x: number; y: number } => {
+  if (typeof point !== "object" || point === null) return false;
+  const { x, y } = point as { x?: number; y?: number };
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  const nest = POLLINATOR_TEACHING_ASSUMPTIONS.nest;
+  return (
+    (x === nest.x && y === nest.y) ||
+    Object.values(BY_ID).some((flower) => flower.x === x && flower.y === y)
+  );
+};
+const isPollen = (pollen: unknown) => {
+  if (pollen === null) return true;
+  if (typeof pollen !== "object") return false;
+  const candidate = pollen as { sourceId?: unknown; species?: unknown };
+  return (
+    isPollinatorFlowerId(candidate.sourceId) &&
+    isSpecies(candidate.species) &&
+    BY_ID[candidate.sourceId].species === candidate.species
+  );
+};
+const isState = (state: unknown): state is PollinatorState => {
+  if (typeof state !== "object" || state === null) return false;
+  const s = state as PollinatorState;
+  return (
+    isKnownPoint(s) &&
+    Number.isSafeInteger(s.visits) &&
+    s.visits >= 0 &&
+    s.visits < Number.MAX_SAFE_INTEGER &&
+    Number.isSafeInteger(s.transfers) &&
+    s.transfers >= 0 &&
+    s.transfers <= s.visits &&
+    Array.isArray(s.pollinated) &&
+    s.pollinated.every(isPollinatorFlowerId) &&
+    Array.isArray(s.path) &&
+    s.path.length > 0 &&
+    s.path.length <= POLLINATOR_TEACHING_ASSUMPTIONS.maximumRouteStops &&
+    s.path.every(isKnownPoint) &&
+    s.path[s.path.length - 1].x === s.x &&
+    s.path[s.path.length - 1].y === s.y &&
+    typeof s.message === "string" &&
+    isPollen(s.pollen)
+  );
+};
 export function initialPollinator(): PollinatorState {
+  const { x, y } = POLLINATOR_TEACHING_ASSUMPTIONS.nest;
   return {
-    x: 70,
-    y: 320,
+    x,
+    y,
     pollen: null,
     visits: 0,
     transfers: 0,
     pollinated: [],
-    path: [{ x: 70, y: 320 }],
-    message: "Visit a flower to collect pollen.",
+    path: [{ x, y }],
+    message: "Start at the nest. Visit a flower to collect pollen.",
+  };
+}
+export function calculatePollinatorVisit(input: {
+  state: PollinatorState;
+  flowerId: string;
+  reach: number;
+  habitat: boolean;
+}) {
+  if (
+    !isState(input.state) ||
+    !isPollinatorFlowerId(input.flowerId) ||
+    !isReach(input.reach) ||
+    typeof input.habitat !== "boolean"
+  )
+    return null;
+  const target = BY_ID[input.flowerId];
+  const distance = Math.hypot(
+    target.x - input.state.x,
+    target.y - input.state.y,
+  );
+  if (!Number.isFinite(distance)) return null;
+  if ("bridge" in target && target.bridge && !input.habitat)
+    return {
+      state: {
+        ...input.state,
+        message: `${target.name} is absent until the habitat stop is added.`,
+      },
+      flowerId: target.id,
+      distance,
+      outcome: "habitat-required" as const,
+      compatibleTransfer: false,
+    };
+  if (distance > input.reach)
+    return {
+      state: {
+        ...input.state,
+        message: `${target.name} is beyond the bee's invented flight reach. Choose a closer stop.`,
+      },
+      flowerId: target.id,
+      distance,
+      outcome: "out-of-reach" as const,
+      compatibleTransfer: false,
+    };
+  const compatibleTransfer =
+    input.state.pollen?.species === target.species &&
+    input.state.pollen.sourceId !== target.id;
+  const state: PollinatorState = {
+    x: target.x,
+    y: target.y,
+    pollen: { species: target.species, sourceId: target.id },
+    visits: input.state.visits + 1,
+    transfers: input.state.transfers + (compatibleTransfer ? 1 : 0),
+    pollinated: compatibleTransfer
+      ? [...new Set([...input.state.pollinated, target.id])]
+      : [...input.state.pollinated],
+    path: [
+      ...input.state.path.slice(
+        -(POLLINATOR_TEACHING_ASSUMPTIONS.maximumRouteStops - 1),
+      ),
+      { x: target.x, y: target.y },
+    ],
+    message: compatibleTransfer
+      ? `${target.name} received compatible pollen from a different flower in this model.`
+      : input.state.pollen?.sourceId === target.id
+        ? "Revisiting the same flower did not transfer pollen from a different flower."
+        : input.state.pollen
+          ? "Different flower species: the bee visited, but this model records no compatible pollen transfer."
+          : `${target.name}: pollen collected. Next, visit another flower of the same model species.`,
+  };
+  return {
+    state,
+    flowerId: target.id,
+    distance,
+    outcome: "visited" as const,
+    compatibleTransfer,
   };
 }
 export function visitFlower(
@@ -166,69 +242,101 @@ export function visitFlower(
   flowerId: string,
   reach: number,
   habitat: boolean,
-): PollinatorState {
-  const target = POLLINATOR_FLOWERS.find((flower) => flower.id === flowerId);
-  if (!target || (target.bridge && !habitat))
-    return { ...state, message: "That flower needs a habitat patch." };
-  if (Math.hypot(target.x - state.x, target.y - state.y) > reach)
-    return {
-      ...state,
-      message:
-        "That flower is beyond the bee's flight reach. Find a closer flower.",
-    };
-  const compatible =
-    state.pollen?.species === target.species &&
-    state.pollen.sourceId !== target.id;
+) {
+  const result = calculatePollinatorVisit({ state, flowerId, reach, habitat });
+  if (!result) throw new RangeError("Invalid pollinator visit input.");
+  return result.state;
+}
+export function runPollinatorRoute(
+  input: PollinatorRouteInput,
+): PollinatorRouteResult | null {
+  if (
+    !isReach(input.reach) ||
+    typeof input.habitat !== "boolean" ||
+    !Array.isArray(input.flowerIds) ||
+    input.flowerIds.length === 0 ||
+    input.flowerIds.length >
+      POLLINATOR_TEACHING_ASSUMPTIONS.maximumRouteStops ||
+    !input.flowerIds.every(
+      (flowerId) => flowerId === "trial" || isPollinatorFlowerId(flowerId),
+    ) ||
+    (input.flowerIds.includes("trial")
+      ? !isSpecies(input.trialSpecies)
+      : input.trialSpecies !== undefined)
+  )
+    return null;
+  let state = initialPollinator(),
+    blockedAttempts = 0;
+  for (const routeStop of input.flowerIds) {
+    const flowerId =
+      routeStop === "trial"
+        ? POLLINATOR_COMPATIBILITY_TARGETS[input.trialSpecies!].id
+        : routeStop;
+    const result = calculatePollinatorVisit({
+      state,
+      flowerId,
+      reach: input.reach,
+      habitat: input.habitat,
+    });
+    if (!result) return null;
+    state = result.state;
+    if (result.outcome !== "visited") blockedAttempts += 1;
+  }
+  const lastStop = input.flowerIds[input.flowerIds.length - 1];
+  const target =
+    lastStop === "trial"
+      ? POLLINATOR_COMPATIBILITY_TARGETS[input.trialSpecies!]
+      : BY_ID[lastStop as PollinatorFlowerId];
   return {
-    x: target.x,
-    y: target.y,
-    pollen: { species: target.species, sourceId: target.id },
-    visits: state.visits + 1,
-    transfers: state.transfers + (compatible ? 1 : 0),
-    pollinated: compatible
-      ? [...new Set([...state.pollinated, target.id])]
-      : state.pollinated,
-    path: [...state.path.slice(-23), { x: target.x, y: target.y }],
-    message: compatible
-      ? `${target.name} received compatible pollen from a different flower.`
-      : state.pollen?.sourceId === target.id
-        ? "Revisiting the same flower did not transfer pollen from a different flower."
-        : state.pollen
-          ? "Different flower species: a visit, but no compatible pollen transfer."
-          : `${target.name}: pollen collected. Visit another flower of the same species.`,
+    state,
+    visits: state.visits,
+    transfers: state.transfers,
+    receivedCount: state.pollinated.length,
+    blockedAttempts,
+    reachedTarget: state.x === target.x && state.y === target.y,
   };
 }
-export function probabilities(weights: number[]) {
-  const total = weights.reduce((sum, value) => sum + value, 0);
-  return weights.map((weight) => (total > 0 ? weight / total : 0));
-}
-export function sampleOutcomes(
-  weights: number[],
-  trials: number,
-  random: () => number = Math.random,
+export function comparePollinatorRoutes(
+  baselineInput: PollinatorRouteInput,
+  comparisonInput: PollinatorRouteInput,
 ) {
-  const chances = probabilities(weights),
-    counts = weights.map(() => 0);
-  if (!chances.some((p) => p > 0)) return counts;
-  for (let trial = 0; trial < trials; trial++) {
-    const value = random();
-    let cumulative = 0;
-    for (let i = 0; i < chances.length; i++) {
-      cumulative += chances[i];
-      if (value < cumulative || i === chances.length - 1) {
-        counts[i]++;
-        break;
-      }
-    }
-  }
-  return counts;
+  const baseline = runPollinatorRoute(baselineInput),
+    comparison = runPollinatorRoute(comparisonInput);
+  if (!baseline || !comparison) return null;
+  return {
+    baseline,
+    comparison,
+    change: {
+      visits: comparison.visits - baseline.visits,
+      transfers: comparison.transfers - baseline.transfers,
+      receivedCount: comparison.receivedCount - baseline.receivedCount,
+      blockedAttempts: comparison.blockedAttempts - baseline.blockedAttempts,
+    },
+  };
 }
-export function fairnessDistance(counts: number[], weights: number[]) {
-  const total = counts.reduce((sum, count) => sum + count, 0);
-  const chances = probabilities(weights);
-  return total === 0
-    ? 0
-    : Math.max(
-        ...counts.map((count, i) => Math.abs(count / total - chances[i]) * 100),
-      );
-}
+export const POLLINATOR_COMPATIBILITY_TRIAL = Object.freeze({
+  baseline: Object.freeze({
+    reach: 170,
+    habitat: false,
+    flowerIds: Object.freeze(["a", "trial"]),
+    trialSpecies: "gold",
+  }) satisfies PollinatorRouteInput,
+  comparison: Object.freeze({
+    reach: 170,
+    habitat: false,
+    flowerIds: Object.freeze(["a", "trial"]),
+    trialSpecies: "violet",
+  }) satisfies PollinatorRouteInput,
+});
+export const POLLINATOR_HABITAT_TRIAL = Object.freeze({
+  baseline: Object.freeze({
+    reach: 170,
+    habitat: false,
+    flowerIds: Object.freeze(["a", "b", "bridge-a", "d"]),
+  }) satisfies PollinatorRouteInput,
+  comparison: Object.freeze({
+    reach: 170,
+    habitat: true,
+    flowerIds: Object.freeze(["a", "b", "bridge-a", "d"]),
+  }) satisfies PollinatorRouteInput,
+});

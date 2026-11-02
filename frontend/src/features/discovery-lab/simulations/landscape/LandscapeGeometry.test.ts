@@ -85,6 +85,7 @@ describe("landscape scene geometry", () => {
       reach: 170,
       habitat: false,
       pollen: "none" as const,
+      trialSpecies: "none" as const,
       received: [],
       path: [{ x: 70, y: 320 }],
     };

@@ -182,27 +182,56 @@ describe("fractions, patterns, trade, pollination and chance", () => {
     );
   });
 
-  it("distinguishes compatible transfer from visits and makes habitat consequential", () => {
+  it("requires two pollinator predictions, reports fixed evidence and resets", () => {
     render(<PollinatorSimulation />);
-    fireEvent.click(screen.getByRole("button", { name: "Visit Gold 1" }));
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Compatible transfers: 0",
+    const compareFlowers = screen.getByRole("button", {
+      name: "Compare the two second flowers",
+    });
+    const compareHabitat = screen.getByRole("button", {
+      name: "Compare routes with and without habitat",
+    });
+    expect(compareFlowers).toBeDisabled();
+    expect(compareHabitat).toBeDisabled();
+    expect(screen.queryByLabelText("Flight reach")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Gold trial flower" }));
+    fireEvent.click(compareFlowers);
+    expect(
+      screen.getByTestId("pollinator-compatibility-feedback"),
+    ).toHaveTextContent(
+      "Gold 1 → fixed Gold trial flower: 2 visits · 1 compatible transfer",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Visit Gold 2" }));
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Compatible transfers: 1",
+    expect(
+      screen.getByTestId("pollinator-compatibility-feedback"),
+    ).toHaveTextContent(
+      "Gold 1 → fixed Violet trial flower: 2 visits · 0 compatible transfers",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Visit Gold 3" }));
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "beyond the bee's flight reach",
+
+    fireEvent.click(screen.getByRole("button", { name: "With habitat" }));
+    fireEvent.click(compareHabitat);
+    expect(screen.getByTestId("pollinator-habitat-feedback")).toHaveTextContent(
+      "Without habitat: Gold 3 blocked",
     );
-    fireEvent.click(screen.getByLabelText("Add habitat patches"));
-    for (const name of ["Gold 1", "Gold 2", "Gold bridge", "Gold 3"])
-      fireEvent.click(screen.getByRole("button", { name: `Visit ${name}` }));
-    expect(screen.getByRole("status")).toHaveTextContent("Flower visits: 4");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Compatible transfers: 3",
+    expect(screen.getByTestId("pollinator-habitat-feedback")).toHaveTextContent(
+      "With habitat: Gold 3 reached",
     );
+    expect(screen.getByTestId("pollinator-habitat-feedback")).toHaveTextContent(
+      "Changed: one bridge habitat patch containing a Gold and a Violet flower",
+    );
+    expect(screen.getByTestId("pollinator-habitat-feedback")).toHaveTextContent(
+      "The fixed planned route uses the Gold bridge stop",
+    );
+    expect(screen.getByLabelText("Flight reach")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Violet trial flower" }),
+    );
+    expect(
+      screen.queryByTestId("pollinator-compatibility-feedback"),
+    ).toBeNull();
+    expect(screen.queryByLabelText("Flight reach")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(compareFlowers).toBeDisabled();
   });
 
   it("runs 10000 actual weighted trials and clears stale samples after edits", () => {

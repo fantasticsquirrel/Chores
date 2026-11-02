@@ -26,8 +26,15 @@ export const gardenFlowers = [
 ] as const;
 export const gardenPoint = (x: number, y: number, height = 0.1) =>
   v((x - 360) / 50, height, (y - 225) / 50);
-function flower(group: T.Object3D, index: number, received: boolean) {
+function flower(
+  group: T.Object3D,
+  index: number,
+  received: boolean,
+  trialSpecies: GardenSceneState["trialSpecies"],
+) {
   const item = gardenFlowers[index],
+    species =
+      index === 1 && trialSpecies !== "none" ? trialSpecies : item.species,
     point = gardenPoint(item.x, item.y),
     plant = new T.Group();
   plant.position.copy(point);
@@ -47,13 +54,13 @@ function flower(group: T.Object3D, index: number, received: boolean) {
     leaf.rotation.y = -i * 2;
     leaf.rotation.z = 0.25;
   }
-  const count = item.species === "gold" ? 12 : 6;
+  const count = species === "gold" ? 12 : 6;
   for (let i = 0; i < count; i++) {
     const angle = (i * Math.PI * 2) / count,
       petal = ellipsoid(
         plant,
-        [item.species === "gold" ? 0.14 : 0.22, 0.06, 0.32],
-        item.species === "gold"
+        [species === "gold" ? 0.14 : 0.22, 0.06, 0.32],
+        species === "gold"
           ? i % 2
             ? "#efbd48"
             : "#f3d16e"
@@ -72,14 +79,14 @@ function flower(group: T.Object3D, index: number, received: boolean) {
         v(Math.sin(angle) * 0.18, 0.88, Math.cos(angle) * 0.18),
         v(Math.sin(angle) * 0.42, 0.875, Math.cos(angle) * 0.42),
       ],
-      item.species === "gold" ? "#dfac45" : "#836397",
+      species === "gold" ? "#dfac45" : "#836397",
       0.007,
     );
   }
   ellipsoid(
     plant,
     [0.2, 0.1, 0.2],
-    item.species === "gold" ? "#78603b" : "#d7b24b",
+    species === "gold" ? "#78603b" : "#d7b24b",
     0,
     0.85,
     0,
@@ -96,6 +103,16 @@ function flower(group: T.Object3D, index: number, received: boolean) {
       Math.sin(angle) * radius,
     );
   }
+  // Enlarged reproductive structures make the mechanism inspectable.
+  rod(plant, v(0, 0.86, 0), v(0, 1.19, 0), 0.025, "#b8d788");
+  ellipsoid(plant, [0.07, 0.035, 0.07], "#d9efad", 0, 1.21, 0);
+  for (let i = 0; i < 6; i++) {
+    const angle = (i * Math.PI) / 3;
+    const x = Math.cos(angle) * 0.14;
+    const z = Math.sin(angle) * 0.14;
+    rod(plant, v(x * 0.45, 0.9, z * 0.45), v(x, 1.08, z), 0.012, "#efe1a0");
+    ellipsoid(plant, [0.035, 0.025, 0.06], "#d9a93d", x, 1.1, z);
+  }
   if (received) {
     const ring = mesh(
       plant,
@@ -106,6 +123,15 @@ function flower(group: T.Object3D, index: number, received: boolean) {
       0,
     );
     ring.rotation.x = Math.PI / 2;
+    for (let i = 0; i < 3; i++)
+      ellipsoid(
+        plant,
+        [0.025, 0.018, 0.025],
+        "#f3d26d",
+        (i - 1) * 0.035,
+        1.25 + (i % 2) * 0.018,
+        0.015 * (i - 1),
+      );
   }
 }
 function bee(group: T.Object3D, state: GardenSceneState) {
@@ -169,6 +195,8 @@ function bee(group: T.Object3D, state: GardenSceneState) {
 export function buildGarden(state: GardenSceneState): BuiltLandscape {
   const group = new T.Group();
   box(group, [14, 0.48, 8.2], "#6d563e", 0, -0.27, 0);
+  box(group, [14.06, 0.07, 8.26], "#4f3d2e", 0, -0.45, 0);
+  box(group, [14.04, 0.045, 8.24], "#947252", 0, -0.31, 0);
   const planted = (x: number, z: number) =>
     Math.abs(x) > 1.4 || (state.habitat && Math.abs(z) < 2.3);
   terrain(
@@ -253,32 +281,59 @@ export function buildGarden(state: GardenSceneState): BuiltLandscape {
     });
     mesh(group, grassGeometry, grassMaterial);
   }
-  const circle = Array.from({ length: 97 }, (_, i) =>
+  const reachOutline = Array.from({ length: 97 }, (_, i) =>
     gardenPoint(
       state.x + Math.cos((i * Math.PI) / 48) * state.reach,
       state.y + Math.sin((i * Math.PI) / 48) * state.reach,
-      0.1,
+      0.11,
     ),
   );
+  const reachHighlight = reachOutline.map((point) => point.clone().setY(0.145));
   for (let i = 0; i < 96; i += 3) {
-    const segment = circle.slice(i, i + 2);
-    if (segment.every((p) => Math.abs(p.x) < 6.95 && Math.abs(p.z) < 4.05))
-      line(group, segment, "#e7edc2", 0.015);
+    const outlineSegment = reachOutline.slice(i, i + 2);
+    if (
+      outlineSegment.every(
+        (point) => Math.abs(point.x) < 6.95 && Math.abs(point.z) < 4.05,
+      )
+    ) {
+      line(group, outlineSegment, "#142826", 0.032);
+      line(group, reachHighlight.slice(i, i + 2), "#f7f5d4", 0.014);
+    }
   }
-  if (state.path.length > 1)
+  if (state.path.length > 1) {
+    const routeOutline = state.path.map((point) =>
+      gardenPoint(point.x, point.y, 0.13),
+    );
+    line(group, routeOutline, "#162c29", 0.052);
     line(
       group,
-      state.path.map((p) => gardenPoint(p.x, p.y, 0.13)),
-      "#e4bd6a",
-      0.026,
+      routeOutline.map((point) => point.clone().setY(0.18)),
+      "#fff0a8",
+      0.023,
+    );
+  }
+  if (state.path.length > 1)
+    state.path.forEach((point, index) =>
+      ellipsoid(
+        group,
+        [
+          index === state.path.length - 1 ? 0.09 : 0.055,
+          0.035,
+          index === state.path.length - 1 ? 0.09 : 0.055,
+        ],
+        index === state.path.length - 1 ? "#fff1a8" : "#d9a94e",
+        gardenPoint(point.x, point.y).x,
+        0.16,
+        gardenPoint(point.x, point.y).z,
+      ),
     );
   const labels: BuiltLandscape["labels"] = [];
   gardenFlowers.forEach((item, i) => {
     if ("bridge" in item && !state.habitat) return;
-    flower(group, i, state.received.includes(i));
+    flower(group, i, state.received.includes(i), state.trialSpecies);
     const point = gardenPoint(item.x, item.y);
     labels.push({
-      text: `${item.name}${state.received.includes(i) ? " ✓" : ""}`,
+      text: `${i === 1 && state.trialSpecies !== "none" ? `Trial flower · ${state.trialSpecies === "gold" ? "Gold" : "Violet"} type` : item.name}${state.received.includes(i) ? " ✓" : ""}`,
       x: point.x,
       y: 1.02,
       z: point.z + 0.6,
@@ -287,6 +342,19 @@ export function buildGarden(state: GardenSceneState): BuiltLandscape {
   const nest = gardenPoint(70, 320);
   box(group, [0.5, 0.3, 0.5], "#98784d", nest.x, 0.2, nest.z);
   ellipsoid(group, [0.11, 0.09, 0.02], "#3b3d2a", nest.x, 0.2, nest.z + 0.26);
+  for (let i = 0; i < 7; i++) {
+    const angle = i === 0 ? 0 : ((i - 1) * Math.PI) / 3;
+    const radius = i === 0 ? 0 : 0.12;
+    ellipsoid(
+      group,
+      [0.035, 0.035, 0.012],
+      i === 0 ? "#5b4632" : "#d1a85c",
+      nest.x + Math.cos(angle) * radius,
+      0.24 + Math.sin(angle) * radius,
+      nest.z + 0.266,
+    );
+  }
+  labels.push({ text: "Nest", x: nest.x, y: 0.68, z: nest.z + 0.45 });
   bee(group, state);
   return { group, labels };
 }

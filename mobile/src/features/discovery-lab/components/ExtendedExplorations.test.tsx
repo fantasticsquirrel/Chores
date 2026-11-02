@@ -11,7 +11,7 @@ const controls: [string, string][] = [
   ["fraction-feast", "The same amount"],
   ["pattern-palace", "Quarter-turn"],
   ["caravan-crossroads", "More travel days"],
-  ["pollinator-express", "Visit Gold 1"],
+  ["pollinator-express", "Gold trial flower"],
   ["chance-carnival", "Add 10"],
 ];
 
@@ -27,7 +27,8 @@ describe("native learning explorations", () => {
         view.getByText(
           id === "fraction-feast" ||
             id === "pattern-palace" ||
-            id === "caravan-crossroads"
+            id === "caravan-crossroads" ||
+            id === "pollinator-express"
             ? "Reset lesson"
             : "Reset experiment",
         ),

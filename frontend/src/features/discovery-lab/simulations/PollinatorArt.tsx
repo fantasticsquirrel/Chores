@@ -98,92 +98,106 @@ export function PollinatorGarden({
         r={reach}
         fill="#d7e7a9"
         fillOpacity=".035"
-        stroke="#cee0a7"
-        strokeWidth="1"
+        stroke="#142826"
+        strokeWidth="4"
         strokeDasharray="6 7"
-        opacity=".65"
+        opacity=".9"
+      />
+      <circle
+        cx={state.x}
+        cy={state.y}
+        r={reach}
+        fill="none"
+        stroke="#f7f5d4"
+        strokeWidth="1.5"
+        strokeDasharray="6 7"
       />
       <polyline
         points={state.path.map((point) => `${point.x},${point.y}`).join(" ")}
         fill="none"
-        stroke="#f2d68e"
-        strokeWidth="2"
+        stroke="#162c29"
+        strokeWidth="6"
         strokeDasharray="3 5"
-        opacity=".7"
+        opacity=".95"
       />
-      {POLLINATOR_FLOWERS.filter((flower) => habitat || !flower.bridge).map(
-        (flower) => {
-          const accessible =
-            Math.hypot(flower.x - state.x, flower.y - state.y) <= reach;
-          const received = state.pollinated.includes(flower.id);
-          return (
-            <g key={flower.id} transform={`translate(${flower.x} ${flower.y})`}>
-              <circle
-                r="35"
-                fill="none"
-                stroke={
-                  received ? "#d6efad" : accessible ? "#b7dfd0" : "#788a7a"
-                }
-                strokeWidth={received ? 2 : 1}
-                opacity={accessible || received ? 0.75 : 0.2}
-                strokeDasharray={received ? undefined : "2 5"}
+      <polyline
+        points={state.path.map((point) => `${point.x},${point.y}`).join(" ")}
+        fill="none"
+        stroke="#fff0a8"
+        strokeWidth="2.5"
+        strokeDasharray="3 5"
+      />
+      {POLLINATOR_FLOWERS.filter(
+        (flower) => habitat || !("bridge" in flower && flower.bridge),
+      ).map((flower) => {
+        const accessible =
+          Math.hypot(flower.x - state.x, flower.y - state.y) <= reach;
+        const received = state.pollinated.includes(flower.id);
+        return (
+          <g key={flower.id} transform={`translate(${flower.x} ${flower.y})`}>
+            <circle
+              r="35"
+              fill="none"
+              stroke={received ? "#d6efad" : accessible ? "#b7dfd0" : "#788a7a"}
+              strokeWidth={received ? 2 : 1}
+              opacity={accessible || received ? 0.75 : 0.2}
+              strokeDasharray={received ? undefined : "2 5"}
+            />
+            <g filter={`url(#${id}-shadow)`}>
+              <path
+                d="M-6 18Q-36 24-32 2Q-13 0-6 18M6 18Q34 36 35 10Q15 1 6 18"
+                fill="#579364"
+                stroke="#81ab73"
+                strokeWidth=".6"
               />
-              <g filter={`url(#${id}-shadow)`}>
-                <path
-                  d="M-6 18Q-36 24-32 2Q-13 0-6 18M6 18Q34 36 35 10Q15 1 6 18"
-                  fill="#579364"
-                  stroke="#81ab73"
-                  strokeWidth=".6"
-                />
-                {Array.from(
-                  { length: flower.species === "gold" ? 8 : 5 },
-                  (_, i) => (
-                    <ellipse
-                      key={i}
-                      cx="0"
-                      cy="-13"
-                      rx={flower.species === "gold" ? 8 : 12}
-                      ry="17"
-                      transform={`rotate(${(i * 360) / (flower.species === "gold" ? 8 : 5)})`}
-                      fill={`url(#${id}-${flower.species})`}
-                      stroke={flower.species === "gold" ? "#f5d97c" : "#e7c8ef"}
-                      strokeWidth=".6"
-                    />
-                  ),
-                )}
-                <circle
-                  r="10"
-                  fill={flower.species === "gold" ? "#8b673c" : "#e2b957"}
-                  stroke="#f5d886"
-                  strokeWidth="1"
-                />
-                {Array.from({ length: 7 }, (_, i) => (
-                  <circle
+              {Array.from(
+                { length: flower.species === "gold" ? 8 : 5 },
+                (_, i) => (
+                  <ellipse
                     key={i}
-                    cx={Math.cos(i) * 6}
-                    cy={Math.sin(i) * 6}
-                    r="1.1"
-                    fill="#ffe3a0"
+                    cx="0"
+                    cy="-13"
+                    rx={flower.species === "gold" ? 8 : 12}
+                    ry="17"
+                    transform={`rotate(${(i * 360) / (flower.species === "gold" ? 8 : 5)})`}
+                    fill={`url(#${id}-${flower.species})`}
+                    stroke={flower.species === "gold" ? "#f5d97c" : "#e7c8ef"}
+                    strokeWidth=".6"
                   />
-                ))}
-              </g>
-              <rect
-                x="-44"
-                y="39"
-                width="88"
-                height="20"
-                rx="8"
-                fill="#102c2b"
-                opacity=".85"
+                ),
+              )}
+              <circle
+                r="10"
+                fill={flower.species === "gold" ? "#8b673c" : "#e2b957"}
+                stroke="#f5d886"
+                strokeWidth="1"
               />
-              <text y="53" textAnchor="middle" className="dl-svg-small">
-                {flower.name}
-                {received ? " ✓" : ""}
-              </text>
+              {Array.from({ length: 7 }, (_, i) => (
+                <circle
+                  key={i}
+                  cx={Math.cos(i) * 6}
+                  cy={Math.sin(i) * 6}
+                  r="1.1"
+                  fill="#ffe3a0"
+                />
+              ))}
             </g>
-          );
-        },
-      )}
+            <rect
+              x="-44"
+              y="39"
+              width="88"
+              height="20"
+              rx="8"
+              fill="#102c2b"
+              opacity=".85"
+            />
+            <text y="53" textAnchor="middle" className="dl-svg-small">
+              {flower.name}
+              {received ? " ✓" : ""}
+            </text>
+          </g>
+        );
+      })}
       <g
         transform={`translate(${state.x + 14} ${state.y - 25}) rotate(-23)`}
         filter={`url(#${id}-shadow)`}

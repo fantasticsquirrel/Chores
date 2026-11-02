@@ -40,6 +40,7 @@ export type GardenSceneState = {
   reach: number;
   habitat: boolean;
   pollen: "none" | "gold" | "violet";
+  trialSpecies: "none" | "gold" | "violet";
   received: number[];
   path: { x: number; y: number }[];
 };

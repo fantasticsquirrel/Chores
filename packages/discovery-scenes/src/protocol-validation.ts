@@ -205,6 +205,7 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
           "reach",
           "habitat",
           "pollen",
+          "trialSpecies",
           "received",
           "path",
         ]) &&
@@ -213,6 +214,7 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
         number(value.reach, 80, 240) &&
         typeof value.habitat === "boolean" &&
         ["none", "gold", "violet"].includes(value.pollen as string) &&
+        ["none", "gold", "violet"].includes(value.trialSpecies as string) &&
         Array.isArray(value.received) &&
         value.received.length <= 8 &&
         value.received.every((v) => number(v, 0, 7) && Number.isInteger(v)) &&

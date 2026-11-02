@@ -117,6 +117,7 @@ const states: OfflineSceneState[] = [
     reach: 140,
     habitat: true,
     pollen: "none",
+    trialSpecies: "none",
     received: [],
     path: [{ x: 80, y: 210 }],
   },

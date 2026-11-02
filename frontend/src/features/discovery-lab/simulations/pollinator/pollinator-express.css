@@ -1,0 +1,212 @@
+.landscape-garden {
+  --pollinator-ink: #253d35;
+}
+.landscape-garden .landscape-controls {
+  display: block;
+  padding: 0;
+  border-color: #9ca58a;
+  background: #e9e5cf;
+}
+.pollinator-locked,
+.pollinator-explore-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 30px;
+  color: var(--pollinator-ink);
+  font-size: 13px;
+}
+.pollinator-explore-heading {
+  border-bottom: 1px solid #b8bea6;
+}
+.pollinator-explore-heading h3 {
+  margin: 0 0 4px;
+  color: #214f43;
+  font:
+    700 21px Georgia,
+    serif;
+}
+.pollinator-explore-heading p {
+  max-width: 700px;
+  margin: 0;
+  color: #4f6258;
+  line-height: 1.5;
+}
+.pollinator-free-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 1fr) minmax(
+      150px,
+      0.5fr
+    );
+  align-items: center;
+  gap: 20px;
+  padding: 20px 30px;
+  color: var(--pollinator-ink);
+}
+.pollinator-switch {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 700;
+}
+.pollinator-flower-controls {
+  padding: 0 30px 26px;
+}
+.landscape-garden .landscape-evidence {
+  padding: 22px 30px;
+  border-color: #8f9a7f;
+  background: #173b35;
+}
+.pollinator-current > p {
+  margin: 14px 0 0;
+  color: #d7e3d7;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.pollinator-metrics .landscape-metric {
+  background: rgb(8 30 27 / 38%);
+  border-color: #557a68;
+}
+.pollinator-metrics .landscape-metric > span,
+.pollinator-metrics .landscape-metric > strong {
+  color: #f6e7ae;
+}
+.pollinator-learning {
+  color: var(--pollinator-ink);
+  background:
+    linear-gradient(rgb(255 253 242 / 96%), rgb(243 238 216 / 96%)),
+    repeating-linear-gradient(0deg, transparent 0 23px, #9c895533 24px);
+}
+.pollinator-trials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 28px 30px 24px;
+}
+.pollinator-trial {
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #a0aa8f;
+  border-radius: 14px;
+  background: rgb(255 254 246 / 84%);
+  box-shadow: 0 12px 24px rgb(54 64 43 / 10%);
+}
+.pollinator-trial legend {
+  padding: 0 8px;
+  color: #205044;
+  font:
+    700 20px Georgia,
+    serif;
+}
+.pollinator-trial > p {
+  min-height: 74px;
+  margin: 6px 0 14px;
+  color: #43554c;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.pollinator-predictions {
+  display: grid;
+  gap: 8px;
+}
+.pollinator-predictions button {
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+}
+.landscape-garden .pollinator-compare {
+  width: 100%;
+  margin-top: 11px;
+  color: #fff7dc;
+  background: #28594d;
+  border-color: #28594d;
+  font-weight: 700;
+}
+.pollinator-feedback {
+  margin-top: 14px;
+  padding: 15px 16px;
+  border-left: 4px solid #347964;
+  border-radius: 4px 9px 9px 4px;
+  background: #e4ecd9;
+  color: #29433a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.pollinator-feedback p {
+  margin: 8px 0 0;
+}
+.pollinator-evidence-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.pollinator-evidence-actions button {
+  flex: 1;
+  font-size: 11px;
+}
+.pollinator-process {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.35fr) 1fr;
+  gap: 20px;
+  padding: 22px 30px 26px;
+  border-top: 1px solid #c2c7af;
+  color: #40534b;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.pollinator-process strong {
+  color: #205044;
+  font:
+    700 18px Georgia,
+    serif;
+}
+.pollinator-process p {
+  margin: 0;
+}
+@media (max-width: 760px) {
+  .landscape-garden .landscape-canvas {
+    height: 260px;
+  }
+
+  .pollinator-trials,
+  .pollinator-free-controls,
+  .pollinator-process {
+    grid-template-columns: 1fr;
+  }
+  .pollinator-trials {
+    padding: 20px 16px;
+  }
+  .pollinator-locked,
+  .pollinator-explore-heading {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px 16px;
+  }
+  .pollinator-free-controls,
+  .pollinator-flower-controls,
+  .landscape-garden .landscape-evidence,
+  .pollinator-process {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .pollinator-evidence-actions {
+    flex-direction: column;
+  }
+}
+@media (max-width: 400px) {
+  .landscape-garden .landscape-canvas {
+    height: 240px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landscape-garden *,
+  .landscape-garden *::before,
+  .landscape-garden *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

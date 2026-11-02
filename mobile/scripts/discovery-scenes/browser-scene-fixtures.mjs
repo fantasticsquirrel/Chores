@@ -279,6 +279,7 @@ cases.push(
         reach: 140,
         habitat: true,
         pollen: "none",
+        trialSpecies: "none",
         received: [],
         path: [{ x: 80, y: 210 }],
       },
@@ -289,6 +290,7 @@ cases.push(
         reach: 220,
         habitat: false,
         pollen: "gold",
+        trialSpecies: "violet",
         received: [0, 1, 2],
         path: [
           { x: 80, y: 210 },

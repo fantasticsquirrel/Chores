@@ -92,7 +92,8 @@ export function createLandscapeScene(
     if (!width || !height || disposed) return;
     renderer.setSize(width, height);
     const aspect = width / height,
-      half = Math.max(4.7, 8.05 / aspect) / zoom;
+      narrowGardenZoom = kind === "garden" && width <= 480 ? 1.11 : 1,
+      half = Math.max(4.7, 8.05 / aspect) / (zoom * narrowGardenZoom);
     camera.left = -half * aspect;
     camera.right = half * aspect;
     camera.top = half;

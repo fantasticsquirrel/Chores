@@ -260,29 +260,32 @@ describe("native predictions and evidence", () => {
     expect(view.getByText(/River Road · wet season · 8 days/)).toBeTruthy();
   });
 
-  it("distinguishes visits, cross-species pollen and stepping-stone habitat", () => {
+  it("gates pollinator controls behind exact controlled evidence", () => {
     const view = render(<NativeExploration id="pollinator-express" />);
-    fireEvent.press(view.getByText("Visit Gold 1"));
-    fireEvent.press(view.getByText("Visit Gold 1"));
+    expect(view.getByText("Compare the two second flowers")).toBeDisabled();
+    expect(view.queryByText("Flight reach (garden units)")).toBeNull();
+    fireEvent.press(view.getByText("Gold trial flower"));
+    fireEvent.press(view.getByText("Compare the two second flowers"));
     expect(
-      view.getByText(/2 flower visits; 0 compatible pollen transfers/),
+      view.getByText(
+        /Gold 1 → fixed Gold trial flower: 2 visits · 1 compatible transfer/,
+      ),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Visit Gold 2"));
+    fireEvent.press(view.getByText("With habitat"));
+    fireEvent.press(view.getByText("Compare routes with and without habitat"));
+    expect(view.getByText(/Without habitat: Gold 3 blocked/)).toBeTruthy();
+    expect(view.getByText(/With habitat: Gold 3 reached/)).toBeTruthy();
     expect(
-      view.getByText(/3 flower visits; 1 compatible pollen transfers/),
+      view.getByText(
+        /Changed: one bridge habitat patch containing a Gold and a Violet flower.*fixed planned route uses the Gold bridge stop/,
+      ),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Visit Gold 3"));
-    expect(view.getByText(/beyond the bee's flight reach/)).toBeTruthy();
-    fireEvent.press(view.getByText("Add habitat patches"));
-    fireEvent.press(view.getByText("Visit Gold bridge"));
-    fireEvent.press(view.getByText("Visit Gold 3"));
+    expect(view.getByText(/Flight reach \(garden units\): 170/)).toBeTruthy();
+    fireEvent.press(view.getByText("Violet trial flower"));
     expect(
-      view.getByText(/5 flower visits; 3 compatible pollen transfers/),
-    ).toBeTruthy();
-    fireEvent.press(view.getByText("Visit Violet 2"));
-    expect(
-      view.getByText(/6 flower visits; 3 compatible pollen transfers/),
-    ).toBeTruthy();
+      view.queryByText(/Gold 1 → fixed Gold trial flower: 2 visits/),
+    ).toBeNull();
+    expect(view.queryByText(/Flight reach \(garden units\):/)).toBeNull();
   });
 
   it("requires predictions and preserves the controlled chance comparison", () => {

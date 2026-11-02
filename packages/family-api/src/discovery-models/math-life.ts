@@ -50,97 +50,29 @@ export function regularTile(sides: number, side: number, rotation = 0) {
   if (!result) throw new RangeError("Invalid regular-polygon geometry input.");
   return result;
 }
-export type FlowerSpecies = "gold" | "violet";
-export const POLLINATOR_FLOWERS: ReadonlyArray<{
-  id: string;
-  name: string;
-  species: FlowerSpecies;
-  x: number;
-  y: number;
-  bridge?: boolean;
-}> = [
-  { id: "a", name: "Gold 1", species: "gold", x: 140, y: 250 },
-  { id: "b", name: "Gold 2", species: "gold", x: 230, y: 195 },
-  { id: "c", name: "Violet 1", species: "violet", x: 180, y: 145 },
-  {
-    id: "bridge-a",
-    name: "Gold bridge",
-    species: "gold",
-    x: 350,
-    y: 205,
-    bridge: true,
-  },
-  {
-    id: "bridge-b",
-    name: "Violet bridge",
-    species: "violet",
-    x: 340,
-    y: 300,
-    bridge: true,
-  },
-  { id: "d", name: "Gold 3", species: "gold", x: 490, y: 235 },
-  { id: "e", name: "Violet 2", species: "violet", x: 570, y: 160 },
-  { id: "f", name: "Gold 4", species: "gold", x: 590, y: 300 },
-];
-export type PollinatorState = {
-  x: number;
-  y: number;
-  pollen: { species: FlowerSpecies; sourceId: string } | null;
-  visits: number;
-  transfers: number;
-  pollinated: string[];
-  path: { x: number; y: number }[];
-  message: string;
-};
-export function initialPollinator(): PollinatorState {
-  return {
-    x: 70,
-    y: 320,
-    pollen: null,
-    visits: 0,
-    transfers: 0,
-    pollinated: [],
-    path: [{ x: 70, y: 320 }],
-    message: "Visit a flower to collect pollen.",
-  };
-}
-export function visitFlower(
-  state: PollinatorState,
-  flowerId: string,
-  reach: number,
-  habitat: boolean,
-): PollinatorState {
-  const target = POLLINATOR_FLOWERS.find((flower) => flower.id === flowerId);
-  if (!target || (target.bridge && !habitat))
-    return { ...state, message: "That flower needs a habitat patch." };
-  if (Math.hypot(target.x - state.x, target.y - state.y) > reach)
-    return {
-      ...state,
-      message:
-        "That flower is beyond the bee's flight reach. Find a closer flower.",
-    };
-  const compatible =
-    state.pollen?.species === target.species &&
-    state.pollen.sourceId !== target.id;
-  return {
-    x: target.x,
-    y: target.y,
-    pollen: { species: target.species, sourceId: target.id },
-    visits: state.visits + 1,
-    transfers: state.transfers + (compatible ? 1 : 0),
-    pollinated: compatible
-      ? [...new Set([...state.pollinated, target.id])]
-      : state.pollinated,
-    path: [...state.path.slice(-23), { x: target.x, y: target.y }],
-    message: compatible
-      ? `${target.name} received compatible pollen from a different flower.`
-      : state.pollen?.sourceId === target.id
-        ? "Revisiting the same flower did not transfer pollen from a different flower."
-        : state.pollen
-          ? "Different flower species: a visit, but no compatible pollen transfer."
-          : `${target.name}: pollen collected. Visit another flower of the same species.`,
-  };
-}
+export {
+  POLLINATOR_COMPATIBILITY_TRIAL,
+  POLLINATOR_COMPATIBILITY_TARGETS,
+  POLLINATOR_FLOWERS,
+  POLLINATOR_HABITAT_TRIAL,
+  POLLINATOR_TEACHING_ASSUMPTIONS,
+  calculatePollinatorVisit,
+  comparePollinatorRoutes,
+  initialPollinator,
+  isPollinatorFlowerId,
+  runPollinatorRoute,
+  visitFlower,
+} from "./pollinators";
+export type {
+  FlowerSpecies,
+  PollinatorFlower,
+  PollinatorFlowerId,
+  PollinatorRouteInput,
+  PollinatorRouteResult,
+  PollinatorState,
+  PollinatorVisitOutcome,
+  PollinatorVisitResult,
+} from "./pollinators";
 export function probabilities(weights: number[]) {
   const total = weights.reduce((sum, value) => sum + value, 0);
   return weights.map((weight) => (total > 0 ? weight / total : 0));

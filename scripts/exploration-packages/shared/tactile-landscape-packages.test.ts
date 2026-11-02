@@ -132,6 +132,30 @@ import {
 } from "../caravan-crossroads/caravans";
 import { buildCaravan as buildWebCaravan } from "../../../packages/discovery-scenes/src/landscape/caravan";
 import { buildCaravan as buildPackageCaravan } from "../caravan-crossroads/caravan";
+import {
+  POLLINATOR_COMPATIBILITY_TRIAL as SHARED_POLLINATOR_COMPATIBILITY_TRIAL,
+  POLLINATOR_COMPATIBILITY_TARGETS as SHARED_POLLINATOR_COMPATIBILITY_TARGETS,
+  POLLINATOR_FLOWERS as SHARED_POLLINATOR_FLOWERS,
+  POLLINATOR_HABITAT_TRIAL as SHARED_POLLINATOR_HABITAT_TRIAL,
+  POLLINATOR_TEACHING_ASSUMPTIONS as SHARED_POLLINATOR_ASSUMPTIONS,
+  calculatePollinatorVisit as calculateSharedPollinatorVisit,
+  comparePollinatorRoutes as compareSharedPollinatorRoutes,
+  initialPollinator as initialSharedPollinator,
+  runPollinatorRoute as runSharedPollinatorRoute,
+} from "../../../packages/family-api/src/discovery-models/pollinators";
+import {
+  POLLINATOR_COMPATIBILITY_TRIAL as PACKAGE_POLLINATOR_COMPATIBILITY_TRIAL,
+  POLLINATOR_COMPATIBILITY_TARGETS as PACKAGE_POLLINATOR_COMPATIBILITY_TARGETS,
+  POLLINATOR_FLOWERS as PACKAGE_POLLINATOR_FLOWERS,
+  POLLINATOR_HABITAT_TRIAL as PACKAGE_POLLINATOR_HABITAT_TRIAL,
+  POLLINATOR_TEACHING_ASSUMPTIONS as PACKAGE_POLLINATOR_ASSUMPTIONS,
+  calculatePollinatorVisit as calculatePackagePollinatorVisit,
+  comparePollinatorRoutes as comparePackagePollinatorRoutes,
+  initialPollinator as initialPackagePollinator,
+  runPollinatorRoute as runPackagePollinatorRoute,
+} from "../pollinator-express/model";
+import { buildGarden as buildWebGarden } from "../../../packages/discovery-scenes/src/landscape/garden";
+import { buildGarden as buildPackageGarden } from "../pollinator-express/garden";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -1364,16 +1388,191 @@ describe("ten independently authored rich explorations", () => {
     );
     expect(expectedMarks).toHaveLength(4);
   }, 30000);
-  it("pollinator reach and pollen remain distinct", () => {
+  it("pollinator package mirrors the bounded model and gates controlled evidence", () => {
+    expect(PACKAGE_POLLINATOR_FLOWERS).toEqual(SHARED_POLLINATOR_FLOWERS);
+    expect(PACKAGE_POLLINATOR_COMPATIBILITY_TARGETS).toEqual(
+      SHARED_POLLINATOR_COMPATIBILITY_TARGETS,
+    );
+    expect(PACKAGE_POLLINATOR_ASSUMPTIONS).toEqual(
+      SHARED_POLLINATOR_ASSUMPTIONS,
+    );
+    expect(PACKAGE_POLLINATOR_COMPATIBILITY_TRIAL).toEqual(
+      SHARED_POLLINATOR_COMPATIBILITY_TRIAL,
+    );
+    expect(PACKAGE_POLLINATOR_HABITAT_TRIAL).toEqual(
+      SHARED_POLLINATOR_HABITAT_TRIAL,
+    );
+    expect(
+      comparePackagePollinatorRoutes(
+        PACKAGE_POLLINATOR_COMPATIBILITY_TRIAL.baseline,
+        PACKAGE_POLLINATOR_COMPATIBILITY_TRIAL.comparison,
+      ),
+    ).toEqual(
+      compareSharedPollinatorRoutes(
+        SHARED_POLLINATOR_COMPATIBILITY_TRIAL.baseline,
+        SHARED_POLLINATOR_COMPATIBILITY_TRIAL.comparison,
+      ),
+    );
+    expect(
+      comparePackagePollinatorRoutes(
+        PACKAGE_POLLINATOR_HABITAT_TRIAL.baseline,
+        PACKAGE_POLLINATOR_HABITAT_TRIAL.comparison,
+      ),
+    ).toEqual(
+      compareSharedPollinatorRoutes(
+        SHARED_POLLINATOR_HABITAT_TRIAL.baseline,
+        SHARED_POLLINATOR_HABITAT_TRIAL.comparison,
+      ),
+    );
+    expect(initialPackagePollinator()).toEqual(initialSharedPollinator());
+    const initial = initialSharedPollinator();
+    const malformedStates = [
+      ...[
+        undefined,
+        7,
+        {},
+        { species: "gold" },
+        { species: "gold", sourceId: "c" },
+      ].map((pollen) => ({ ...initial, pollen })),
+      {
+        ...initial,
+        x: Number.MAX_VALUE,
+        y: Number.MAX_VALUE,
+        path: [{ x: Number.MAX_VALUE, y: Number.MAX_VALUE }],
+      },
+      { ...initial, x: 140, y: 250 },
+      { ...initial, visits: Number.MAX_SAFE_INTEGER },
+      { ...initial, visits: Number.MAX_SAFE_INTEGER + 1 },
+    ];
+    const visitInputs = [
+      { state: initial, flowerId: "a", reach: 170, habitat: false },
+      { state: initial, flowerId: "bridge-a", reach: 170, habitat: false },
+      { state: initial, flowerId: "d", reach: 170, habitat: false },
+      ...["constructor", "toString", "__proto__"].map((flowerId) => ({
+        state: initial,
+        flowerId,
+        reach: 170,
+        habitat: false,
+      })),
+      ...malformedStates.map((state) => ({
+        state,
+        flowerId: "a",
+        reach: 170,
+        habitat: false,
+      })),
+    ];
+    for (const input of visitInputs) {
+      expect(() => calculatePackagePollinatorVisit(input as any)).not.toThrow();
+      expect(calculatePackagePollinatorVisit(input as any)).toEqual(
+        calculateSharedPollinatorVisit(input as any),
+      );
+    }
+    for (const length of [23, 24, 25]) {
+      const route = {
+        reach: 170,
+        habitat: false,
+        flowerIds: Array.from({ length }, () => "a"),
+      };
+      expect(runPackagePollinatorRoute(route)).toEqual(
+        runSharedPollinatorRoute(route),
+      );
+    }
+    const gardenState = {
+      kind: "garden" as const,
+      x: 230,
+      y: 195,
+      reach: 170,
+      habitat: true,
+      pollen: "violet" as const,
+      trialSpecies: "violet" as const,
+      received: [1],
+      path: [
+        { x: 70, y: 320 },
+        { x: 140, y: 250 },
+        { x: 230, y: 195 },
+      ],
+    };
+    const webGarden = buildWebGarden(gardenState);
+    const packageGarden = buildPackageGarden(gardenState);
+    const gardenSignature = (built: typeof webGarden) => {
+      const objects: unknown[] = [];
+      built.group.traverse((object) => {
+        const rendered = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: { color?: { getHexString(): string } };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          quaternion: object.quaternion.toArray(),
+          scale: object.scale.toArray(),
+          geometry: rendered.geometry?.type,
+          vertices: rendered.geometry?.attributes?.position?.count,
+          color: rendered.material?.color?.getHexString(),
+        });
+      });
+      return { objects, labels: built.labels };
+    };
+    expect(gardenSignature(packageGarden)).toEqual(gardenSignature(webGarden));
+    const evidenceColors: string[] = [];
+    webGarden.group.traverse((object) => {
+      const rendered = object as typeof object & {
+        material?: { color?: { getHexString(): string } };
+      };
+      const color = rendered.material?.color?.getHexString();
+      if (color) evidenceColors.push(color);
+    });
+    expect(evidenceColors).toContain("162c29");
+    expect(evidenceColors).toContain("fff0a8");
+    expect(evidenceColors).toContain("142826");
+    expect(evidenceColors).toContain("f7f5d4");
+    expect(webGarden.labels.map((label) => label.text)).toContain(
+      "Trial flower · Violet type ✓",
+    );
+    webGarden.group.clear();
+    packageGarden.group.clear();
+
     const send = worker("pollinator-express");
-    send();
-    send("flower_a");
-    expect(send("flower_c").description).toContain("0 compatible");
-    send(undefined, undefined, "reset");
-    send("flower_a");
-    expect(send("flower_b").description).toContain("1 compatible");
-    expect(send("flower_d").description).toContain("1 compatible");
-    expect(send("habitat", 1).description).toContain("0 visits");
+    let frame = send();
+    expect(frame.controls).toHaveLength(0);
+    expect(
+      frame.buttons.find((button: any) => button.id === "compareFlowers")
+        .disabled,
+    ).toBe(true);
+    send("predictGold");
+    frame = send("compareFlowers");
+    expect(frame.sections[0].text).toContain(
+      "Gold 1 → fixed Gold trial flower: 2 visits · 1 compatible transfer",
+    );
+    expect(frame.sections[0].text).toContain(
+      "Gold 1 → fixed Violet trial flower: 2 visits · 0 compatible transfers",
+    );
+    send("predictWith");
+    frame = send("compareHabitat");
+    expect(frame.sections[1].text).toContain("Without habitat: Gold 3 blocked");
+    expect(frame.sections[1].text).toContain("With habitat: Gold 3 reached");
+    expect(frame.sections[1].text).toContain(
+      "Changed: one bridge habitat patch containing a Gold and a Violet flower",
+    );
+    expect(frame.sections[1].text).toContain(
+      "The fixed planned route uses the Gold bridge stop",
+    );
+    expect(frame.controls.map((control: any) => control.id)).toEqual([
+      "reach",
+      "habitat",
+    ]);
+    frame = send("predictViolet");
+    expect(frame.sections[0].text).not.toContain(
+      "Gold 1 → fixed Gold trial flower: 2 visits",
+    );
+    expect(frame.controls).toHaveLength(0);
+    expect(send(undefined, undefined, "reset").description).toContain(
+      "Choose a prediction to begin",
+    );
   }, 30000);
   for (const id of ids)
     it(`${id}: combined minimum and maximum controls validate`, () => {
