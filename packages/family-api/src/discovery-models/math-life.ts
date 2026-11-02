@@ -2,6 +2,12 @@ import { addFractionParts, normalizeFraction } from "./fractions";
 
 export * from "./fractions";
 
+import {
+  patternVertexFit,
+  regularPolygonVertices,
+  rigidTransformPoint,
+} from "./patterns";
+
 /** Deterministic teaching models. Distances, cargo prices and route timings are illustrative. */
 export function simplifyFraction(numerator: number, denominator: number) {
   const result = normalizeFraction(numerator, denominator);
@@ -14,12 +20,12 @@ export function addFractions(a: number, b: number, c: number, d: number) {
   return result.sum;
 }
 export function vertexFit(sides: number, copies: number) {
-  const angle = ((sides - 2) * 180) / sides;
-  const occupied = angle * copies;
+  const result = patternVertexFit(sides, copies);
+  if (!result) throw new RangeError("Invalid regular-polygon vertex input.");
   return {
-    angle,
-    gap: Math.max(0, 360 - occupied),
-    overlap: Math.max(0, occupied - 360),
+    angle: result.interiorAngle,
+    gap: result.gapAngle,
+    overlap: result.overlapAngle,
   };
 }
 export function transformPoint(
@@ -28,24 +34,20 @@ export function transformPoint(
   degrees: number,
   reflected: boolean,
 ) {
-  const angle = (degrees * Math.PI) / 180;
-  const horizontal = reflected ? -x : x;
-  return {
-    x: horizontal * Math.cos(angle) - y * Math.sin(angle),
-    y: horizontal * Math.sin(angle) + y * Math.cos(angle),
-  };
+  const result = rigidTransformPoint(
+    { x, y },
+    {
+      rotationDegreesClockwise: degrees,
+      reflectAcrossVertical: reflected,
+    },
+  );
+  if (!result) throw new RangeError("Invalid rigid-transform input.");
+  return result;
 }
 export function regularTile(sides: number, side: number, rotation = 0) {
-  const vertices = [{ x: 0, y: 0 }];
-  let x = 0,
-    y = 0;
-  for (let i = 0; i < sides - 1; i++) {
-    const heading = (rotation * Math.PI) / 180 + (i * 2 * Math.PI) / sides;
-    x += side * Math.cos(heading);
-    y += side * Math.sin(heading);
-    vertices.push({ x, y });
-  }
-  return vertices;
+  const result = regularPolygonVertices(sides, side, rotation);
+  if (!result) throw new RangeError("Invalid regular-polygon geometry input.");
+  return result;
 }
 export const CARAVAN_ROUTES = {
   ridge: {

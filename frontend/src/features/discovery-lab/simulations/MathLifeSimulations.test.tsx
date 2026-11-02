@@ -83,16 +83,53 @@ describe("fractions, patterns, trade, pollination and chance", () => {
 
   it("shows a real gap and overlap rather than claiming pentagons tile", () => {
     render(<PatternPalaceSimulation />);
-    expect(screen.getByRole("status")).toHaveTextContent("36° gap");
-    change("Tiles around one point", 4);
-    expect(screen.getByRole("status")).toHaveTextContent("72° overlap");
-    change("Regular tile shape", 4);
-    expect(screen.getByRole("status")).toHaveTextContent("360°: an exact fit");
-    change("Motif rotation", 90);
-    fireEvent.click(screen.getByLabelText("Reflect left to right"));
-    expect(screen.getByRole("img")).toHaveAccessibleName(
-      expect.stringContaining("rotated 90 degrees and reflected"),
+    const compareTransform = screen.getByRole("button", {
+      name: "Compare the two transformations",
+    });
+    const comparePentagons = screen.getByRole("button", {
+      name: "Compare 3 and 4 pentagons",
+    });
+    expect(compareTransform).toBeDisabled();
+    expect(comparePentagons).toBeDisabled();
+    expect(screen.queryByLabelText("Regular tile shape")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reflection" }));
+    fireEvent.click(compareTransform);
+    expect(screen.getByTestId("pattern-transform-feedback")).toHaveTextContent(
+      "M moved farther right after the reflection",
     );
+    expect(screen.getByTestId("pattern-transform-feedback")).toHaveTextContent(
+      "Held: motif dimensions · center · marked point M",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "72° overlap" }));
+    fireEvent.click(comparePentagons);
+    expect(screen.getByTestId("pattern-corner-feedback")).toHaveTextContent(
+      "3 × 108° = 324°",
+    );
+    expect(screen.getByTestId("pattern-corner-feedback")).toHaveTextContent(
+      "4 × 108° = 432°",
+    );
+    expect(screen.getByLabelText("Regular tile shape")).toBeTruthy();
+
+    change("Tiles around one point", 4);
+    expect(
+      screen.getByText("Corner calculation").parentElement,
+    ).toHaveTextContent("72° overlap");
+    change("Regular tile shape", 4);
+    expect(
+      screen.getByText("Corner calculation").parentElement,
+    ).toHaveTextContent("exact 360° fit");
+    change("Motif transformation", "quarter-turn");
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      expect.stringContaining("clockwise quarter-turn"),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Quarter-turn" }));
+    expect(screen.queryByTestId("pattern-transform-feedback")).toBeNull();
+    expect(screen.queryByLabelText("Regular tile shape")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(compareTransform).toBeDisabled();
   });
 
   it("recalculates seasonal travel and resolves a supply shortfall", () => {

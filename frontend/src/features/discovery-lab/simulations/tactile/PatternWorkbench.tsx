@@ -1,76 +1,37 @@
 import { useId } from "react";
 import {
+  PATTERN_MARKER,
+  rigidTransformPoint,
+} from "@family-manager/family-api/discovery-models/patterns";
+import {
   regularTile,
   vertexFit,
 } from "@family-manager/family-api/discovery-models/math-life";
 import { sectorPath } from "../mathLifeGeometry";
-const COLORS = [
-  "#2d7b78",
-  "#c0904a",
-  "#647fa5",
-  "#aa6270",
-  "#668861",
-  "#9475a0",
-];
-export function MosaicMotif({
-  rotation = 0,
-  mirror = false,
-  x = 0,
-  y = 0,
-  size = 1,
-}: {
-  rotation?: number;
-  mirror?: boolean;
-  x?: number;
-  y?: number;
-  size?: number;
-}) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${size})`}>
-      <g
-        transform={`rotate(${rotation}) scale(${mirror ? -1 : 1} 1)`}
-        stroke="#f0e4ca"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      >
-        <path
-          d="M-42-42H42V42H-42Z"
-          fill="#e2d7ba"
-          stroke="#8b8065"
-          strokeWidth="2"
-        />
-        <path d="M-39-39H39L0 0Z" fill="#315c5d" />
-        <path d="M39-39V39L0 0Z" fill="#c4934d" />
-        <path d="M39 39H-39L0 0Z" fill="#698c83" />
-        <path d="M-39 39V-39L0 0Z" fill="#81a4a0" />
-        <path d="M0-32L20 7L6 4L-13 29L-10 1L-28-8Z" fill="#f2dfb0" />
-        <path
-          d="M0-32L6 4L-13 29"
-          fill="none"
-          stroke="#a46f3f"
-          strokeWidth="2"
-        />
-        <circle cx="-28" cy="-26" r="5" fill="#ba5a3f" stroke="#eed4a1" />
-        <circle cx="28" cy="26" r="3" fill="#2a5d57" />
-      </g>
-    </g>
-  );
-}
+import { MosaicMotif } from "../pattern/PatternMosaicMotif";
+import { PATTERN_TILE_COLORS } from "../pattern/patternVisualConstants";
+export { MosaicMotif } from "../pattern/PatternMosaicMotif";
 export function PatternWorkbench({
   sides,
   copies,
   rotation,
   mirror,
   repeat,
+  transformationLabel,
 }: {
   sides: number;
   copies: number;
   rotation: number;
   mirror: boolean;
   repeat: number;
+  transformationLabel?: string;
 }) {
   const id = useId(),
     fit = vertexFit(sides, copies);
+  const marker = rigidTransformPoint(PATTERN_MARKER, {
+    rotationDegreesClockwise: rotation,
+    reflectAcrossVertical: mirror,
+  })!;
   const result = fit.gap
     ? `${fit.gap}° gap`
     : fit.overlap
@@ -80,7 +41,7 @@ export function PatternWorkbench({
     <div
       className="pattern-workbench"
       role="img"
-      aria-label={`${repeat} copies of a motif rotated ${rotation} degrees${mirror ? " and reflected" : ""}. ${copies} regular ${sides}-sided tiles meet at a vertex, leaving ${fit.gap} degrees of gap and ${fit.overlap} degrees of overlap.`}
+      aria-label={`${copies} regular ${sides}-sided tiles meet at one point. Each interior angle is ${fit.angle} degrees; the total is ${fit.angle * copies} degrees, with ${fit.gap} degrees of gap and ${fit.overlap} degrees of overlap. Motif image: ${transformationLabel ?? `${rotation} degree rotation${mirror ? " after a vertical reflection" : ""}`}; point M is ${Math.abs(marker.x)} units ${marker.x < 0 ? "left" : "right"} and ${Math.abs(marker.y)} units ${marker.y < 0 ? "up" : "down"} from center. ${repeat} identical motif copies are shown.`}
     >
       <div className="pattern-tile-board">
         <svg viewBox="0 0 640 540" aria-hidden="true">
@@ -98,6 +59,17 @@ export function PatternWorkbench({
                 strokeWidth=".5"
                 opacity=".35"
               />
+            </pattern>
+            <pattern
+              id={`${id}-inlay`}
+              width="44"
+              height="44"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <rect width="22" height="22" fill="#2b554e" />
+              <rect x="22" y="22" width="22" height="22" fill="#37655b" />
+              <path d="M0 22H44M22 0V44" stroke="#92a68e" strokeWidth=".5" />
             </pattern>
             <pattern
               id={`${id}-ceramic`}
@@ -145,14 +117,36 @@ export function PatternWorkbench({
             stroke="#b6a271"
             strokeWidth="3"
           />
+          <path
+            d="M34 507V146Q34 42 138 42H502Q606 42 606 146V507Z"
+            fill={`url(#${id}-inlay)`}
+            stroke="#d0b36d"
+            strokeWidth="4"
+          />
           <rect
-            x="22"
-            y="23"
-            width="596"
-            height="494"
+            x="48"
+            y="58"
+            width="544"
+            height="440"
             rx="12"
             fill={`url(#${id}-grid)`}
+            stroke="#173b36"
+            strokeWidth="8"
           />
+          {[
+            [63, 72],
+            [577, 72],
+            [63, 484],
+            [577, 484],
+          ].map(([x, y], index) => (
+            <g key={`rosette-${index}`} transform={`translate(${x} ${y})`}>
+              <circle r="13" fill="#cda85a" stroke="#f3dfaa" />
+              <path
+                d="M0-10L3-3L10 0L3 3L0 10L-3 3L-10 0L-3-3Z"
+                fill="#2d5c52"
+              />
+            </g>
+          ))}
           <circle
             cx="320"
             cy="269"
@@ -160,6 +154,7 @@ export function PatternWorkbench({
             fill="#2f554d"
             stroke="#a2b3a2"
             strokeWidth=".75"
+            filter={`url(#${id}-shadow)`}
           />
           <circle
             cx="320"
@@ -219,7 +214,7 @@ export function PatternWorkbench({
                 />
                 <polygon
                   points={points}
-                  fill={COLORS[i]}
+                  fill={PATTERN_TILE_COLORS[i % PATTERN_TILE_COLORS.length]}
                   stroke="#d2d3b7"
                   strokeWidth="2"
                   fillOpacity={(i + 1) * fit.angle > 360 ? 0.86 : 1}
@@ -270,8 +265,8 @@ export function PatternWorkbench({
             width="220"
             height="39"
             rx="5"
-            fill="#1c3934"
-            stroke="#81937c"
+            fill="#132f2c"
+            stroke="#d0b36d"
           />
           <text
             x="320"
@@ -281,7 +276,7 @@ export function PatternWorkbench({
             fontSize="21"
             fontFamily="Georgia"
           >
-            {result}
+            {result === "360° exact fit" ? "exact 360° fit" : result}
           </text>
         </svg>
         <p className="pattern-board-caption">
@@ -290,7 +285,7 @@ export function PatternWorkbench({
         </p>
       </div>
       <aside className="pattern-transform-study">
-        <span className="tactile-kicker">FOLLOW THE RED DOT</span>
+        <span className="tactile-kicker">TRACK POINT M</span>
         <div className="pattern-motif-pair">
           <div>
             <svg viewBox="0 0 130 130" aria-hidden="true">
@@ -301,22 +296,30 @@ export function PatternWorkbench({
           <div>
             <svg viewBox="0 0 130 130" aria-hidden="true">
               <path d="M65 8V122" stroke="#927f5d" strokeDasharray="3 4" />
-              <MosaicMotif x={65} y={65} rotation={rotation} mirror={mirror} />
+              <MosaicMotif x={65} y={65} rotation={90} />
             </svg>
-            <span>
-              {mirror ? "Reflected, then turned" : `Turned ${rotation}°`}
-            </span>
+            <span>90° clockwise</span>
+          </div>
+          <div>
+            <svg viewBox="0 0 130 130" aria-hidden="true">
+              <path d="M65 8V122" stroke="#927f5d" strokeDasharray="3 4" />
+              <MosaicMotif x={65} y={65} mirror />
+            </svg>
+            <span>Vertical reflection</span>
           </div>
         </div>
         <p>
-          A turn changes direction. A reflection reverses left and right.
-          Neither changes lengths or angles.
+          Original M: 30 left, 18 up. Turned M: 18 right, 30 up. Reflected M: 30
+          right, 18 up. Corresponding lengths and angles stay equal.
         </p>
         <div className="pattern-measure">
-          <span>TURN</span>
-          <strong>{rotation}°</strong>
-          <span>REFLECTION</span>
-          <strong>{mirror ? "Left ↔ right" : "None"}</strong>
+          <span>CURRENT IMAGE</span>
+          <strong>{transformationLabel ?? `${rotation}° turn`}</strong>
+          <span>POINT M</span>
+          <strong>
+            {Math.abs(marker.x)} {marker.x < 0 ? "left" : "right"} ·{" "}
+            {Math.abs(marker.y)} {marker.y < 0 ? "up" : "down"}
+          </strong>
         </div>
         <div className="pattern-repeat">
           <span className="tactile-kicker">{repeat} IDENTICAL COPIES</span>

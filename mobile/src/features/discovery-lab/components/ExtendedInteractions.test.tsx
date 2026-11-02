@@ -210,11 +210,23 @@ describe("native predictions and evidence", () => {
 
   it("shows pentagon overlap and records distinct rotation and reflection", () => {
     const view = render(<NativeExploration id="pattern-palace" />);
-    fireEvent.press(view.getByText("Pentagon"));
-    expect(view.getByText(/overlap by 72°/)).toBeTruthy();
-    fireEvent.press(view.getByText("Rotate a quarter turn"));
-    fireEvent.press(view.getByText("Reflect motif"));
-    expect(view.getByText(/Motif rotation: 90°. Reflection: on/)).toBeTruthy();
+    expect(view.getByText("Compare the two transformations")).toBeDisabled();
+    expect(view.getByText("Compare 3 and 4 pentagons")).toBeDisabled();
+    expect(view.queryByText("Regular tile")).toBeNull();
+    fireEvent.press(view.getByText("Reflection"));
+    fireEvent.press(view.getByText("Compare the two transformations"));
+    expect(
+      view.getByText(/M moved farther right after the reflection/),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("72° overlap"));
+    fireEvent.press(view.getByText("Compare 3 and 4 pentagons"));
+    expect(view.getByText(/3 × 108° = 324°.*4 × 108° = 432°/)).toBeTruthy();
+    expect(view.getByText("Regular tile")).toBeTruthy();
+    fireEvent.press(view.getByText("Square"));
+    expect(view.getByText(/exact 360° fit/)).toBeTruthy();
+    fireEvent.press(view.getByText("Quarter-turn"));
+    expect(view.queryByText(/M moved farther right/)).toBeNull();
+    expect(view.queryByText("Regular tile")).toBeNull();
   });
 
   it("makes seasonal route and supply constraints matter", () => {

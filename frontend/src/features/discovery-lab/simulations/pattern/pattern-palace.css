@@ -1,0 +1,249 @@
+.pattern-heading {
+  padding-bottom: 14px;
+}
+
+.pattern-heading h2 {
+  max-width: 760px;
+}
+
+.pattern-trials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 26px 30px 30px;
+  background:
+    linear-gradient(90deg, transparent 49.9%, #aa9a7455 50%, transparent 50.1%),
+    #f3eee0;
+  border-top: 1px solid #9a8d6c;
+}
+
+.pattern-trial {
+  min-width: 0;
+  margin: 0;
+  padding: 18px;
+  border: 1px solid #b6aa8c;
+  border-radius: 12px;
+  background: #fffaf0cc;
+  box-shadow: inset 0 0 0 4px #ece2ca;
+}
+
+.pattern-trial legend {
+  padding: 0 9px;
+  color: #173f39;
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pattern-trial > p {
+  min-height: 62px;
+  margin: 2px 0 14px;
+  color: #40554c;
+  line-height: 1.55;
+}
+
+.pattern-prediction-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pattern-prediction-options button,
+.pattern-run,
+.pattern-explore button,
+.pattern-locked button {
+  min-height: 44px;
+  border: 1px solid #496f66;
+  border-radius: 8px;
+  background: #fffdf5;
+  color: #153f37;
+  font: inherit;
+  font-weight: 700;
+}
+
+.pattern-prediction-options button[aria-pressed="true"] {
+  background: #245e52;
+  color: #fffdf0;
+  box-shadow: inset 0 0 0 2px #d6c184;
+}
+
+.pattern-run {
+  width: 100%;
+  margin-top: 10px;
+  background: #315f55;
+  color: #fffdf0;
+}
+
+.pattern-run:disabled {
+  border-color: #9da9a1;
+  background: #9aa8a0;
+  color: #f8f5e9;
+  cursor: not-allowed;
+}
+
+.pattern-feedback {
+  margin-top: 12px;
+  padding: 14px 14px 12px;
+  border-left: 4px solid #3d806d;
+  background: #e7edde;
+  color: #24493f;
+  line-height: 1.5;
+}
+
+.pattern-feedback p {
+  margin: 7px 0 0;
+}
+
+.pattern-readout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  padding: 0;
+  border-top: 1px solid #9aa88f;
+  border-bottom: 1px solid #9aa88f;
+}
+
+.pattern-readout > div {
+  display: grid;
+  gap: 4px;
+  padding: 17px 30px;
+}
+
+.pattern-readout > div + div {
+  border-left: 1px solid #aeb9a7;
+}
+
+.pattern-readout span,
+.pattern-readout small {
+  color: #536a5e;
+}
+
+.pattern-readout strong {
+  color: #173f39;
+  font-family: Georgia, serif;
+  font-size: 22px;
+}
+
+.pattern-explore {
+  padding: 26px 30px 30px;
+  background: #f6f1e5;
+}
+
+.pattern-explore-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #b9af94;
+}
+
+.pattern-explore-heading h3 {
+  margin: 0 0 4px;
+  color: #173f39;
+  font-family: Georgia, serif;
+  font-size: 23px;
+}
+
+.pattern-explore-heading p {
+  margin: 0;
+  color: #536259;
+}
+
+.pattern-explore-heading button,
+.pattern-locked button {
+  padding: 10px 16px;
+  white-space: nowrap;
+}
+
+.pattern-free-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  padding-top: 20px;
+}
+
+.pattern-free-controls > label {
+  display: grid;
+  gap: 10px;
+  color: #264c43;
+  font-weight: 700;
+}
+
+.pattern-free-controls select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #648078;
+  border-radius: 7px;
+  background: #fffdf5;
+  color: #173f39;
+  padding: 0 12px;
+  font: inherit;
+}
+
+.pattern-free-controls .dl-slider {
+  margin: 0;
+}
+
+.pattern-locked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 30px;
+  background: #e5eadc;
+  color: #335248;
+}
+
+.pattern-model-note {
+  border-top: 1px solid #aeb6a3;
+  background: #dfe6d9;
+}
+
+@media (max-width: 760px) {
+  .pattern-trials,
+  .pattern-readout,
+  .pattern-free-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .pattern-trials {
+    padding: 18px 12px 22px;
+    background: #f3eee0;
+  }
+
+  .pattern-trial {
+    padding: 15px;
+  }
+
+  .pattern-trial > p {
+    min-height: 0;
+  }
+
+  .pattern-prediction-options {
+    grid-template-columns: 1fr;
+  }
+
+  .pattern-readout > div {
+    padding: 14px 18px;
+  }
+
+  .pattern-readout > div + div {
+    border-top: 1px solid #aeb9a7;
+    border-left: 0;
+  }
+
+  .pattern-explore {
+    padding: 22px 18px 26px;
+  }
+
+  .pattern-explore-heading,
+  .pattern-locked {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pattern-free-controls {
+    gap: 18px;
+  }
+}

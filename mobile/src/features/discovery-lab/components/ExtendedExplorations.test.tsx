@@ -9,7 +9,7 @@ const controls: [string, string][] = [
   ["circuit-city", "All off in series; houses A and C on in parallel"],
   ["food-web-rescue", "Zooplankton rises and algae falls"],
   ["fraction-feast", "The same amount"],
-  ["pattern-palace", "Rotate a quarter turn"],
+  ["pattern-palace", "Quarter-turn"],
   ["caravan-crossroads", "Wet season"],
   ["pollinator-express", "Visit Gold 1"],
   ["chance-carnival", "Add 10"],
@@ -25,7 +25,9 @@ describe("native learning explorations", () => {
       fireEvent.press(view.getByText(control));
       fireEvent.press(
         view.getByText(
-          id === "fraction-feast" ? "Reset lesson" : "Reset experiment",
+          id === "fraction-feast" || id === "pattern-palace"
+            ? "Reset lesson"
+            : "Reset experiment",
         ),
       );
       expect(view.getByText(control)).toBeTruthy();

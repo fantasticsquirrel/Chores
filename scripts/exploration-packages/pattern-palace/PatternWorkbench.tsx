@@ -1,7 +1,12 @@
 /** @jsx h */
 /** @jsxFrag Fragment */
 import { h, Fragment, useId } from "../shared/vector-author";
-import { regularTile, vertexFit } from "./model";
+import {
+  PATTERN_MARKER,
+  regularTile,
+  rigidTransformPoint,
+  vertexFit,
+} from "./model";
 import { sectorPath } from "./mathLifeGeometry";
 const COLORS = [
   "#2d7b78",
@@ -24,6 +29,10 @@ export function MosaicMotif({
   y?: number;
   size?: number;
 }) {
+  const marker = rigidTransformPoint(PATTERN_MARKER, {
+    rotationDegreesClockwise: rotation,
+    reflectAcrossVertical: mirror,
+  })!;
   return (
     <g transform={`translate(${x} ${y}) scale(${size})`}>
       <g
@@ -49,9 +58,27 @@ export function MosaicMotif({
           stroke="#a46f3f"
           strokeWidth="2"
         />
-        <circle cx="-28" cy="-26" r="5" fill="#ba5a3f" stroke="#eed4a1" />
         <circle cx="28" cy="26" r="3" fill="#2a5d57" />
       </g>
+      <circle
+        cx={marker.x}
+        cy={marker.y}
+        r="7"
+        fill="#ba5a3f"
+        stroke="#fff0bf"
+      />
+      <text
+        x={marker.x}
+        y={marker.y + 2.5}
+        textAnchor="middle"
+        fill="#fffdf1"
+        stroke="none"
+        fontSize="7"
+        fontFamily="system-ui"
+        fontWeight="700"
+      >
+        M
+      </text>
     </g>
   );
 }
@@ -74,7 +101,7 @@ export function PatternWorkbench({
     ? `${fit.gap}° gap`
     : fit.overlap
       ? `${fit.overlap}° overlap`
-      : "360° exact fit";
+      : "exact 360° fit";
   return (
     <div
       className="pattern-workbench"
@@ -97,6 +124,17 @@ export function PatternWorkbench({
                 strokeWidth=".5"
                 opacity=".35"
               />
+            </pattern>
+            <pattern
+              id={`${id}-inlay`}
+              width="44"
+              height="44"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <rect width="22" height="22" fill="#2b554e" />
+              <rect x="22" y="22" width="22" height="22" fill="#37655b" />
+              <path d="M0 22H44M22 0V44" stroke="#92a68e" strokeWidth=".5" />
             </pattern>
             <pattern
               id={`${id}-ceramic`}
@@ -144,14 +182,36 @@ export function PatternWorkbench({
             stroke="#b6a271"
             strokeWidth="3"
           />
+          <path
+            d="M34 507V146Q34 42 138 42H502Q606 42 606 146V507Z"
+            fill={`url(#${id}-inlay)`}
+            stroke="#d0b36d"
+            strokeWidth="4"
+          />
           <rect
-            x="22"
-            y="23"
-            width="596"
-            height="494"
+            x="48"
+            y="58"
+            width="544"
+            height="440"
             rx="12"
             fill={`url(#${id}-grid)`}
+            stroke="#173b36"
+            strokeWidth="8"
           />
+          {[
+            [63, 72],
+            [577, 72],
+            [63, 484],
+            [577, 484],
+          ].map(([x, y], index) => (
+            <g key={`rosette-${index}`} transform={`translate(${x} ${y})`}>
+              <circle r="13" fill="#cda85a" stroke="#f3dfaa" />
+              <path
+                d="M0-10L3-3L10 0L3 3L0 10L-3 3L-10 0L-3-3Z"
+                fill="#2d5c52"
+              />
+            </g>
+          ))}
           <circle
             cx="320"
             cy="269"
@@ -159,6 +219,7 @@ export function PatternWorkbench({
             fill="#2f554d"
             stroke="#a2b3a2"
             strokeWidth=".75"
+            filter={`url(#${id}-shadow)`}
           />
           <circle
             cx="320"
@@ -218,7 +279,7 @@ export function PatternWorkbench({
                 />
                 <polygon
                   points={points}
-                  fill={COLORS[i]}
+                  fill={COLORS[i % COLORS.length]}
                   stroke="#d2d3b7"
                   strokeWidth="2"
                   fillOpacity={(i + 1) * fit.angle > 360 ? 0.86 : 1}
@@ -269,8 +330,8 @@ export function PatternWorkbench({
             width="220"
             height="39"
             rx="5"
-            fill="#1c3934"
-            stroke="#81937c"
+            fill="#132f2c"
+            stroke="#d0b36d"
           />
           <text
             x="320"
@@ -289,7 +350,7 @@ export function PatternWorkbench({
         </p>
       </div>
       <aside className="pattern-transform-study">
-        <span className="tactile-kicker">FOLLOW THE RED DOT</span>
+        <span className="tactile-kicker">TRACK POINT M</span>
         <div className="pattern-motif-pair">
           <div>
             <svg viewBox="0 0 130 130" aria-hidden="true">
@@ -300,16 +361,21 @@ export function PatternWorkbench({
           <div>
             <svg viewBox="0 0 130 130" aria-hidden="true">
               <path d="M65 8V122" stroke="#927f5d" strokeDasharray="3 4" />
-              <MosaicMotif x={65} y={65} rotation={rotation} mirror={mirror} />
+              <MosaicMotif x={65} y={65} rotation={90} />
             </svg>
-            <span>
-              {mirror ? "Reflected, then turned" : `Turned ${rotation}°`}
-            </span>
+            <span>90° clockwise</span>
+          </div>
+          <div>
+            <svg viewBox="0 0 130 130" aria-hidden="true">
+              <path d="M65 8V122" stroke="#927f5d" strokeDasharray="3 4" />
+              <MosaicMotif x={65} y={65} mirror />
+            </svg>
+            <span>Vertical reflection</span>
           </div>
         </div>
         <p>
-          A turn changes direction. A reflection reverses left and right.
-          Neither changes lengths or angles.
+          Original M: 30 left, 18 up. Turned M: 18 right, 30 up. Reflected M: 30
+          right, 18 up. Corresponding lengths and angles stay equal.
         </p>
         <div className="pattern-measure">
           <span>TURN</span>

@@ -1,194 +1,168 @@
-import { useId, useState } from "react";
-import {
-  transformPoint,
-  vertexFit,
-} from "@family-manager/family-api/discovery-models/math-life";
+import { useId } from "react";
+import { patternVertexFit } from "@family-manager/family-api/discovery-models/patterns";
 import { Slider } from "./SimulationPrimitives";
+import { PatternPredictionTrials } from "./pattern/PatternPredictionTrials";
+import {
+  type MotifTransformation,
+  usePatternLesson,
+} from "./pattern/usePatternLesson";
 import { PatternWorkbench } from "./tactile/PatternWorkbench";
 import "./tactile/tactile.css";
+import "./pattern/pattern-palace.css";
+
+const transformationDetails: Record<
+  MotifTransformation,
+  { rotation: number; mirror: boolean; label: string }
+> = {
+  original: { rotation: 0, mirror: false, label: "original position" },
+  "quarter-turn": {
+    rotation: 90,
+    mirror: false,
+    label: "clockwise quarter-turn",
+  },
+  "half-turn": {
+    rotation: 180,
+    mirror: false,
+    label: "clockwise half-turn",
+  },
+  reflection: {
+    rotation: 0,
+    mirror: true,
+    label: "reflection across the vertical line",
+  },
+};
+
 export function PatternPalaceSimulation() {
   const id = useId();
-  const [rotation, setRotation] = useState(0),
-    [mirror, setMirror] = useState(false),
-    [repeat, setRepeat] = useState(5);
-  const [sides, setSides] = useState(5),
-    [copies, setCopies] = useState(3),
-    [prediction, setPrediction] = useState<string | null>(null);
-  const fit = vertexFit(sides, copies);
-  const marker = transformPoint(-28, -26, rotation, mirror);
-  const markerLocation = `${marker.y < 0 ? "upper" : "lower"} ${marker.x < 0 ? "left" : "right"}`;
-  const result =
-    fit.gap > 0
-      ? `${fit.gap}° gap`
-      : fit.overlap > 0
-        ? `${fit.overlap}° overlap`
-        : "360°: an exact fit";
-  const reset = () => {
-    setRotation(0);
-    setMirror(false);
-    setRepeat(5);
-    setSides(5);
-    setCopies(3);
-    setPrediction(null);
-  };
+  const lesson = usePatternLesson();
+  const fit = patternVertexFit(lesson.sides, lesson.copies)!;
+  const transform = transformationDetails[lesson.transformation];
+  const fitLabel =
+    fit.relation === "gap"
+      ? `${fit.gapAngle}° gap`
+      : fit.relation === "overlap"
+        ? `${fit.overlapAngle}° overlap`
+        : "exact 360° fit";
+
   return (
     <div className="tactile-exhibit pattern-exhibit">
-      <header className="tactile-heading">
-        <span>ONE POINT / A FULL TURN IS 360°</span>
-        <h2>Will the tiles fit together?</h2>
+      <header className="tactile-heading pattern-heading">
+        <h2>Test turns and corner fits</h2>
         <p>
-          Keep each tile regular. Change the shape or the number meeting at a
-          corner.
+          Predict first. Compare one changed variable, then use the angle
+          evidence to explain the result.
         </p>
       </header>
+
       <PatternWorkbench
-        sides={sides}
-        copies={copies}
-        rotation={rotation}
-        mirror={mirror}
-        repeat={repeat}
+        sides={lesson.sides}
+        copies={lesson.copies}
+        rotation={transform.rotation}
+        mirror={transform.mirror}
+        repeat={5}
+        transformationLabel={transform.label}
       />
-      <div className="tactile-console pattern-console">
-        <div className="tactile-control-group">
-          <span className="tactile-kicker">SHAPE & CORNERS</span>
-          <label htmlFor={`${id}-shape`}>Regular tile shape</label>
-          <select
-            id={`${id}-shape`}
-            value={sides}
-            onChange={(event) => setSides(Number(event.target.value))}
-          >
-            {[
-              [3, "Equilateral triangles"],
-              [4, "Squares"],
-              [5, "Regular pentagons"],
-              [6, "Regular hexagons"],
-            ].map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <Slider
-            label="Tiles around one point"
-            value={copies}
-            min={1}
-            max={6}
-            onChange={setCopies}
-          />
+
+      <PatternPredictionTrials
+        transformPrediction={lesson.transformPrediction}
+        cornerPrediction={lesson.cornerPrediction}
+        transformCompared={lesson.transformCompared}
+        cornerCompared={lesson.cornerCompared}
+        onTransformPrediction={lesson.setTransformPrediction}
+        onCornerPrediction={lesson.setCornerPrediction}
+        onCompareTransformations={lesson.compareTransformations}
+        onCompareCorners={lesson.compareCorners}
+      />
+
+      <div
+        className="tactile-readout pattern-readout"
+        role="status"
+        aria-live="polite"
+      >
+        <div>
+          <span>Corner calculation</span>
+          <strong>
+            {fit.copies} × {fit.interiorAngle}° = {fit.occupiedAngle}°
+          </strong>
+          <small>{fitLabel}</small>
         </div>
-        <div className="tactile-control-group">
-          <span className="tactile-kicker">TURN & REFLECT</span>
-          <Slider
-            label="Motif rotation"
-            value={rotation}
-            min={0}
-            max={345}
-            step={15}
-            unit="°"
-            onChange={setRotation}
-          />
-          <label className="tactile-check">
-            <input
-              type="checkbox"
-              checked={mirror}
-              onChange={(event) => setMirror(event.target.checked)}
-            />{" "}
-            Reflect left to right
-          </label>
-          <button
-            type="button"
-            onClick={() => setRotation((rotation + 90) % 360)}
-          >
-            Turn 90°
-          </button>
-        </div>
-        <div className="tactile-control-group">
-          <span className="tactile-kicker">REPEAT</span>
-          <Slider
-            label="Repeated motifs"
-            value={repeat}
-            min={1}
-            max={6}
-            onChange={setRepeat}
-          />
-          <button type="button" onClick={reset}>
-            Reset
-          </button>
+        <div>
+          <span>Motif image</span>
+          <strong>{transform.label}</strong>
+          <small>corresponding lengths and angles unchanged</small>
         </div>
       </div>
-      <div className="tactile-investigation">
-        <div>
-          <span className="tactile-kicker">PREDICT</span>
-          <h3>Will three regular pentagons fill one full turn?</h3>
-          <div className="dl-actions">
-            {["A gap", "An exact fit", "An overlap"].map((label) => (
-              <button
-                key={label}
-                type="button"
-                aria-pressed={prediction === label}
-                onClick={() => setPrediction(label)}
+
+      {lesson.explorationUnlocked ? (
+        <section className="pattern-explore" aria-labelledby={`${id}-explore`}>
+          <div className="pattern-explore-heading">
+            <div>
+              <h3 id={`${id}-explore`}>Explore one change at a time</h3>
+              <p>
+                Reset the selected control before a new comparison. The corner
+                calculation is local evidence, not proof of a full tiling.
+              </p>
+            </div>
+            <button type="button" onClick={lesson.reset}>
+              Reset lesson
+            </button>
+          </div>
+          <div className="pattern-free-controls">
+            <label>
+              <span>Regular tile shape</span>
+              <select
+                value={lesson.sides}
+                onChange={(event) =>
+                  lesson.setSides(Number(event.target.value))
+                }
               >
-                {label}
-              </button>
-            ))}
+                <option value={3}>Equilateral triangle</option>
+                <option value={4}>Square</option>
+                <option value={5}>Regular pentagon</option>
+                <option value={6}>Regular hexagon</option>
+              </select>
+            </label>
+            <Slider
+              label="Tiles around one point"
+              value={lesson.copies}
+              min={1}
+              max={8}
+              onChange={lesson.setCopies}
+            />
+            <label>
+              <span>Motif transformation</span>
+              <select
+                value={lesson.transformation}
+                onChange={(event) =>
+                  lesson.setTransformation(
+                    event.target.value as MotifTransformation,
+                  )
+                }
+              >
+                <option value="original">Original</option>
+                <option value="quarter-turn">90° clockwise turn</option>
+                <option value="half-turn">180° turn</option>
+                <option value="reflection">Vertical reflection</option>
+              </select>
+            </label>
           </div>
+        </section>
+      ) : (
+        <div className="pattern-locked">
+          Complete both comparisons to unlock the shape and transformation
+          controls.
+          <button type="button" onClick={lesson.reset}>
+            Reset lesson
+          </button>
         </div>
-        <div>
-          <span className="tactile-kicker">OBSERVE</span>
-          <h3>Compare three pentagons with four.</h3>
-          <div className="dl-actions">
-            <button
-              type="button"
-              onClick={() => {
-                setSides(5);
-                setCopies(3);
-              }}
-            >
-              Test 3 pentagons
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSides(5);
-                setCopies(4);
-              }}
-            >
-              Test 4 pentagons
-            </button>
-          </div>
-          <p>
-            Keep the tile size fixed. Does adding a tile close the gap exactly?
-          </p>
-        </div>
-        <div>
-          <span className="tactile-kicker">EXPLAIN</span>
-          <p>
-            Each regular pentagon has a 108° corner. Three total 324°; four
-            total 432°. Neither is 360°.
-          </p>
-          <p>
-            Next, predict where the red dot goes after a reflection, then a 90°
-            turn. Compare the original and changed motif.
-          </p>
-        </div>
-      </div>
-      <div className="tactile-readout" role="status" aria-live="polite">
-        <strong>{result}</strong> · {copies} × {fit.angle}° ={" "}
-        {copies * fit.angle}°.
-        <br />
-        {fit.gap > 0
-          ? "The gold sector is still uncovered."
-          : fit.overlap > 0
-            ? "The rose sector is covered more than once."
-            : "The corners meet without a gap or overlap."}{" "}
-        Reflection flips the motif; rotation turns it. Red dot: {markerLocation}
-        . Lengths and angles are unchanged.
-      </div>
-      <p className="tactile-model-note">
-        The tile faces are shown from directly above, so their angles are not
-        distorted. A 360° corner fit is necessary but does not alone prove a
-        full-plane tiling. These regular triangles, squares and hexagons do tile
-        the plane; other tilings may mix shapes.
+      )}
+
+      <p className="tactile-model-note pattern-model-note">
+        Model boundary: every corner tile here is a regular polygon, with equal
+        sides and equal interior angles. A 360° fit at one observed point is
+        necessary for this local arrangement, but a finite example alone does
+        not prove that a proposed rule extends without gaps across the plane.
+        Irregular polygons with the same number of sides can behave differently.
       </p>
     </div>
   );

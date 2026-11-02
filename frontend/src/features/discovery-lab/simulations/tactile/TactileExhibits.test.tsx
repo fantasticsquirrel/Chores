@@ -92,20 +92,35 @@ describe("tactile mathematical exhibits", () => {
     ).toHaveTextContent("2/4 = 2/4");
     expect(screen.getByText(/selected amount did not/)).toBeTruthy();
   });
-  it("makes the transform demonstrable without changing shape measurements", () => {
+  it("gates exact transformation and corner-fit evidence behind predictions", () => {
     render(<PatternPalaceSimulation />);
-    fireEvent.click(screen.getByRole("button", { name: "Turn 90°" }));
-    expect(screen.getByLabelText("Motif rotation")).toHaveValue("90");
+    fireEvent.click(screen.getByRole("button", { name: "Reflection" }));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Compare the two transformations",
+      }),
+    );
     expect(screen.getByRole("img")).toHaveAccessibleName(
-      expect.stringContaining("rotated 90 degrees"),
+      expect.stringContaining("point M is 18 units right and 30 units up"),
     );
-    expect(screen.getByRole("status")).toHaveTextContent("36° gap");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Red dot: upper right",
+    expect(screen.getByTestId("pattern-transform-feedback")).toHaveTextContent(
+      "M moved farther right after the reflection",
     );
-    fireEvent.click(screen.getByLabelText("Reflect left to right"));
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Red dot: lower right",
+    fireEvent.click(screen.getByRole("button", { name: "72° overlap" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare 3 and 4 pentagons" }),
+    );
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      expect.stringContaining("the total is 432 degrees"),
+    );
+    expect(screen.getByTestId("pattern-corner-feedback")).toHaveTextContent(
+      "4 × 108° = 432°",
+    );
+    fireEvent.change(screen.getByLabelText("Motif transformation"), {
+      target: { value: "reflection" },
+    });
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      expect.stringContaining("point M is 30 units right and 18 units up"),
     );
   });
   it("uses the real final random draw for its visible outcome", () => {

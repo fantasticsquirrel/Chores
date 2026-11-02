@@ -1,160 +1,216 @@
-import { useState } from "react";
-import {
-  regularTile,
-  transformPoint,
-  vertexFit,
-} from "@family-manager/family-api/discovery-models/math-life";
+import { Text, View } from "react-native";
+import { patternVertexFit } from "@family-manager/family-api/discovery-models/patterns";
 import { ActionButton } from "../../../components/ActionButton";
-import { Control, Dot, Line } from "./Primitives";
+import { Control } from "./Primitives";
 import {
   Choice,
-  Diagram,
-  DiagramLabel,
   Explanation,
   LearningFrame,
   ModelNote,
 } from "./LearningPrimitives";
+import {
+  PatternMotifDiagram,
+  PatternTileDiagram,
+} from "./pattern/PatternVisuals";
+import {
+  type NativeCornerPrediction,
+  type NativeMotifTransformation,
+  type NativeTransformPrediction,
+  useNativePatternLesson,
+} from "./pattern/useNativePatternLesson";
+import { colors } from "../../../styles/colors";
+
+const motifStates: Record<
+  NativeMotifTransformation,
+  {
+    rotation: 0 | 90 | 180 | 270;
+    reflected: boolean;
+    label: string;
+  }
+> = {
+  original: { rotation: 0, reflected: false, label: "Original motif" },
+  "quarter-turn": {
+    rotation: 90,
+    reflected: false,
+    label: "90° clockwise turn",
+  },
+  "half-turn": {
+    rotation: 180,
+    reflected: false,
+    label: "180° turn",
+  },
+  reflection: {
+    rotation: 0,
+    reflected: true,
+    label: "Vertical reflection",
+  },
+};
+
+function SectionTitle({ children }: { children: string }) {
+  return (
+    <Text
+      accessibilityRole="header"
+      style={{ color: colors.text, fontSize: 20, fontWeight: "700" }}
+    >
+      {children}
+    </Text>
+  );
+}
 
 export function PatternExploration() {
-  const [shape, setShape] = useState("4");
-  const [copies, setCopies] = useState(4);
-  const [rotation, setRotation] = useState(0);
-  const [reflected, setReflected] = useState(false);
-  const sides = Number(shape),
-    fit = vertexFit(sides, copies);
-  const motif = [
-    { x: -20, y: -20 },
-    { x: 20, y: -20 },
-    { x: 20, y: 15 },
-    { x: 5, y: 5 },
-  ].map((point) => transformPoint(point.x, point.y, rotation, reflected));
+  const lesson = useNativePatternLesson();
+  const sides = Number(lesson.sides);
+  const fit = patternVertexFit(sides, lesson.copies)!;
+  const motif = motifStates[lesson.transformation];
+  const fitResult =
+    fit.relation === "gap"
+      ? `${fit.gapAngle}° gap`
+      : fit.relation === "overlap"
+        ? `${fit.overlapAngle}° overlap`
+        : "exact 360° fit";
+
   return (
-    <LearningFrame
-      onReset={() => {
-        setShape("4");
-        setCopies(4);
-        setRotation(0);
-        setReflected(false);
-      }}
-    >
-      <Diagram
-        visualState={{
-          kind: "pattern",
-          sides,
-          copies,
-          rotation,
-          reflected,
-          view: "tiles",
-        }}
-        label={`${copies} regular ${sides}-sided tiles at one vertex. ${fit.gap.toFixed(0)} degrees gap and ${fit.overlap.toFixed(0)} degrees overlap.`}
-      >
-        {(width) => (
-          <>
-            {Array.from({ length: copies }, (_, tile) => {
-              const points = regularTile(sides, 42, tile * fit.angle);
-              return points.map((point, i) => (
-                <Line
-                  key={`${tile}-${i}`}
-                  x={width / 2 + point.x}
-                  y={120 + point.y}
-                  x2={width / 2 + points[(i + 1) % points.length].x}
-                  y2={120 + points[(i + 1) % points.length].y}
-                  color={["#91ede4", "#ffe49b", "#d4b5ff"][tile % 3]}
-                />
-              ));
-            })}
-            <Dot x={width / 2} y={120} size={8} color="#fff9ef" />
-            <DiagramLabel x={15} y={12}>
-              Tiles meet at the white vertex
-            </DiagramLabel>
-          </>
-        )}
-      </Diagram>
+    <LearningFrame onReset={lesson.reset} resetLabel="Reset lesson">
+      <PatternTileDiagram sides={sides} copies={lesson.copies} />
       <Explanation>
-        Each interior angle is {fit.angle.toFixed(0)}°. {copies} ×{" "}
-        {fit.angle.toFixed(0)}° = {(copies * fit.angle).toFixed(0)}°.{" "}
-        {fit.gap > 0
-          ? `A ${fit.gap.toFixed(0)}° gap remains.`
-          : fit.overlap > 0
-            ? `The tiles overlap by ${fit.overlap.toFixed(0)}°.`
-            : "The angles fill 360° exactly, with no gap or overlap."}
+        Corner calculation: {fit.copies} × {fit.interiorAngle}° ={" "}
+        {fit.occupiedAngle}° · {fitResult}.
+      </Explanation>
+
+      <SectionTitle>1 · Turn or reflect?</SectionTitle>
+      <PatternMotifDiagram
+        rotation={0}
+        reflected={false}
+        label="Original motif"
+      />
+      <Explanation>
+        Point M starts 30 units left and 18 units up. Which operation moves M
+        farther right while the motif size and center stay fixed?
       </Explanation>
       <Choice
-        label="Regular tile"
-        value={shape}
-        onChange={setShape}
+        label="Prediction: farther right"
+        value={lesson.transformPrediction ?? ""}
+        onChange={(value) =>
+          lesson.setTransformPrediction(value as NativeTransformPrediction)
+        }
         options={[
-          { value: "3", label: "Triangle" },
-          { value: "4", label: "Square" },
-          { value: "5", label: "Pentagon" },
-          { value: "6", label: "Hexagon" },
+          { value: "turn", label: "Quarter-turn" },
+          { value: "reflection", label: "Reflection" },
+          { value: "same", label: "Same horizontal position" },
         ]}
       />
-      <Control
-        label="Tiles around a vertex"
-        value={copies}
-        min={1}
-        max={8}
-        onChange={setCopies}
+      <ActionButton
+        label="Compare the two transformations"
+        disabled={!lesson.transformPrediction}
+        onPress={lesson.compareTransformations}
       />
-      <Diagram
-        visualState={{
-          kind: "pattern",
-          sides,
-          copies,
-          rotation,
-          reflected,
-          view: "motif",
-        }}
-        height={150}
-        label={`Asymmetric motif, rotated ${rotation} degrees, ${reflected ? "reflected across its vertical axis before rotation" : "not reflected"}.`}
-      >
-        {(width) => (
-          <>
-            <Line
-              x={width / 2}
-              y={20}
-              x2={width / 2}
-              y2={130}
-              color="#788bad"
-            />
-            {motif.map((point, i) => (
-              <Line
-                key={i}
-                x={width / 2 + point.x * 1.8}
-                y={75 + point.y * 1.8}
-                x2={width / 2 + motif[(i + 1) % motif.length].x * 1.8}
-                y2={75 + motif[(i + 1) % motif.length].y * 1.8}
-                color="#ffe49b"
-              />
-            ))}
-            <Dot
-              x={width / 2 + motif[0].x * 1.8}
-              y={75 + motif[0].y * 1.8}
-              size={9}
-              color="#c5b4ff"
-            />
-          </>
-        )}
-      </Diagram>
+      {lesson.transformCompared && (
+        <>
+          <PatternMotifDiagram
+            rotation={90}
+            reflected={false}
+            label="90° clockwise turn"
+          />
+          <PatternMotifDiagram
+            rotation={0}
+            reflected
+            label="Vertical reflection"
+          />
+          <Explanation>
+            {lesson.transformPrediction === "reflection"
+              ? "The evidence matches your prediction. "
+              : "The evidence differs from your prediction. "}
+            Turn: M is 18 right and 30 up. Reflection: M is 30 right and 18 up.
+            M moved farther right after the reflection. Changed: transformation.
+            Held: motif dimensions · center · marked point M. Corresponding
+            lengths and angles stay equal.
+          </Explanation>
+        </>
+      )}
+
+      <SectionTitle>2 · Add one pentagon</SectionTitle>
       <Explanation>
-        Motif rotation: {rotation}°. Reflection: {reflected ? "on" : "off"}. The
-        marked dot helps track orientation. Both transformations preserve side
-        lengths and angles.
+        Three regular pentagons leave 36°. Keep their shape, size, 108° corner
+        and meeting point fixed. What happens when a fourth is added?
       </Explanation>
-      <ActionButton
-        label="Rotate a quarter turn"
-        onPress={() => setRotation((rotation + 90) % 360)}
+      <Choice
+        label="Prediction: fourth pentagon"
+        value={lesson.cornerPrediction ?? ""}
+        onChange={(value) =>
+          lesson.setCornerPrediction(value as NativeCornerPrediction)
+        }
+        options={[
+          { value: "exact", label: "Exact fit" },
+          { value: "gap", label: "Still a gap" },
+          { value: "overlap", label: "72° overlap" },
+        ]}
       />
       <ActionButton
-        label={reflected ? "Remove reflection" : "Reflect motif"}
-        variant="secondary"
-        onPress={() => setReflected(!reflected)}
+        label="Compare 3 and 4 pentagons"
+        disabled={!lesson.cornerPrediction}
+        onPress={lesson.compareCorners}
       />
+      {lesson.cornerCompared && (
+        <Explanation>
+          {lesson.cornerPrediction === "overlap"
+            ? "The evidence matches your prediction. "
+            : "The evidence differs from your prediction. "}
+          3 × 108° = 324°, leaving 36°. 4 × 108° = 432°, so the fourth pentagon
+          overlaps 72°. Changed: number of pentagons. Held: regular shape · side
+          length · interior angle · meeting point.
+        </Explanation>
+      )}
+
+      {lesson.explorationUnlocked ? (
+        <View style={{ gap: 16 }}>
+          <SectionTitle>Explore one change at a time</SectionTitle>
+          <Choice
+            label="Regular tile"
+            value={lesson.sides}
+            onChange={lesson.setSides}
+            options={[
+              { value: "3", label: "Triangle" },
+              { value: "4", label: "Square" },
+              { value: "5", label: "Pentagon" },
+              { value: "6", label: "Hexagon" },
+            ]}
+          />
+          <Control
+            label="Tiles around one point"
+            value={lesson.copies}
+            min={1}
+            max={8}
+            onChange={lesson.setCopies}
+          />
+          <Choice
+            label="Motif transformation"
+            value={lesson.transformation}
+            onChange={lesson.setTransformation}
+            options={[
+              { value: "original", label: "Original" },
+              { value: "quarter-turn", label: "90° clockwise turn" },
+              { value: "half-turn", label: "180° turn" },
+              { value: "reflection", label: "Vertical reflection" },
+            ]}
+          />
+          <PatternMotifDiagram
+            rotation={motif.rotation}
+            reflected={motif.reflected}
+            label={motif.label}
+          />
+        </View>
+      ) : (
+        <Explanation>
+          Complete both comparisons to unlock the shape and transformation
+          controls.
+        </Explanation>
+      )}
+
       <ModelNote>
-        The vertex test checks whether copies of one regular polygon fit
-        locally. It is not a proof that any arbitrary collection tiles the whole
-        plane. Reflection happens before rotation in this diagram.
+        Model boundary: every corner tile shown is regular, with equal sides and
+        equal interior angles. A 360° fit at one observed point is necessary for
+        this local arrangement, but a finite example alone does not prove a rule
+        extends across the plane. Irregular polygons can behave differently.
       </ModelNote>
     </LearningFrame>
   );

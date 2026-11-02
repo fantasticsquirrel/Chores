@@ -73,6 +73,27 @@ test("all 74 bounded SVG states render offline without unsupported gestures", as
           await page.locator("svg").getAttribute("aria-label"),
           new RegExp(`angle ${state.angle} degrees`),
         );
+      if (state.kind === "pattern" && state.view === "motif") {
+        const expectedLabel = state.reflected
+          ? state.rotation === 0
+            ? "Vertical reflection"
+            : `Reflect + ${state.rotation}° turn`
+          : state.rotation === 0
+            ? "Same image"
+            : `${state.rotation}° clockwise`;
+        const label = page.locator("svg text").last();
+        assert.equal(await label.textContent(), expectedLabel);
+        const [svgBox, labelBox] = await Promise.all([
+          page.locator("svg").boundingBox(),
+          label.boundingBox(),
+        ]);
+        assert.ok(svgBox && labelBox);
+        assert.ok(labelBox.x >= svgBox.x && labelBox.y >= svgBox.y);
+        assert.ok(
+          labelBox.x + labelBox.width <= svgBox.x + svgBox.width + 0.5 &&
+            labelBox.y + labelBox.height <= svgBox.y + svgBox.height + 0.5,
+        );
+      }
     }
     for (const [name, state] of [
       ["optics", { kind: "optics", angle: 40, reverse: false }],

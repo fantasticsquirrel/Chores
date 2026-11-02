@@ -458,7 +458,7 @@
 }
 .pattern-workbench {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 275px;
+  grid-template-columns: minmax(0, 1fr) 330px;
   gap: 20px;
   padding: 10px 26px 27px;
   align-items: center;
@@ -489,7 +489,7 @@
 }
 .pattern-motif-pair {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 3px;
   margin-top: 13px;
 }
@@ -578,14 +578,16 @@
   .pattern-motif-pair {
     grid-column: 1/-1;
     margin: 0 auto;
-    max-width: 260px;
+    max-width: 330px;
     width: 100%;
   }
   .pattern-transform-study p {
     margin: 0;
+    grid-column: 1/-1;
   }
   .pattern-measure {
     padding: 8px 0;
+    grid-column: 1/-1;
   }
   .pattern-repeat {
     grid-column: 1/-1;

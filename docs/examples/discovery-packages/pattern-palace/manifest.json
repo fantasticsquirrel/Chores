@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "pattern-palace-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "pattern-palace-package",
@@ -17,30 +17,34 @@
       "patterns",
       "angles"
     ],
-    "summary": "Rotate and reflect a motif, then test how regular polygons fit around a point.",
-    "question": "Why do some repeated shapes leave a gap while others fit exactly?",
-    "explanation": "A rotation turns a shape around a point. A reflection flips it across a line; both preserve lengths and angles. A full turn is 360°. Equal regular polygons can meet without a gap or overlap only when their corner angles fill that turn. Six equilateral triangles, four squares or three regular hexagons do so. This model checks one meeting point; a successful corner test alone is not a proof that any proposed pattern tiles an entire floor.",
+    "summary": "Compare a quarter-turn with a reflection, then calculate how regular-polygon corners fit around one point.",
+    "question": "What changes when a motif is turned or reflected, and when does a regular-polygon corner total fill 360°?",
+    "explanation": "A rotation turns every point through the same angle around a center. A reflection maps points across a line. Both are rigid transformations, so corresponding lengths and angles stay equal, but a reflection reverses orientation while a rotation does not. Around one point, regular-polygon interior angles must total 360° to meet without a local gap or overlap. This corner calculation is evidence about that point; one finite arrangement alone is not proof that a proposed rule continues across the whole plane.",
     "experiments": [
       {
         "title": "Turn or flip?",
-        "instruction": "Inspect the uneven motif. Predict where its marked point will move after a quarter-turn, then rotate it 90°. Compare with reflecting the motif.",
-        "observe": "Compare the position of the marked point. Explain why turning and making a mirror image are different transformations even though lengths stay the same."
+        "instruction": "Keep the asymmetric motif, center and marked point M fixed. Predict whether a 90° clockwise turn or a reflection across the vertical line moves M farther right, then compare both images.",
+        "observe": "The turn puts M 18 units right and 30 units up; the reflection puts M 30 units right and 18 units up. Explain how the positions differ even though corresponding lengths and angles stay equal."
       },
       {
         "title": "Fill a full turn",
-        "instruction": "Predict how many squares meet at a point without gaps. Test four, then try three regular pentagons and four regular pentagons.",
-        "observe": "Four square corners fill 360°. Three pentagon corners leave 36°, while four overlap by 72°. Explain why adding another pentagon does not solve the gap."
+        "instruction": "Keep the regular-pentagon shape, side length, 108° interior angle and meeting point fixed. Three corners leave 36°. Predict what happens when a fourth pentagon is added, then compare both totals.",
+        "observe": "Three corners total 324° and leave 36°; four total 432° and overlap by 72°. Explain why adding a whole 108° corner cannot fill only the 36° gap."
       }
     ],
-    "misconception": "A regular shape does not necessarily tile a flat surface by itself. Its corner angles must fit with neighboring tiles without gaps or overlaps.",
+    "misconception": "Seeing a 360° fit at one corner is not by itself proof that a proposed pattern tiles the plane. The arrangement must continue consistently at every point, and regular and irregular polygons with the same number of sides are not interchangeable.",
     "sources": [
       {
-        "title": "Illustrative Mathematics: Rotations and reflections",
-        "url": "https://tasks.illustrativemathematics.org/content-standards/8/G/A/3"
+        "title": "Illustrative Mathematics: Reflections, Rotations, and Translations",
+        "url": "https://tasks.illustrativemathematics.org/content-standards/8/G/A/1/tasks/1673"
       },
       {
         "title": "University of Cambridge NRICH: How polygons fit around a point",
         "url": "https://nrich.maths.org/problems/semi-regular-tessellations?tab=help"
+      },
+      {
+        "title": "University of Cambridge NRICH: Regular-polygon interior angles and regular tessellations",
+        "url": "https://nrich.maths.org/problems/classifying-solids-using-angle-deficiency"
       }
     ],
     "duration_minutes": 12
@@ -50,7 +54,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "2726fd26ce121e12b236e1bb112b53787b522d68836ae0a073875c66866bdeda"
+      "sha256": "554a83fdee870790938209eda50334fc97de57e737bac793c5f4a5a9fc235c29"
     },
     {
       "path": "THREE-LICENSE.txt",

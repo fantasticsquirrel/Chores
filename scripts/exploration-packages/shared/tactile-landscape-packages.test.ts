@@ -106,6 +106,18 @@ import {
 } from "../fraction-feast/model";
 import { buildPizzaScene as buildWebPizzaScene } from "../../../frontend/src/features/discovery-lab/simulations/tactile/pizzaScene";
 import { buildPizzaScene as buildPackagePizzaScene } from "../fraction-feast/pizzaScene";
+import {
+  patternMarkerComparison as sharedPatternMarkerComparison,
+  patternVertexFit as sharedPatternVertexFit,
+  regularPolygonVertices as sharedRegularPolygonVertices,
+  rigidTransformPoint as sharedRigidTransformPoint,
+} from "../../../packages/family-api/src/discovery-models/patterns";
+import {
+  patternMarkerComparison as packagePatternMarkerComparison,
+  patternVertexFit as packagePatternVertexFit,
+  regularPolygonVertices as packageRegularPolygonVertices,
+  rigidTransformPoint as packageRigidTransformPoint,
+} from "../pattern-palace/model";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -192,6 +204,59 @@ describe("ten independently authored rich explorations", () => {
       expect(reset.description).toBe(initial.description);
     }, 30000);
   }
+  it("pattern package gates both comparisons, resets stale evidence and matches shared geometry", () => {
+    expect(packagePatternMarkerComparison()).toEqual(
+      sharedPatternMarkerComparison(),
+    );
+    for (const [sides, copies] of [
+      [3, 6],
+      [4, 4],
+      [5, 3],
+      [5, 4],
+      [12, 12],
+      [2, 3],
+      [4.5, 4],
+    ])
+      expect(packagePatternVertexFit(sides, copies)).toEqual(
+        sharedPatternVertexFit(sides, copies),
+      );
+    expect(packageRegularPolygonVertices(5, 80, -90)).toEqual(
+      sharedRegularPolygonVertices(5, 80, -90),
+    );
+    for (const transform of [
+      { rotationDegreesClockwise: 0, reflectAcrossVertical: false },
+      { rotationDegreesClockwise: 90, reflectAcrossVertical: false },
+      { rotationDegreesClockwise: 180, reflectAcrossVertical: true },
+      { rotationDegreesClockwise: 45.5, reflectAcrossVertical: false },
+      { rotationDegreesClockwise: 360, reflectAcrossVertical: false },
+    ])
+      expect(packageRigidTransformPoint({ x: -30, y: -18 }, transform)).toEqual(
+        sharedRigidTransformPoint({ x: -30, y: -18 }, transform),
+      );
+
+    const send = worker("pattern-palace");
+    let frame = send();
+    expect(
+      frame.buttons.find((button: any) => button.id === "compareTransform")
+        .disabled,
+    ).toBe(true);
+    expect(frame.controls).toHaveLength(0);
+    send("predictReflection");
+    frame = send("compareTransform");
+    expect(frame.sections[0].text).toContain(
+      "M moved farther right after the reflection",
+    );
+    send("predictOverlap");
+    frame = send("compareCorners");
+    expect(frame.sections[1].text).toContain("3 × 108° = 324°");
+    expect(frame.sections[1].text).toContain("4 × 108° = 432°");
+    expect(frame.controls).toHaveLength(3);
+    frame = send("predictTurn");
+    expect(frame.sections[0].text).not.toContain("M moved farther right");
+    expect(frame.controls).toHaveLength(0);
+    frame = send(undefined, undefined, "reset");
+    expect(frame.description).toContain("Choose a prediction to begin");
+  });
   it("sound gates comparisons, separates pitch from amplitude and preserves opt-in audio/animation", () => {
     const send = worker("sound-playground");
     const initial = send();

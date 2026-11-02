@@ -44,6 +44,13 @@ export function makeAtlas() {
     }
   for (const rotation of [0, 90, 180, 270])
     for (const mirror of [false, true]) {
+      const imageLabel = mirror
+        ? rotation === 0
+          ? "Vertical reflection"
+          : `Reflect + ${rotation}° turn`
+        : rotation === 0
+          ? "Same image"
+          : `${rotation}° clockwise`;
       motifs[`${rotation}:${mirror ? 1 : 0}`] = renderToStaticMarkup(
         <svg viewBox="0 0 280 150" xmlns="http://www.w3.org/2000/svg">
           <MosaicMotif x={65} y={65} />
@@ -58,7 +65,7 @@ export function makeAtlas() {
             fill="#fff9ef"
             fontSize="12"
           >
-            {mirror ? "Reflected, then rotated" : "Rotated"}
+            {imageLabel}
           </text>
         </svg>,
       );
