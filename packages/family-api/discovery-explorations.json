@@ -557,22 +557,22 @@
     "subject": "History",
     "grade_bands": ["3-5", "6-8"],
     "tags": ["history", "trade", "geography", "resources"],
-    "summary": "Plan a caravan’s route and supplies, then compare how terrain and seasons change a journey.",
-    "question": "Why might travelers choose a longer route instead of the shortest one?",
-    "explanation": "Trading routes connected communities and carried ideas and skills as well as goods. The Silk Roads were a changing network of land and sea routes, not a single road or one journey made by every merchant. Travelers had to consider terrain, water, seasons and supplies. This fictional journey borrows those general trade-offs. Its routes, prices, cargo losses and travel times are invented for comparison, not a reconstruction of a particular culture, place or century.",
+    "summary": "Predict, then compare how changing only season or route affects travel time, delivered cargo, load and margin in a fictional trade model.",
+    "question": "When every other rule stays fixed, how can one modeled route or season change alter several journey outcomes?",
+    "explanation": "The historical Silk Roads were overlapping land and sea networks connecting many communities, not one road or a one-way end-to-end journey. Goods, knowledge, skills and ideas moved through local and long-distance exchanges, often changing hands between merchants. This lesson studies two controlled comparisons on one fictional composite segment. Every location, duration, season effect, carrying limit, price, toll, margin, spoilage rule and breakage rule is a teaching assumption, not a historical measurement, probability or forecast.",
     "experiments": [
       {
-        "title": "Choose a seasonal route",
-        "instruction": "Pack 14 supply days and keep the cargo fixed. Predict how changing from dry to wet season affects the river route, then compare travel time and cargo delivered.",
-        "observe": "Use the journey results to explain why the fastest route can depend on conditions, not just distance. Identify which numbers are model assumptions rather than historical evidence."
+        "title": "Change only the season",
+        "instruction": "Keep River Road, 6 grain units, 14 supply days, the 100 kg limit and all price and loss rules fixed. Predict whether changing wet season to dry creates more, the same or fewer travel days, then compare the two plans.",
+        "observe": "Wet to dry changes 8 to 14 days and 6 to 4 units delivered, while load stays 64 kg. Margin changes from −8 to −22 teaching credits because the invented dry-season rule adds time and crosses the invented grain-spoilage threshold."
       },
       {
-        "title": "Pack for the journey",
-        "instruction": "Choose a route and predict the supplies needed for its travel time. Add supply days until the shortage is zero, then increase the cargo load.",
-        "observe": "Compare total load with carrying capacity. Explain the trade-off between carrying more goods and leaving room for the supplies needed to complete the journey."
+        "title": "Change only the route",
+        "instruction": "Keep dry season, 6 pottery units, 12 supply days, the 100 kg limit and all price and loss rules fixed. Predict whether Mountain Pass, Oasis Trail or neither delivers more pottery and keeps the larger margin, then compare.",
+        "observe": "Mountain Pass takes 9 days, delivers 5 units and has margin 0. Oasis Trail takes 12 days, delivers 6 units and has margin 15 teaching credits. Both loads stay 66 kg; the longer fictional route avoids the invented breakage rule and has the lower invented toll."
       }
     ],
-    "misconception": "Trade was not simply one-way travel between two distant empires. Networks involved many communities, local exchanges and changing routes.",
+    "misconception": "The Silk Roads were not one road, a simple east-to-west line or a route where the same merchant usually carried goods end to end. Many communities, local exchanges and changing land and sea routes formed the networks.",
     "sources": [
       {
         "title": "UNESCO: About the Silk Roads",
@@ -581,6 +581,14 @@
       {
         "title": "UNESCO: The Chang’an–Tianshan routes network",
         "url": "https://whc.unesco.org/en/list/1442"
+      },
+      {
+        "title": "The Metropolitan Museum of Art: Afghanistan—Hidden Treasures from the National Museum, Kabul",
+        "url": "https://www.metmuseum.org/exhibitions/listings/2009/afghanistan"
+      },
+      {
+        "title": "British Museum: Silk Roads exhibition guide",
+        "url": "https://www.britishmuseum.org/sites/default/files/2024-09/Silk_Roads.pdf"
       }
     ],
     "duration_minutes": 15

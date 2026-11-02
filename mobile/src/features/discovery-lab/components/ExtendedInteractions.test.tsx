@@ -229,14 +229,35 @@ describe("native predictions and evidence", () => {
     expect(view.queryByText("Regular tile")).toBeNull();
   });
 
-  it("makes seasonal route and supply constraints matter", () => {
+  it("gates controlled caravan comparisons and clears stale evidence", () => {
     const view = render(<NativeExploration id="caravan-crossroads" />);
-    fireEvent.press(view.getByText("Wet season"));
+    expect(view.getByText("Compare wet and dry river plans")).toBeDisabled();
+    expect(view.getByText("Compare mountain and oasis plans")).toBeDisabled();
+    expect(view.queryByText("Route")).toBeNull();
+
+    fireEvent.press(view.getByText("More travel days"));
+    fireEvent.press(view.getByText("Compare wet and dry river plans"));
     expect(
-      view.getByText(/13 days of travel; 3 days short of supplies/),
+      view.getByText(
+        /Wet: 8 days · 6 of 6 delivered · 64 \/ 100 kg · −8 teaching credits.*Dry: 14 days · 4 of 6 delivered · 64 \/ 100 kg · −22 teaching credits/,
+      ),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("River road"));
-    expect(view.getByText(/8 days of travel; Enough supplies/)).toBeTruthy();
+
+    fireEvent.press(view.getByText("Oasis Trail"));
+    fireEvent.press(view.getByText("Compare mountain and oasis plans"));
+    expect(
+      view.getByText(
+        /Mountain: 9 days · 5 of 6 delivered · toll 8 · margin 0 teaching credits.*Oasis: 12 days · 6 of 6 delivered · toll 3 · margin 15 teaching credits/,
+      ),
+    ).toBeTruthy();
+    expect(view.getByText("Route")).toBeTruthy();
+
+    fireEvent.press(view.getByText("Same travel time"));
+    expect(view.queryByText(/Wet: 8 days/)).toBeNull();
+    expect(view.queryByText("Route")).toBeNull();
+    fireEvent.press(view.getByText("Reset lesson"));
+    expect(view.getByText("Compare wet and dry river plans")).toBeDisabled();
+    expect(view.getByText(/River Road · wet season · 8 days/)).toBeTruthy();
   });
 
   it("distinguishes visits, cross-species pollen and stepping-stone habitat", () => {

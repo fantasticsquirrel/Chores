@@ -10,7 +10,7 @@ const controls: [string, string][] = [
   ["food-web-rescue", "Zooplankton rises and algae falls"],
   ["fraction-feast", "The same amount"],
   ["pattern-palace", "Quarter-turn"],
-  ["caravan-crossroads", "Wet season"],
+  ["caravan-crossroads", "More travel days"],
   ["pollinator-express", "Visit Gold 1"],
   ["chance-carnival", "Add 10"],
 ];
@@ -25,7 +25,9 @@ describe("native learning explorations", () => {
       fireEvent.press(view.getByText(control));
       fireEvent.press(
         view.getByText(
-          id === "fraction-feast" || id === "pattern-palace"
+          id === "fraction-feast" ||
+            id === "pattern-palace" ||
+            id === "caravan-crossroads"
             ? "Reset lesson"
             : "Reset experiment",
         ),

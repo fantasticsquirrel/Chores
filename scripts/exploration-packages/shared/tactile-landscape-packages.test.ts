@@ -118,6 +118,20 @@ import {
   regularPolygonVertices as packageRegularPolygonVertices,
   rigidTransformPoint as packageRigidTransformPoint,
 } from "../pattern-palace/model";
+import {
+  CARAVAN_ROUTE_TRIAL as SHARED_CARAVAN_ROUTE_TRIAL,
+  CARAVAN_SEASON_TRIAL as SHARED_CARAVAN_SEASON_TRIAL,
+  calculateCaravanJourney as calculateSharedCaravanJourney,
+  compareCaravanPlans as compareSharedCaravanPlans,
+} from "../../../packages/family-api/src/discovery-models/caravans";
+import {
+  CARAVAN_ROUTE_TRIAL as PACKAGE_CARAVAN_ROUTE_TRIAL,
+  CARAVAN_SEASON_TRIAL as PACKAGE_CARAVAN_SEASON_TRIAL,
+  calculateCaravanJourney as calculatePackageCaravanJourney,
+  compareCaravanPlans as comparePackageCaravanPlans,
+} from "../caravan-crossroads/caravans";
+import { buildCaravan as buildWebCaravan } from "../../../packages/discovery-scenes/src/landscape/caravan";
+import { buildCaravan as buildPackageCaravan } from "../caravan-crossroads/caravan";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -340,6 +354,173 @@ describe("ten independently authored rich explorations", () => {
     expect(frame.controls).toHaveLength(0);
     frame = send(undefined, undefined, "reset");
     expect(frame.description).toContain("Choose a prediction to begin");
+  });
+  it("caravan package gates controlled comparisons and matches the shared bounded model", () => {
+    expect(PACKAGE_CARAVAN_SEASON_TRIAL).toEqual(SHARED_CARAVAN_SEASON_TRIAL);
+    expect(PACKAGE_CARAVAN_ROUTE_TRIAL).toEqual(SHARED_CARAVAN_ROUTE_TRIAL);
+    for (const input of [
+      SHARED_CARAVAN_SEASON_TRIAL.baseline,
+      SHARED_CARAVAN_SEASON_TRIAL.comparison,
+      SHARED_CARAVAN_ROUTE_TRIAL.baseline,
+      SHARED_CARAVAN_ROUTE_TRIAL.comparison,
+      {
+        route: "ridge",
+        season: "dry",
+        cargo: "pottery",
+        units: 10,
+        supplyDays: 20,
+      },
+      {
+        route: "river",
+        season: "wet",
+        cargo: "cloth",
+        units: 1,
+        supplyDays: 0,
+      },
+      {
+        route: "river",
+        season: "wet",
+        cargo: "grain",
+        units: 0,
+        supplyDays: 14,
+      },
+      {
+        route: "river",
+        season: "wet",
+        cargo: "grain",
+        units: 6.5,
+        supplyDays: 14,
+      },
+      {
+        route: "unknown",
+        season: "wet",
+        cargo: "grain",
+        units: 6,
+        supplyDays: 14,
+      },
+      ...["constructor", "toString", "__proto__"].map((route) => ({
+        route,
+        season: "wet",
+        cargo: "grain",
+        units: 6,
+        supplyDays: 14,
+      })),
+      ...["constructor", "toString", "__proto__"].map((cargo) => ({
+        route: "river",
+        season: "wet",
+        cargo,
+        units: 6,
+        supplyDays: 14,
+      })),
+    ] as any[])
+      expect(calculatePackageCaravanJourney(input)).toEqual(
+        calculateSharedCaravanJourney(input),
+      );
+    for (const inheritedKey of ["constructor", "toString", "__proto__"]) {
+      expect(
+        calculatePackageCaravanJourney({
+          ...PACKAGE_CARAVAN_SEASON_TRIAL.baseline,
+          route: inheritedKey,
+        } as any),
+      ).toBeNull();
+      expect(
+        calculatePackageCaravanJourney({
+          ...PACKAGE_CARAVAN_SEASON_TRIAL.baseline,
+          cargo: inheritedKey,
+        } as any),
+      ).toBeNull();
+    }
+    expect(
+      comparePackageCaravanPlans(
+        PACKAGE_CARAVAN_SEASON_TRIAL.baseline,
+        PACKAGE_CARAVAN_SEASON_TRIAL.comparison,
+      ),
+    ).toEqual(
+      compareSharedCaravanPlans(
+        SHARED_CARAVAN_SEASON_TRIAL.baseline,
+        SHARED_CARAVAN_SEASON_TRIAL.comparison,
+      ),
+    );
+
+    const send = worker("caravan-crossroads");
+    let frame = send();
+    expect(frame.controls).toHaveLength(0);
+    expect(
+      frame.buttons.find((button: any) => button.id === "compareSeasons")
+        .disabled,
+    ).toBe(true);
+    send("seasonMore");
+    frame = send("compareSeasons");
+    expect(frame.sections[0].text).toContain("Wet: 8 days · 6 of 6 delivered");
+    expect(frame.sections[0].text).toContain("Dry: 14 days · 4 of 6 delivered");
+    expect(frame.sections[0].text).toContain("Changed: season");
+    send("routeOasis");
+    frame = send("compareRoutes");
+    expect(frame.sections[1].text).toContain(
+      "Mountain: 9 days · 5 of 6 delivered",
+    );
+    expect(frame.sections[1].text).toContain(
+      "Oasis: 12 days · 6 of 6 delivered",
+    );
+    expect(frame.sections[1].text).toContain("Changed: route");
+    expect(frame.controls.map((control: any) => control.id)).toEqual([
+      "route",
+      "season",
+      "cargo",
+      "units",
+      "supplyDays",
+    ]);
+    frame = send("seasonSame");
+    expect(frame.sections[0].text).not.toContain("Wet: 8 days");
+    expect(frame.controls).toHaveLength(0);
+    frame = send(undefined, undefined, "reset");
+    expect(frame.description).toContain("Choose a prediction to begin");
+
+    const sceneState = {
+      kind: "caravan" as const,
+      route: "oasis" as const,
+      season: "dry" as const,
+      cargo: "pottery" as const,
+      units: 6,
+      supplies: 12,
+      days: 12,
+      load: 66,
+    };
+    const webScene = buildWebCaravan(sceneState);
+    const packageScene = buildPackageCaravan(sceneState);
+    const signature = (built: typeof webScene) => {
+      const objects: unknown[] = [];
+      built.group.traverse((object) => {
+        const rendered = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: { color?: { getHexString(): string } };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          quaternion: object.quaternion.toArray(),
+          scale: object.scale.toArray(),
+          geometry: rendered.geometry?.type,
+          vertices: rendered.geometry?.attributes?.position?.count,
+          color: rendered.material?.color?.getHexString(),
+        });
+      });
+      return { objects, labels: built.labels };
+    };
+    expect(signature(packageScene)).toEqual(signature(webScene));
+    expect(webScene.labels.map((label) => label.text)).toEqual(
+      expect.arrayContaining([
+        "Mountain Pass",
+        "River Road exchange",
+        "Oasis Trail exchange",
+      ]),
+    );
+    webScene.group.clear();
+    packageScene.group.clear();
   });
   it("sound gates comparisons, separates pitch from amplitude and preserves opt-in audio/animation", () => {
     const send = worker("sound-playground");

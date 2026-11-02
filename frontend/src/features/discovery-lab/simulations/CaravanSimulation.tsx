@@ -1,216 +1,207 @@
-import { useId, useState } from "react";
+import { useId } from "react";
 import {
   CARAVAN_CARGO,
   CARAVAN_ROUTES,
-  caravanJourney,
+  calculateCaravanJourney,
   type CaravanCargo,
   type CaravanRoute,
   type CaravanSeason,
-} from "@family-manager/family-api/discovery-models/math-life";
+} from "@family-manager/family-api/discovery-models/caravans";
 import { Slider } from "./SimulationPrimitives";
 import {
   LandscapeExhibit,
-  LandscapeInvestigation,
   LandscapeMetric,
 } from "./landscape/LandscapeExhibit";
+import { CaravanPredictionTrials } from "./caravan/CaravanPredictionTrials";
+import { useCaravanLesson } from "./caravan/useCaravanLesson";
+import "./caravan/caravan-crossroads.css";
+
+const formatCredits = (value: number) =>
+  `${value < 0 ? "−" : ""}${Math.abs(value)} teaching credits`;
+
 export function CaravanSimulation() {
-  const id = useId(),
-    [route, setRoute] = useState<CaravanRoute>("river"),
-    [season, setSeason] = useState<CaravanSeason>("wet"),
-    [cargo, setCargo] = useState<CaravanCargo>("grain"),
-    [units, setUnits] = useState(6),
-    [supplies, setSupplies] = useState(10);
-  const result = caravanJourney(route, season, cargo, units, supplies),
-    status = result.overCapacity
-      ? "Over the 100 kg carrying limit"
-      : result.shortfall > 0
-        ? `${result.shortfall} more supply days needed`
-        : "Enough supplies and carrying capacity";
-  const reset = () => {
-    setRoute("river");
-    setSeason("wet");
-    setCargo("grain");
-    setUnits(6);
-    setSupplies(10);
-  };
+  const id = useId();
+  const lesson = useCaravanLesson();
+  const result = calculateCaravanJourney(lesson.plan)!;
+  const route = CARAVAN_ROUTES[lesson.plan.route];
+  const cargo = CARAVAN_CARGO[lesson.plan.cargo];
+  const packingStatus = result.overCapacity
+    ? `${result.load - result.capacity} kg over capacity`
+    : result.shortfall > 0
+      ? `${result.shortfall} supply days missing`
+      : `${result.capacityRemaining} kg capacity remains`;
+
   return (
     <LandscapeExhibit
-      title="Which route fits the cargo?"
-      introduction="Compare three routes between fictional markets. Weather, supplies and fragile or perishable goods change the tradeoff."
+      title="Compare route constraints"
+      introduction="Predict first. Change one modeled condition, then use travel, delivery, load and margin evidence to explain the result."
       state={{
         kind: "caravan",
-        route,
-        season,
-        cargo,
-        units,
-        supplies,
+        route: lesson.plan.route,
+        season: lesson.plan.season,
+        cargo: lesson.plan.cargo,
+        units: lesson.plan.units,
+        supplies: lesson.plan.supplyDays,
         days: result.days,
         load: result.load,
       }}
-      description={`Fictional relief map. The selected ${CARAVAN_ROUTES[route].name} takes ${result.days} days in the ${season} season. ${units} ${cargo} units and ${supplies} days of supplies weigh ${result.load} kilograms. ${status}. Mountains lie to the north, an oasis to the south, and a river between the markets.`}
+      description={`Fictional dimensional relief map with three undirected routes between Willow Market and Harbor Town and intermediate exchange stops. Selected ${route.name}, ${lesson.plan.season} season, ${result.days} modeled days. ${lesson.plan.units} ${cargo.name.toLowerCase()} units and ${lesson.plan.supplyDays} supply days make a ${result.load} kilogram load against a 100 kilogram teaching limit. ${result.delivered} units are delivered; ${result.spoiled} spoil and ${result.broken} break under the invented rules. This single segment represents one small comparison within historical networks that connected many communities in many directions.`}
       controls={
-        <>
-          <label htmlFor={`${id}-route`}>
-            Trade route
-            <select
-              aria-label="Trade route"
-              id={`${id}-route`}
-              value={route}
-              onChange={(event) => setRoute(event.target.value as CaravanRoute)}
-            >
-              {Object.entries(CARAVAN_ROUTES).map(([value, item]) => (
-                <option key={value} value={value}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label htmlFor={`${id}-season`}>
-            Season
-            <select
-              aria-label="Season"
-              id={`${id}-season`}
-              value={season}
-              onChange={(event) =>
-                setSeason(event.target.value as CaravanSeason)
-              }
-            >
-              <option value="wet">Wet season</option>
-              <option value="dry">Dry season</option>
-            </select>
-          </label>
-          <label htmlFor={`${id}-cargo`}>
-            Cargo
-            <select
-              aria-label="Cargo"
-              id={`${id}-cargo`}
-              value={cargo}
-              onChange={(event) => setCargo(event.target.value as CaravanCargo)}
-            >
-              {Object.entries(CARAVAN_CARGO).map(([value, item]) => (
-                <option key={value} value={value}>
-                  {item.name} · {item.weight} kg each
-                </option>
-              ))}
-            </select>
-          </label>
-          <Slider
-            label="Cargo units"
-            value={units}
-            min={1}
-            max={10}
-            onChange={setUnits}
-          />
-          <Slider
-            label="Supply days packed"
-            value={supplies}
-            min={0}
-            max={20}
-            onChange={setSupplies}
-          />
-          <div className="landscape-actions">
-            <button type="button" onClick={() => setSupplies(result.days)}>
-              Pack enough days
-            </button>
-            <button type="button" onClick={reset}>
-              Reset
+        lesson.explorationUnlocked ? (
+          <section
+            className="caravan-explore"
+            aria-labelledby={`${id}-explore`}
+          >
+            <div className="caravan-explore-heading">
+              <div>
+                <h3 id={`${id}-explore`}>Explore one change at a time</h3>
+                <p>
+                  Restore a comparison before drawing a conclusion. These are
+                  invented values, not a travel recommendation.
+                </p>
+              </div>
+              <button type="button" onClick={lesson.reset}>
+                Reset lesson
+              </button>
+            </div>
+            <div className="caravan-free-controls">
+              <label htmlFor={`${id}-route`}>
+                Trade route
+                <select
+                  aria-label="Trade route"
+                  id={`${id}-route`}
+                  value={lesson.plan.route}
+                  onChange={(event) =>
+                    lesson.setRoute(event.target.value as CaravanRoute)
+                  }
+                >
+                  {Object.entries(CARAVAN_ROUTES).map(([value, item]) => (
+                    <option key={value} value={value}>
+                      {item.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label htmlFor={`${id}-season`}>
+                Season
+                <select
+                  aria-label="Season"
+                  id={`${id}-season`}
+                  value={lesson.plan.season}
+                  onChange={(event) =>
+                    lesson.setSeason(event.target.value as CaravanSeason)
+                  }
+                >
+                  <option value="wet">Wet season</option>
+                  <option value="dry">Dry season</option>
+                </select>
+              </label>
+              <label htmlFor={`${id}-cargo`}>
+                Cargo
+                <select
+                  aria-label="Cargo"
+                  id={`${id}-cargo`}
+                  value={lesson.plan.cargo}
+                  onChange={(event) =>
+                    lesson.setCargo(event.target.value as CaravanCargo)
+                  }
+                >
+                  {Object.entries(CARAVAN_CARGO).map(([value, item]) => (
+                    <option key={value} value={value}>
+                      {item.name} · {item.weight} kg each
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Slider
+                label="Cargo units"
+                value={lesson.plan.units}
+                min={1}
+                max={15}
+                onChange={lesson.setUnits}
+              />
+              <Slider
+                label="Supply days packed"
+                value={lesson.plan.supplyDays}
+                min={0}
+                max={20}
+                onChange={lesson.setSupplyDays}
+              />
+              <div className="caravan-actions">
+                <button type="button" onClick={lesson.packExactDays}>
+                  Pack exactly {result.days} days
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <div className="caravan-locked">
+            <span>
+              Complete both prediction-first comparisons to unlock route, cargo
+              and packing controls.
+            </span>
+            <button type="button" onClick={lesson.reset}>
+              Reset lesson
             </button>
           </div>
-        </>
+        )
       }
       evidence={
-        <>
-          <div className="landscape-metrics">
-            <LandscapeMetric label="Journey" value={`${result.days} days`}>
-              <small>{CARAVAN_ROUTES[route].name}</small>
-            </LandscapeMetric>
+        <div className="caravan-current" role="status" aria-live="polite">
+          <div className="caravan-current-heading">
+            <div>
+              <span>Current fictional plan</span>
+              <strong>
+                {route.name} · {lesson.plan.season} season · {result.days} days
+              </strong>
+            </div>
+            <span data-viable={result.viable}>{packingStatus}</span>
+          </div>
+          <div className="landscape-metrics caravan-metrics">
             <LandscapeMetric
-              label="Supply days packed"
-              value={`${supplies} / ${result.days}`}
-            >
-              <div className="landscape-bars" aria-hidden="true">
-                {Array.from(
-                  { length: Math.max(supplies, result.days) },
-                  (_, i) => (
-                    <i key={i} data-missing={i >= supplies} />
-                  ),
-                )}
-              </div>
-            </LandscapeMetric>
-            <LandscapeMetric
-              label="Packed load"
-              value={`${result.load} / 100 kg`}
+              label="Delivered"
+              value={`${result.delivered} / ${lesson.plan.units} units`}
             >
               <small>
-                Cargo {units * CARAVAN_CARGO[cargo].weight} kg + supplies{" "}
-                {supplies * 2} kg
+                {result.spoiled} spoiled · {result.broken} broken
               </small>
             </LandscapeMetric>
             <LandscapeMetric
-              label="Trade margin"
+              label="Packed load"
+              value={`${result.load} / ${result.capacity} kg`}
+            >
+              <small>
+                cargo {result.cargoWeight} + supplies {result.supplyWeight}
+              </small>
+            </LandscapeMetric>
+            <LandscapeMetric label="Toll" value={`${result.toll} credits`}>
+              <small>invented route charge</small>
+            </LandscapeMetric>
+            <LandscapeMetric
+              label="Margin"
               value={
-                result.viable ? `${result.margin} coins` : "Plan incomplete"
+                result.viable ? formatCredits(result.margin) : "Not compared"
               }
             >
               <small>
                 {result.viable
-                  ? `${result.revenue} sales − ${result.costs} costs`
-                  : "Resolve supplies and carrying capacity"}
+                  ? `${result.revenue} revenue − ${result.costs} costs`
+                  : "resolve supply or capacity first"}
               </small>
             </LandscapeMetric>
           </div>
-          <div className="landscape-observation" role="status">
-            <strong>{status}</strong>. {result.days} travel days · {result.load}
-            /100 kg packed · toll {result.toll} coins.{" "}
-            {CARAVAN_ROUTES[route].description}{" "}
-            {result.spoiled > 0
-              ? `${result.spoiled} grain unit${result.spoiled === 1 ? "" : "s"} spoil during the journey. `
-              : ""}
-            {result.broken > 0
-              ? `${result.broken} pottery unit${result.broken === 1 ? "" : "s"} break on the steep path. `
-              : ""}
-            {result.viable
-              ? `Estimated delivery: ${result.delivered} units. Sale ${result.revenue} − purchase, supplies and tolls ${result.costs} = ${result.margin} coins remaining from this trade.`
-              : "Change the packing plan before estimating a completed trade."}
-          </div>
-        </>
+        </div>
       }
       investigations={
-        <LandscapeInvestigation
-          items={[
-            {
-              label: "Compare seasons",
-              predict:
-                "Will a dry-season river journey need more or fewer supplies?",
-              options: ["More", "Fewer"],
-              action:
-                "Keep six grain units and the river road. Compare wet and dry seasons. Pack enough days for each and compare delivered cargo and margin.",
-              explain:
-                "Low water slows this modeled river route. A longer journey needs supplies and passes the grain-spoilage threshold. Why is travel time not the only cost?",
-              test: reset,
-              testLabel: "Set wet-season baseline",
-            },
-            {
-              label: "Compare cargo",
-              predict: "Is the shortest route always best for pottery?",
-              options: ["Always", "Not always"],
-              action:
-                "In the dry season, carry six pottery units. Compare the mountain pass with the oasis trail. Pack enough days separately for each route.",
-              explain:
-                "The pass is shorter but breaks some pottery; the oasis route needs more supplies but has a lower toll. Use delivered units, carrying capacity and margin as evidence.",
-              test: () => {
-                setSeason("dry");
-                setCargo("pottery");
-                setUnits(6);
-                setRoute("ridge");
-                setSupplies(9);
-              },
-              testLabel: "Set pottery comparison",
-            },
-          ]}
+        <CaravanPredictionTrials
+          lesson={lesson}
+          onShowSeasonWet={lesson.showSeasonBaseline}
+          onShowSeasonDry={lesson.showSeasonComparison}
+          onShowRouteMountain={lesson.showRouteBaseline}
+          onShowRouteOasis={lesson.showRouteComparison}
         />
       }
-      note="Fictional composite map, not a reconstruction of a real historical route. Trade connected many communities in multiple directions. Locations, durations, prices and losses are invented teaching parameters. Supplies weigh 2 kg/day. Grain loses 25% after ten days; mountain travel breaks 15% of pottery, rounded up. These fixed rules reveal constraints, not historical probabilities."
+      note="Model boundary: this is a fictional composite segment, not a reconstruction of a place, people or century. Historical Silk Roads were overlapping land and sea networks connecting many communities in many directions; goods often changed hands between merchants. Every location, route, season effect, duration, 100 kg limit, price, toll, margin and loss here is invented. Fixed teaching rules use 2 kg per supply day, 25% grain spoilage after 10 days and 15% mountain pottery breakage, rounded up. They are not historical measurements, probabilities or forecasts."
     />
   );
 }

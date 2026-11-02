@@ -1,0 +1,455 @@
+.landscape-caravan {
+  --land-ink: #f4eedb;
+  --land-muted: #b7c7ba;
+  --land-line: #567b73;
+  --land-accent: #e3bd68;
+  border-color: #557b72;
+  background: #102d31;
+  color: #f4eedb;
+  box-shadow:
+    0 24px 60px rgb(15 38 38 / 18%),
+    inset 0 0 0 1px rgb(244 224 166 / 12%);
+}
+
+.landscape-caravan .landscape-visual {
+  background:
+    radial-gradient(circle at 74% 18%, rgb(228 189 104 / 22%), transparent 32%),
+    linear-gradient(145deg, #173a3d, #10282f 58%, #0e2329);
+  border-bottom: 1px solid #557b72;
+}
+
+.landscape-caravan .landscape-visual header {
+  padding: 27px 30px 0;
+}
+
+.landscape-caravan .landscape-visual h2 {
+  color: #fff4d5;
+  font-size: clamp(27px, 3vw, 39px);
+}
+
+.landscape-caravan .landscape-visual header p {
+  color: #c6d5ca;
+  max-width: 75ch;
+}
+
+.landscape-caravan .landscape-canvas {
+  height: clamp(420px, 48vw, 620px);
+}
+
+.landscape-caravan .landscape-label {
+  color: #203c35;
+  background: rgb(255 247 222 / 94%);
+  border-color: #bb9f61;
+  box-shadow: 0 5px 18px rgb(12 30 27 / 26%);
+}
+
+.landscape-caravan .landscape-camera {
+  color: #e8efdf;
+  background: #17373b;
+  border-color: #557b72;
+}
+
+.landscape-caravan .landscape-camera span {
+  color: #b9c9bf;
+}
+
+.landscape-caravan button {
+  color: #183630;
+  background: #f8f0dc;
+  border-color: #8b9d83;
+}
+
+.landscape-caravan button:hover:not(:disabled) {
+  background: #fff8e7;
+}
+
+.landscape-caravan button[aria-pressed="true"] {
+  color: #fff8e2;
+  background: #245b52;
+  border-color: #f0c96f;
+  box-shadow: inset 4px 0 0 #f0c96f;
+}
+
+.landscape-caravan button:disabled {
+  color: #61746a;
+  background: #b9c3b8;
+  border-color: #89998e;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.landscape-caravan button:focus-visible,
+.landscape-caravan input:focus-visible,
+.landscape-caravan select:focus-visible,
+.landscape-caravan .landscape-canvas:focus-visible {
+  outline-color: #ffd477;
+}
+
+.landscape-caravan .landscape-evidence {
+  padding: 23px 30px 26px;
+  color: #eef4e8;
+  background: #16353a;
+  border-color: #557b72;
+}
+
+.caravan-current-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.caravan-current-heading > div > span {
+  display: block;
+  margin-bottom: 5px;
+  color: #b7c9bd;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.caravan-current-heading strong {
+  color: #fff1c9;
+  font-family: Georgia, serif;
+  font-size: clamp(20px, 2.2vw, 28px);
+  font-weight: 400;
+}
+
+.caravan-current-heading > span {
+  padding: 7px 10px;
+  color: #f7dc9e;
+  border: 1px solid #6e8d81;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.caravan-current-heading > span[data-viable="false"] {
+  color: #ffe2cc;
+  border-color: #d19170;
+}
+
+.landscape-caravan .caravan-metrics {
+  gap: 10px;
+}
+
+.landscape-caravan .caravan-metrics .landscape-metric {
+  min-width: 0;
+  padding: 14px 15px;
+  border: 1px solid #456b68;
+  border-radius: 10px;
+  background: rgb(10 33 36 / 38%);
+}
+
+.landscape-caravan .caravan-metrics .landscape-metric > span,
+.landscape-caravan .caravan-metrics .landscape-metric small {
+  color: #b7c9bd;
+}
+
+.landscape-caravan .caravan-metrics .landscape-metric > strong {
+  color: #ffe7ad;
+  font-size: clamp(18px, 1.8vw, 23px);
+}
+
+.caravan-learning {
+  color: #243e36;
+  background:
+    linear-gradient(rgb(255 253 243 / 96%), rgb(247 241 222 / 96%)),
+    repeating-linear-gradient(0deg, transparent 0 23px, #a8936240 24px);
+}
+
+.caravan-trials {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 28px 30px 24px;
+}
+
+.caravan-trial {
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid #9baa8d;
+  border-radius: 12px;
+  background: rgb(255 254 247 / 82%);
+  box-shadow: 0 9px 20px rgb(53 66 45 / 8%);
+}
+
+.caravan-trial legend {
+  padding: 0 8px;
+  color: #1e4b43;
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.caravan-trial > p {
+  min-height: 64px;
+  margin: 6px 0 14px;
+  color: #3c5148;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.caravan-predictions {
+  display: grid;
+  gap: 8px;
+}
+
+.caravan-predictions button {
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+}
+
+.landscape-caravan .caravan-compare {
+  width: 100%;
+  margin-top: 11px;
+  color: #fff5d9;
+  background: #244f48;
+  border-color: #244f48;
+  font-weight: 700;
+}
+
+.landscape-caravan .caravan-compare:hover:not(:disabled) {
+  background: #173f39;
+}
+
+.caravan-feedback {
+  margin-top: 14px;
+  padding: 15px 16px;
+  border-left: 4px solid #2f7b6c;
+  border-radius: 4px 9px 9px 4px;
+  background: #e5ecdc;
+  color: #29433a;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.caravan-feedback > strong {
+  color: #164e43;
+}
+
+.caravan-feedback p {
+  margin: 8px 0 0;
+}
+
+.caravan-evidence-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.caravan-evidence-actions button {
+  flex: 1;
+  font-size: 11px;
+}
+
+.caravan-history-connection {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.35fr) 1fr;
+  gap: 18px;
+  padding: 21px 30px 25px;
+  border-top: 1px solid #c5c9b6;
+  color: #40534b;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.caravan-history-connection strong {
+  color: #1f4e45;
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+
+.caravan-history-connection p {
+  margin: 0;
+}
+
+.landscape-caravan .landscape-controls {
+  display: block;
+  padding: 0;
+  background: #e9e7d7;
+  border-color: #9baa8d;
+}
+
+.caravan-locked,
+.caravan-explore-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.caravan-locked {
+  padding: 17px 30px;
+  color: #334a41;
+  font-size: 13px;
+}
+
+.caravan-explore-heading {
+  padding: 21px 30px 17px;
+  border-bottom: 1px solid #bcc3ae;
+}
+
+.caravan-explore-heading h3 {
+  margin: 0 0 4px;
+  color: #1d4b42;
+  font-family: Georgia, serif;
+  font-size: 21px;
+}
+
+.caravan-explore-heading p {
+  margin: 0;
+  color: #56685e;
+  font-size: 12px;
+}
+
+.caravan-free-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 24px;
+  padding: 22px 30px 26px;
+  color: #294039;
+}
+
+.caravan-free-controls label {
+  color: #294039;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.caravan-free-controls select {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  color: #1e3d35;
+  background: #fffdf4;
+  border: 1px solid #8da08a;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.landscape-caravan .caravan-free-controls .dl-slider-heading {
+  color: #294039;
+}
+
+.landscape-caravan .caravan-free-controls .dl-value {
+  color: #284d43;
+  background: #d7e3d4;
+}
+
+.landscape-caravan .caravan-free-controls .dl-range-labels {
+  color: #5a6c62;
+}
+
+.landscape-caravan .caravan-free-controls input[type="range"] {
+  accent-color: #27685b;
+}
+
+.caravan-actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.caravan-actions button {
+  width: 100%;
+}
+
+.landscape-caravan .landscape-model-note {
+  padding: 18px 30px 21px;
+  color: #c1cec5;
+  background: #0d262b;
+  border-top: 1px solid #41675f;
+  font-size: 11px;
+  line-height: 1.75;
+}
+
+@media (max-width: 760px) {
+  .landscape-caravan .landscape-visual header {
+    padding: 22px 20px 0;
+  }
+
+  .landscape-caravan .landscape-canvas {
+    height: 380px;
+  }
+
+  .caravan-current-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .caravan-current-heading > span {
+    white-space: normal;
+  }
+
+  .caravan-trials {
+    grid-template-columns: 1fr;
+    padding: 22px 20px;
+  }
+
+  .caravan-trial > p {
+    min-height: 0;
+  }
+
+  .caravan-history-connection {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .caravan-locked,
+  .caravan-explore-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .caravan-free-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 20px;
+  }
+}
+
+@media (max-width: 420px) {
+  .landscape-caravan .landscape-canvas {
+    height: 330px;
+  }
+
+  .landscape-caravan .landscape-evidence {
+    padding: 20px;
+  }
+
+  .caravan-current-heading strong {
+    font-size: 20px;
+  }
+
+  .landscape-caravan .caravan-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .landscape-caravan .caravan-metrics .landscape-metric {
+    padding: 12px;
+  }
+
+  .caravan-evidence-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .caravan-free-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landscape-caravan * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

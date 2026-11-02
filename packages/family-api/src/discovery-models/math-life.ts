@@ -1,6 +1,7 @@
 import { addFractionParts, normalizeFraction } from "./fractions";
 
 export * from "./fractions";
+export * from "./caravans";
 
 import {
   patternVertexFit,
@@ -48,72 +49,6 @@ export function regularTile(sides: number, side: number, rotation = 0) {
   const result = regularPolygonVertices(sides, side, rotation);
   if (!result) throw new RangeError("Invalid regular-polygon geometry input.");
   return result;
-}
-export const CARAVAN_ROUTES = {
-  ridge: {
-    name: "Mountain pass",
-    dry: 9,
-    wet: 13,
-    toll: 8,
-    description: "Short in dry weather; steep paths can break pottery.",
-  },
-  river: {
-    name: "River road",
-    dry: 14,
-    wet: 8,
-    toll: 12,
-    description:
-      "Wet-season water helps boats; low water slows the dry-season journey.",
-  },
-  oasis: {
-    name: "Oasis trail",
-    dry: 12,
-    wet: 11,
-    toll: 3,
-    description:
-      "A longer route with low tolls; more travel days need more supplies.",
-  },
-} as const;
-export const CARAVAN_CARGO = {
-  grain: { name: "Grain", weight: 6, buy: 4, sell: 7 },
-  cloth: { name: "Cloth", weight: 3, buy: 8, sell: 12 },
-  pottery: { name: "Pottery", weight: 7, buy: 5, sell: 10 },
-} as const;
-export type CaravanRoute = keyof typeof CARAVAN_ROUTES;
-export type CaravanCargo = keyof typeof CARAVAN_CARGO;
-export type CaravanSeason = "dry" | "wet";
-export function caravanJourney(
-  route: CaravanRoute,
-  season: CaravanSeason,
-  cargo: CaravanCargo,
-  units: number,
-  supplyDays: number,
-) {
-  const road = CARAVAN_ROUTES[route],
-    goods = CARAVAN_CARGO[cargo];
-  const days = road[season];
-  const spoiled = cargo === "grain" && days > 10 ? Math.ceil(units * 0.25) : 0;
-  const broken =
-    cargo === "pottery" && route === "ridge" ? Math.ceil(units * 0.15) : 0;
-  const delivered = units - spoiled - broken;
-  const load = units * goods.weight + supplyDays * 2;
-  const shortfall = Math.max(0, days - supplyDays);
-  const costs = units * goods.buy + supplyDays + road.toll;
-  const revenue = delivered * goods.sell;
-  return {
-    days,
-    spoiled,
-    broken,
-    delivered,
-    load,
-    shortfall,
-    overCapacity: load > 100,
-    toll: road.toll,
-    costs,
-    revenue,
-    margin: revenue - costs,
-    viable: load <= 100 && shortfall === 0,
-  };
 }
 export type FlowerSpecies = "gold" | "violet";
 export const POLLINATOR_FLOWERS: ReadonlyArray<{

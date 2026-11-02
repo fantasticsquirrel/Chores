@@ -132,23 +132,53 @@ describe("fractions, patterns, trade, pollination and chance", () => {
     expect(compareTransform).toBeDisabled();
   });
 
-  it("recalculates seasonal travel and resolves a supply shortfall", () => {
+  it("gates controlled caravan comparisons, reports evidence and clears stale results", () => {
     render(<CaravanSimulation />);
-    expect(screen.getByRole("status")).toHaveTextContent("8 travel days");
-    change("Season", "dry");
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "4 more supply days needed",
+    const compareSeason = screen.getByRole("button", {
+      name: "Compare wet and dry river plans",
+    });
+    const compareRoutes = screen.getByRole("button", {
+      name: "Compare mountain and oasis plans",
+    });
+    expect(compareSeason).toBeDisabled();
+    expect(compareRoutes).toBeDisabled();
+    expect(screen.queryByLabelText("Trade route")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "More travel days" }));
+    fireEvent.click(compareSeason);
+    expect(screen.getByTestId("caravan-season-feedback")).toHaveTextContent(
+      "Wet: 8 days · 6 of 6 delivered · 64 / 100 kg · −8 teaching credits",
     );
-    fireEvent.click(screen.getByRole("button", { name: "Pack enough days" }));
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Enough supplies and carrying capacity",
+    expect(screen.getByTestId("caravan-season-feedback")).toHaveTextContent(
+      "Dry: 14 days · 4 of 6 delivered · 64 / 100 kg · −22 teaching credits",
     );
-    expect(screen.getByRole("status")).toHaveTextContent("2 grain units spoil");
+    expect(screen.getByTestId("caravan-season-feedback")).toHaveTextContent(
+      "Changed: season",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Oasis Trail" }));
+    fireEvent.click(compareRoutes);
+    expect(screen.getByTestId("caravan-route-feedback")).toHaveTextContent(
+      "Mountain: 9 days · 5 of 6 delivered · toll 8 · margin 0 teaching credits",
+    );
+    expect(screen.getByTestId("caravan-route-feedback")).toHaveTextContent(
+      "Oasis: 12 days · 6 of 6 delivered · toll 3 · margin 15 teaching credits",
+    );
+    expect(screen.getByLabelText("Trade route")).toBeTruthy();
+
+    change("Trade route", "ridge");
     change("Cargo", "pottery");
     change("Cargo units", 10);
     change("Supply days packed", 20);
+    expect(screen.getByRole("status")).toHaveTextContent("110 / 100 kg");
+
+    fireEvent.click(screen.getByRole("button", { name: "Same travel time" }));
+    expect(screen.queryByTestId("caravan-season-feedback")).toBeNull();
+    expect(screen.queryByLabelText("Trade route")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(compareSeason).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Over the 100 kg carrying limit",
+      "River Road · wet season · 8 days",
     );
   });
 

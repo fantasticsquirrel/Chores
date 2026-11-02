@@ -58,6 +58,52 @@ function village(group: T.Object3D, x: number, z: number) {
     box(group, [0.08, 0.17, 0.02], "#534737", xx, 0.34, zz + 0.155);
   }
   box(group, [1.7, 0.1, 1.5], "#bd9b67", x, 0.17, z);
+  for (const offset of [-0.55, 0, 0.55]) {
+    box(group, [0.38, 0.05, 0.28], "#805c43", x + offset, 0.3, z - 0.72);
+    const awning = box(
+      group,
+      [0.52, 0.045, 0.36],
+      offset === 0 ? "#3f7c78" : "#a65743",
+      x + offset,
+      0.64,
+      z - 0.72,
+    );
+    awning.rotation.z = offset === 0 ? 0.05 : -0.05;
+    for (const dx of [-0.18, 0.18])
+      rod(
+        group,
+        v(x + offset + dx, 0.3, z - 0.72),
+        v(x + offset + dx, 0.64, z - 0.72),
+        0.018,
+        "#5d4937",
+      );
+  }
+}
+function exchangeStop(group: T.Object3D, x: number, z: number, canopy: string) {
+  box(group, [1.25, 0.07, 0.92], "#b69160", x, 0.24, z);
+  for (const offset of [-0.35, 0.35]) {
+    box(group, [0.44, 0.38, 0.38], "#c6a36d", x + offset, 0.46, z + 0.18);
+    const roof = mesh(
+      group,
+      new T.ConeGeometry(0.38, 0.22, 4),
+      material(canopy, 0.72),
+      x + offset,
+      0.76,
+      z + 0.18,
+    );
+    roof.rotation.y = Math.PI / 4;
+  }
+  box(group, [0.72, 0.05, 0.38], canopy, x, 0.58, z - 0.3);
+  for (const dx of [-0.3, 0.3])
+    rod(
+      group,
+      v(x + dx, 0.25, z - 0.3),
+      v(x + dx, 0.58, z - 0.3),
+      0.018,
+      "#5d4937",
+    );
+  for (const dx of [-0.18, 0, 0.18])
+    ellipsoid(group, [0.07, 0.11, 0.07], "#b96e4d", x + dx, 0.35, z - 0.32);
 }
 function camel(
   group: T.Object3D,
@@ -146,6 +192,8 @@ export function buildCaravan(state: CaravanSceneState): BuiltLandscape {
   }
   village(group, -5.9, 1.5);
   village(group, 5.8, 1.35);
+  exchangeStop(group, -3.05, 1.18, "#4f8580");
+  exchangeStop(group, 3.85, 2.47, "#a85f46");
   ellipsoid(group, [1.02, 0.06, 0.54], "#78956a", -0.5, 0.3, 3.2);
   ellipsoid(group, [0.57, 0.035, 0.28], "#579ca0", -0.5, 0.37, 3.15);
   for (let i = 0; i < 6; i++)
@@ -198,15 +246,17 @@ export function buildCaravan(state: CaravanSceneState): BuiltLandscape {
   return {
     group,
     labels: [
-      { text: "Willow market", x: -5.7, y: 1.15, z: 1.9 },
-      { text: "Harbor town", x: 5.7, y: 1.15, z: 1.8 },
+      { text: "Willow market", x: -5.2, y: 2.5, z: 1.9 },
+      { text: "Harbor town", x: 5.1, y: 2.5, z: 1.8 },
       {
-        text: "Mountain pass",
+        text: "Mountain Pass",
         x: 0.4,
         y: elevation(0.4, -2.2) + 0.55,
         z: -2.2,
       },
-      { text: "Oasis", x: -0.5, y: 0.9, z: 3.3 },
+      { text: "River Road exchange", x: -2.75, y: 0.82, z: 1.18 },
+      { text: "Oasis Trail exchange", x: 3.45, y: 0.82, z: 2.47 },
+      { text: "Oasis water stop", x: -0.5, y: 1.18, z: 3.3 },
     ],
   };
 }

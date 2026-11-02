@@ -9,22 +9,44 @@ afterEach(cleanup);
 const change = (label: string, value: number | string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 describe("landscape investigations", () => {
-  it.each([CaravanSimulation, PollinatorSimulation])(
-    "keeps two prediction and comparison investigations",
-    (Component) => {
-      render(<Component />);
-      const tabs = screen.getAllByRole("tab");
-      expect(tabs).toHaveLength(2);
-      expect(screen.getByText("1. Predict")).toBeTruthy();
-      expect(screen.getByText("2. Compare")).toBeTruthy();
-      expect(screen.getByText("3. Explain")).toBeTruthy();
-      fireEvent.click(tabs[1]);
-      expect(tabs[1]).toHaveAttribute("aria-selected", "true");
-      expect(
-        screen.getAllByRole("button", { pressed: false }).length,
-      ).toBeGreaterThanOrEqual(2);
-    },
-  );
+  it("keeps two tabbed pollinator prediction and comparison investigations", () => {
+    render(<PollinatorSimulation />);
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs).toHaveLength(2);
+    expect(screen.getByText("1. Predict")).toBeTruthy();
+    expect(screen.getByText("2. Compare")).toBeTruthy();
+    expect(screen.getByText("3. Explain")).toBeTruthy();
+    fireEvent.click(tabs[1]);
+    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+    expect(
+      screen.getAllByRole("button", { pressed: false }).length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+
+  it("keeps two controlled Caravan prediction and comparison investigations", () => {
+    render(<CaravanSimulation />);
+    const seasonCompare = screen.getByRole("button", {
+      name: "Compare wet and dry river plans",
+    });
+    const routeCompare = screen.getByRole("button", {
+      name: "Compare mountain and oasis plans",
+    });
+    expect(seasonCompare).toBeDisabled();
+    expect(routeCompare).toBeDisabled();
+    expect(screen.queryByLabelText("Trade route")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "More travel days" }));
+    fireEvent.click(seasonCompare);
+    expect(screen.getByTestId("caravan-season-feedback")).toHaveTextContent(
+      "Wet: 8 days · 6 of 6 delivered",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Oasis Trail" }));
+    fireEvent.click(routeCompare);
+    expect(screen.getByTestId("caravan-route-feedback")).toHaveTextContent(
+      "Oasis: 12 days · 6 of 6 delivered",
+    );
+    expect(screen.getByLabelText("Trade route")).toBeTruthy();
+  });
   it("restores soil without changing the independent storm inputs", () => {
     render(<RiverSculptorSimulation />);
     fireEvent.click(
