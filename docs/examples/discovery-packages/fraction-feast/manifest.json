@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "fraction-feast-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "fraction-feast-package",
@@ -16,26 +16,34 @@
       "addition",
       "number-sense"
     ],
-    "summary": "Divide equal-sized plates into equal parts, compare portions and combine fractions.",
-    "question": "How can two different fractions describe the same amount?",
-    "explanation": "A fraction describes equal parts of a whole. The denominator tells how many equal parts make the whole; the numerator counts the parts selected. One half and two quarters cover the same amount of an equal-sized plate. To add fractions with different denominators, describe them using equal-sized pieces first. Every plate here represents the same whole, and every cut makes equal portions. The total can be greater than one plate.",
+    "summary": "Hold the whole area fixed, compare equal partitions and add fractions with an exact shared unit.",
+    "question": "How do piece size and piece count work together when fractions are equivalent or added?",
+    "explanation": "A fraction describes equal parts of a whole. The denominator tells how many equal pieces make that whole; the numerator counts selected pieces. Comparisons are fair only when the wholes have the same area. One half and two quarters cover the same amount because doubling the piece count makes each piece half as large. To add fractions with different denominators, first rename both portions with a common-sized piece. The exact total may be greater than one whole.",
     "experiments": [
       {
         "title": "Different pieces, same portion",
-        "instruction": "Show 1/2 on plate A and 2/4 on plate B. Predict whether they cover the same amount, then split every slice on one plate.",
-        "observe": "The pieces get smaller and more numerous, but the selected amount stays the same. Explain why doubling both numerator and denominator preserves the fraction."
+        "instruction": "Keep the whole area and selected area fixed. Show 1/2 on plate A, predict what changes when every piece is split in two, then compare with 2/4.",
+        "observe": "The selected piece count doubles while each piece becomes half as large; 1/2 and 2/4 cover the same area. Explain why changing both numerator and denominator by the same factor preserves the amount."
       },
       {
         "title": "Combine unlike pieces",
-        "instruction": "Select 2/3 on one plate and 3/4 on the other. Predict whether the total is below, equal to or above one whole, then compare the combined total.",
-        "observe": "Compare the total, 17/12, with one whole. Explain how 8/12 plus 9/12 represents the same portions using equal-sized twelfths."
+        "instruction": "Use equal-area wholes. Select 2/3 and 3/4, predict whether their sum fits in one whole, then combine the portions using equal twelfths.",
+        "observe": "The exact conversion is 8/12 + 9/12 = 17/12, or 1 whole and 5/12. Explain why the numerators add while the common denominator stays 12."
       }
     ],
     "misconception": "A larger denominator does not automatically mean more food. With the same whole and numerator, more equal parts make each selected part smaller.",
     "sources": [
       {
-        "title": "Illustrative Mathematics: Fraction equivalence and comparison",
-        "url": "https://tasks.illustrativemathematics.org/content-standards/3/NF/A/3"
+        "title": "Common Core State Standards: fraction equivalence, common wholes and visual models",
+        "url": "https://corestandards.org/wp-content/uploads/2023/09/ADA-Compliant-Math-Standards.pdf"
+      },
+      {
+        "title": "OpenStax Prealgebra 2e: Visualize Fractions",
+        "url": "https://openstax.org/books/prealgebra-2e/pages/4-1-visualize-fractions"
+      },
+      {
+        "title": "OpenStax Prealgebra 2e: Add and Subtract Fractions with Different Denominators",
+        "url": "https://openstax.org/books/prealgebra-2e/pages/4-5-add-and-subtract-fractions-with-different-denominators"
       }
     ],
     "duration_minutes": 12
@@ -45,7 +53,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "cdc66d3ed8fbe9b07a2631945a8dc0dbfca2eb6244dd9a2ea210bd5f7dd2d96a"
+      "sha256": "daa7ed548bd000267254462c2c6623fd0092ae4a6142d064782589ec83f32a42"
     },
     {
       "path": "assets/bread.png",

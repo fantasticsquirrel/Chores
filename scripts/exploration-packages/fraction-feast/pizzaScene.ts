@@ -69,6 +69,7 @@ export function buildPizzaScene(
     );
     group.add(base);
     const ceramic = material(p === 0 ? "#f4eddb" : "#d5e1db", 0.23);
+    disk(base, 1.34, 0.07, material("#5d4b37", 0.84), 0, 0, -0.035);
     disk(base, 1.62, 0.09, ceramic, 0, 0, 0.04);
     disk(
       base,
@@ -78,6 +79,14 @@ export function buildPizzaScene(
       0,
       0,
       0.1,
+    );
+    mesh(
+      base,
+      new THREE.TorusGeometry(1.565, 0.045, 12, 100),
+      material(p === 0 ? "#fff9e9" : "#e9f4ef", 0.16, 0.08),
+      0,
+      0,
+      0.105,
     );
     mesh(
       base,
@@ -95,6 +104,18 @@ export function buildPizzaScene(
       0,
       0.12,
     );
+    const glaze = material("#ffffff", 0.08, 0.06);
+    glaze.transparent = true;
+    glaze.opacity = 0.42;
+    const glazeArc = mesh(
+      base,
+      new THREE.TorusGeometry(1.43, 0.012, 6, 38, Math.PI * 0.62),
+      glaze,
+      0,
+      0,
+      0.135,
+    );
+    glazeArc.rotation.z = Math.PI * 0.72;
     for (let i = 0; i < plate.d; i++) {
       const span = (Math.PI * 2) / plate.d,
         start = Math.PI / 2 - (i + 1) * span;

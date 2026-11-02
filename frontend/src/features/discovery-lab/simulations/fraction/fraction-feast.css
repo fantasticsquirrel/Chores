@@ -1,0 +1,435 @@
+.fraction-exhibit {
+  --fraction-green: #1f463d;
+  --fraction-green-light: #dce5d8;
+  --fraction-paper: #f4f0e5;
+  --fraction-line: #b9c2ad;
+  overflow: hidden;
+}
+
+.fraction-heading {
+  padding: 27px 32px 24px;
+  background: var(--fraction-paper);
+  border-bottom: 1px solid #b8b29f;
+}
+
+.fraction-heading h2 {
+  margin: 0 0 7px;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.15;
+}
+
+.fraction-heading p,
+.fraction-explore-heading p {
+  margin: 0;
+  max-width: 720px;
+  color: #50645b;
+  font-size: 13px;
+}
+
+.fraction-exhibit .fraction-table {
+  height: 565px;
+  background: #cfa96e;
+}
+
+.fraction-exhibit .fraction-render {
+  inset: 0 0 80px;
+}
+
+.fraction-exhibit .fraction-equation {
+  top: 40%;
+}
+
+.fraction-exhibit .fraction-plate-captions {
+  bottom: 46px;
+}
+
+.fraction-plate-captions small {
+  max-width: 180px;
+  margin: 0 auto;
+}
+
+.fraction-investigations {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 26px 28px 30px;
+  background: #e8e5d8;
+}
+
+.fraction-trial {
+  min-width: 0;
+  margin: 0;
+  padding: 18px 17px 17px;
+  border: 1px solid #b8c3ae;
+  border-radius: 10px;
+  background: #f5f2e8;
+}
+
+.fraction-trial legend {
+  padding: 0 7px;
+  color: #263f38;
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.fraction-trial > p {
+  min-height: 48px;
+  margin: 2px 0 14px;
+  color: #52645d;
+  font-size: 12px;
+}
+
+.fraction-choices,
+.fraction-evidence-actions,
+.fraction-free-actions {
+  display: grid;
+  gap: 7px;
+}
+
+.fraction-choices {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fraction-choices button {
+  padding-inline: 8px;
+}
+
+.fraction-exhibit .fraction-compare {
+  width: 100%;
+  margin-top: 9px;
+  background: var(--fraction-green);
+  color: #fff8e8;
+}
+
+.fraction-feedback {
+  display: grid;
+  gap: 8px;
+  margin-top: 11px;
+  padding: 13px 13px 12px;
+  border-left: 4px solid #477b61;
+  background: #e8eddc;
+  color: #3f544b;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.fraction-feedback[data-result="revise"] {
+  border-left-color: #a36a37;
+}
+
+.fraction-feedback strong {
+  color: #263f37;
+}
+
+.fraction-evidence-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 2px;
+}
+
+.fraction-evidence-actions button {
+  min-height: 38px;
+  padding: 7px;
+  font-size: 10px;
+}
+
+.fraction-combined {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.3fr);
+  gap: 25px;
+  padding: 24px 30px;
+  background: #e5d7b8;
+  border-top: 1px solid #b7a983;
+}
+
+.fraction-combined-equation {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+}
+
+.fraction-combined-equation > span {
+  color: #5d6d60;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fraction-combined-equation strong {
+  font-family: Georgia, serif;
+  font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 400;
+}
+
+.fraction-combined-equation small {
+  color: #5b604e;
+}
+
+.fraction-exhibit .fraction-whole-bars {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fraction-exhibit .fraction-whole-track {
+  display: grid;
+  grid-template-columns: repeat(var(--fraction-columns, 12), minmax(0, 1fr));
+  height: 38px;
+  overflow: hidden;
+}
+
+.fraction-whole-track i {
+  position: static;
+  border: 0;
+  border-right: 1px solid #675b40;
+  background: #f4eddd;
+}
+
+.fraction-whole-track i:last-child {
+  border-right: 0;
+}
+
+.fraction-whole-track i[data-selected="true"] {
+  background: #bc8032;
+  box-shadow: inset 0 2px #deb970;
+}
+
+.fraction-readout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  padding: 19px 30px;
+  background: var(--fraction-green-light);
+  border-top: 1px solid var(--fraction-line);
+}
+
+.fraction-readout > div {
+  display: grid;
+  gap: 4px;
+}
+
+.fraction-readout span {
+  color: #5b6d63;
+  font-size: 10px;
+}
+
+.fraction-readout strong {
+  color: #263f37;
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+
+.fraction-explore {
+  padding: 24px 29px 27px;
+  background: #f5f2e8;
+  border-top: 1px solid #c5c3b4;
+}
+
+.fraction-explore-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.fraction-explore-heading h3 {
+  margin: 0 0 5px;
+  font-size: 20px;
+}
+
+.fraction-free-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 22px;
+  align-items: end;
+  margin-top: 21px;
+  padding-top: 20px;
+  border-top: 1px solid #cbc8b7;
+}
+
+.fraction-active-control label {
+  display: block;
+  margin-bottom: 8px;
+  color: #42584f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fraction-active-control select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid #7a9287;
+  border-radius: 6px;
+  background: #fffdf5;
+  color: #263f37;
+}
+
+.fraction-free-controls .dl-slider {
+  margin: 0;
+}
+
+.fraction-free-controls .dl-slider-heading,
+.fraction-free-controls .dl-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.fraction-free-controls input[type="range"] {
+  width: 100%;
+  min-height: 24px;
+  margin: 10px 0 3px;
+  accent-color: var(--fraction-green);
+}
+
+.fraction-free-actions {
+  grid-template-columns: 1fr;
+}
+
+.fraction-piece-toggles {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 9px;
+  padding-top: 17px;
+  border-top: 1px solid #cbc8b7;
+}
+
+.fraction-piece-toggles > span {
+  color: #42584f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fraction-piece-toggles > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.fraction-piece-toggles button {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 7px;
+}
+
+.fraction-piece-toggles button[aria-pressed="true"] {
+  border-color: var(--fraction-green);
+  background: var(--fraction-green);
+  color: #fff8e8;
+  box-shadow: inset 0 0 0 2px #fff8e84d;
+}
+
+.fraction-exhibit .tactile-model-note {
+  padding: 14px 29px 18px;
+  background: #e1e6d9;
+}
+
+@media (max-width: 760px) {
+  .fraction-heading {
+    padding: 22px 21px 20px;
+  }
+
+  .fraction-heading p {
+    font-size: 12px;
+  }
+
+  .fraction-exhibit .fraction-table {
+    height: 690px;
+  }
+
+  .fraction-exhibit .fraction-render {
+    inset: 0 0 72px;
+  }
+
+  .fraction-exhibit .fraction-equation {
+    top: 46%;
+    right: 18px;
+  }
+
+  .fraction-exhibit .fraction-plate-captions {
+    inset: 0;
+    display: block;
+    text-align: left;
+  }
+
+  .fraction-exhibit .fraction-plate-captions > div {
+    position: absolute;
+    left: 14px;
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 7px;
+    align-items: baseline;
+    max-width: 190px;
+    padding: 5px 8px 6px;
+    border: 1px solid #8b816b;
+    border-radius: 6px;
+    background: #f7f0dfeb;
+    box-shadow: 0 2px 6px #4e392f24;
+  }
+
+  .fraction-exhibit .fraction-plate-captions > div:first-child {
+    top: 12px;
+  }
+
+  .fraction-exhibit .fraction-plate-captions > div:last-child {
+    top: 310px;
+  }
+
+  .fraction-exhibit .fraction-plate-captions > div > span {
+    grid-column: 1 / -1;
+    color: #4f4838;
+  }
+
+  .fraction-exhibit .fraction-plate-captions strong {
+    font-size: 22px;
+  }
+
+  .fraction-exhibit .fraction-plate-captions small {
+    max-width: 118px;
+    color: #4f5544;
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .fraction-investigations {
+    grid-template-columns: 1fr;
+    padding: 23px 18px 26px;
+  }
+
+  .fraction-trial > p {
+    min-height: 0;
+  }
+
+  .fraction-choices {
+    grid-template-columns: 1fr;
+  }
+
+  .fraction-combined {
+    grid-template-columns: 1fr;
+    padding: 22px 20px;
+  }
+
+  .fraction-readout {
+    grid-template-columns: 1fr;
+    padding: 18px 21px;
+  }
+
+  .fraction-explore {
+    padding: 22px 20px 24px;
+  }
+
+  .fraction-explore-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .fraction-free-controls {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .fraction-piece-toggles button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

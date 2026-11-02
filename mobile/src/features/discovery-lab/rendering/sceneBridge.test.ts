@@ -163,6 +163,27 @@ describe("typed offline scene transport", () => {
       { ...states[4], water: -1 },
       { ...states[5], wallHeightMeters: 100 },
       { ...states[5], gate: "yes" },
+      {
+        ...states.find((state) => state.kind === "pizza")!,
+        plates: [
+          { n: -1, d: 2, slices: [] },
+          { n: 2, d: 4, slices: [0, 1] },
+        ],
+      },
+      {
+        ...states.find((state) => state.kind === "pizza")!,
+        plates: [
+          { n: 2, d: 2, slices: [0, 0] },
+          { n: 2, d: 4, slices: [0, 1] },
+        ],
+      },
+      {
+        ...states.find((state) => state.kind === "pizza")!,
+        plates: [
+          { n: 1, d: 25, slices: [0] },
+          { n: 2, d: 4, slices: [0, 1] },
+        ],
+      },
       { ...states.find((state) => state.kind === "pond")!, detritus: 101 },
       {
         ...states.find((state) => state.kind === "pond")!,

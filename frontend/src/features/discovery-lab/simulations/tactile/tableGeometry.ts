@@ -73,6 +73,14 @@ export function seeded(index: number) {
   return x - Math.floor(x);
 }
 function texture(draw: (ctx: CanvasRenderingContext2D) => void, size = 512) {
+  // Three.js scene parity tests run without a browser. Geometry and materials
+  // remain inspectable there; the browser replaces this placeholder with the
+  // procedural teaching texture below.
+  if (typeof document === "undefined") {
+    const map = new THREE.Texture();
+    map.colorSpace = THREE.SRGBColorSpace;
+    return map;
+  }
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext("2d")!;

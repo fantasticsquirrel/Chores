@@ -9,6 +9,17 @@ afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
+function unlockFractionExploration() {
+  fireEvent.click(screen.getByRole("button", { name: "The same amount" }));
+  fireEvent.click(screen.getByRole("button", { name: "Compare 1/2 with 2/4" }));
+  fireEvent.click(screen.getByRole("button", { name: "More than one whole" }));
+  fireEvent.click(screen.getByRole("button", { name: "Combine 2/3 and 3/4" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Show 1/2 before the split" }),
+  );
+}
+
 describe("tactile mathematical exhibits", () => {
   it("keeps weighted spinner badges readable above the sampled pointer", () => {
     const { container } = render(
@@ -53,12 +64,19 @@ describe("tactile mathematical exhibits", () => {
 
   it("selects individual equal slices and preserves selection when subdividing", () => {
     render(<FractionFeastSimulation />);
+    unlockFractionExploration();
     fireEvent.click(screen.getByRole("button", { name: "Plate A slice 2" }));
-    expect(screen.getByRole("status")).toHaveTextContent("2/2 > 2/4");
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("2/2 > 2/4");
     fireEvent.click(screen.getByRole("button", { name: "Split every slice" }));
-    expect(screen.getByRole("status")).toHaveTextContent("4/4 > 2/4");
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("4/4 > 2/4");
     fireEvent.click(screen.getByRole("button", { name: "Plate A slice 2" }));
-    expect(screen.getByRole("status")).toHaveTextContent("3/4 > 2/4");
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("3/4 > 2/4");
   });
   it("supports a prediction before testing equivalent fractions", () => {
     render(<FractionFeastSimulation />);
@@ -66,9 +84,13 @@ describe("tactile mathematical exhibits", () => {
     expect(
       screen.getByRole("button", { name: "The same amount" }),
     ).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(screen.getByRole("button", { name: "Test the split" }));
-    expect(screen.getByRole("status")).toHaveTextContent("2/4 = 2/4");
-    expect(screen.getByText(/The amount stayed the same/)).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare 1/2 with 2/4" }),
+    );
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("2/4 = 2/4");
+    expect(screen.getByText(/selected amount did not/)).toBeTruthy();
   });
   it("makes the transform demonstrable without changing shape measurements", () => {
     render(<PatternPalaceSimulation />);
@@ -118,11 +140,16 @@ describe("tactile mathematical exhibits", () => {
   });
   it("subdivides an empty plate without adding area", () => {
     render(<FractionFeastSimulation />);
+    unlockFractionExploration();
     fireEvent.change(screen.getByLabelText("Selected slices"), {
       target: { value: 0 },
     });
     fireEvent.click(screen.getByRole("button", { name: "Split every slice" }));
-    expect(screen.getByRole("status")).toHaveTextContent("0/4 < 2/4");
-    expect(screen.getByRole("status")).toHaveTextContent("simplest form: 0/1");
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("0/4 < 2/4");
+    expect(
+      screen.getByText("Selected plate in simplest form").parentElement,
+    ).toHaveTextContent("0/1");
   });
 });

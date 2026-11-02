@@ -32,7 +32,7 @@ describe("fractions, patterns, trade, pollination and chance", () => {
       render(<Component />);
       expect(screen.getAllByRole("img")[0]).toHaveAccessibleName();
       expect(screen.getByRole("status")).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Reset" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: /Reset/ })).toBeTruthy();
       expect(screen.queryByRole("button", { name: "Pause motion" })).toBeNull();
     },
   );
@@ -40,19 +40,45 @@ describe("fractions, patterns, trade, pollination and chance", () => {
   it("splits fractions without changing area, then combines unlike denominators", () => {
     render(<FractionFeastSimulation />);
     expect(screen.getByRole("status")).toHaveTextContent("1/2 = 2/4");
+    fireEvent.click(screen.getByRole("button", { name: "The same amount" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare 1/2 with 2/4" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "More than one whole" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Combine 2/3 and 3/4" }),
+    );
+    expect(
+      screen.getByText("Exact combined amount").parentElement,
+    ).toHaveTextContent("17/12 = 1 whole and 5/12");
+
+    change("Active plate", 0);
+    change("Equal parts in this whole", 2);
+    change("Selected slices", 1);
     fireEvent.click(screen.getByRole("button", { name: "Split every slice" }));
-    expect(screen.getByRole("status")).toHaveTextContent("2/4 = 2/4");
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("2/4 < 3/4");
     change("Equal parts in this whole", 3);
     change("Selected slices", 2);
-    fireEvent.click(screen.getByRole("button", { name: "Plate B" }));
+    change("Active plate", 1);
+    change("Equal parts in this whole", 4);
     change("Selected slices", 3);
     fireEvent.click(screen.getByRole("button", { name: "Combine slices" }));
-    expect(screen.getByRole("status")).toHaveTextContent("17/12 wholes");
     expect(
-      screen.getByRole("img", { name: "Combined area equals 17/12 wholes" }),
+      screen.getByText("Exact combined amount").parentElement,
+    ).toHaveTextContent("17/12 = 1 whole and 5/12");
+    expect(
+      screen.getByRole("img", {
+        name: /together 17\/12, or 1 whole and 5\/12/,
+      }),
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(screen.getByRole("status")).toHaveTextContent("1/2 = 2/4");
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(
+      screen.getByText("Plate comparison").parentElement,
+    ).toHaveTextContent("1/2 = 2/4");
   });
 
   it("shows a real gap and overlap rather than claiming pentagons tile", () => {

@@ -1,11 +1,17 @@
+import { addFractionParts, normalizeFraction } from "./fractions";
+
+export * from "./fractions";
+
 /** Deterministic teaching models. Distances, cargo prices and route timings are illustrative. */
 export function simplifyFraction(numerator: number, denominator: number) {
-  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-  const divisor = gcd(Math.abs(numerator), denominator);
-  return { numerator: numerator / divisor, denominator: denominator / divisor };
+  const result = normalizeFraction(numerator, denominator);
+  if (!result) throw new RangeError("Invalid bounded fraction.");
+  return result;
 }
 export function addFractions(a: number, b: number, c: number, d: number) {
-  return simplifyFraction(a * d + c * b, b * d);
+  const result = addFractionParts(a, b, c, d);
+  if (!result) throw new RangeError("Invalid bounded fraction addition.");
+  return result.sum;
 }
 export function vertexFit(sides: number, copies: number) {
   const angle = ((sides - 2) * 180) / sides;

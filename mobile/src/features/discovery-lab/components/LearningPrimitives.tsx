@@ -8,18 +8,16 @@ import { colors } from "../../../styles/colors";
 export function LearningFrame({
   children,
   onReset,
+  resetLabel = "Reset experiment",
 }: {
   children: ReactNode;
   onReset: () => void;
+  resetLabel?: string;
 }) {
   return (
     <View style={{ gap: 16 }}>
       {children}
-      <ActionButton
-        label="Reset experiment"
-        variant="secondary"
-        onPress={onReset}
-      />
+      <ActionButton label={resetLabel} variant="secondary" onPress={onReset} />
     </View>
   );
 }

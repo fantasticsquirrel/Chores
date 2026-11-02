@@ -96,6 +96,16 @@ import {
 } from "../food-web-rescue/model";
 import { buildPond as buildWebPond } from "../../../packages/discovery-scenes/src/landscape/pond";
 import { buildPond as buildPackagePond } from "../food-web-rescue/pond";
+import {
+  addFractionParts as addSharedFractionParts,
+  normalizeFraction as normalizeSharedFraction,
+} from "../../../packages/family-api/src/discovery-models/fractions";
+import {
+  addFractionParts as addPackageFractionParts,
+  normalizeFraction as normalizePackageFraction,
+} from "../fraction-feast/model";
+import { buildPizzaScene as buildWebPizzaScene } from "../../../frontend/src/features/discovery-lab/simulations/tactile/pizzaScene";
+import { buildPizzaScene as buildPackagePizzaScene } from "../fraction-feast/pizzaScene";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -871,16 +881,104 @@ describe("ten independently authored rich explorations", () => {
     expect(send("advanceWeek").description).toContain("model week 9");
     expect(send(undefined, undefined, "reset").controls).toHaveLength(0);
   }, 30000);
+  it("fraction package mirrors shared exact bounded arithmetic", () => {
+    for (const [numerator, denominator] of [
+      [0, 1],
+      [2, -4],
+      [-2, -4],
+      [96, 96],
+      [97, 2],
+      [1, 0],
+      [Number.NaN, 2],
+      [1, Number.POSITIVE_INFINITY],
+    ])
+      expect(normalizePackageFraction(numerator, denominator)).toEqual(
+        normalizeSharedFraction(numerator, denominator),
+      );
+    for (const values of [
+      [2, 3, 3, 4],
+      [1, 6, 1, 3],
+      [0, 2, 0, 12],
+      [1, 0, 1, 2],
+    ] as const)
+      expect(addPackageFractionParts(...values)).toEqual(
+        addSharedFractionParts(...values),
+      );
+  });
+  it("fraction package and web preserve identical dimensional pizza geometry", () => {
+    const plates = [
+      { n: 2, d: 3, slices: [0, 1] },
+      { n: 3, d: 4, slices: [0, 1, 2] },
+    ];
+    const web = buildWebPizzaScene(plates, 0, false);
+    const packaged = buildPackagePizzaScene(plates, 0, false);
+    const signature = (group: typeof web) => {
+      const objects: unknown[] = [];
+      group.traverse((object) => {
+        const mesh = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: {
+            color?: { getHexString(): string };
+            roughness?: number;
+            metalness?: number;
+          };
+        };
+        objects.push({
+          type: object.type,
+          position: object.position.toArray(),
+          quaternion: object.quaternion.toArray(),
+          scale: object.scale.toArray(),
+          slice: object.userData.slice,
+          plate: object.userData.plate,
+          geometry: mesh.geometry?.type,
+          vertices: mesh.geometry?.attributes?.position?.count,
+          color: mesh.material?.color?.getHexString(),
+          roughness: mesh.material?.roughness,
+          metalness: mesh.material?.metalness,
+        });
+      });
+      return objects;
+    };
+    expect(signature(packaged)).toEqual(signature(web));
+    web.clear();
+    packaged.clear();
+  });
   it("fractions preserve sparse slices under splitting and show sums beyond one", () => {
     const send = worker("fraction-feast");
-    send();
+    const initial = send();
+    expect(initial.controls).toHaveLength(0);
+    expect(
+      initial.buttons.find((button: any) => button.id === "compareEquivalent")
+        .disabled,
+    ).toBe(true);
+    send("equivalentSame");
+    let output = send("compareEquivalent");
+    expect(output.sections[0].text).toContain("1/2 = 2/4");
+    expect(output.sections[0].text).toContain(
+      "Changed: piece count · piece size",
+    );
+    send("additionAbove");
+    output = send("compareAddition");
+    expect(output.sections[1].text).toContain("2/3 = 8/12");
+    expect(output.sections[1].text).toContain("17/12 = 1 whole and 5/12");
+    expect(output.controls).not.toHaveLength(0);
+
+    output = send("equivalentMore");
+    expect(output.controls).toHaveLength(0);
+    expect(output.sections[0].text).not.toContain("1/2 = 2/4");
+    send("equivalentSame");
+    output = send("compareEquivalent");
+    expect(output.controls).not.toHaveLength(0);
+
+    send("showEquivalentBefore");
     send("slice", 2);
     send("toggleSlice");
     expect(send("split").description).toContain("Plate A 4/4");
-    send("trialSum");
-    send("predictDifferent");
-    send("baseline");
-    const o = send("compare");
+    send("showAdditionParts");
+    const o = send("combine");
     expect(o.description).toContain("Sum 17/12");
     expect(o.vector).toBeTruthy();
   }, 30000);
@@ -935,6 +1033,10 @@ describe("ten independently authored rich explorations", () => {
   it("fractions: every pair of denominators with both full plates remains supported", () => {
     const send = worker("fraction-feast");
     send();
+    send("equivalentSame");
+    send("compareEquivalent");
+    send("additionAbove");
+    send("compareAddition");
     const denominators = [2, 3, 4, 6, 8, 12, 16, 24];
     for (let a = 0; a < denominators.length; a++) {
       send("active", 0);
@@ -950,19 +1052,25 @@ describe("ten independently authored rich explorations", () => {
       }
     }
   }, 120000);
-  it("fractions: stale slice cannot exceed the new whole and comparison needs a baseline", () => {
+  it("fractions: stale slice is clamped and changed predictions relock exploration", () => {
     const send = worker("fraction-feast");
     send();
+    send("equivalentSame");
+    send("compareEquivalent");
+    send("additionAbove");
+    send("compareAddition");
     send("denominator", 7);
     send("slice", 24);
     send("denominator", 0);
     send("numerator", 2);
     expect(send("toggleSlice").description).toContain("Plate A 1/2");
-    send("trialSum");
-    send("predictDifferent");
-    expect(send("compare").vector).toBeUndefined();
-    send("baseline");
-    expect(send("compare").description).toContain("Sum 17/12");
+    const stale = send("equivalentMore");
+    expect(stale.controls).toHaveLength(0);
+    expect(stale.vector).toBeUndefined();
+    expect(send("combine").vector).toBeUndefined();
+    send("equivalentSame");
+    const restored = send("compareEquivalent");
+    expect(restored.controls).not.toHaveLength(0);
   });
   it("chance: comparison without baseline cannot manufacture a misleading sample", () => {
     const send = worker("chance-carnival");

@@ -194,13 +194,18 @@ describe("native predictions and evidence", () => {
 
   it("splits every slice without changing the fraction and adds unlike denominators", () => {
     const view = render(<NativeExploration id="fraction-feast" />);
-    fireEvent.press(view.getByText("Split every first-pizza slice in half"));
-    expect(view.getByText(/First share: 4\/8 = 1\/2/)).toBeTruthy();
+    fireEvent.press(view.getByText("The same amount"));
+    fireEvent.press(view.getByText("Compare 1/2 with 2/4"));
+    fireEvent.press(view.getByText("More than one whole"));
+    fireEvent.press(view.getByText("Combine 2/3 and 3/4"));
+    fireEvent.press(view.getByText("Split every active-plate slice in half"));
     expect(
-      view.getByText(/The combined amount is exactly one whole pizza/),
+      view.getByText(/Plate A: 4\/6 = 2\/3.*Exact total: 17\/12/),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Decrease First selected slices"));
-    expect(view.getByText(/3\/8 \+ 4\/8 = 7\/8 pizzas/)).toBeTruthy();
+    fireEvent.press(view.getByText("Decrease Selected slices"));
+    expect(
+      view.getByText(/Plate A: 3\/6 = 1\/2.*Exact total: 15\/12/),
+    ).toBeTruthy();
   });
 
   it("shows pentagon overlap and records distinct rotation and reflection", () => {

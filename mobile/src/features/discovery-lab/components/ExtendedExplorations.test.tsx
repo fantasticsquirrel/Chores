@@ -8,7 +8,7 @@ const controls: [string, string][] = [
   ["river-sculptor", "Runoff and soil export both decrease"],
   ["circuit-city", "All off in series; houses A and C on in parallel"],
   ["food-web-rescue", "Zooplankton rises and algae falls"],
-  ["fraction-feast", "Increase Equal slices"],
+  ["fraction-feast", "The same amount"],
   ["pattern-palace", "Rotate a quarter turn"],
   ["caravan-crossroads", "Wet season"],
   ["pollinator-express", "Visit Gold 1"],
@@ -23,7 +23,11 @@ describe("native learning explorations", () => {
       expect(view.queryByRole("alert")).toBeNull();
       expect(view.getByText(control)).toBeTruthy();
       fireEvent.press(view.getByText(control));
-      fireEvent.press(view.getByText("Reset experiment"));
+      fireEvent.press(
+        view.getByText(
+          id === "fraction-feast" ? "Reset lesson" : "Reset experiment",
+        ),
+      );
       expect(view.getByText(control)).toBeTruthy();
     },
   );
@@ -33,7 +37,7 @@ describe("native learning explorations", () => {
     fireEvent.press(view.getByText("Half as many cycles per second"));
     view.rerender(<NativeExploration id="fraction-feast" />);
     expect(view.queryByText("Half as many cycles per second")).toBeNull();
-    expect(view.getByText("Increase Equal slices")).toBeTruthy();
+    expect(view.getByText("The same amount")).toBeTruthy();
     view.rerender(<NativeExploration id="future-topic" />);
     expect(view.getByRole("alert")).toBeTruthy();
   });
