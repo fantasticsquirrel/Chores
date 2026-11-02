@@ -1,31 +1,20 @@
-import type {
-  bridge,
-  BridgeMaterial,
-} from "@family-manager/family-api/discovery-models/physical-world";
+import type { bridgeActivity } from "@family-manager/family-api/discovery-models/bridge";
 
 export function BridgeDrawing({
-  material,
   braces,
   load,
   position,
   result,
 }: {
-  material: BridgeMaterial;
-  braces: boolean[];
+  braces: readonly boolean[];
   load: number;
   position: number;
-  result: ReturnType<typeof bridge>;
+  result: ReturnType<typeof bridgeActivity>;
 }) {
   const loadX = 100 + position * 5.2;
-  const colors = result.utilization.map((u) =>
-    u > 1 ? "#fc9b8a" : u > 0.7 ? "#ffdd91" : "#8ee0c4",
-  );
-  const materialColor = material === "steel" ? "#aac3d7" : "#c89b62";
+  const colors = braces.map((present) => (present ? "#9dd8c5" : "#8fb1b6"));
   return (
     <>
-      <text x="30" y="34" className="dl-world-caption">
-        BRIDGE / FOLLOW THE LOAD
-      </text>
       <path
         d="M0 123L50 88L119 142L175 115L270 176L400 111L506 160L607 96L720 139V265H0Z"
         fill="#527161"
@@ -64,38 +53,28 @@ export function BridgeDrawing({
           <path d={`M${x - 13} 199L${x} 184L${x + 13} 199Z`} fill="#dfd7b4" />
         </g>
       ))}
-      {braces.map((on, i) => (
-        <g key={i}>
+      {braces.map((on, index) => (
+        <g key={index}>
           <path
-            d={`M${100 + i * 130} 186V119H${230 + i * 130}V186`}
-            stroke={materialColor}
+            d={`M${100 + index * 130} 186V119H${230 + index * 130}V186`}
+            stroke="#c89b62"
             strokeWidth="7"
             fill="none"
           />
           {on && (
             <path
-              d={`M${100 + i * 130} 186L${230 + i * 130} 119`}
-              stroke={materialColor}
+              d={`M${100 + index * 130} 186L${230 + index * 130} 119`}
+              stroke="#c89b62"
               strokeWidth="8"
             />
           )}
           <path
-            d={`M${100 + i * 130} 190H${230 + i * 130}`}
-            stroke={colors[i]}
+            d={`M${100 + index * 130} 190H${230 + index * 130}`}
+            stroke={colors[index]}
             strokeWidth="13"
           />
-          {[100 + i * 130, 230 + i * 130].map((x) => (
-            <circle
-              key={x}
-              cx={x}
-              cy="119"
-              r="5"
-              fill="#e8e7d0"
-              stroke="#627687"
-            />
-          ))}
-          <text x={165 + i * 130} y="218" textAnchor="middle">
-            {i + 1} · {Math.round(result.utilization[i] * 100)}%
+          <text x={165 + index * 130} y="218" textAnchor="middle">
+            {index + 1} · {result.braceReferenceUseIndex[index].toFixed(2)}×
           </text>
         </g>
       ))}
@@ -117,8 +96,8 @@ export function BridgeDrawing({
         </text>
       </g>
       {[
-        { x: 100, force: result.leftReaction },
-        { x: 620, force: result.rightReaction },
+        { x: 100, force: result.leftReactionKilonewtons },
+        { x: 620, force: result.rightReactionKilonewtons },
       ].map(({ x, force }) => (
         <g key={x}>
           <path
@@ -142,19 +121,14 @@ export function BridgeDrawing({
         stroke="#466663"
       />
       <text x="45" y="358" className="dl-world-caption">
-        BENDING MOMENT
+        EQUIVALENT BEAM
       </text>
-      <path
-        d={`M230 354L${230 + position * 4.2} ${354 + Math.min(30, result.maxMoment * 0.4)}L650 354Z`}
-        fill="#d3c58a"
-        opacity=".6"
-      />
       <path d="M230 354H650" stroke="#749b9c" />
       <text x="45" y="383" className="dl-svg-small">
-        Peak {result.maxMoment.toFixed(1)} kN·m
+        Peak {result.peakBendingMomentKilonewtonMeters.toFixed(1)} kN·m
       </text>
       <text x="440" y="391" className="dl-svg-small" textAnchor="middle">
-        10 m span · strongest bending under the load
+        Deflection at load {result.deflectionAtLoadMillimeters.toFixed(2)} mm
       </text>
     </>
   );

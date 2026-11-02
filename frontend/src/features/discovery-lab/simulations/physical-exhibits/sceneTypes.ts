@@ -12,6 +12,8 @@ export type BridgeSceneState = {
   utilization: number[];
   leftReaction: number;
   rightReaction: number;
+  progress: number;
+  deflectionMillimeters: number;
 };
 export type SoundSceneState = {
   kind: "sound";

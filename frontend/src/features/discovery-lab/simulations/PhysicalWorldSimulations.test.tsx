@@ -51,14 +51,32 @@ describe("physical world exploration controls", () => {
   });
   it("adds and removes bracing with keyboard-accessible buttons", () => {
     render(<BridgeBuilderSimulation />);
-    const before = screen.getByLabelText("Build cost").textContent;
+    fireEvent.click(
+      screen.getByRole("button", { name: "Left support carries more" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare load positions" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Moment and deflection both double",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare point loads" }),
+    );
+    const before = screen
+      .getByRole("button", { name: "Brace section 2" })
+      .textContent;
     fireEvent.click(screen.getByRole("button", { name: "Brace section 2" }));
     expect(
       screen.getByRole("button", { name: "Brace section 2", pressed: true }),
     ).toBeTruthy();
-    expect(screen.getByLabelText("Build cost").textContent).not.toBe(before);
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(screen.getByLabelText("Build cost").textContent).toBe(before);
+    expect(
+      screen.getByRole("button", { name: "Brace section 2" }).textContent,
+    ).not.toBe(before);
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(screen.queryByRole("button", { name: "Brace section 2" })).toBeNull();
   });
   it("erodes finite soil only when a storm is run and resets it", () => {
     render(<RiverSculptorSimulation />);

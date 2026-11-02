@@ -8,7 +8,6 @@
     "title": "Bridge Builder",
     "subject": "Engineering",
     "grade_bands": [
-      "3-5",
       "6-8"
     ],
     "tags": [
@@ -17,40 +16,48 @@
       "structures",
       "design"
     ],
-    "summary": "Add braces, move a load and compare how a bridge carries weight to its supports.",
-    "question": "Why can the same load be harder to support in the middle of a bridge?",
-    "explanation": "A bridge transfers a load to its supports. The load can bend the span; diagonal braces form triangles that help a frame resist changing shape. Materials and reinforcement affect what a structure can carry and how much it costs. This model calculates a simple beam’s bending and uses invented brace strengths and costs for comparison. Its capacity-use display is not a real bridge safety rating, and it does not calculate every force in a truss.",
+    "summary": "Move one static point load and compare support reactions, bending moment and modeled beam deflection.",
+    "question": "How do load position and load size change the forces and bending of a simply supported beam?",
+    "explanation": "Static equilibrium requires the upward support reactions to equal the downward point load and their torques to balance. Moving the load changes how the two supports share it. This activity also calculates peak bending moment and small deflection for a 10 m equivalent beam with a fixed flexural rigidity EI. The timber truss is explanatory artwork, not the structure being solved. Brace buttons change only an invented comparison index; they do not calculate truss forces, member capacity or a safe load.",
     "experiments": [
       {
-        "title": "Move the load",
-        "instruction": "Keep material, load size and braces fixed. Predict whether the middle or near an end will bend the span more, then move the load across.",
-        "observe": "Compare the capacity-use readings and force on each support. Explain why moving weight changes how the load is carried."
+        "title": "Move the same load",
+        "instruction": "Keep the 10 m span, 12 kN point load, 100 MN·m² flexural rigidity and brace index fixed. Predict which support carries more when the load moves from the center to 20% of the span, then compare both trials.",
+        "observe": "At the center, both reactions are 6.0 kN. At 20%, the left reaction is 9.6 kN and the right is 2.4 kN; peak moment and deflection at the load are also smaller. Explain how force and torque balance support this result."
       },
       {
-        "title": "Place a brace where it helps",
-        "instruction": "Keep the load in the middle. Predict which brace will reduce the highest capacity-use reading, then add braces one at a time.",
-        "observe": "Compare each section’s capacity use and the material cost. Explain which brace helped at this load position, then test whether it still helps when the load moves."
+        "title": "Double the point load",
+        "instruction": "Keep the load at midspan, the 10 m span, 100 MN·m² flexural rigidity and brace index fixed. Predict what happens to peak moment and deflection when the point load changes from 8 to 16 kN, then compare.",
+        "observe": "Peak moment changes from 20.0 to 40.0 kN·m and deflection at the load changes from 1.67 to 3.33 mm. Explain why both double in this linear beam model and why that does not identify a safe load."
       }
     ],
-    "misconception": "A triangular shape is not a guarantee of safety. Connections, materials, loads and many other conditions matter in a real bridge.",
+    "misconception": "A triangular frame or a low teaching index does not prove that a bridge is safe. Real design also checks member forces, connections, shear, buckling, fatigue, impact, wind, material limits, safety factors and other loads.",
     "sources": [
       {
-        "title": "Science Buddies: How triangular trusses resist changing shape",
-        "url": "https://www.sciencebuddies.org/stem-activities/popsicle-stick-trusses-what-shape-is-strongest"
+        "title": "OpenStax University Physics: Conditions for static equilibrium",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/12-1-conditions-for-static-equilibrium"
       },
       {
-        "title": "Federal Highway Administration: Bridge force and stress analysis",
+        "title": "Federal Highway Administration: Truck loads, bending, shear and fatigue",
+        "url": "https://www.fhwa.dot.gov/policy/otps/truck/wusr/chap05.cfm"
+      },
+      {
+        "title": "Virginia Tech Engineering Mechanics OER: Simply supported beam deflection tables",
+        "url": "https://eng.libretexts.org/Bookshelves/Mechanical_Engineering/Strength_of_Materials/16:_Appendices/16.02:_Slope_and_Deflection_Tables"
+      },
+      {
+        "title": "Federal Highway Administration: Timber truss and bracing analysis limits",
         "url": "https://www.fhwa.dot.gov/publications/research/infrastructure/structures/04098/12.cfm"
       }
     ],
-    "duration_minutes": 15
+    "duration_minutes": 12
   },
   "entry": "worker.js",
   "assets": [
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "bfdaf254931834c222219e86bcdd4e522363b906d24ed0f0136b7569e335f3b2"
+      "sha256": "dc5c31c39b9486699006b9fb8d7c30a15aa8e22cfeb44536357a3534fd0f7867"
     },
     {
       "path": "THREE-LICENSE.txt",

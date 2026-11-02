@@ -23,6 +23,8 @@ export type OfflineSceneState =
       utilization: number[];
       leftReaction: number;
       rightReaction: number;
+      progress: number;
+      deflectionMillimeters: number;
     }
   | {
       kind: "sound";

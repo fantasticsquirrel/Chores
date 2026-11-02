@@ -18,6 +18,18 @@ import {
 } from "../sound-playground/model";
 import { createSoundScene as createWebSoundScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/soundScene";
 import { createSoundScene as createPackageSoundScene } from "../sound-playground/soundScene";
+import {
+  BRIDGE_DEFAULT_INPUTS as SHARED_BRIDGE_DEFAULTS,
+  bridgeActivity as sharedBridgeActivity,
+  normalizeBridgeInputs as normalizeSharedBridge,
+} from "../../../packages/family-api/src/discovery-models/bridge";
+import {
+  BRIDGE_DEFAULT_INPUTS as PACKAGE_BRIDGE_DEFAULTS,
+  bridgeActivity as packageBridgeActivity,
+  normalizeBridgeInputs as normalizePackageBridge,
+} from "../bridge-builder/model";
+import { createBridgeScene as createWebBridgeScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/bridgeScene";
+import { createBridgeScene as createPackageBridgeScene } from "../bridge-builder/bridgeScene";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -170,6 +182,7 @@ describe("ten independently authored rich explorations", () => {
     );
     expect(amplitude.audio[0].gain).toBeLessThanOrEqual(0.018);
     expect(send("play").animate).toBe(true);
+    expect(send("phase", 90).animate).toBe(false);
     expect(
       send(undefined, undefined, "step", { dt: 0.05 }).controls.find(
         (c: any) => c.id === "phase",
@@ -236,6 +249,146 @@ describe("ten independently authored rich explorations", () => {
     };
     expect(signature(packaged)).toEqual(signature(web));
     const next = { ...state, length: 120, amplitude: 6, progress: 0.63 };
+    web.update(next);
+    packaged.update(next);
+    expect(signature(packaged)).toEqual(signature(web));
+    web.dispose();
+    packaged.dispose();
+  });
+  it("bridge package gates controlled evidence and labels the brace index honestly", () => {
+    const send = worker("bridge-builder");
+    const initial = send();
+    expect(initial.controls).toHaveLength(0);
+    expect(
+      initial.buttons.find((button: any) => button.id === "comparePosition")
+        .disabled,
+    ).toBe(true);
+    send("positionLeft");
+    let compared = send("comparePosition");
+    expect(compared.sections[0].text).toContain("matches your prediction");
+    expect(compared.sections[0].text).toContain(
+      "Center: left 6.0 kN · right 6.0 kN · peak moment 30.0 kN·m · deflection at load 2.50 mm",
+    );
+    expect(compared.sections[0].text).toContain("Changed: load position");
+    send("loadBothDouble");
+    compared = send("compareLoad");
+    expect(compared.sections[1].text).toContain("matches your prediction");
+    expect(compared.sections[1].text).toContain(
+      "8 kN: 20.0 kN·m and 1.67 mm · 16 kN: 40.0 kN·m and 3.33 mm",
+    );
+    expect(compared.controls.map((control: any) => control.id)).toEqual([
+      "position",
+      "load",
+      "rigidity",
+      "brace0",
+      "brace1",
+      "brace2",
+      "brace3",
+      "phase",
+    ]);
+    const left = compared.description.match(/Left reaction ([\d.]+) kN/)?.[1];
+    const moment = compared.description.match(/peak moment ([\d.]+) kN·m/)?.[1];
+    const braced = send("brace1", 1);
+    expect(braced.description).toContain(`Left reaction ${left} kN`);
+    expect(braced.description).toContain(`peak moment ${moment} kN·m`);
+    expect(braced.footnote).toContain(
+      "invented comparison index, not a capacity or safety rating",
+    );
+    expect(send("play").animate).toBe(true);
+    expect(
+      send(undefined, undefined, "reset").buttons.find(
+        (button: any) => button.id === "comparePosition",
+      ).disabled,
+    ).toBe(true);
+  });
+
+  it("bridge package model exactly mirrors shared boundaries and outputs", () => {
+    expect(PACKAGE_BRIDGE_DEFAULTS).toEqual(SHARED_BRIDGE_DEFAULTS);
+    for (const inputs of [
+      SHARED_BRIDGE_DEFAULTS,
+      {
+        pointLoadKilonewtons: 30,
+        loadPositionPercent: 5,
+        flexuralRigidityMeganewtonMetersSquared: 250,
+        braces: [true, false, true, false],
+      },
+      {
+        pointLoadKilonewtons: Number.NaN,
+        loadPositionPercent: Infinity,
+        flexuralRigidityMeganewtonMetersSquared: -10,
+        braces: [true],
+      },
+    ]) {
+      expect(normalizePackageBridge(inputs)).toEqual(
+        normalizeSharedBridge(inputs),
+      );
+      expect(packageBridgeActivity(inputs)).toEqual(
+        sharedBridgeActivity(inputs),
+      );
+    }
+  });
+  it("bridge package and web preserve the same dimensional scene geometry", () => {
+    const activity = sharedBridgeActivity(SHARED_BRIDGE_DEFAULTS);
+    const state = {
+      kind: "bridge" as const,
+      material: "timber" as const,
+      braces: activity.inputs.braces,
+      load: activity.inputs.pointLoadKilonewtons,
+      position: activity.inputs.loadPositionPercent,
+      utilization: activity.braceReferenceUseIndex,
+      leftReaction: activity.leftReactionKilonewtons,
+      rightReaction: activity.rightReactionKilonewtons,
+      progress: 0.25,
+      deflectionMillimeters: activity.deflectionAtLoadMillimeters,
+    };
+    const web = createWebBridgeScene(state);
+    const packaged = createPackageBridgeScene(state);
+    const signature = (scene: typeof web) => {
+      const objects: unknown[] = [];
+      scene.group.traverse((object) => {
+        const mesh = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: {
+            color?: { getHexString(): string };
+            emissive?: { getHexString(): string };
+          };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+          scale: object.scale.toArray(),
+          geometry: mesh.geometry?.type,
+          vertices: mesh.geometry?.attributes?.position?.count,
+          color: mesh.material?.color?.getHexString(),
+          emissive: mesh.material?.emissive?.getHexString(),
+          visible: object.visible,
+        });
+      });
+      return { objects, labels: scene.labels?.(), view: scene.view };
+    };
+    expect(signature(packaged)).toEqual(signature(web));
+    const nextActivity = sharedBridgeActivity({
+      pointLoadKilonewtons: 24,
+      loadPositionPercent: 25,
+      flexuralRigidityMeganewtonMetersSquared: 150,
+      braces: [true, false, true, false],
+    });
+    const next = {
+      ...state,
+      braces: nextActivity.inputs.braces,
+      load: nextActivity.inputs.pointLoadKilonewtons,
+      position: nextActivity.inputs.loadPositionPercent,
+      utilization: nextActivity.braceReferenceUseIndex,
+      leftReaction: nextActivity.leftReactionKilonewtons,
+      rightReaction: nextActivity.rightReactionKilonewtons,
+      progress: 0.63,
+      deflectionMillimeters: nextActivity.deflectionAtLoadMillimeters,
+    };
     web.update(next);
     packaged.update(next);
     expect(signature(packaged)).toEqual(signature(web));

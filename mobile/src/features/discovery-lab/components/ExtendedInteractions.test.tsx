@@ -58,20 +58,35 @@ describe("native predictions and evidence", () => {
     expect(view.getByText(/Fundamental 202.0 Hz/)).toBeTruthy();
   });
 
-  it("changes bridge stress and spending with reinforcement", () => {
+  it("gates both bridge comparisons and keeps brace indices separate from beam results", () => {
     const view = render(<NativeExploration id="bridge-builder" />);
+    expect(view.getByText("Compare load positions")).toBeDisabled();
+    expect(view.getByText("Compare point loads")).toBeDisabled();
+    fireEvent.press(view.getByText("Left support carries more"));
+    fireEvent.press(view.getByText("Compare load positions"));
     expect(
-      view.getByText(/Highest stress-to-capacity ratio: 3.13/),
+      view.getByText(
+        /matches your prediction.*Center: left 6.0 kN.*20%: left 9.6 kN.*Changed: load position.*Held: 12 kN point load/,
+      ),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Add zone 2 reinforcement"));
-    fireEvent.press(view.getByText("Add zone 3 reinforcement"));
+    fireEvent.press(view.getByText("Moment and deflection both double"));
+    fireEvent.press(view.getByText("Compare point loads"));
     expect(
-      view.getByText(/Highest stress-to-capacity ratio: 1.56/),
+      view.getByText(
+        /matches your prediction.*8 kN: 20.0 kN·m and 1.67 mm.*16 kN: 40.0 kN·m and 3.33 mm/,
+      ),
     ).toBeTruthy();
-    expect(view.getByText(/Materials cost 150 units/)).toBeTruthy();
-    fireEvent.press(view.getByText("Decrease Vehicle load"));
+    const beamSummary = view.getByText(
+      /Left reaction 8.0 kN.*right reaction 8.0 kN.*peak moment 40.0 kN·m.*deflection at load 3.33 mm/,
+    ).props.children;
+    fireEvent.press(view.getByText("Add section 2 brace index modifier"));
     expect(
-      view.getByText(/All zones are within their model capacity/),
+      view.getByText(
+        /Left reaction 8.0 kN.*right reaction 8.0 kN.*peak moment 40.0 kN·m.*deflection at load 3.33 mm/,
+      ).props.children,
+    ).toEqual(beamSummary);
+    expect(
+      view.getByText(/invented comparison index.*not a capacity/i),
     ).toBeTruthy();
   });
 

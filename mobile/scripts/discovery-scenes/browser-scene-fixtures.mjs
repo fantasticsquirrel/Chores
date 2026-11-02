@@ -101,6 +101,8 @@ cases.push(
         utilization: [0.2, 0.3, 0.3, 0.2],
         leftReaction: 15,
         rightReaction: 15,
+        progress: 0,
+        deflectionMillimeters: 6.25,
       },
       changed: {
         kind: "bridge",
@@ -111,6 +113,8 @@ cases.push(
         utilization: [1.4, 0.4, 0.8, 0.2],
         leftReaction: 64,
         rightReaction: 16,
+        progress: 0.5,
+        deflectionMillimeters: 8,
       },
     },
     {

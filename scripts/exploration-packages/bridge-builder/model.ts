@@ -1,160 +1,216 @@
-const clamp = (value: number, min = 0, max = 100) =>
-  Math.min(max, Math.max(min, value));
-
-/** Ideal string fundamental; fixed linear density of 0.001 kg/m. */
-export function stringWave(
-  lengthCm: number,
-  tensionN: number,
-  amplitudeMm: number,
-) {
-  const length = Math.max(0.01, lengthCm / 100);
-  const frequency = Math.sqrt(Math.max(0, tensionN) / 0.001) / (2 * length);
-  return {
-    frequency,
-    wavelength: frequency > 0 ? 343 / frequency : 0,
-    // Energy comparison is at fixed frequency, string length, and tension.
-    relativeEnergy: Math.max(0, amplitudeMm) ** 2,
-  };
-}
-
-export type CircuitMode = "series" | "parallel";
-/** Ideal battery, wires and switches; each house is a fixed 12-ohm resistor. */
-export function circuit(
-  mode: CircuitMode,
-  voltage: number,
-  switches: readonly boolean[],
-) {
-  const supply = Math.max(0, voltage);
-  const closed = switches.every(Boolean) && switches.length > 0;
-  const seriesCurrent = closed ? supply / (12 * switches.length) : 0;
-  const houseCurrent = switches.map((on) =>
-    mode === "series" ? seriesCurrent : on ? supply / 12 : 0,
-  );
-  const houseVoltage = houseCurrent.map((current) => current * 12);
-  return {
-    totalCurrent:
-      mode === "series"
-        ? seriesCurrent
-        : houseCurrent.reduce((a, b) => a + b, 0),
-    houseCurrent,
-    houseVoltage,
-    housePower: houseCurrent.map((current) => current ** 2 * 12),
-  };
-}
+export type BridgeInputs = {
+  pointLoadKilonewtons: number;
+  loadPositionPercent: number;
+  flexuralRigidityMeganewtonMetersSquared: number;
+  braces: readonly boolean[];
+};
 
 export type BridgeMaterial = "timber" | "steel";
-/** Static simply-supported beam moments; capacities/bracing and costs are illustrative. */
+export type CircuitMode = "series" | "parallel";
+
+export const BRIDGE_SPAN_METERS = 10;
+export const BRIDGE_BRACE_REFERENCE_MOMENT_KILONEWTON_METERS = 16;
+export const BRIDGE_BRACE_REFERENCE_FACTOR = 2.4;
+
+export const BRIDGE_DEFAULT_INPUTS = {
+  pointLoadKilonewtons: 12,
+  loadPositionPercent: 50,
+  flexuralRigidityMeganewtonMetersSquared: 100,
+  braces: [false, false, false, false],
+} as const satisfies BridgeInputs;
+
+export const BRIDGE_POSITION_COMPARISON = [
+  BRIDGE_DEFAULT_INPUTS,
+  { ...BRIDGE_DEFAULT_INPUTS, loadPositionPercent: 20 },
+] as const satisfies readonly BridgeInputs[];
+
+export const BRIDGE_LOAD_COMPARISON = [
+  { ...BRIDGE_DEFAULT_INPUTS, pointLoadKilonewtons: 8 },
+  { ...BRIDGE_DEFAULT_INPUTS, pointLoadKilonewtons: 16 },
+] as const satisfies readonly BridgeInputs[];
+
+function bounded(
+  value: number,
+  minimum: number,
+  maximum: number,
+  fallback: number,
+) {
+  return Number.isFinite(value)
+    ? Math.max(minimum, Math.min(maximum, value))
+    : fallback;
+}
+
+export function normalizeBridgeInputs(inputs: BridgeInputs): {
+  pointLoadKilonewtons: number;
+  loadPositionPercent: number;
+  flexuralRigidityMeganewtonMetersSquared: number;
+  braces: boolean[];
+} {
+  return {
+    pointLoadKilonewtons: bounded(
+      inputs.pointLoadKilonewtons,
+      0,
+      30,
+      BRIDGE_DEFAULT_INPUTS.pointLoadKilonewtons,
+    ),
+    loadPositionPercent: bounded(
+      inputs.loadPositionPercent,
+      5,
+      95,
+      BRIDGE_DEFAULT_INPUTS.loadPositionPercent,
+    ),
+    flexuralRigidityMeganewtonMetersSquared: bounded(
+      inputs.flexuralRigidityMeganewtonMetersSquared,
+      50,
+      250,
+      BRIDGE_DEFAULT_INPUTS.flexuralRigidityMeganewtonMetersSquared,
+    ),
+    braces: Array.from(
+      { length: 4 },
+      (_, index) => inputs.braces[index] === true,
+    ),
+  };
+}
+
+export function bridgeDeflectionMillimetersAt(
+  raw: BridgeInputs,
+  positionMeters: number,
+) {
+  const inputs = normalizeBridgeInputs(raw);
+  const spanMeters = BRIDGE_SPAN_METERS;
+  const loadPositionMeters = (inputs.loadPositionPercent / 100) * spanMeters;
+  const distanceToRightSupportMeters = spanMeters - loadPositionMeters;
+  const x = Math.max(0, Math.min(spanMeters, positionMeters));
+  const a = loadPositionMeters;
+  const b = distanceToRightSupportMeters;
+  const pointLoadNewtons = inputs.pointLoadKilonewtons * 1_000;
+  const flexuralRigidityNewtonMetersSquared =
+    inputs.flexuralRigidityMeganewtonMetersSquared * 1_000_000;
+  const numerator =
+    x <= a
+      ? pointLoadNewtons * b * x * (spanMeters ** 2 - b ** 2 - x ** 2)
+      : pointLoadNewtons *
+        a *
+        (spanMeters - x) *
+        (spanMeters ** 2 - a ** 2 - (spanMeters - x) ** 2);
+  return (
+    (numerator / (6 * spanMeters * flexuralRigidityNewtonMetersSquared)) * 1_000
+  );
+}
+
+export function bridgeActivity(raw: BridgeInputs) {
+  const inputs = normalizeBridgeInputs(raw);
+  const spanMeters = BRIDGE_SPAN_METERS;
+  const loadPositionMeters = (inputs.loadPositionPercent / 100) * spanMeters;
+  const distanceToRightSupportMeters = spanMeters - loadPositionMeters;
+  const leftReactionKilonewtons =
+    (inputs.pointLoadKilonewtons * distanceToRightSupportMeters) / spanMeters;
+  const rightReactionKilonewtons =
+    (inputs.pointLoadKilonewtons * loadPositionMeters) / spanMeters;
+  const momentAt = (positionMeters: number) =>
+    leftReactionKilonewtons * positionMeters -
+    inputs.pointLoadKilonewtons *
+      Math.max(0, positionMeters - loadPositionMeters);
+  const peakBendingMomentKilonewtonMeters = momentAt(loadPositionMeters);
+  const deflectionAtLoadMillimeters = bridgeDeflectionMillimetersAt(
+    inputs,
+    loadPositionMeters,
+  );
+  const zonePeakBendingMomentsKilonewtonMeters = Array.from(
+    { length: 4 },
+    (_, index) => {
+      const start = index * 2.5;
+      const end = start + 2.5;
+      return Math.max(
+        momentAt(start),
+        momentAt(end),
+        loadPositionMeters >= start && loadPositionMeters <= end
+          ? peakBendingMomentKilonewtonMeters
+          : 0,
+      );
+    },
+  );
+  const braceReferenceUseIndex = zonePeakBendingMomentsKilonewtonMeters.map(
+    (moment, index) =>
+      moment /
+      (BRIDGE_BRACE_REFERENCE_MOMENT_KILONEWTON_METERS *
+        (inputs.braces[index] ? BRIDGE_BRACE_REFERENCE_FACTOR : 1)),
+  );
+  return {
+    inputs,
+    spanMeters,
+    loadPositionMeters,
+    leftReactionKilonewtons,
+    rightReactionKilonewtons,
+    peakBendingMomentKilonewtonMeters,
+    deflectionAtLoadMillimeters,
+    zonePeakBendingMomentsKilonewtonMeters,
+    braceReferenceUseIndex,
+    maximumBraceReferenceUseIndex: Math.max(...braceReferenceUseIndex),
+  };
+}
+
+export function bridgeStateAtPhase(raw: BridgeInputs, rawPhase: number) {
+  const activity = bridgeActivity(raw);
+  const finitePhase = Number.isFinite(rawPhase) ? rawPhase : 0;
+  return {
+    ...activity,
+    visualPhase: ((finitePhase % 1) + 1) % 1,
+  };
+}
+
+export function compareBridgeTrials(first: BridgeInputs, second: BridgeInputs) {
+  const a = normalizeBridgeInputs(first);
+  const b = normalizeBridgeInputs(second);
+  const changed: string[] = [];
+  if (a.loadPositionPercent !== b.loadPositionPercent)
+    changed.push("load position");
+  if (a.pointLoadKilonewtons !== b.pointLoadKilonewtons)
+    changed.push("point load");
+  if (
+    a.flexuralRigidityMeganewtonMetersSquared !==
+    b.flexuralRigidityMeganewtonMetersSquared
+  )
+    changed.push("flexural rigidity");
+  if (a.braces.some((brace, index) => brace !== b.braces[index]))
+    changed.push("brace-index modifiers");
+  const held: string[] = [];
+  if (a.pointLoadKilonewtons === b.pointLoadKilonewtons)
+    held.push(`${a.pointLoadKilonewtons} kN point load`);
+  if (a.loadPositionPercent === b.loadPositionPercent)
+    held.push(`${a.loadPositionPercent}% load position`);
+  if (
+    a.flexuralRigidityMeganewtonMetersSquared ===
+    b.flexuralRigidityMeganewtonMetersSquared
+  )
+    held.push(
+      `${a.flexuralRigidityMeganewtonMetersSquared} MN·m² flexural rigidity`,
+    );
+  held.push(`${BRIDGE_SPAN_METERS} m span`);
+  if (a.braces.every((brace) => !brace) && b.braces.every((brace) => !brace))
+    held.push("no brace-index modifiers");
+  return { changed, held };
+}
+
+/** Compatibility for the dimensional scene while package code migrates. */
 export function bridge(
-  material: BridgeMaterial,
+  _material: BridgeMaterial,
   braces: readonly boolean[],
   loadKN: number,
   positionPercent: number,
 ) {
-  const span = 10;
-  const position = (clamp(positionPercent) / 100) * span;
-  const load = Math.max(0, loadKN);
-  const leftReaction = (load * (span - position)) / span;
-  const rightReaction = (load * position) / span;
-  const moment = (x: number) =>
-    leftReaction * x - load * Math.max(0, x - position);
-  const capacity = material === "steel" ? 45 : 16;
-  const utilization = Array.from({ length: 4 }, (_, index) => {
-    const start = index * 2.5,
-      end = start + 2.5;
-    const zoneMoment = Math.max(
-      moment(start),
-      moment(end),
-      position >= start && position <= end ? moment(position) : 0,
-    );
-    return zoneMoment / (capacity * (braces[index] ? 2.4 : 1));
+  const activity = bridgeActivity({
+    pointLoadKilonewtons: loadKN,
+    loadPositionPercent: positionPercent,
+    flexuralRigidityMeganewtonMetersSquared: 100,
+    braces,
   });
   return {
-    leftReaction,
-    rightReaction,
-    maxMoment: moment(position),
-    utilization,
-    maxUtilization: Math.max(...utilization),
-    cost:
-      (material === "steel" ? 240 : 80) +
-      braces.filter(Boolean).length * (material === "steel" ? 80 : 35),
+    leftReaction: activity.leftReactionKilonewtons,
+    rightReaction: activity.rightReactionKilonewtons,
+    maxMoment: activity.peakBendingMomentKilonewtonMeters,
+    utilization: activity.braceReferenceUseIndex,
+    maxUtilization: activity.maximumBraceReferenceUseIndex,
+    cost: 0,
   };
-}
-
-/** One-hour storm on one hectare; empirical teaching coefficients, not a flood forecast. */
-export function riverStorm(
-  slopePercent: number,
-  rainMm: number,
-  vegetationPercent: number,
-  availableSoil = 5000,
-) {
-  const vegetation = clamp(vegetationPercent) / 100;
-  const slope = clamp(slopePercent, 0, 20) / 20;
-  const rainVolume = Math.max(0, rainMm) * 10;
-  const runoff = rainVolume * (0.8 - 0.55 * vegetation);
-  const infiltration = rainVolume - runoff;
-  const eroded = Math.min(
-    Math.max(0, availableSoil),
-    runoff * (0.1 + 0.9 * slope) * (1 - 0.85 * vegetation),
-  );
-  const exported = eroded * clamp(0.25 + 0.6 * slope - 0.2 * vegetation, 0, 1);
-  return {
-    rainVolume,
-    runoff,
-    infiltration,
-    eroded,
-    exported,
-    deposited: eroded - exported,
-    // 180 m³ passes within the channel during the modeled hour.
-    floodVolume: Math.max(0, runoff - 180),
-  };
-}
-
-export interface PondState {
-  algae: number;
-  zooplankton: number;
-  fish: number;
-  oxygen: number;
-}
-export interface PondConditions {
-  nutrients: number;
-  drought: number;
-}
-export const initialPond: PondState = {
-  algae: 45,
-  zooplankton: 35,
-  fish: 20,
-  oxygen: 80,
-};
-/** Bounded food-web indices; one step is an illustrative week, not a field prediction. */
-export function pondWeek(
-  state: PondState,
-  conditions: PondConditions,
-): PondState {
-  let { algae, zooplankton, fish, oxygen } = state;
-  const nutrients = clamp(conditions.nutrients),
-    drought = clamp(conditions.drought);
-  const capacity = 20 + nutrients * 0.8;
-  for (let i = 0; i < 10; i++) {
-    const grazing = (0.018 * algae * zooplankton) / (1 + algae / 35);
-    const predation = (0.012 * zooplankton * fish) / (1 + zooplankton / 35);
-    const oxygenTarget = clamp(100 - 0.65 * algae - 0.5 * drought);
-    const oxygenStress = Math.max(0, 40 - oxygen) / 100;
-    algae = clamp(
-      algae +
-        0.1 *
-          (0.5 * algae * (1 - algae / capacity) -
-            grazing -
-            drought * 0.0007 * algae),
-    );
-    zooplankton = clamp(
-      zooplankton +
-        0.1 *
-          (0.4 * grazing - predation - (0.025 + oxygenStress) * zooplankton),
-    );
-    fish = clamp(
-      fish + 0.1 * (0.3 * predation - (0.035 + oxygenStress * 1.7) * fish),
-    );
-    oxygen = clamp(oxygen + 0.1 * (oxygenTarget - oxygen) * 0.8);
-  }
-  return { algae, zooplankton, fish, oxygen };
 }

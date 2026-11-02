@@ -97,12 +97,12 @@ export function createBridgeScene(
     );
   const frame: THREE.Mesh[] = [];
   const braceMeshes: THREE.Mesh[][] = [];
-  const capacityMats: THREE.MeshStandardMaterial[] = [];
+  const referenceMats: THREE.MeshStandardMaterial[] = [];
   for (let section = 0; section < 4; section++) {
     const start = -5 + section * 2.5,
       end = start + 2.5;
     const colorMat = material("#8bd6bd", 0.35, 0.42);
-    capacityMats.push(colorMat);
+    referenceMats.push(colorMat);
     const sectionBraces: THREE.Mesh[] = [];
     for (const z of [-1.02, 1.02]) {
       frame.push(
@@ -199,6 +199,21 @@ export function createBridgeScene(
     a.position.set(x, -0.9, 1.65);
     return a;
   });
+  const pathMaterial = new THREE.MeshStandardMaterial({
+    color: "#fff0a6",
+    emissive: "#d99a30",
+    emissiveIntensity: 1.8,
+    roughness: 0.28,
+  });
+  const loadPathMarkers = [-1, 1].map(() => {
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.13, 18, 12),
+      pathMaterial,
+    );
+    marker.castShadow = true;
+    group.add(marker);
+    return marker;
+  });
   const update = (state: BridgeSceneState) => {
     deck.material = state.material === "steel" ? steel : timber;
     frame.forEach(
@@ -210,14 +225,8 @@ export function createBridgeScene(
         m.material = state.material === "steel" ? steel : timber;
       }),
     );
-    capacityMats.forEach((mat, i) =>
-      mat.color.set(
-        state.utilization[i] > 1
-          ? "#e38667"
-          : state.utilization[i] > 0.7
-            ? "#dfbc6d"
-            : "#78bfa8",
-      ),
+    referenceMats.forEach((mat, i) =>
+      mat.color.set(state.braces[i] ? "#7cc7ad" : "#7ca6aa"),
     );
     truck.position.set(bridgeLoadX(state.position), truckAxleHeight, 0);
     loadArrow.position.set(bridgeLoadX(state.position), 4.8, 0);
@@ -227,6 +236,27 @@ export function createBridgeScene(
       const force = i ? state.rightReaction : state.leftReaction;
       a.scale.y = 0.18 + force / 18;
       a.visible = force > 0;
+    });
+    const rawPhase = Number.isFinite(state.progress) ? state.progress : 0;
+    const phase = ((rawPhase % 1) + 1) % 1;
+    const truckX = bridgeLoadX(state.position);
+    loadPathMarkers.forEach((marker, index) => {
+      const direction = index ? 1 : -1;
+      const supportX = direction * 5;
+      if (phase < 0.22) {
+        const t = phase / 0.22;
+        marker.position.set(truckX, 4.25 - t * 2.72, direction * 0.62);
+      } else {
+        const t = Math.min(1, (phase - 0.22) / 0.78);
+        marker.position.set(
+          THREE.MathUtils.lerp(truckX, supportX, t),
+          1.53 - Math.sin(t * Math.PI) * 0.08,
+          direction * 0.62,
+        );
+      }
+      const pulse = 0.82 + Math.sin(phase * Math.PI * 2) * 0.18;
+      marker.scale.setScalar(pulse);
+      marker.visible = state.load > 0;
     });
   };
   update(initial);

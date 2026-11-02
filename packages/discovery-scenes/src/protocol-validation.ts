@@ -16,6 +16,8 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
           "utilization",
           "leftReaction",
           "rightReaction",
+          "progress",
+          "deflectionMillimeters",
         ]) &&
         (value.material === "timber" || value.material === "steel") &&
         Array.isArray(value.braces) &&
@@ -25,7 +27,9 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
         number(value.position, 0, 100) &&
         numbers(value.utilization, 4, 0, 100) &&
         number(value.leftReaction, 0, 100) &&
-        number(value.rightReaction, 0, 100)
+        number(value.rightReaction, 0, 100) &&
+        number(value.progress, 0, 1) &&
+        number(value.deflectionMillimeters, 0, 100)
       );
     case "sound":
       return (

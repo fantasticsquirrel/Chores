@@ -23,6 +23,8 @@ describe("pure physical exhibit models", () => {
       load: 10,
       position: 50,
       ...bridge("timber", [false, false, false, false], 10, 50),
+      progress: 0,
+      deflectionMillimeters: 2.08,
     };
     const model = createBridgeScene(state);
     expect(truckAxleHeight - truckTireRadius).toBe(bridgeDeckSurface);

@@ -5,20 +5,23 @@ import { SoundPlaygroundSimulation } from "../SoundPlaygroundSimulation";
 import { CircuitCitySimulation } from "../CircuitCitySimulation";
 afterEach(cleanup);
 describe("physical exhibits: direct investigation equivalents", () => {
-  it("moves the bridge load without changing material or bracing", () => {
+  it("moves the bridge load through a controlled comparison", () => {
     render(<BridgeBuilderSimulation />);
-    const cost = screen.getByLabelText("Build cost").textContent;
     fireEvent.click(
-      screen.getByRole("button", { name: "Move load toward left bank" }),
+      screen.getByRole("button", { name: "Left support carries more" }),
     );
-    expect(screen.getByLabelText("Load position")).toHaveValue("15");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare load positions" }),
+    );
     expect(screen.getByLabelText("Left support force")).toHaveTextContent(
-      "8.5 kN",
+      "9.6 kN",
     );
     expect(screen.getByLabelText("Right support force")).toHaveTextContent(
-      "1.5 kN",
+      "2.4 kN",
     );
-    expect(screen.getByLabelText("Build cost").textContent).toBe(cost);
+    expect(screen.getByTestId("bridge-position-feedback")).toHaveTextContent(
+      "Changed: load position",
+    );
   });
   it("compares amplitude without changing natural frequency", () => {
     render(<SoundPlaygroundSimulation />);

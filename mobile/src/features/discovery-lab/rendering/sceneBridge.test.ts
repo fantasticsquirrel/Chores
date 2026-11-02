@@ -47,6 +47,8 @@ const states: OfflineSceneState[] = [
     utilization: [0.2, 0.3, 0.3, 0.2],
     leftReaction: 15,
     rightReaction: 15,
+    progress: 0,
+    deflectionMillimeters: 6.25,
   },
   { kind: "sound", length: 60, tension: 80, amplitude: 4, progress: 0 },
   {
