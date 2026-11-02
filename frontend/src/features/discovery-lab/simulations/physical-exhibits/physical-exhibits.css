@@ -561,12 +561,12 @@
 .dl-bridge-profile svg {
   height: 68px;
 }
-.dl-bridge-index-note {
+.discovery-lab .dl-bridge-index-note {
   margin: -8px 24px 22px;
   padding: 12px 14px;
   border-left: 4px solid #f0c876;
   background: #172a35;
-  color: #c3d2d0;
+  color: #dce8e5;
   font-size: 12px;
   line-height: 1.55;
 }
@@ -590,7 +590,7 @@
   .dl-bridge-explore > p {
     min-height: 0;
   }
-  .dl-bridge-index-note {
+  .discovery-lab .dl-bridge-index-note {
     margin: -5px 16px 18px;
   }
 }

@@ -180,7 +180,37 @@ export function buildGarden(state: GardenSceneState): BuiltLandscape {
       new T.Color(planted(x, z) ? "#6c814e" : "#b8a27b").multiplyScalar(
         0.95 + noise(x, z) * 0.1,
       ),
+    48,
   );
+  const grassPositions: number[] = [];
+  const grassColors: number[] = [];
+  const grassIndices: number[] = [];
+  const addGrassBlade = (
+    x: number,
+    z: number,
+    height: number,
+    angle: number,
+    color: T.Color,
+  ) => {
+    const offset = grassPositions.length / 3;
+    const halfWidth = 0.025;
+    const sideX = Math.cos(angle) * halfWidth;
+    const sideZ = Math.sin(angle) * halfWidth;
+    grassPositions.push(
+      x - sideX,
+      0.04,
+      z - sideZ,
+      x + sideX,
+      0.04,
+      z + sideZ,
+      x + Math.sin(angle) * 0.05,
+      height,
+      z + Math.cos(angle) * 0.05,
+    );
+    for (let vertex = 0; vertex < 3; vertex++)
+      grassColors.push(color.r, color.g, color.b);
+    grassIndices.push(offset, offset + 1, offset + 2);
+  };
   for (let i = 0; i < 200; i++) {
     const x = -6.7 + ((i * 1.343) % 13.4),
       z = -3.8 + ((i * 1.727) % 7.6);
@@ -194,16 +224,34 @@ export function buildGarden(state: GardenSceneState): BuiltLandscape {
       )
     )
       continue;
+    const color = new T.Color(i % 2 ? "#8c9c58" : "#4c7242");
     for (let j = 0; j < 2; j++)
-      line(
-        group,
-        [
-          v(x, 0.04, z),
-          v(x + (j - 0.5) * 0.09, 0.19 + (i % 3) * 0.06, z + 0.03),
-        ],
-        i % 2 ? "#8c9c58" : "#4c7242",
-        0.015,
+      addGrassBlade(
+        x,
+        z,
+        0.19 + (i % 3) * 0.06,
+        i * 2.399 + (j * Math.PI) / 2,
+        color,
       );
+  }
+  if (grassPositions.length) {
+    const grassGeometry = new T.BufferGeometry();
+    grassGeometry.setAttribute(
+      "position",
+      new T.Float32BufferAttribute(grassPositions, 3),
+    );
+    grassGeometry.setAttribute(
+      "color",
+      new T.Float32BufferAttribute(grassColors, 3),
+    );
+    grassGeometry.setIndex(grassIndices);
+    grassGeometry.computeVertexNormals();
+    const grassMaterial = new T.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.96,
+      side: T.DoubleSide,
+    });
+    mesh(group, grassGeometry, grassMaterial);
   }
   const circle = Array.from({ length: 97 }, (_, i) =>
     gardenPoint(

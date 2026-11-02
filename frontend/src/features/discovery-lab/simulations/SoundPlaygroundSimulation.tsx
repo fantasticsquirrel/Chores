@@ -106,7 +106,10 @@ export function SoundPlaygroundSimulation() {
               audio.stop();
               setAmplitude(value);
             }}
-            onProgress={(value) => playback.setProgress(value)}
+            onProgress={(value) => {
+              playback.pause();
+              playback.setProgress(value);
+            }}
             onToggleMotion={playback.toggle}
             onPluck={pluck}
             onToggleAudio={() =>

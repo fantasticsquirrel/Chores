@@ -50,7 +50,10 @@ function updateFromControl(key: string, value: number) {
   if (key === "length") inputs.lengthCm = Math.max(20, Math.min(120, value));
   if (key === "tension") inputs.tensionN = Math.max(20, Math.min(200, value));
   if (key === "amplitude") inputs.amplitudeMm = Math.max(0, Math.min(8, value));
-  if (key === "phase") progress = Math.max(0, Math.min(1, value / 360));
+  if (key === "phase") {
+    progress = Math.max(0, Math.min(1, value / 360));
+    playing = false;
+  }
 }
 
 function run(input: any) {

@@ -131,6 +131,12 @@ describe("Sound Playground controlled investigation", () => {
     expect(
       screen.getByRole("button", { name: "Pause slowed motion" }),
     ).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Slowed-motion position"), {
+      target: { value: 180 },
+    });
+    expect(
+      screen.getByRole("button", { name: "Play slowed motion" }),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
 
     expect(screen.queryByLabelText("String length")).toBeNull();

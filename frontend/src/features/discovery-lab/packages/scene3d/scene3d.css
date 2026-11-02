@@ -290,6 +290,9 @@
   line-height: 1.65;
   border-top: 1px solid #b5bea9;
 }
+.discovery-package-runtime-3d .discovery-package-footnote {
+  color: #344b38;
+}
 @media (max-width: 760px) {
   .discovery-package-sections {
     grid-template-columns: 1fr;
