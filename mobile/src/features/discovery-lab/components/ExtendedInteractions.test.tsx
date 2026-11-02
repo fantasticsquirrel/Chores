@@ -120,18 +120,50 @@ describe("native predictions and evidence", () => {
 
   it("preserves independent parallel branches and opens the full series circuit", () => {
     const view = render(<NativeExploration id="circuit-city" />);
-    fireEvent.press(view.getByText("Open house A switch"));
+    expect(view.getByText("Compare series and parallel")).toBeDisabled();
+    expect(view.getByText("Compare 6 V and 12 V")).toBeDisabled();
+    fireEvent.press(
+      view.getByText("All off in series; houses A and C on in parallel"),
+    );
+    fireEvent.press(view.getByText("Compare series and parallel"));
+    expect(
+      view.getByText(
+        /matches your prediction.*Series, B open: 0\.00 A.*Parallel, B open: 2\.00 A/,
+      ),
+    ).toBeTruthy();
+    fireEvent.press(
+      view.getByText("Current doubles; power and energy quadruple"),
+    );
+    fireEvent.press(view.getByText("Compare 6 V and 12 V"));
+    expect(
+      view.getByText(
+        /6 V: each house 0\.50 A.*3\.0 W.*30\.0 J.*12 V: each house 1\.00 A.*12\.0 W.*120\.0 J/,
+      ),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("Open house B switch"));
     expect(
       view.getByText(/Total current from the battery: 2.00 A/),
     ).toBeTruthy();
-    expect(view.getByText("House B: 12.0 V · 1.00 A · 12.00 W")).toBeTruthy();
+    expect(view.getByText("House A: 12.0 V · 1.00 A · 12.00 W")).toBeTruthy();
+    expect(
+      view.getByText(/20\.0 C leaves the source and 20\.0 C returns/),
+    ).toBeTruthy();
+    expect(
+      view.getByText(/240\.0 J supplied = 240\.0 J transferred/),
+    ).toBeTruthy();
     fireEvent.press(view.getByText("Series"));
     expect(
       view.getByText(/Total current from the battery: 0.00 A/),
     ).toBeTruthy();
-    fireEvent.press(view.getByText("Close house A switch"));
+    fireEvent.press(view.getByText("Close house B switch"));
     expect(
       view.getByText(/Total current from the battery: 0.33 A/),
+    ).toBeTruthy();
+    fireEvent.press(
+      view.getByText("Increase Conventional-current marker phase (%)"),
+    );
+    expect(
+      view.getByText("Conventional-current marker phase (%): 5"),
     ).toBeTruthy();
   });
 

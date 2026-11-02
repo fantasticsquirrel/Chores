@@ -55,9 +55,10 @@ const states: OfflineSceneState[] = [
     kind: "circuit",
     mode: "parallel",
     switches: [true, true, true],
-    power: [24, 24, 24],
-    current: [2, 2, 2],
+    power: [12, 12, 12],
+    current: [1, 1, 1],
     voltage: 12,
+    phase: 0,
   },
   {
     kind: "pizza",

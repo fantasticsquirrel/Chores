@@ -195,6 +195,21 @@ for (const viewport of [
       });
       await page.goto("/chore/discovery-lab/circuit-city");
       await expect(page.locator('[data-renderer-ready="true"]')).toBeVisible();
+      await page
+        .getByRole("button", {
+          name: "All off in series; houses 1 and 3 on in parallel",
+        })
+        .click();
+      await page
+        .getByRole("button", { name: "Compare series and parallel" })
+        .click();
+      await page
+        .getByRole("button", {
+          name: "Current doubles; power and energy quadruple",
+        })
+        .click();
+      await page.getByRole("button", { name: "Compare 6 V and 12 V" }).click();
+      await page.getByLabel("Wiring", { exact: true }).selectOption("series");
       const circuitCanvas = page.locator(".dl-physical-canvas canvas");
       await circuitCanvas.scrollIntoViewIfNeeded();
       const circuit = createCircuitScene({
@@ -204,6 +219,7 @@ for (const viewport of [
         voltage: 12,
         current: [1 / 3, 1 / 3, 1 / 3],
         power: [4 / 3, 4 / 3, 4 / 3],
+        phase: 0,
       });
       const switchPoint = await screenPoint(
         circuitCanvas,

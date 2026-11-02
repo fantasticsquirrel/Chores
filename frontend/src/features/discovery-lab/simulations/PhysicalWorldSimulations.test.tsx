@@ -9,19 +9,22 @@ afterEach(cleanup);
 
 describe("physical world exploration controls", () => {
   it.each([
-    SoundPlaygroundSimulation,
-    BridgeBuilderSimulation,
-    RiverSculptorSimulation,
-    CircuitCitySimulation,
-    FoodWebSimulation,
-  ])("renders a labeled exhibit and experiment prompt", (Simulation) => {
-    render(<Simulation />);
-    expect(screen.getAllByRole("img").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Try this")).toBeTruthy();
-    expect(
-      screen.getByRole("button", { name: /^Reset(?: lesson)?$/ }),
-    ).toBeTruthy();
-  });
+    [SoundPlaygroundSimulation, "Try this"],
+    [BridgeBuilderSimulation, "Try this"],
+    [RiverSculptorSimulation, "Try this"],
+    [CircuitCitySimulation, "Units used in the evidence"],
+    [FoodWebSimulation, "Try this"],
+  ] as const)(
+    "renders a labeled exhibit and experiment prompt",
+    (Simulation, prompt) => {
+      render(<Simulation />);
+      expect(screen.getAllByRole("img").length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText(prompt)).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: /^Reset(?: lesson)?$/ }),
+      ).toBeTruthy();
+    },
+  );
   it("changes pitch with length but not pluck amplitude", () => {
     render(<SoundPlaygroundSimulation />);
     const before = screen.getByLabelText("Frequency").textContent;
@@ -120,10 +123,26 @@ describe("physical world exploration controls", () => {
   });
   it("keeps other parallel houses on when one switch opens", () => {
     render(<CircuitCitySimulation />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "All off in series; houses 1 and 3 on in parallel",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare series and parallel" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Current doubles; power and energy quadruple",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare 6 V and 12 V" }),
+    );
     fireEvent.change(screen.getByLabelText("Wiring"), {
       target: { value: "parallel" },
     });
-    fireEvent.click(screen.getByLabelText("House 2 switch"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "House 2 switch" }));
     expect(screen.getByLabelText("House 1 current").textContent).toBe("1.00 A");
     expect(screen.getByLabelText("House 2 current").textContent).toBe("0.00 A");
     fireEvent.change(screen.getByLabelText("Wiring"), {

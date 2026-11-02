@@ -1,168 +1,194 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
-  circuit,
+  CIRCUIT_DEFAULT_INPUTS,
+  circuitStateAtPhase,
+  normalizeCircuitInputs,
+  type CircuitInputs,
   type CircuitMode,
-} from "@family-manager/family-api/discovery-models/physical-world";
+  type CircuitSwitches,
+} from "@family-manager/family-api/discovery-models/circuit";
 import { Slider } from "./SimulationPrimitives";
 import { CircuitDrawing } from "./CircuitDrawing";
-import {
-  PhysicalLayout,
-  PhysicalStage,
-} from "./physical-exhibits/PhysicalStage";
+import { CircuitEvidenceSummary } from "./circuit/CircuitEvidenceSummary";
+import { CircuitPredictionTrials } from "./circuit/CircuitPredictionTrials";
+import { useCircuitLesson } from "./circuit/useCircuitLesson";
+import { PhysicalStage } from "./physical-exhibits/PhysicalStage";
 import "./physical-exhibits/physical-exhibits.css";
+import "./circuit/circuit-city.css";
+
+const freshInputs = (): CircuitInputs => ({
+  ...CIRCUIT_DEFAULT_INPUTS,
+  switches: [...CIRCUIT_DEFAULT_INPUTS.switches],
+});
+
 export function CircuitCitySimulation() {
-  const modeId = useId(),
-    [mode, setMode] = useState<CircuitMode>("series"),
-    [voltage, setVoltage] = useState(12),
-    [switches, setSwitches] = useState([true, true, true]);
-  const result = circuit(mode, voltage, switches);
-  const toggle = (index: number) =>
-    setSwitches((current) => current.map((on, i) => (i === index ? !on : on)));
+  const modeId = useId();
+  const [inputs, setInputs] = useState<CircuitInputs>(freshInputs);
+  const [phase, setPhase] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const lesson = useCircuitLesson();
+  const result = circuitStateAtPhase(inputs, phase);
+
+  useEffect(() => {
+    if (!playing) return;
+    const timer = window.setInterval(
+      () => setPhase((current) => (current + 0.06) % 1),
+      240,
+    );
+    return () => window.clearInterval(timer);
+  }, [playing]);
+
+  useEffect(() => {
+    const stopWhenHidden = () => {
+      if (document.hidden) setPlaying(false);
+    };
+    document.addEventListener("visibilitychange", stopWhenHidden);
+    return () =>
+      document.removeEventListener("visibilitychange", stopWhenHidden);
+  }, []);
+
+  const showTrial = (trial: CircuitInputs) => {
+    const normalized = normalizeCircuitInputs(trial);
+    setInputs({ ...normalized, switches: [...normalized.switches] });
+    setPhase(0);
+    setPlaying(false);
+  };
+  const relockMotion = () => {
+    setPhase(0);
+    setPlaying(false);
+  };
+  const reset = () => {
+    setInputs(freshInputs());
+    setPhase(0);
+    setPlaying(false);
+    lesson.resetLesson();
+  };
+  const setMode = (mode: CircuitMode) => {
+    setInputs((current) => ({ ...current, mode }));
+    setPhase(0);
+    setPlaying(false);
+  };
+  const setVoltage = (sourceVoltageVolts: number) => {
+    setInputs((current) => ({ ...current, sourceVoltageVolts }));
+    setPhase(0);
+    setPlaying(false);
+  };
+  const toggle = (index: number) => {
+    if (!lesson.freeExploration) return;
+    setInputs((current) => ({
+      ...current,
+      switches: current.switches.map((closed, currentIndex) =>
+        currentIndex === index ? !closed : closed,
+      ) as unknown as CircuitSwitches,
+    }));
+    setPhase(0);
+    setPlaying(false);
+  };
+  const legacyResult = {
+    totalCurrent: result.totalCurrentAmperes,
+    houseCurrent: result.houseCurrentAmperes,
+    houseVoltage: result.houseVoltageVolts,
+    housePower: result.housePowerWatts,
+  };
+  const description = [
+    result.mode +
+      " ideal direct-current circuit on a dimensional teaching board.",
+    "Source " + result.sourceVoltageVolts.toFixed(1) + " volts.",
+    "Total current " +
+      result.totalCurrentAmperes.toFixed(2) +
+      " amperes and source power " +
+      result.sourcePowerWatts.toFixed(1) +
+      " watts.",
+    result.switches
+      .map(
+        (closed, index) =>
+          "House " +
+          (index + 1) +
+          " switch " +
+          (closed ? "closed" : "open") +
+          ", load current " +
+          result.houseCurrentAmperes[index].toFixed(2) +
+          " amperes, voltage " +
+          result.houseVoltageVolts[index].toFixed(1) +
+          " volts and power " +
+          result.housePowerWatts[index].toFixed(1) +
+          " watts",
+      )
+      .join(". ") + ".",
+    "Conventional-current markers are at phase " +
+      Math.round(result.visualPhase * 100) +
+      " percent; measurements do not depend on marker motion.",
+  ].join(" ");
+
   return (
-    <PhysicalLayout
-      question="Predict what will happen when House 2’s switch opens. Test it in series, then change to parallel without changing the battery or switches. Which houses still receive energy?"
-      explanation={
-        mode === "series"
-          ? "One complete path carries the same current through all three loads. Battery voltage is shared between them. Opening any switch interrupts the whole path; charge is not used up in a house."
-          : "Each parallel branch is a complete path across the battery. Opening one branch leaves the other paths intact. Every closed branch receives the full battery voltage; branch currents add at the battery."
-      }
-      caveat="Each house represents a fixed 12 Ω resistor and one switch. Ideal battery and wires; window glow follows relative electrical power. Arrows indicate conventional current. Charge is conserved while the battery transfers energy. Real homes use parallel AC wiring with protective devices, not this low-voltage model."
-      controls={
-        <>
-          <div className="dl-physical-control-group">
-            <div>
-              <label className="dl-physical-select-label" htmlFor={modeId}>
-                Wiring
-              </label>
-              <select
-                id={modeId}
-                value={mode}
-                onChange={(event) => setMode(event.target.value as CircuitMode)}
-              >
-                <option value="series">Series · one path</option>
-                <option value="parallel">Parallel · three paths</option>
-              </select>
-            </div>
-            <Slider
-              label="Battery voltage"
-              value={voltage}
-              min={0}
-              max={18}
-              unit=" V"
-              onChange={setVoltage}
-            />
-          </div>
-          <fieldset className="dl-physical-switches">
-            <legend>Close a switch to connect it</legend>
-            {switches.map((on, i) => (
-              <label key={i}>
-                <input
-                  type="checkbox"
-                  aria-label={`House ${i + 1} switch`}
-                  checked={on}
-                  onChange={() => toggle(i)}
-                />
-                House {i + 1} · {on ? "closed" : "open"}
-              </label>
-            ))}
-          </fieldset>
-          <div className="dl-physical-control-group">
-            <div className="dl-physical-number">
-              <strong>{(voltage * result.totalCurrent).toFixed(1)} W</strong>
-              <small>power supplied by the {voltage} V battery</small>
-            </div>
-            <div className="dl-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode("series");
-                  setVoltage(12);
-                  setSwitches([true, true, true]);
-                }}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-        </>
-      }
-      readout={
-        <>
-          <span>
-            Battery current: <strong>{result.totalCurrent.toFixed(2)} A</strong>
-          </span>
-          <span>
-            Each load: <strong>12 Ω</strong>
-          </span>
-          <span>I = V ÷ R · Power = V × I</span>
-          <span>
-            {mode === "parallel"
-              ? `${result.houseCurrent.map((value) => value.toFixed(2)).join(" + ")} = ${result.totalCurrent.toFixed(2)} A at the battery`
-              : result.totalCurrent > 0
-                ? `${result.houseVoltage.map((value) => value.toFixed(1)).join(" + ")} = ${voltage.toFixed(1)} V across the loads`
-                : "Open path: no current anywhere in the series loop."}
-          </span>
-        </>
-      }
-    >
+    <section className="dl-physical dl-circuit">
       <PhysicalStage
         state={{
           kind: "circuit",
-          mode,
-          switches,
-          power: result.housePower,
-          current: result.houseCurrent,
-          voltage,
+          mode: result.mode,
+          switches: [...result.switches],
+          power: result.housePowerWatts,
+          current: result.houseCurrentAmperes,
+          voltage: result.sourceVoltageVolts,
+          phase: result.visualPhase,
         }}
         onAction={(action) => {
           if (action.type === "switch") toggle(action.index);
         }}
-        description={`${mode} circuit town connected by visible wires to a ${voltage} volt battery. ${switches.map((on, i) => `House ${i + 1} switch ${on ? "closed" : "open"}, current ${result.houseCurrent[i].toFixed(2)} amperes`).join(". ")}. Click a switch or use the matching labeled controls.`}
+        description={description}
         fallback={
           <CircuitDrawing
-            mode={mode}
-            voltage={voltage}
-            switches={switches}
-            result={result}
+            mode={result.mode}
+            voltage={result.sourceVoltageVolts}
+            switches={[...result.switches]}
+            result={legacyResult}
           />
         }
         header={
-          <div className="dl-physical-header">
+          <div className="dl-physical-header dl-circuit-header">
             <div>
               <h3>
-                {mode === "series"
-                  ? "One path through three loads"
-                  : "Three independent paths"}
+                {result.mode === "series"
+                  ? "One path through three 12 Ω loads"
+                  : "Three independent 12 Ω branches"}
               </h3>
               <p>
-                Click a switch or house to open its connection. Follow the wires
-                back to the battery.
+                Follow the copper paths. Window light is tied to calculated
+                power; the readings provide the evidence.
               </p>
             </div>
             <div className="dl-physical-number">
-              <strong>{result.totalCurrent.toFixed(2)} A</strong>
-              <small>current from the battery</small>
+              <strong>
+                <output aria-label="Source current">
+                  {result.totalCurrentAmperes.toFixed(2)} A
+                </output>
+              </strong>
+              <small>
+                {result.sourceVoltageVolts.toFixed(1)} V ideal source ·{" "}
+                {result.sourcePowerWatts.toFixed(1)} W
+              </small>
             </div>
           </div>
         }
       >
         <div className="dl-physical-strip dl-physical-houses">
-          {switches.map((on, i) => (
+          {result.switches.map((closed, index) => (
             <button
               type="button"
               className="dl-physical-house"
-              key={i}
-              aria-label={`Toggle House ${i + 1}`}
-              aria-pressed={on}
-              aria-describedby={`${modeId}-house-${i}`}
-              data-lit={result.housePower[i] > 0}
-              onClick={() => toggle(i)}
+              key={index}
+              aria-label={"Toggle House " + (index + 1)}
+              aria-pressed={closed}
+              aria-describedby={modeId + "-house-" + index}
+              data-lit={result.housePowerWatts[index] > 0}
+              disabled={!lesson.freeExploration}
+              onClick={() => toggle(index)}
             >
               <div className="dl-physical-house-heading">
-                <strong>House {i + 1}</strong>
+                <strong>House {index + 1}</strong>
                 <span>
-                  {on
-                    ? result.housePower[i] > 0
+                  {closed
+                    ? result.housePowerWatts[index] > 0
                       ? "CLOSED · ON"
                       : "CLOSED · NO CURRENT"
                     : "OPEN"}
@@ -170,20 +196,146 @@ export function CircuitCitySimulation() {
               </div>
               <div
                 className="dl-physical-house-reading"
-                id={`${modeId}-house-${i}`}
+                id={modeId + "-house-" + index}
               >
-                <output aria-label={`House ${i + 1} current`}>
-                  {result.houseCurrent[i].toFixed(2)} A
+                <output aria-label={"House " + (index + 1) + " current"}>
+                  {result.houseCurrentAmperes[index].toFixed(2)} A
                 </output>
                 <small>
-                  {result.houseVoltage[i].toFixed(1)} V ·{" "}
-                  {result.housePower[i].toFixed(1)} W
+                  {result.houseVoltageVolts[index].toFixed(1)} V ·{" "}
+                  {result.housePowerWatts[index].toFixed(1)} W
                 </small>
               </div>
             </button>
           ))}
         </div>
       </PhysicalStage>
-    </PhysicalLayout>
+
+      <div className="dl-circuit-stage-readouts">
+        <div>
+          <span>Equivalent resistance</span>
+          <strong>
+            {result.equivalentResistanceOhms !== null
+              ? result.equivalentResistanceOhms.toFixed(1) + " Ω"
+              : "Open path"}
+          </strong>
+        </div>
+        <div>
+          <span>Source current</span>
+          <strong>{result.totalCurrentAmperes.toFixed(2)} A</strong>
+        </div>
+        <div>
+          <span>Source power</span>
+          <strong>{result.sourcePowerWatts.toFixed(1)} W</strong>
+        </div>
+        <div>
+          <span>Energy in 10 s</span>
+          <strong>{result.sourceEnergyJoules.toFixed(1)} J</strong>
+        </div>
+      </div>
+
+      <div className="dl-circuit-controls">
+        <CircuitPredictionTrials
+          lesson={lesson}
+          onShowTrial={showTrial}
+          onPredictionChange={relockMotion}
+        />
+        <div className="dl-circuit-explore">
+          <strong>
+            {lesson.freeExploration
+              ? "3 · Explore one variable"
+              : "Reset the investigation"}
+          </strong>
+          {lesson.freeExploration ? (
+            <>
+              <p>
+                Change one input at a time. Compare readings at steady state;
+                reset before starting another controlled trial.
+              </p>
+              <label className="dl-circuit-select-label" htmlFor={modeId}>
+                Wiring
+              </label>
+              <select
+                id={modeId}
+                value={result.mode}
+                onChange={(event) => setMode(event.target.value as CircuitMode)}
+              >
+                <option value="series">Series · one path</option>
+                <option value="parallel">Parallel · three branches</option>
+              </select>
+              <Slider
+                label="Battery voltage"
+                value={result.sourceVoltageVolts}
+                min={0}
+                max={18}
+                unit=" V"
+                onChange={setVoltage}
+              />
+              <fieldset className="dl-circuit-switches">
+                <legend>House switches</legend>
+                {result.switches.map((closed, index) => (
+                  <label key={index}>
+                    <input
+                      type="checkbox"
+                      aria-label={"House " + (index + 1) + " switch"}
+                      checked={closed}
+                      onChange={() => toggle(index)}
+                    />
+                    House {index + 1} · {closed ? "closed" : "open"}
+                  </label>
+                ))}
+              </fieldset>
+              <Slider
+                label="Conventional-current marker phase"
+                value={Math.round(result.visualPhase * 100)}
+                min={0}
+                max={100}
+                unit="%"
+                onChange={(value) => {
+                  setPhase(value / 100);
+                  setPlaying(false);
+                }}
+              />
+              <div className="dl-circuit-actions">
+                <button
+                  type="button"
+                  onClick={() => setPlaying((current) => !current)}
+                >
+                  {playing
+                    ? "Pause conventional current"
+                    : "Play conventional current"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhase(0);
+                    setPlaying(false);
+                  }}
+                >
+                  Start markers
+                </button>
+              </div>
+              <p className="dl-circuit-motion-note">
+                Moving arrows are slowed direction markers, not individual
+                charges, drift speed or energy. The phase slider gives the same
+                positions without motion.
+              </p>
+            </>
+          ) : (
+            <p>
+              Reset clears both predictions and restores a 12 V series circuit
+              with all switches closed.
+            </p>
+          )}
+          <div className="dl-circuit-actions">
+            <button type="button" onClick={reset}>
+              Reset lesson
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <CircuitEvidenceSummary result={result} />
+    </section>
   );
 }

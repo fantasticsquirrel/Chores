@@ -130,6 +130,7 @@ describe("pure physical exhibit models", () => {
       voltage: 12,
       current: initial.houseCurrent,
       power: initial.housePower,
+      phase: 0,
     };
     const model = createCircuitScene(state);
     expect(model.interact("switch-1", new Vector3(), false)).toEqual({

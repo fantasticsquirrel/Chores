@@ -1,0 +1,338 @@
+.dl-circuit {
+  --circuit-ink: #f3eee0;
+  --circuit-muted: #b8ccd0;
+  --circuit-panel: #172e39;
+  --circuit-border: #47616a;
+  --circuit-accent: #f3c876;
+  --circuit-evidence: #9fe0cc;
+  background:
+    radial-gradient(circle at 80% 8%, rgb(62 104 111 / 0.2), transparent 30%),
+    #0d2029;
+}
+
+.dl-circuit .dl-physical-stage {
+  background:
+    radial-gradient(ellipse at 50% 38%, #18343d 0%, #0c202a 72%), #0c202a;
+}
+
+.dl-circuit .dl-physical-view {
+  height: clamp(390px, 44vw, 580px);
+}
+
+.dl-circuit .dl-physical-house:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.dl-circuit-stage-readouts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid #3b525c;
+  border-bottom: 1px solid #3b525c;
+  background: #314853;
+}
+
+.dl-circuit-stage-readouts > div {
+  min-width: 0;
+  padding: 15px 18px;
+  background: #122a34;
+}
+
+.dl-circuit-stage-readouts span,
+.dl-circuit-stage-readouts strong {
+  display: block;
+}
+
+.dl-circuit-stage-readouts span {
+  color: var(--circuit-muted);
+  font-size: 12px;
+}
+
+.dl-circuit-stage-readouts strong {
+  margin-top: 5px;
+  color: #f6dea5;
+  font-size: 21px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-circuit-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  padding: 28px 24px;
+  background: #172e39;
+}
+
+.dl-circuit-trial,
+.dl-circuit-explore {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dl-circuit-trial legend,
+.dl-circuit-explore > strong {
+  color: #f4e6c1;
+  font-family: Georgia, serif;
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.dl-circuit-trial > p,
+.dl-circuit-explore > p {
+  min-height: 72px;
+  margin: 10px 0 14px;
+  color: #c5d7d7;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.dl-circuit-choices {
+  display: grid;
+  gap: 8px;
+}
+
+.dl-circuit-choices button,
+.dl-circuit-compare,
+.dl-circuit-evidence-actions button,
+.dl-circuit-actions button {
+  min-height: 42px;
+  border: 1px solid #698188;
+  border-radius: 8px;
+  background: #17333e;
+  color: #eef2e8;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dl-circuit-choices button {
+  padding: 8px 10px;
+}
+
+.dl-circuit-choices button[aria-pressed="true"] {
+  border-color: #edc66f;
+  box-shadow: inset 4px 0 #edc66f;
+  background: #4a513d;
+}
+
+.dl-circuit-compare {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  text-align: center;
+  color: #18342f;
+  border-color: #c8ddd2;
+  background: #d9eadf;
+  font-weight: 700;
+}
+
+.dl-circuit-compare:disabled {
+  opacity: 1;
+  color: #30473f;
+  border-style: dashed;
+  border-color: #879b91;
+  background: #c7cec7;
+  cursor: not-allowed;
+}
+
+.dl-circuit-feedback {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 13px 13px 12px;
+  border: 1px solid #6a8887;
+  border-left: 4px solid #9edec9;
+  border-radius: 8px;
+  background: #102832;
+  color: #cfe0dc;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.dl-circuit-feedback[data-result="revise"] {
+  border-left-color: #f3c876;
+}
+
+.dl-circuit-feedback strong {
+  color: #f3eee0;
+  font-size: 12px;
+}
+
+.dl-circuit-evidence-actions,
+.dl-circuit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.dl-circuit-evidence-actions button,
+.dl-circuit-actions button {
+  flex: 1 1 120px;
+  padding: 7px 9px;
+  text-align: center;
+  background: #1c3b44;
+}
+
+.dl-circuit-explore .dl-slider {
+  margin-top: 16px;
+}
+
+.dl-circuit-select-label {
+  display: block;
+  margin: 15px 0 8px;
+}
+
+.dl-circuit-switches {
+  display: grid;
+  gap: 8px;
+  margin: 15px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.dl-circuit-switches legend {
+  margin-bottom: 7px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.dl-circuit-switches label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 28px;
+}
+
+.dl-circuit-switches input {
+  width: 18px;
+  height: 18px;
+  accent-color: #b9dcc7;
+}
+
+.dl-circuit-motion-note {
+  min-height: 0 !important;
+  margin: 10px 0 !important;
+  padding-left: 10px;
+  border-left: 3px solid #e9c56c;
+  color: #c6d7d6 !important;
+}
+
+.dl-circuit-definitions {
+  padding: 26px 30px;
+  background: #ece9db;
+  color: #263f3c;
+}
+
+.dl-circuit-definitions strong {
+  font-size: 15px;
+}
+
+.dl-circuit-definitions p {
+  margin: 8px 0 0;
+  color: #3b5650;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.dl-circuit-ledger {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 26px;
+  padding: 20px 30px;
+  border-top: 1px solid #354e58;
+  color: #c8d9d8;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dl-circuit-ledger span:first-child,
+.dl-circuit-ledger span:nth-child(3) {
+  color: #f1e6c7;
+  font-weight: 700;
+}
+
+.dl-circuit p.dl-circuit-caveat {
+  margin: 0;
+  padding: 0 30px 24px;
+  color: #c8d7d8;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .dl-circuit-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dl-circuit-explore {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .dl-circuit .dl-physical-view {
+    height: 320px;
+  }
+
+  .dl-circuit-header h3 {
+    font-size: 25px;
+  }
+
+  .dl-circuit-stage-readouts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dl-circuit-stage-readouts > div {
+    padding: 12px 14px;
+  }
+
+  .dl-circuit-stage-readouts strong {
+    font-size: 18px;
+  }
+
+  .dl-circuit-controls {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 24px 18px;
+  }
+
+  .dl-circuit-explore {
+    grid-column: auto;
+  }
+
+  .dl-circuit-trial > p,
+  .dl-circuit-explore > p {
+    min-height: 0;
+  }
+
+  .dl-circuit-definitions,
+  .dl-circuit-ledger {
+    padding: 23px 20px;
+  }
+
+  .dl-circuit-ledger {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .dl-circuit p.dl-circuit-caveat {
+    padding: 0 20px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-circuit *,
+  .dl-circuit *::before,
+  .dl-circuit *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -494,26 +494,30 @@
       "energy",
       "systems"
     ],
-    "summary": "Connect three model houses in series or parallel and investigate what happens when a switch opens.",
-    "question": "Can one house switch off while the others keep their lights on?",
-    "explanation": "Electric current needs a complete path. In a series circuit, the same current passes through every house, so one open switch breaks the whole path. Parallel branches provide separate paths across the battery; opening one branch leaves the others connected. The battery supplies energy, while charge keeps moving around complete paths. These houses are identical, fixed resistances with ideal wires and a battery that never runs down, not a model of household mains wiring.",
+    "summary": "Compare one series path with parallel branches, then measure how voltage changes current, power and energy.",
+    "question": "How do circuit paths and source voltage control charge flow and energy transfer?",
+    "explanation": "Current is charge flow rate (A = C/s), voltage is energy transferred per charge (V = J/C), and power is energy-transfer rate (W = J/s). For each fixed 12 Ω resistor in this ideal direct-current model, V = IR and P = VI. The same current passes through every load in series, while parallel branch currents add at the source. Charge is conserved around a complete circuit; the source transfers energy to the loads. The model uses an ideal 0–18 V source, zero-resistance wires and fixed resistors. It omits heating, transients, source sag, component limits and protective devices and is not guidance for household mains wiring.",
     "experiments": [
       {
-        "title": "Break one path",
-        "instruction": "Close all three switches in series. Predict which houses lose power when one switch opens, then try it. Repeat in parallel.",
-        "observe": "Compare the lit houses and current readings. Explain why one open switch affects every house in series but only its branch in parallel."
+        "title": "Open one switch",
+        "instruction": "Predict the effect of opening house 2. Compare series and parallel at the same ideal 12 V source, with houses 1 and 3 closed and all three resistors fixed at 12 Ω.",
+        "observe": "Series source current is 0 A because the only path is open. In parallel, houses 1 and 3 each carry 1 A and transfer 12 W while house 2 carries 0 A. Explain which paths remain complete."
       },
       {
-        "title": "Raise the voltage",
-        "instruction": "Close all switches and keep the circuit arrangement fixed. Predict the change in current when battery voltage increases, then compare two settings.",
-        "observe": "Higher voltage produces more current through the same resistance. Explain why this comparison would change if the resistance also changed."
+        "title": "Double the voltage",
+        "instruction": "Predict what changes when the ideal source increases from 6 V to 12 V. Keep all switches closed, use parallel wiring, keep each resistor fixed at 12 Ω and observe both trials for 10 s.",
+        "observe": "Each branch changes from 0.5 A, 3 W and 30 J to 1 A, 12 W and 120 J. Use I = V/R and P = V²/R to explain why current doubles while power and energy quadruple."
       }
     ],
-    "misconception": "A house uses electrical energy, not a supply of charge that disappears. Current is the rate at which charge passes a point.",
+    "misconception": "A load does not use up charge. Charge returns to the source while energy is transferred from the source to the loads; moving markers show conventional-current direction, not individual charges or their drift speed.",
     "sources": [
       {
-        "title": "OpenStax: Resistors in series and parallel",
-        "url": "https://openstax.org/books/university-physics-volume-2/pages/10-2-resistors-in-series-and-parallel"
+        "title": "OpenStax College Physics 2e: Resistors in Series and Parallel",
+        "url": "https://openstax.org/books/college-physics-2e/pages/21-1-resistors-in-series-and-parallel"
+      },
+      {
+        "title": "OpenStax College Physics 2e: Electric Power and Energy",
+        "url": "https://openstax.org/books/college-physics-2e/pages/20-4-electric-power-and-energy"
       }
     ],
     "duration_minutes": 12

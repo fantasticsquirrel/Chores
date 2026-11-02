@@ -84,8 +84,7 @@ export function CircuitDrawing({
   return (
     <>
       <text x="30" y="34" className="dl-world-caption">
-        CIRCUIT CITY /{" "}
-        {mode === "series" ? "ONE SHARED PATH" : "THREE INDEPENDENT PATHS"}
+        {mode === "series" ? "ONE SHARED PATH" : "THREE INDEPENDENT BRANCHES"}
       </text>
       <rect
         x="32"

@@ -6,7 +6,7 @@ const controls: [string, string][] = [
   ["sound-playground", "Half as many cycles per second"],
   ["bridge-builder", "Left support carries more"],
   ["river-sculptor", "Runoff and soil export both decrease"],
-  ["circuit-city", "Open house A switch"],
+  ["circuit-city", "All off in series; houses A and C on in parallel"],
   ["food-web-rescue", "Advance one week"],
   ["fraction-feast", "Increase Equal slices"],
   ["pattern-palace", "Rotate a quarter turn"],

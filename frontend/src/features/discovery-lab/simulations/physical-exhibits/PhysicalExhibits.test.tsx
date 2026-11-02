@@ -46,6 +46,25 @@ describe("physical exhibits: direct investigation equivalents", () => {
   });
   it("toggles a house from its exhibit card with correct path behavior", () => {
     render(<CircuitCitySimulation />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "All off in series; houses 1 and 3 on in parallel",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare series and parallel" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Current doubles; power and energy quadruple",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare 6 V and 12 V" }),
+    );
+    fireEvent.change(screen.getByLabelText("Wiring"), {
+      target: { value: "series" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Toggle House 2" }));
     expect(screen.getByLabelText("House 1 current")).toHaveTextContent(
       "0.00 A",

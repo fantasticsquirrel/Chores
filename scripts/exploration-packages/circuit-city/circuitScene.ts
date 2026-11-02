@@ -136,7 +136,8 @@ export function createCircuitScene(
       m.color.set(s.power[i] > 0 ? "#fbd18a" : "#1b3038");
       m.emissiveIntensity = brightness * 1.9;
     });
-    const key = `${s.mode}:${s.current.join()}`;
+    const phase = Number.isFinite(s.phase) ? ((s.phase % 1) + 1) % 1 : 0;
+    const key = `${s.mode}:${s.current.join()}:${phase.toFixed(3)}`;
     if (key === previous) return;
     previous = key;
     disposeObject(wires);
@@ -163,7 +164,12 @@ export function createCircuitScene(
       );
       cone.rotation.z = -Math.PI / 2;
       cone.rotation.y = angle;
-      cone.position.set(x, 0.18, z);
+      const travel = (phase - 0.5) * 1.1;
+      cone.position.set(
+        x + Math.cos(angle) * travel,
+        0.18,
+        z + Math.sin(angle) * travel,
+      );
       wires.add(cone);
     };
     const total = s.current.reduce((a, b) => a + b, 0);

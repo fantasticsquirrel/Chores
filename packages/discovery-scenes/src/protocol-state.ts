@@ -40,6 +40,7 @@ export type OfflineSceneState =
       power: number[];
       current: number[];
       voltage: number;
+      phase: number;
     }
   | { kind: "pizza"; plates: PizzaPlateState[]; active: number }
   | {

@@ -48,14 +48,16 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
           "power",
           "current",
           "voltage",
+          "phase",
         ]) &&
         (value.mode === "parallel" || value.mode === "series") &&
         Array.isArray(value.switches) &&
         value.switches.length === 3 &&
         value.switches.every((v) => typeof v === "boolean") &&
-        numbers(value.power, 3, 0, 1000) &&
-        numbers(value.current, 3, 0, 100) &&
-        number(value.voltage, 0, 100)
+        numbers(value.power, 3, 0, 27) &&
+        numbers(value.current, 3, 0, 1.5) &&
+        number(value.voltage, 0, 18) &&
+        number(value.phase, 0, 1)
       );
     case "pizza":
       return (

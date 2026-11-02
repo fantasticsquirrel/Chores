@@ -24,6 +24,7 @@ export type CircuitSceneState = {
   power: number[];
   current: number[];
   voltage: number;
+  phase: number;
 };
 export type PhysicalSceneState =
   | BridgeSceneState

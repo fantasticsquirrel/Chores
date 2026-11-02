@@ -1,5 +1,8 @@
 import { soundActivity } from "./sound";
 import { riverActivity } from "./river";
+import { circuitActivity, type CircuitMode } from "./circuit";
+
+export type { CircuitMode } from "./circuit";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
@@ -19,28 +22,26 @@ export function stringWave(
   };
 }
 
-export type CircuitMode = "series" | "parallel";
-/** Ideal battery, wires and switches; each house is a fixed 12-ohm resistor. */
+/** Compatibility wrapper for the dedicated Circuit City ideal-resistor model. */
 export function circuit(
   mode: CircuitMode,
   voltage: number,
   switches: readonly boolean[],
 ) {
-  const supply = Math.max(0, voltage);
-  const closed = switches.every(Boolean) && switches.length > 0;
-  const seriesCurrent = closed ? supply / (12 * switches.length) : 0;
-  const houseCurrent = switches.map((on) =>
-    mode === "series" ? seriesCurrent : on ? supply / 12 : 0,
-  );
-  const houseVoltage = houseCurrent.map((current) => current * 12);
+  const result = circuitActivity({
+    mode,
+    sourceVoltageVolts: voltage,
+    switches: [
+      switches[0] === true,
+      switches[1] === true,
+      switches[2] === true,
+    ],
+  });
   return {
-    totalCurrent:
-      mode === "series"
-        ? seriesCurrent
-        : houseCurrent.reduce((a, b) => a + b, 0),
-    houseCurrent,
-    houseVoltage,
-    housePower: houseCurrent.map((current) => current ** 2 * 12),
+    totalCurrent: result.totalCurrentAmperes,
+    houseCurrent: result.houseCurrentAmperes,
+    houseVoltage: result.houseVoltageVolts,
+    housePower: result.housePowerWatts,
   };
 }
 

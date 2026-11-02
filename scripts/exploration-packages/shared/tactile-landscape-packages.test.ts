@@ -54,6 +54,24 @@ import {
 } from "../river-sculptor/model";
 import { buildRiver as buildWebRiver } from "../../../packages/discovery-scenes/src/landscape/river";
 import { buildRiver as buildPackageRiver } from "../river-sculptor/river";
+import {
+  CIRCUIT_DEFAULT_INPUTS as SHARED_CIRCUIT_DEFAULTS,
+  CIRCUIT_SWITCH_COMPARISON as SHARED_CIRCUIT_SWITCH_COMPARISON,
+  CIRCUIT_VOLTAGE_COMPARISON as SHARED_CIRCUIT_VOLTAGE_COMPARISON,
+  circuitActivity as sharedCircuitActivity,
+  circuitStateAtPhase as sharedCircuitStateAtPhase,
+  normalizeCircuitInputs as normalizeSharedCircuit,
+} from "../../../packages/family-api/src/discovery-models/circuit";
+import {
+  CIRCUIT_DEFAULT_INPUTS as PACKAGE_CIRCUIT_DEFAULTS,
+  CIRCUIT_SWITCH_COMPARISON as PACKAGE_CIRCUIT_SWITCH_COMPARISON,
+  CIRCUIT_VOLTAGE_COMPARISON as PACKAGE_CIRCUIT_VOLTAGE_COMPARISON,
+  circuitActivity as packageCircuitActivity,
+  circuitStateAtPhase as packageCircuitStateAtPhase,
+  normalizeCircuitInputs as normalizePackageCircuit,
+} from "../circuit-city/model";
+import { createCircuitScene as createWebCircuitScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/circuitScene";
+import { createCircuitScene as createPackageCircuitScene } from "../circuit-city/circuitScene";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -580,6 +598,130 @@ describe("ten independently authored rich explorations", () => {
     expect(o.controls.find((c: any) => c.id === "rain").value).toBe(100);
     expect(send("play").animate).toBe(true);
     expect(send("phase", 90).animate).toBe(false);
+  }, 30000);
+  it("circuit package exactly mirrors the shared bounded ideal-resistor model", () => {
+    expect(PACKAGE_CIRCUIT_DEFAULTS).toEqual(SHARED_CIRCUIT_DEFAULTS);
+    expect(PACKAGE_CIRCUIT_SWITCH_COMPARISON).toEqual(
+      SHARED_CIRCUIT_SWITCH_COMPARISON,
+    );
+    expect(PACKAGE_CIRCUIT_VOLTAGE_COMPARISON).toEqual(
+      SHARED_CIRCUIT_VOLTAGE_COMPARISON,
+    );
+    for (const inputs of [
+      SHARED_CIRCUIT_DEFAULTS,
+      ...SHARED_CIRCUIT_SWITCH_COMPARISON,
+      ...SHARED_CIRCUIT_VOLTAGE_COMPARISON,
+      {
+        mode: "parallel" as const,
+        sourceVoltageVolts: Number.NaN,
+        switches: [true, false] as unknown as readonly [
+          boolean,
+          boolean,
+          boolean,
+        ],
+      },
+    ]) {
+      expect(normalizePackageCircuit(inputs)).toEqual(
+        normalizeSharedCircuit(inputs),
+      );
+      expect(packageCircuitActivity(inputs)).toEqual(
+        sharedCircuitActivity(inputs),
+      );
+    }
+    expect(packageCircuitStateAtPhase(PACKAGE_CIRCUIT_DEFAULTS, 2.25)).toEqual(
+      sharedCircuitStateAtPhase(SHARED_CIRCUIT_DEFAULTS, 2.25),
+    );
+  });
+  it("circuit package and web preserve identical dimensional scene geometry", () => {
+    const activity = sharedCircuitStateAtPhase(
+      SHARED_CIRCUIT_VOLTAGE_COMPARISON[1],
+      0.35,
+    );
+    const state = {
+      kind: "circuit" as const,
+      mode: activity.mode,
+      switches: [...activity.switches],
+      power: activity.housePowerWatts,
+      current: activity.houseCurrentAmperes,
+      voltage: activity.sourceVoltageVolts,
+      phase: activity.visualPhase,
+    };
+    const web = createWebCircuitScene(state);
+    const packaged = createPackageCircuitScene(state);
+    const signature = (scene: typeof web) => {
+      const objects: unknown[] = [];
+      scene.group.traverse((object) => {
+        const mesh = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: {
+            color?: { getHexString(): string };
+            emissive?: { getHexString(): string };
+            emissiveIntensity?: number;
+          };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+          scale: object.scale.toArray(),
+          geometry: mesh.geometry?.type,
+          vertices: mesh.geometry?.attributes?.position?.count,
+          color: mesh.material?.color?.getHexString(),
+          emissive: mesh.material?.emissive?.getHexString(),
+          emissiveIntensity: mesh.material?.emissiveIntensity,
+        });
+      });
+      return { objects, labels: scene.labels?.(), view: scene.view };
+    };
+    expect(signature(packaged)).toEqual(signature(web));
+    const next = { ...state, phase: 0.75 };
+    web.update(next);
+    packaged.update(next);
+    expect(signature(packaged)).toEqual(signature(web));
+    web.dispose();
+    packaged.dispose();
+  });
+  it("circuit gates two fair comparisons and exposes charge and energy evidence", () => {
+    const send = worker("circuit-city");
+    const initial = send();
+    expect(initial.controls).toHaveLength(0);
+    expect(
+      initial.buttons.find((button: any) => button.id === "comparePath")
+        .disabled,
+    ).toBe(true);
+    send("pathSeriesOff");
+    let output = send("comparePath");
+    expect(output.sections[0].text).toContain("matches your prediction");
+    expect(output.sections[0].text).toContain(
+      "Series: 0.00 A source current · houses 0.0, 0.0, 0.0 W",
+    );
+    send("voltageQuadratic");
+    output = send("compareVoltage");
+    expect(output.sections[1].text).toContain("matches your prediction");
+    expect(output.sections[1].text).toContain(
+      "6 V: each house 0.50 A · 3.0 W · 30.0 J in 10 s",
+    );
+    expect(output.controls.map((control: any) => control.id)).toEqual([
+      "mode",
+      "voltage",
+      "switch0",
+      "switch1",
+      "switch2",
+      "phase",
+    ]);
+    expect(output.description).toContain(
+      "Charge in 10 s: 30.0 C leaves the source and 30.0 C returns",
+    );
+    expect(output.description).toContain(
+      "Energy in 10 s: 360.0 J supplied = 360.0 J transferred",
+    );
+    expect(send("play").animate).toBe(true);
+    expect(send("phase", 90).animate).toBe(false);
+    expect(send(undefined, undefined, "reset").controls).toHaveLength(0);
   }, 30000);
   it("fractions preserve sparse slices under splitting and show sums beyond one", () => {
     const send = worker("fraction-feast");

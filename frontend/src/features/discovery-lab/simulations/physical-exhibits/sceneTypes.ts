@@ -1,8 +1,6 @@
 import type { Group, Vector3 } from "three";
-import type {
-  BridgeMaterial,
-  CircuitMode,
-} from "@family-manager/family-api/discovery-models/physical-world";
+import type { BridgeMaterial } from "@family-manager/family-api/discovery-models/physical-world";
+import type { CircuitMode } from "@family-manager/family-api/discovery-models/circuit";
 export type BridgeSceneState = {
   kind: "bridge";
   material: BridgeMaterial;
@@ -29,6 +27,7 @@ export type CircuitSceneState = {
   power: number[];
   current: number[];
   voltage: number;
+  phase: number;
 };
 export type PhysicalSceneState =
   | BridgeSceneState
