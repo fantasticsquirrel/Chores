@@ -84,7 +84,9 @@ const states: OfflineSceneState[] = [
     eroded: 3,
     flood: 0,
     deposited: 1,
+    exported: 2,
     soil: 100,
+    phase: 0,
   },
   {
     kind: "pond",

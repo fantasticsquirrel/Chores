@@ -131,10 +131,12 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
           "eroded",
           "flood",
           "deposited",
+          "exported",
           "soil",
+          "phase",
         ]) &&
-        number(value.slope, 1, 20) &&
-        number(value.rain, 0, 120) &&
+        number(value.slope, 0, 20) &&
+        number(value.rain, 0, 100) &&
         number(value.vegetation, 0, 100) &&
         [
           value.runoff,
@@ -142,8 +144,10 @@ export function validSceneState(value: unknown): value is OfflineSceneState {
           value.eroded,
           value.flood,
           value.deposited,
+          value.exported,
           value.soil,
-        ].every((v) => number(v, 0, 1000000))
+        ].every((v) => number(v, 0, 1000000)) &&
+        number(value.phase, 0, 1)
       );
     case "pond":
       return (

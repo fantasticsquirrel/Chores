@@ -36,6 +36,24 @@ import {
 } from "../bridge-builder/model";
 import { createBridgeScene as createWebBridgeScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/bridgeScene";
 import { createBridgeScene as createPackageBridgeScene } from "../bridge-builder/bridgeScene";
+import {
+  RIVER_DEFAULT_INPUTS as SHARED_RIVER_DEFAULTS,
+  RIVER_INITIAL_LEDGER as SHARED_RIVER_LEDGER,
+  applyRiverStorm as applySharedRiverStorm,
+  normalizeRiverInputs as normalizeSharedRiver,
+  riverActivity as sharedRiverActivity,
+  riverStateAtPhase as sharedRiverStateAtPhase,
+} from "../../../packages/family-api/src/discovery-models/river";
+import {
+  RIVER_DEFAULT_INPUTS as PACKAGE_RIVER_DEFAULTS,
+  RIVER_INITIAL_LEDGER as PACKAGE_RIVER_LEDGER,
+  applyRiverStorm as applyPackageRiverStorm,
+  normalizeRiverInputs as normalizePackageRiver,
+  riverActivity as packageRiverActivity,
+  riverStateAtPhase as packageRiverStateAtPhase,
+} from "../river-sculptor/model";
+import { buildRiver as buildWebRiver } from "../../../packages/discovery-scenes/src/landscape/river";
+import { buildRiver as buildPackageRiver } from "../river-sculptor/river";
 const ids = [
   "sound-playground",
   "bridge-builder",
@@ -188,6 +206,10 @@ describe("ten independently authored rich explorations", () => {
     );
     expect(amplitude.audio[0].gain).toBeLessThanOrEqual(0.018);
     expect(send("play").animate).toBe(true);
+    const moving = send(undefined, undefined, "step", { dt: 0.5 });
+    expect(
+      moving.controls.find((control: any) => control.id === "phase").value,
+    ).toBeGreaterThan(0);
     expect(send("phase", 90).animate).toBe(false);
     expect(
       send(undefined, undefined, "step", { dt: 0.05 }).controls.find(
@@ -445,17 +467,119 @@ describe("ten independently authored rich explorations", () => {
     web.dispose();
     packaged.dispose();
   });
-  it("river soil is conserved through repeated storms and restore preserves controls", () => {
+  it("river package mirrors the shared bounded model", () => {
+    for (const inputs of [
+      SHARED_RIVER_DEFAULTS,
+      {
+        catchmentSlopePercent: 0,
+        rainfallMillimeters: 0,
+        vegetationCoverPercent: 100,
+      },
+      {
+        catchmentSlopePercent: 20,
+        rainfallMillimeters: 100,
+        vegetationCoverPercent: 0,
+      },
+      {
+        catchmentSlopePercent: Number.NaN,
+        rainfallMillimeters: Infinity,
+        vegetationCoverPercent: -5,
+      },
+    ]) {
+      expect(normalizePackageRiver(inputs)).toEqual(
+        normalizeSharedRiver(inputs),
+      );
+      expect(packageRiverActivity(inputs)).toEqual(sharedRiverActivity(inputs));
+    }
+    expect(PACKAGE_RIVER_DEFAULTS).toEqual(SHARED_RIVER_DEFAULTS);
+    expect(PACKAGE_RIVER_LEDGER).toEqual(SHARED_RIVER_LEDGER);
+    expect(packageRiverStateAtPhase(PACKAGE_RIVER_DEFAULTS, 2.25)).toEqual(
+      sharedRiverStateAtPhase(SHARED_RIVER_DEFAULTS, 2.25),
+    );
+    expect(
+      applyPackageRiverStorm(PACKAGE_RIVER_DEFAULTS, PACKAGE_RIVER_LEDGER),
+    ).toEqual(
+      applySharedRiverStorm(SHARED_RIVER_DEFAULTS, SHARED_RIVER_LEDGER),
+    );
+  });
+  it("river package and web preserve the same dimensional scene geometry", () => {
+    const activity = sharedRiverStateAtPhase(SHARED_RIVER_DEFAULTS, 0.35);
+    const state = {
+      kind: "river" as const,
+      slope: activity.catchmentSlopePercent,
+      rain: activity.rainfallMillimeters,
+      vegetation: activity.vegetationCoverPercent,
+      runoff: activity.runoffCubicMeters,
+      infiltration: activity.infiltrationCubicMeters,
+      eroded: activity.soilMovedKilograms,
+      flood: activity.channelCapacityExcessCubicMeters,
+      deposited: 48,
+      exported: 22,
+      soil: 4930,
+      phase: activity.visualPhase,
+    };
+    const web = buildWebRiver(state);
+    const packaged = buildPackageRiver(state);
+    const signature = (built: typeof web) => {
+      const objects: unknown[] = [];
+      built.group.traverse((object) => {
+        const mesh = object as typeof object & {
+          geometry?: {
+            type: string;
+            attributes?: { position?: { count: number } };
+          };
+          material?: { color?: { getHexString(): string } };
+        };
+        objects.push({
+          type: object.type,
+          name: object.name,
+          position: object.position.toArray(),
+          rotation: [object.rotation.x, object.rotation.y, object.rotation.z],
+          scale: object.scale.toArray(),
+          geometry: mesh.geometry?.type,
+          vertices: mesh.geometry?.attributes?.position?.count,
+          color: mesh.material?.color?.getHexString(),
+        });
+      });
+      return { objects, labels: built.labels };
+    };
+    expect(signature(packaged)).toEqual(signature(web));
+    web.group.clear();
+    packaged.group.clear();
+  });
+  it("river gates comparisons, conserves soil and restore preserves controls", () => {
     const send = worker("river-sculptor");
-    send();
+    const initial = send();
+    expect(initial.controls).toHaveLength(0);
+    expect(
+      initial.buttons.find((button: any) => button.id === "compareVegetation")
+        .disabled,
+    ).toBe(true);
+    send("vegetationBoth");
+    let o: any = send("compareVegetation");
+    expect(
+      o.buttons.find((button: any) => button.id === "compareVegetation")
+        .disabled,
+    ).toBe(true);
+    expect(o.sections[0].text).toContain("matches your prediction");
+    expect(o.sections[0].text).toContain("Bare: runoff 320.0 m³");
+    send("slopeSoil");
+    o = send("compareSlope");
+    expect(
+      o.buttons.find((button: any) => button.id === "compareSlope").disabled,
+    ).toBe(true);
+    expect(o.sections[1].text).toContain("matches your prediction");
+    expect(o.sections[1].text).toContain("20% slope: runoff 232.0 m³");
+    expect(o.controls).toHaveLength(4);
     send("rain", 100);
     send("vegetation", 0);
-    let o: any;
     for (let n = 0; n < 20; n++) o = send("storm");
     expect(o.description).toContain("Total 5000.0 kg");
     o = send("restore");
     expect(o.description).toContain("Soil remaining 5000.0");
     expect(o.controls.find((c: any) => c.id === "rain").value).toBe(100);
+    expect(send("play").animate).toBe(true);
+    expect(send("phase", 90).animate).toBe(false);
   }, 30000);
   it("fractions preserve sparse slices under splitting and show sums beyond one", () => {
     const send = worker("fraction-feast");

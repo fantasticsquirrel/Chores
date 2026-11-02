@@ -17,7 +17,9 @@ describe("landscape scene geometry", () => {
       eroded: 0,
       flood: 0,
       deposited: 0,
+      exported: 0,
       soil: 5000,
+      phase: 0,
     });
     expect(dry.group.getObjectByName("floodwater")).toBeUndefined();
     const wet = buildRiver({
@@ -30,10 +32,14 @@ describe("landscape scene geometry", () => {
       eroded: 800,
       flood: 620,
       deposited: 120,
+      exported: 680,
       soil: 4200,
+      phase: 0.4,
     });
     expect(wet.group.getObjectByName("floodwater")).toBeTruthy();
     expect(wet.group.getObjectByName("deposited-sediment")).toBeTruthy();
+    expect(wet.group.getObjectByName("transported-sediment")).toBeTruthy();
+    expect(wet.group.getObjectByName("exported-sediment")).toBeTruthy();
     disposeGroup(dry.group);
     disposeGroup(wet.group);
   });

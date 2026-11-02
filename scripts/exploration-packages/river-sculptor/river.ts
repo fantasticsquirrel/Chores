@@ -18,7 +18,8 @@ export const riverCenter = (x: number) =>
 export function buildRiver(state: RiverSceneState): BuiltLandscape {
   const group = new T.Group();
   const grade = state.slope / 90,
-    loss = (5000 - state.soil) / 5000;
+    loss = (5000 - state.soil) / 5000,
+    phase = ((state.phase % 1) + 1) % 1;
   const bed = (x: number) => 0.05 + (6 - x) * grade;
   const surface = (x: number, z: number) => {
     const distance = Math.abs(z - riverCenter(x));
@@ -81,6 +82,44 @@ export function buildRiver(state: RiverSceneState): BuiltLandscape {
       );
     }
   }
+  const rills = new T.Group();
+  rills.name = "runoff-rills";
+  group.add(rills);
+  const rillCount = Math.min(8, Math.ceil(state.runoff / 100));
+  for (let i = 0; i < rillCount; i++) {
+    const x = -5.7 + i * (11.4 / Math.max(1, rillCount - 1));
+    const center = riverCenter(x);
+    const side = i % 2 ? 1 : -1;
+    const outerZ = center + side * (2.2 + (i % 3) * 0.35);
+    line(
+      rills,
+      [
+        v(x - 0.25, surface(x - 0.25, outerZ) + 0.04, outerZ),
+        v(x, surface(x, center + side * 1.25) + 0.035, center + side * 1.25),
+        v(x + 0.12, bed(x) + 0.09, center + side * 0.48),
+      ],
+      "#91c9c4",
+      0.018,
+    );
+  }
+  const transport = new T.Group();
+  transport.name = "transported-sediment";
+  group.add(transport);
+  const transportCount = Math.min(24, Math.ceil(state.eroded / 18));
+  for (let i = 0; i < transportCount; i++) {
+    const progress = (phase + i / Math.max(1, transportCount)) % 1;
+    const pointIndex = 4 + Math.floor(progress * 92);
+    const p = waterPoints[pointIndex];
+    const grain = mesh(
+      transport,
+      new T.OctahedronGeometry(0.045 + (i % 3) * 0.01),
+      material(i % 2 ? "#f1d29b" : "#c9965f"),
+      p.x,
+      p.y + 0.055 + (i % 2) * 0.025,
+      p.z + Math.sin(i * 2.7) * 0.19,
+    );
+    grain.scale.set(1.35, 0.7, 1);
+  }
   if (state.flood > 0) {
     const flood = ribbon(
       group,
@@ -124,6 +163,22 @@ export function buildRiver(state: RiverSceneState): BuiltLandscape {
     );
     grain.scale.y = 0.55;
   }
+  const exported = new T.Group();
+  exported.name = "exported-sediment";
+  group.add(exported);
+  for (let i = 0; i < Math.min(18, Math.ceil(state.exported / 12)); i++) {
+    const x = 6.2 + ((i * 0.19 + phase * 0.9) % 1.1),
+      z = riverCenter(6.2) + Math.sin(i * 2.2) * 0.22;
+    const grain = mesh(
+      exported,
+      new T.OctahedronGeometry(0.045 + (i % 2) * 0.015),
+      material("#e2bd7c"),
+      x,
+      bed(6.2) + 0.14 + (i % 3) * 0.025,
+      z,
+    );
+    grain.scale.y = 0.65;
+  }
   for (let i = 0; i < Math.floor(state.vegetation * 0.65); i++) {
     const x = -6.5 + ((i * 2.137) % 13),
       z = -4.1 + ((i * 1.729) % 8.2);
@@ -146,16 +201,16 @@ export function buildRiver(state: RiverSceneState): BuiltLandscape {
     labels: [
       { text: "Upstream", x: -5, y: bed(-5) + 0.5, z: riverCenter(-5) },
       {
-        text: "Sediment deposits",
+        text: "Deposition zone",
         x: 3.5,
         y: bed(3.5) + 0.5,
         z: riverCenter(3.5) + 0.9,
       },
       {
-        text: "Downstream outlet",
-        x: 6.1,
-        y: bed(6.1) + 0.35,
-        z: riverCenter(6.1),
+        text: "Sediment exits downstream",
+        x: 5,
+        y: bed(5) + 0.85,
+        z: riverCenter(5),
       },
     ],
   };

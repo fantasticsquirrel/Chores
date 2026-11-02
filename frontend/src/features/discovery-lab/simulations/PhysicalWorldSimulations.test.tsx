@@ -65,9 +65,9 @@ describe("physical world exploration controls", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Compare point loads" }),
     );
-    const before = screen
-      .getByRole("button", { name: "Brace section 2" })
-      .textContent;
+    const before = screen.getByRole("button", {
+      name: "Brace section 2",
+    }).textContent;
     fireEvent.click(screen.getByRole("button", { name: "Brace section 2" }));
     expect(
       screen.getByRole("button", { name: "Brace section 2", pressed: true }),
@@ -76,12 +76,35 @@ describe("physical world exploration controls", () => {
       screen.getByRole("button", { name: "Brace section 2" }).textContent,
     ).not.toBe(before);
     fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
-    expect(screen.queryByRole("button", { name: "Brace section 2" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Brace section 2" }),
+    ).toBeNull();
   });
   it("erodes finite soil only when a storm is run and resets it", () => {
     render(<RiverSculptorSimulation />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Runoff and soil export both decrease",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare vegetation cover" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Compare vegetation cover" }),
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Only soil moved increases" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare catchment slopes" }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Compare catchment slopes" }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Restore soil" }));
     const before = screen.getByLabelText("Soil remaining").textContent;
-    fireEvent.change(screen.getByLabelText("Rainfall"), {
+    fireEvent.change(screen.getByLabelText("Rainfall in one hour"), {
       target: { value: 100 },
     });
     expect(screen.getByLabelText("Soil remaining").textContent).toBe(before);
@@ -90,8 +113,10 @@ describe("physical world exploration controls", () => {
       before,
     );
     expect(screen.getByText("Storm 1")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(screen.getByLabelText("Soil remaining").textContent).toBe(before);
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(screen.getByLabelText("Soil remaining")).toHaveTextContent(
+      "5000.0 kg",
+    );
   });
   it("keeps other parallel houses on when one switch opens", () => {
     render(<CircuitCitySimulation />);

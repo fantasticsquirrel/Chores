@@ -10,37 +10,87 @@ afterEach(cleanup);
 const change = (label: string, value: number | string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 describe("landscape investigations", () => {
-  it.each([
-    RiverSculptorSimulation,
-    FoodWebSimulation,
-    CaravanSimulation,
-    PollinatorSimulation,
-  ])("keeps two prediction and comparison investigations", (Component) => {
-    render(<Component />);
-    const tabs = screen.getAllByRole("tab");
-    expect(tabs).toHaveLength(2);
-    expect(screen.getByText("1. Predict")).toBeTruthy();
-    expect(screen.getByText("2. Compare")).toBeTruthy();
-    expect(screen.getByText("3. Explain")).toBeTruthy();
-    fireEvent.click(tabs[1]);
-    expect(tabs[1]).toHaveAttribute("aria-selected", "true");
-    expect(
-      screen.getAllByRole("button", { pressed: false }).length,
-    ).toBeGreaterThanOrEqual(2);
-  });
+  it.each([FoodWebSimulation, CaravanSimulation, PollinatorSimulation])(
+    "keeps two prediction and comparison investigations",
+    (Component) => {
+      render(<Component />);
+      const tabs = screen.getAllByRole("tab");
+      expect(tabs).toHaveLength(2);
+      expect(screen.getByText("1. Predict")).toBeTruthy();
+      expect(screen.getByText("2. Compare")).toBeTruthy();
+      expect(screen.getByText("3. Explain")).toBeTruthy();
+      fireEvent.click(tabs[1]);
+      expect(tabs[1]).toHaveAttribute("aria-selected", "true");
+      expect(
+        screen.getAllByRole("button", { pressed: false }).length,
+      ).toBeGreaterThanOrEqual(2);
+    },
+  );
   it("restores soil without changing the independent storm inputs", () => {
     render(<RiverSculptorSimulation />);
-    change("Rainfall", 80);
-    change("Channel slope", 18);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Runoff and soil export both decrease",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare vegetation cover" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Only soil moved increases" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare catchment slopes" }),
+    );
+    change("Rainfall in one hour", 80);
+    change("Catchment slope", 18);
     change("Vegetation cover", 0);
     fireEvent.click(screen.getByRole("button", { name: "Run one storm" }));
     fireEvent.click(screen.getByRole("button", { name: "Restore soil" }));
     expect(screen.getByLabelText("Soil remaining")).toHaveTextContent(
       "5000.0 kg",
     );
-    expect(screen.getByLabelText("Rainfall")).toHaveValue("80");
-    expect(screen.getByLabelText("Channel slope")).toHaveValue("18");
+    expect(screen.getByLabelText("Rainfall in one hour")).toHaveValue("80");
+    expect(screen.getByLabelText("Catchment slope")).toHaveValue("18");
     expect(screen.getByLabelText("Vegetation cover")).toHaveValue("0");
+  });
+
+  it("gates River controls behind two predictions and reports fixed evidence", () => {
+    render(<RiverSculptorSimulation />);
+    expect(screen.queryByLabelText("Catchment slope")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Compare vegetation cover" }),
+    ).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Runoff and soil export both decrease",
+      }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare vegetation cover" }),
+    );
+    expect(screen.getByTestId("river-vegetation-feedback")).toHaveTextContent(
+      "Bare: runoff 320.0 m³",
+    );
+    expect(screen.getByTestId("river-vegetation-feedback")).toHaveTextContent(
+      "100% cover: runoff 100.0 m³",
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Only soil moved increases" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Compare catchment slopes" }),
+    );
+    expect(screen.getByTestId("river-slope-feedback")).toHaveTextContent(
+      "2% slope: runoff 232.0 m³",
+    );
+    expect(screen.getByTestId("river-slope-feedback")).toHaveTextContent(
+      "20% slope: runoff 232.0 m³",
+    );
+    expect(screen.getByLabelText("Catchment slope")).toBeTruthy();
+    expect(screen.getByLabelText("Sediment tracer phase")).toBeTruthy();
   });
   it("preserves the exact garden coordinates and species used for reach calculations", () => {
     expect(

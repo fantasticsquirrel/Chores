@@ -5,7 +5,7 @@ import { NativeExploration } from "./NativeExploration";
 const controls: [string, string][] = [
   ["sound-playground", "Half as many cycles per second"],
   ["bridge-builder", "Left support carries more"],
-  ["river-sculptor", "Increase Rainfall"],
+  ["river-sculptor", "Runoff and soil export both decrease"],
   ["circuit-city", "Open house A switch"],
   ["food-web-rescue", "Advance one week"],
   ["fraction-feast", "Increase Equal slices"],

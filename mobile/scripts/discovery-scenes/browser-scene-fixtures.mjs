@@ -201,7 +201,9 @@ cases.push(
         eroded: 3,
         flood: 0,
         deposited: 1,
+        exported: 2,
         soil: 100,
+        phase: 0,
       },
       changed: {
         kind: "river",
@@ -213,7 +215,9 @@ cases.push(
         eroded: 30,
         flood: 20,
         deposited: 15,
+        exported: 25,
         soil: 60,
+        phase: 0.5,
       },
     },
     {

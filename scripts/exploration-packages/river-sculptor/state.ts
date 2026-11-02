@@ -8,7 +8,9 @@ export type RiverSceneState = {
   eroded: number;
   flood: number;
   deposited: number;
+  exported: number;
   soil: number;
+  phase: number;
 };
 export type PondSceneState = {
   kind: "pond";

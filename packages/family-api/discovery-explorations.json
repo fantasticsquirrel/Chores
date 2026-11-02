@@ -452,22 +452,22 @@
       "water",
       "landforms"
     ],
-    "summary": "Send rain down a slope and trace soil as it erodes, settles or travels downstream.",
-    "question": "Where does soil go when rain washes it away?",
-    "explanation": "Flowing water can remove soil, carry it as sediment and deposit it where the flow slows. Steeper slopes and heavier rainfall can increase runoff and erosion. Plant cover helps protect soil and slows runoff. This model follows soil through a one-hour storm on a small plot: some stays on the slope, some settles nearby and some leaves downstream. Its amounts use teaching assumptions, not measurements from a real river or a flood forecast.",
+    "summary": "Compare vegetation and slope, then account for soil that stays, deposits or exits downstream.",
+    "question": "How do vegetation and catchment slope change runoff and soil transport in this model?",
+    "explanation": "Water erosion detaches and transports soil. Sediment can settle where flow slows or continue downstream. Vegetation and stable soil structure can increase infiltration and reduce runoff, while long, steep slopes can increase the power of water to erode and transport soil. This one-hour, one-hectare teaching model holds many real conditions fixed so you can compare one variable at a time. Its runoff, erosion, export and channel-capacity coefficients are invented; the results are not field measurements or a flood forecast.",
     "experiments": [
       {
-        "title": "Follow the sediment",
-        "instruction": "Predict where the soil will go. Set rainfall above zero, run one storm and compare soil remaining, deposited sediment and sediment leaving downstream.",
-        "observe": "Check that eroded soil is divided between deposition and downstream export. Explain why erosion moves material rather than making it disappear."
+        "title": "Add vegetation",
+        "instruction": "Predict what happens to runoff and soil export when vegetation changes from 0% to 100%. Compare one 40 mm storm on an 8% slope with the same 5,000 kg starting soil, area and duration.",
+        "observe": "Compare runoff, infiltration, soil moved, deposition and export in both trials. Which changes explain the smaller or larger downstream export?"
       },
       {
-        "title": "Protect the slope",
-        "instruction": "Record your slope and rainfall settings. Reset the landscape, restore those settings and run a storm with little vegetation. Reset again and restore the same slope and rainfall. Predict the effect of more vegetation before repeating.",
-        "observe": "Compare erosion and runoff from the two storms. Explain why a fair comparison needs the same starting soil, slope and rain."
+        "title": "Steepen the slope",
+        "instruction": "Predict whether runoff, soil moved or both change when catchment slope changes from 2% to 20%. Compare one storm with rain fixed at 40 mm, vegetation fixed at 40% and the same 5,000 kg starting soil, area and duration.",
+        "observe": "Runoff stays fixed in this teaching formula while soil moved and export increase. Explain why this result describes the model relationship rather than every real catchment."
       }
     ],
-    "misconception": "Clearer water does not mean sediment has vanished. It may have settled on the bed or moved farther downstream.",
+    "misconception": "Erosion does not destroy soil. Removed material is transported, then deposits within the reach or exits downstream. Clearer water can still mean sediment settled elsewhere.",
     "sources": [
       {
         "title": "USGS: Sediment and suspended sediment",

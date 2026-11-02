@@ -1,4 +1,5 @@
 import { soundActivity } from "./sound";
+import { riverActivity } from "./river";
 
 const clamp = (value: number, min = 0, max = 100) =>
   Math.min(max, Math.max(min, value));
@@ -81,32 +82,29 @@ export function bridge(
   };
 }
 
-/** One-hour storm on one hectare; empirical teaching coefficients, not a flood forecast. */
+/** Compatibility wrapper for the dedicated River Sculptor teaching model. */
 export function riverStorm(
   slopePercent: number,
   rainMm: number,
   vegetationPercent: number,
   availableSoil = 5000,
 ) {
-  const vegetation = clamp(vegetationPercent) / 100;
-  const slope = clamp(slopePercent, 0, 20) / 20;
-  const rainVolume = Math.max(0, rainMm) * 10;
-  const runoff = rainVolume * (0.8 - 0.55 * vegetation);
-  const infiltration = rainVolume - runoff;
-  const eroded = Math.min(
-    Math.max(0, availableSoil),
-    runoff * (0.1 + 0.9 * slope) * (1 - 0.85 * vegetation),
+  const result = riverActivity(
+    {
+      catchmentSlopePercent: slopePercent,
+      rainfallMillimeters: rainMm,
+      vegetationCoverPercent: vegetationPercent,
+    },
+    availableSoil,
   );
-  const exported = eroded * clamp(0.25 + 0.6 * slope - 0.2 * vegetation, 0, 1);
   return {
-    rainVolume,
-    runoff,
-    infiltration,
-    eroded,
-    exported,
-    deposited: eroded - exported,
-    // 180 m³ passes within the channel during the modeled hour.
-    floodVolume: Math.max(0, runoff - 180),
+    rainVolume: result.rainfallVolumeCubicMeters,
+    runoff: result.runoffCubicMeters,
+    infiltration: result.infiltrationCubicMeters,
+    eroded: result.soilMovedKilograms,
+    exported: result.exportedKilograms,
+    deposited: result.depositedKilograms,
+    floodVolume: result.channelCapacityExcessCubicMeters,
   };
 }
 

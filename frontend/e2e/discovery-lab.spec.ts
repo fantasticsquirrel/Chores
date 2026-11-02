@@ -170,7 +170,7 @@ for (const viewport of [
         gravity: "Timeline",
         "sound-playground": "String length",
         "bridge-builder": "Load position",
-        "river-sculptor": "Channel slope",
+        "river-sculptor": "Catchment slope",
         "circuit-city": "Battery voltage",
         "fraction-feast": "Selected slices",
         "pattern-palace": "Motif rotation",
@@ -205,6 +205,32 @@ for (const viewport of [
           .getByRole("button", { name: "Advance one week", exact: true })
           .click();
       } else {
+        if (id === "river-sculptor") {
+          await page
+            .getByRole("button", {
+              name: "Runoff and soil export both decrease",
+              exact: true,
+            })
+            .click();
+          await page
+            .getByRole("button", {
+              name: "Compare vegetation cover",
+              exact: true,
+            })
+            .click();
+          await page
+            .getByRole("button", {
+              name: "Only soil moved increases",
+              exact: true,
+            })
+            .click();
+          await page
+            .getByRole("button", {
+              name: "Compare catchment slopes",
+              exact: true,
+            })
+            .click();
+        }
         const label = controlLabels[id];
         const range = label
           ? page.getByRole("slider", { name: label, exact: true })

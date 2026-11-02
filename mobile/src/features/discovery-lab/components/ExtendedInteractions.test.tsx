@@ -97,17 +97,25 @@ describe("native predictions and evidence", () => {
 
   it("applies finite soil erosion and resets the river", () => {
     const view = render(<NativeExploration id="river-sculptor" />);
+    fireEvent.press(view.getByText("Runoff and soil export both decrease"));
+    fireEvent.press(view.getByText("Compare vegetation cover"));
+    expect(view.getByText("Compare vegetation cover")).toBeDisabled();
     expect(
-      view.getByText(/0 storms applied. Available soil: 5000 kg/),
+      view.getByText(/matches your prediction.*Bare: runoff 320.0 m³/),
     ).toBeTruthy();
+    fireEvent.press(view.getByText("Only soil moved increases"));
+    fireEvent.press(view.getByText("Compare catchment slopes"));
+    expect(view.getByText("Compare catchment slopes")).toBeDisabled();
+    expect(
+      view.getByText(/matches your prediction.*2% slope: runoff 232.0 m³/),
+    ).toBeTruthy();
+    fireEvent.press(view.getByText("Restore soil"));
     fireEvent.press(view.getByText("Run one storm"));
     expect(
-      view.getByText(/1 storms applied. Available soil: 4961 kg/),
+      view.getByText(/Storm 1.*4846.9 kg remaining.*5,000.0 kg/),
     ).toBeTruthy();
     fireEvent.press(view.getByText("Reset experiment"));
-    expect(
-      view.getByText(/0 storms applied. Available soil: 5000 kg/),
-    ).toBeTruthy();
+    expect(view.getByText("Compare vegetation cover")).toBeDisabled();
   });
 
   it("preserves independent parallel branches and opens the full series circuit", () => {
