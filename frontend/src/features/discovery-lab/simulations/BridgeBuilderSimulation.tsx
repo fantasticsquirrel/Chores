@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   BRIDGE_DEFAULT_INPUTS,
+  BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS,
   bridgeActivity,
   bridgeDeflectionMillimetersAt,
+  bridgeDeflectionVisualFraction,
   type BridgeInputs,
 } from "@family-manager/family-api/discovery-models/bridge";
 import { Slider } from "./SimulationPrimitives";
@@ -74,11 +76,10 @@ export function BridgeBuilderSimulation() {
         deflection: bridgeDeflectionMillimetersAt(result.inputs, xMeters),
       };
     });
-    const maximum = Math.max(...samples.map((sample) => sample.deflection), 1);
     return samples
       .map(
         (sample, index) =>
-          `${index ? "L" : "M"}${sample.x.toFixed(1)} ${(22 + (sample.deflection / maximum) * 34).toFixed(1)}`,
+          `${index ? "L" : "M"}${sample.x.toFixed(1)} ${(22 + bridgeDeflectionVisualFraction(sample.deflection) * 34).toFixed(2)}`,
       )
       .join(" ");
   }, [result]);
@@ -87,7 +88,7 @@ export function BridgeBuilderSimulation() {
     <PhysicalLayout
       question="What changes when one static point load moves along the span or doubles? Predict first, compare fixed trials, then explain the support reactions, bending moment and deflection."
       explanation="For static equilibrium, the two upward reactions sum to the downward load and their torques balance. The nearer support carries more when the load moves off-center. With span and flexural rigidity fixed, this small-deflection beam equation is linear in point load."
-      caveat="Model boundary: one static point load on a 10 m simply supported Euler–Bernoulli equivalent beam with constant flexural rigidity EI. The displayed deflection uses the small-deflection equation and is visually enlarged. The timber truss is an illustration, not the solved structure. Self-weight, multiple axles, connections, shear, buckling, fatigue, impact, wind, material limits and safety factors are omitted. Brace modifiers change only an invented comparison index, not the beam calculation. This is not a construction design, load rating or safety certification."
+      caveat="Model boundary: one static point load on a 10 m simply supported Euler–Bernoulli equivalent beam with constant flexural rigidity EI. The displayed deflection uses the small-deflection equation and one fixed, visually enlarged 0–12.5 mm scale across every state. The timber truss is an illustration, not the solved structure. Self-weight, multiple axles, connections, shear, buckling, fatigue, impact, wind, material limits and safety factors are omitted. Brace modifiers change only an invented comparison index, not the beam calculation. This is not a construction design, load rating or safety certification."
       controls={
         <>
           <BridgePredictionTrials
@@ -294,7 +295,7 @@ export function BridgeBuilderSimulation() {
         <div
           className="dl-physical-trace dl-bridge-profile"
           role="img"
-          aria-label={`Equivalent-beam deflection profile, visibly enlarged. Deflection at the point load is ${result.deflectionAtLoadMillimeters.toFixed(2)} millimeters. Supports remain at zero deflection.`}
+          aria-label={`Equivalent-beam deflection profile on one fixed 0 to ${BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS.toFixed(1)} millimeter scale across every state. Deflection at the point load is ${result.deflectionAtLoadMillimeters.toFixed(2)} millimeters. Supports remain at zero deflection.`}
         >
           <div className="dl-physical-trace-heading">
             <strong>Equivalent-beam deflection profile</strong>
@@ -306,6 +307,7 @@ export function BridgeBuilderSimulation() {
           <svg viewBox="0 0 720 68" aria-hidden="true">
             <path d="M18 22H702" stroke="#58727a" strokeDasharray="5 5" />
             <path
+              data-testid="bridge-deflection-profile"
               d={beamProfile}
               fill="none"
               stroke="#9ee0cf"
@@ -321,8 +323,10 @@ export function BridgeBuilderSimulation() {
             <circle cx="702" cy="22" r="5" fill="#eef0d8" />
           </svg>
           <p>
-            Shape is enlarged for comparison; the numeric millimeter value is
-            computed. The dashed line is the unloaded beam axis.
+            Fixed deflection scale across every state: 0–
+            {BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS.toFixed(1)} mm. The shape
+            is visually enlarged; the numeric millimeter value is computed. The
+            dashed line is the unloaded beam axis.
           </p>
         </div>
         {lesson.freeExploration && (

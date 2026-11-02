@@ -6,8 +6,10 @@ import {
   BRIDGE_DEFAULT_INPUTS,
   BRIDGE_LOAD_COMPARISON,
   BRIDGE_POSITION_COMPARISON,
+  BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS,
   bridgeActivity,
   bridgeDeflectionMillimetersAt,
+  bridgeDeflectionVisualFraction,
   compareBridgeTrials,
   normalizeBridgeInputs,
   type BridgeInputs,
@@ -188,11 +190,10 @@ function run(input: any) {
     const xMeters = (index / 40) * result.spanMeters;
     return bridgeDeflectionMillimetersAt(result.inputs, xMeters);
   });
-  const maximumDeflection = Math.max(...deflectionPoints, 1);
   const profile = deflectionPoints
     .map(
       (deflection, index) =>
-        `${18 + (index / 40) * 684},${28 + (deflection / maximumDeflection) * 42}`,
+        `${18 + (index / 40) * 684},${28 + bridgeDeflectionVisualFraction(deflection) * 42}`,
     )
     .join(" ");
 
@@ -266,8 +267,8 @@ function run(input: any) {
 
   return {
     vector: {
-      viewBox: [0, 0, 720, 112],
-      description: `Equivalent-beam deflection profile, visibly enlarged. Deflection at the point load is ${result.deflectionAtLoadMillimeters.toFixed(2)} millimeters. Supports remain at zero deflection.`,
+      viewBox: [0, 0, 720, 132],
+      description: `Equivalent-beam deflection profile on one fixed deflection scale across every state: 0–${BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS.toFixed(1)} millimeters. Deflection at the point load is ${result.deflectionAtLoadMillimeters.toFixed(2)} millimeters. Supports remain at zero deflection.`,
       nodes: [
         {
           tag: "line",
@@ -294,7 +295,14 @@ function run(input: any) {
         },
         {
           tag: "text",
-          attrs: { x: 18, y: 100, fill: "#294c49", fontSize: 15 },
+          attrs: { x: 18, y: 96, fill: "#294c49", fontSize: 14 },
+          children: [
+            `Fixed deflection scale across every state: 0–${BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS.toFixed(1)} mm`,
+          ],
+        },
+        {
+          tag: "text",
+          attrs: { x: 18, y: 119, fill: "#294c49", fontSize: 15 },
           children: [
             `Peak moment ${result.peakBendingMomentKilonewtonMeters.toFixed(1)} kN·m · deflection at load ${result.deflectionAtLoadMillimeters.toFixed(2)} mm`,
           ],
@@ -416,7 +424,7 @@ function run(input: any) {
       },
     ],
     footnote:
-      "Model boundary: one static point load on a 10 m simply supported Euler–Bernoulli equivalent beam with constant EI. Deflection is visibly enlarged. The timber truss is illustrative, not the solved structure. Self-weight, multiple axles, connections, shear, buckling, fatigue, impact, wind, material limits and safety factors are omitted. Brace reference-use is an invented comparison index, not a capacity or safety rating; it does not change the beam reactions, moment or deflection. Not a construction design, load rating or safety certification.",
+      "Model boundary: one static point load on a 10 m simply supported Euler–Bernoulli equivalent beam with constant EI. Deflection uses one fixed, visibly enlarged 0–12.5 mm scale across every state. The timber truss is illustrative, not the solved structure. Self-weight, multiple axles, connections, shear, buckling, fatigue, impact, wind, material limits and safety factors are omitted. Brace reference-use is an invented comparison index, not a capacity or safety rating; it does not change the beam reactions, moment or deflection. Not a construction design, load rating or safety certification.",
   };
 }
 

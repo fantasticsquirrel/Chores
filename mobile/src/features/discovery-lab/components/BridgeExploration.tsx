@@ -4,7 +4,11 @@ import {
   BRIDGE_DEFAULT_INPUTS,
   BRIDGE_LOAD_COMPARISON,
   BRIDGE_POSITION_COMPARISON,
+  BRIDGE_SPAN_METERS,
+  BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS,
   bridgeActivity,
+  bridgeDeflectionMillimetersAt,
+  bridgeDeflectionVisualFraction,
   compareBridgeTrials,
   type BridgeInputs,
 } from "@family-manager/family-api/discovery-models/bridge";
@@ -39,6 +43,16 @@ export function BridgeExploration() {
   const [loadComplete, setLoadComplete] = useState(false);
   const result = bridgeActivity(inputs);
   const freeExploration = positionComplete && loadComplete;
+  const fallbackProfile = Array.from({ length: 41 }, (_, index) => {
+    const positionMeters = (index / 40) * BRIDGE_SPAN_METERS;
+    return {
+      xFraction: index / 40,
+      depth:
+        bridgeDeflectionVisualFraction(
+          bridgeDeflectionMillimetersAt(result.inputs, positionMeters),
+        ) * 42,
+    };
+  });
   const summary = `Left reaction ${result.leftReactionKilonewtons.toFixed(1)} kN; right reaction ${result.rightReactionKilonewtons.toFixed(1)} kN; peak moment ${result.peakBendingMomentKilonewtonMeters.toFixed(1)} kN·m; deflection at load ${result.deflectionAtLoadMillimeters.toFixed(2)} mm.`;
 
   const showTrial = (trial: BridgeInputs) => {
@@ -69,7 +83,7 @@ export function BridgeExploration() {
           progress: phase / 100,
           deflectionMillimeters: result.deflectionAtLoadMillimeters,
         }}
-        label={`Dimensional timber demonstration bridge. ${summary} The truss and load-path position are explanatory artwork, not a solved truss or safety result.`}
+        label={`Dimensional timber demonstration bridge. ${summary} The equivalent-beam profile uses one fixed 0 to ${BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS.toFixed(1)} millimeter display scale across every state. The truss and load-path position are explanatory artwork, not a solved truss or safety result.`}
       >
         {(width) => (
           <>
@@ -107,6 +121,24 @@ export function BridgeExploration() {
               Left {result.leftReactionKilonewtons.toFixed(1)} kN · Right{" "}
               {result.rightReactionKilonewtons.toFixed(1)} kN
             </DiagramLabel>
+            <DiagramLabel x={15} y={218}>
+              Fixed deflection scale: 0–
+              {BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS.toFixed(1)} mm
+            </DiagramLabel>
+            <Line x={20} y={250} x2={width - 20} y2={250} color="#6f8b8d" />
+            {fallbackProfile.slice(1).map((point, index) => {
+              const previous = fallbackProfile[index];
+              return (
+                <Line
+                  key={`deflection-${index}`}
+                  x={20 + previous.xFraction * (width - 40)}
+                  y={250 + previous.depth}
+                  x2={20 + point.xFraction * (width - 40)}
+                  y2={250 + point.depth}
+                  color="#9ee0cf"
+                />
+              );
+            })}
           </>
         )}
       </Diagram>
@@ -330,11 +362,12 @@ export function BridgeExploration() {
       <ModelNote>
         Model boundary: one static point load on a 10 m simply supported
         Euler–Bernoulli equivalent beam with constant EI. Deflection uses the
-        small-deflection equation and is visually enlarged. The timber truss is
-        illustrative, not the solved structure. Self-weight, multiple axles,
-        connections, shear, buckling, fatigue, impact, wind, material limits and
-        safety factors are omitted. This is not a construction design, load
-        rating or safety certification.
+        small-deflection equation and one fixed, visually enlarged 0–12.5 mm
+        display scale across every state. The timber truss is illustrative, not
+        the solved structure. Self-weight, multiple axles, connections, shear,
+        buckling, fatigue, impact, wind, material limits and safety factors are
+        omitted. This is not a construction design, load rating or safety
+        certification.
       </ModelNote>
     </LearningFrame>
   );

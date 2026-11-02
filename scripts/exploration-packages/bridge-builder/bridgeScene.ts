@@ -8,9 +8,15 @@ import {
   arrow,
 } from "./sceneGeometry";
 import type { BridgeSceneState, PhysicalSceneModel } from "./sceneTypes";
+import {
+  bridgeDeflectionVisualFraction,
+  bridgeProfileDeflectionMillimetersAt,
+} from "./model";
 export const bridgeDeckSurface = 1.5;
 export const truckTireRadius = 0.26;
 export const truckAxleHeight = bridgeDeckSurface + truckTireRadius;
+export const bridgeDeflectionProfileBaselineY = 1.28;
+export const bridgeDeflectionProfileMaximumDepth = 1.1;
 /** The chassis origin is the axle center. Tires touch the deck at every load position. */
 export const bridgeLoadX = (position: number) => -5 + position / 10;
 export function createBridgeScene(
@@ -214,6 +220,38 @@ export function createBridgeScene(
     group.add(marker);
     return marker;
   });
+  const profileAxis = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-5, bridgeDeflectionProfileBaselineY, 1.28),
+      new THREE.Vector3(5, bridgeDeflectionProfileBaselineY, 1.28),
+    ]),
+    new THREE.LineDashedMaterial({
+      color: "#6f8b8d",
+      dashSize: 0.18,
+      gapSize: 0.12,
+      transparent: true,
+      opacity: 0.78,
+    }),
+  );
+  profileAxis.computeLineDistances();
+  profileAxis.name = "bridge-deflection-axis";
+  group.add(profileAxis);
+  const deflectionProfile = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(
+      Array.from(
+        { length: 41 },
+        (_, index) =>
+          new THREE.Vector3(
+            -5 + index / 4,
+            bridgeDeflectionProfileBaselineY,
+            1.3,
+          ),
+      ),
+    ),
+    new THREE.LineBasicMaterial({ color: "#9ee0cf" }),
+  );
+  deflectionProfile.name = "bridge-deflection-profile";
+  group.add(deflectionProfile);
   const update = (state: BridgeSceneState) => {
     deck.material = state.material === "steel" ? steel : timber;
     frame.forEach(
@@ -237,6 +275,25 @@ export function createBridgeScene(
       a.scale.y = 0.18 + force / 18;
       a.visible = force > 0;
     });
+    const profilePositions = deflectionProfile.geometry.getAttribute(
+      "position",
+    ) as THREE.BufferAttribute;
+    for (let index = 0; index < profilePositions.count; index++) {
+      const positionMeters = (index / (profilePositions.count - 1)) * 10;
+      const deflectionMillimeters = bridgeProfileDeflectionMillimetersAt(
+        state.position,
+        state.deflectionMillimeters,
+        positionMeters,
+      );
+      profilePositions.setY(
+        index,
+        bridgeDeflectionProfileBaselineY -
+          bridgeDeflectionVisualFraction(deflectionMillimeters) *
+            bridgeDeflectionProfileMaximumDepth,
+      );
+    }
+    profilePositions.needsUpdate = true;
+    deflectionProfile.geometry.computeBoundingSphere();
     const rawPhase = Number.isFinite(state.progress) ? state.progress : 0;
     const phase = ((rawPhase % 1) + 1) % 1;
     const truckX = bridgeLoadX(state.position);
@@ -268,6 +325,12 @@ export function createBridgeScene(
       width: 15.6,
       height: 8.4,
     },
+    labels: () => [
+      {
+        text: "Equivalent-beam profile · fixed 0–12.5 mm scale",
+        at: [0, 0.08, 1.35],
+      },
+    ],
     update: (s) => {
       if (s.kind === "bridge") update(s);
     },

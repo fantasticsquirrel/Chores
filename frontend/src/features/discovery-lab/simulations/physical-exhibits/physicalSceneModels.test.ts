@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import * as THREE from "three";
 import { Vector3 } from "three";
 import {
   bridge,
@@ -6,15 +7,62 @@ import {
 } from "@family-manager/family-api/discovery-models/physical-world";
 import {
   createBridgeScene,
+  bridgeDeflectionProfileBaselineY,
   bridgeDeckSurface,
   truckAxleHeight,
   truckTireRadius,
   bridgeLoadX,
 } from "./bridgeScene";
+import {
+  BRIDGE_LOAD_COMPARISON,
+  bridgeActivity,
+} from "@family-manager/family-api/discovery-models/bridge";
 import { createCircuitScene } from "./circuitScene";
 import { createSoundScene, stringEndX } from "./soundScene";
 import type { BridgeSceneState, CircuitSceneState } from "./sceneTypes";
 describe("pure physical exhibit models", () => {
+  it("uses a fixed 3D deflection scale across the 8 and 16 kN trials", () => {
+    const sceneState = (index: number): BridgeSceneState => {
+      const activity = bridgeActivity(BRIDGE_LOAD_COMPARISON[index]);
+      return {
+        kind: "bridge",
+        material: "timber",
+        braces: activity.inputs.braces,
+        load: activity.inputs.pointLoadKilonewtons,
+        position: activity.inputs.loadPositionPercent,
+        utilization: activity.braceReferenceUseIndex,
+        leftReaction: activity.leftReactionKilonewtons,
+        rightReaction: activity.rightReactionKilonewtons,
+        progress: 0,
+        deflectionMillimeters: activity.deflectionAtLoadMillimeters,
+      };
+    };
+    const model = createBridgeScene(sceneState(0));
+    const profile = model.group.getObjectByName("bridge-deflection-profile");
+    const renderedDepth = () => {
+      const positions = (profile as THREE.Line).geometry.getAttribute(
+        "position",
+      );
+      return Math.max(
+        ...Array.from(
+          { length: positions.count },
+          (_, index) =>
+            bridgeDeflectionProfileBaselineY - positions.getY(index),
+        ),
+      );
+    };
+
+    expect(profile).toBeInstanceOf(THREE.Line);
+    const lightDepth = renderedDepth();
+    model.update(sceneState(1));
+    const heavyDepth = renderedDepth();
+
+    expect(lightDepth).toBeGreaterThan(0);
+    expect(heavyDepth).toBeCloseTo(lightDepth * 2);
+    expect(model.labels?.()[0].text).toMatch(/fixed 0–12\.5 mm scale/i);
+    model.dispose();
+  });
+
   it("grounds both truck axles on the deck as the load moves", () => {
     const state: BridgeSceneState = {
       kind: "bridge",

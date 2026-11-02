@@ -20,12 +20,18 @@ import { createSoundScene as createWebSoundScene } from "../../../frontend/src/f
 import { createSoundScene as createPackageSoundScene } from "../sound-playground/soundScene";
 import {
   BRIDGE_DEFAULT_INPUTS as SHARED_BRIDGE_DEFAULTS,
+  BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS as SHARED_BRIDGE_VISUAL_MAX,
   bridgeActivity as sharedBridgeActivity,
+  bridgeDeflectionVisualFraction as sharedBridgeVisualFraction,
+  bridgeProfileDeflectionMillimetersAt as sharedBridgeProfileAt,
   normalizeBridgeInputs as normalizeSharedBridge,
 } from "../../../packages/family-api/src/discovery-models/bridge";
 import {
   BRIDGE_DEFAULT_INPUTS as PACKAGE_BRIDGE_DEFAULTS,
+  BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS as PACKAGE_BRIDGE_VISUAL_MAX,
   bridgeActivity as packageBridgeActivity,
+  bridgeDeflectionVisualFraction as packageBridgeVisualFraction,
+  bridgeProfileDeflectionMillimetersAt as packageBridgeProfileAt,
   normalizeBridgeInputs as normalizePackageBridge,
 } from "../bridge-builder/model";
 import { createBridgeScene as createWebBridgeScene } from "../../../frontend/src/features/discovery-lab/simulations/physical-exhibits/bridgeScene";
@@ -225,7 +231,9 @@ describe("ten independently authored rich explorations", () => {
         const mesh = object as typeof object & {
           geometry?: {
             type: string;
-            attributes?: { position?: { count: number } };
+            attributes?: {
+              position?: { count: number; array?: ArrayLike<number> };
+            };
           };
           material?: {
             color?: { getHexString(): string };
@@ -302,8 +310,36 @@ describe("ten independently authored rich explorations", () => {
     ).toBe(true);
   });
 
+  it("bridge package keeps one deflection scale so 16 kN renders twice the 8 kN profile depth", () => {
+    const send = worker("bridge-builder");
+    send();
+    send("positionLeft");
+    send("comparePosition");
+    send("loadBothDouble");
+    send("compareLoad");
+    const profileDepth = (output: any) => {
+      const points = output.vector.nodes
+        .find((node: any) => node.tag === "polyline")
+        .attrs.points.split(" ")
+        .map((point: string) => Number(point.split(",")[1]));
+      return Math.max(...points) - 28;
+    };
+
+    const light = send("showLoadLight");
+    const heavy = send("showLoadHeavy");
+    const lightDepth = profileDepth(light);
+    const heavyDepth = profileDepth(heavy);
+
+    expect(lightDepth).toBeGreaterThan(0);
+    expect(heavyDepth).toBeCloseTo(lightDepth * 2, 5);
+    expect(heavy.vector.description).toMatch(
+      /fixed deflection scale across every state.*0–12\.5 millimeters/i,
+    );
+  });
+
   it("bridge package model exactly mirrors shared boundaries and outputs", () => {
     expect(PACKAGE_BRIDGE_DEFAULTS).toEqual(SHARED_BRIDGE_DEFAULTS);
+    expect(PACKAGE_BRIDGE_VISUAL_MAX).toBe(SHARED_BRIDGE_VISUAL_MAX);
     for (const inputs of [
       SHARED_BRIDGE_DEFAULTS,
       {
@@ -326,6 +362,14 @@ describe("ten independently authored rich explorations", () => {
         sharedBridgeActivity(inputs),
       );
     }
+    for (const value of [0, 1.67, 3.33, 12.5, 99, Number.NaN])
+      expect(packageBridgeVisualFraction(value)).toBe(
+        sharedBridgeVisualFraction(value),
+      );
+    for (const position of [0, 2.5, 5, 7.5, 10])
+      expect(packageBridgeProfileAt(20, 1.024, position)).toBe(
+        sharedBridgeProfileAt(20, 1.024, position),
+      );
   });
   it("bridge package and web preserve the same dimensional scene geometry", () => {
     const activity = sharedBridgeActivity(SHARED_BRIDGE_DEFAULTS);
@@ -349,7 +393,9 @@ describe("ten independently authored rich explorations", () => {
         const mesh = object as typeof object & {
           geometry?: {
             type: string;
-            attributes?: { position?: { count: number } };
+            attributes?: {
+              position?: { count: number; array?: ArrayLike<number> };
+            };
           };
           material?: {
             color?: { getHexString(): string };
@@ -364,6 +410,10 @@ describe("ten independently authored rich explorations", () => {
           scale: object.scale.toArray(),
           geometry: mesh.geometry?.type,
           vertices: mesh.geometry?.attributes?.position?.count,
+          authoredPositions:
+            object.name === "bridge-deflection-profile"
+              ? Array.from(mesh.geometry?.attributes?.position?.array ?? [])
+              : undefined,
           color: mesh.material?.color?.getHexString(),
           emissive: mesh.material?.emissive?.getHexString(),
           visible: object.visible,

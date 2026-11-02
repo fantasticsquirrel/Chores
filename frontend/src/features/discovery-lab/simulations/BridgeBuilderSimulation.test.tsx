@@ -20,6 +20,35 @@ function completeInvestigations() {
 }
 
 describe("Bridge Builder controlled investigations", () => {
+  it("uses one fixed deflection scale so doubling load doubles the rendered profile depth", () => {
+    render(<BridgeBuilderSimulation />);
+    completeInvestigations();
+
+    const renderedDepth = () => {
+      const path = screen.getByTestId("bridge-deflection-profile");
+      const coordinates = Array.from(
+        (path.getAttribute("d") ?? "").matchAll(/[ML][\d.]+ ([\d.]+)/g),
+        (match) => Number(match[1]),
+      );
+      return Math.max(...coordinates) - 22;
+    };
+
+    fireEvent.click(screen.getByRole("button", { name: "Show 8 kN evidence" }));
+    const lightDepth = renderedDepth();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Show 16 kN evidence" }),
+    );
+    const heavyDepth = renderedDepth();
+
+    expect(lightDepth).toBeGreaterThan(0);
+    expect(heavyDepth).toBeCloseTo(lightDepth * 2, 1);
+    expect(
+      screen.getByText(
+        /fixed deflection scale across every state.*0–12\.5 mm/i,
+      ),
+    ).toBeVisible();
+  });
+
   it("gates both comparisons and reports controlled, unit-labeled evidence", () => {
     render(<BridgeBuilderSimulation />);
 

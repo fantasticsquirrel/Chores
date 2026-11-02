@@ -3,7 +3,12 @@ import {
   BRIDGE_DEFAULT_INPUTS,
   BRIDGE_LOAD_COMPARISON,
   BRIDGE_POSITION_COMPARISON,
+  BRIDGE_SPAN_METERS,
+  BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS,
   bridgeActivity,
+  bridgeDeflectionMillimetersAt,
+  bridgeDeflectionVisualFraction,
+  bridgeProfileDeflectionMillimetersAt,
   bridgeStateAtPhase,
   compareBridgeTrials,
 } from "./bridge";
@@ -58,6 +63,52 @@ describe("bounded Bridge Builder beam model", () => {
         "no brace-index modifiers",
       ],
     });
+
+    const renderedDepths = BRIDGE_LOAD_COMPARISON.map((inputs) =>
+      Math.max(
+        ...Array.from({ length: 41 }, (_, index) =>
+          bridgeDeflectionVisualFraction(
+            bridgeDeflectionMillimetersAt(
+              inputs,
+              (index / 40) * BRIDGE_SPAN_METERS,
+            ),
+          ),
+        ),
+      ),
+    );
+    expect(renderedDepths[1]).toBeCloseTo(renderedDepths[0] * 2);
+  });
+
+  it("uses the bounded maximum as one fixed display scale and reconstructs the exact profile", () => {
+    const bound = bridgeActivity({
+      ...BRIDGE_DEFAULT_INPUTS,
+      pointLoadKilonewtons: 30,
+      flexuralRigidityMeganewtonMetersSquared: 50,
+    });
+    expect(bound.deflectionAtLoadMillimeters).toBeCloseTo(
+      BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS,
+    );
+    expect(
+      bridgeDeflectionVisualFraction(bound.deflectionAtLoadMillimeters),
+    ).toBe(1);
+    for (const inputs of [
+      BRIDGE_DEFAULT_INPUTS,
+      BRIDGE_POSITION_COMPARISON[1],
+    ]) {
+      const result = bridgeActivity(inputs);
+      for (let index = 0; index <= 40; index++) {
+        const positionMeters = (index / 40) * BRIDGE_SPAN_METERS;
+        expect(
+          bridgeProfileDeflectionMillimetersAt(
+            result.inputs.loadPositionPercent,
+            result.deflectionAtLoadMillimeters,
+            positionMeters,
+          ),
+        ).toBeCloseTo(
+          bridgeDeflectionMillimetersAt(result.inputs, positionMeters),
+        );
+      }
+    }
   });
 
   it("keeps the beam calculation independent of the invented brace-reference index", () => {

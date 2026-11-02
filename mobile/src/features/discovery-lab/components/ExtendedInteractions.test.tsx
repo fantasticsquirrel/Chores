@@ -76,6 +76,11 @@ describe("native predictions and evidence", () => {
         /matches your prediction.*8 kN: 20.0 kN·m and 1.67 mm.*16 kN: 40.0 kN·m and 3.33 mm/,
       ),
     ).toBeTruthy();
+    expect(
+      view.getByLabelText(
+        /equivalent-beam profile uses one fixed 0 to 12\.5 millimeter display scale across every state/i,
+      ),
+    ).toBeTruthy();
     const beamSummary = view.getByText(
       /Left reaction 8.0 kN.*right reaction 8.0 kN.*peak moment 40.0 kN·m.*deflection at load 3.33 mm/,
     ).props.children;

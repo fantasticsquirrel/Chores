@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "bridge-builder-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "bridge-builder-package",
@@ -57,7 +57,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "dc5c31c39b9486699006b9fb8d7c30a15aa8e22cfeb44536357a3534fd0f7867"
+      "sha256": "507789fe331a143c7a180dc25bc3cdafc4423856386e139c890d3a49d65db43a"
     },
     {
       "path": "THREE-LICENSE.txt",

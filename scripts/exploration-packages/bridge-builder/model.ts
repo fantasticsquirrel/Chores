@@ -11,6 +11,8 @@ export type CircuitMode = "series" | "parallel";
 export const BRIDGE_SPAN_METERS = 10;
 export const BRIDGE_BRACE_REFERENCE_MOMENT_KILONEWTON_METERS = 16;
 export const BRIDGE_BRACE_REFERENCE_FACTOR = 2.4;
+/** Fixed model-wide display bound: 30 kN at midspan with EI = 50 MN·m². */
+export const BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS = 12.5;
 
 export const BRIDGE_DEFAULT_INPUTS = {
   pointLoadKilonewtons: 12,
@@ -96,6 +98,39 @@ export function bridgeDeflectionMillimetersAt(
   return (
     (numerator / (6 * spanMeters * flexuralRigidityNewtonMetersSquared)) * 1_000
   );
+}
+
+export function bridgeDeflectionVisualFraction(deflectionMillimeters: number) {
+  const finite = Number.isFinite(deflectionMillimeters)
+    ? deflectionMillimeters
+    : 0;
+  return Math.max(
+    0,
+    Math.min(1, finite / BRIDGE_VISUAL_MAX_DEFLECTION_MILLIMETERS),
+  );
+}
+
+export function bridgeProfileDeflectionMillimetersAt(
+  rawLoadPositionPercent: number,
+  rawDeflectionAtLoadMillimeters: number,
+  rawPositionMeters: number,
+) {
+  const span = BRIDGE_SPAN_METERS;
+  const loadPositionPercent = bounded(rawLoadPositionPercent, 5, 95, 50);
+  const a = (loadPositionPercent / 100) * span;
+  const b = span - a;
+  const x = bounded(rawPositionMeters, 0, span, 0);
+  const shapeAt = (position: number) =>
+    position <= a
+      ? b * position * (span ** 2 - b ** 2 - position ** 2)
+      : a * (span - position) * (span ** 2 - a ** 2 - (span - position) ** 2);
+  const atLoad = shapeAt(a);
+  const deflectionAtLoadMillimeters = Number.isFinite(
+    rawDeflectionAtLoadMillimeters,
+  )
+    ? Math.max(0, rawDeflectionAtLoadMillimeters)
+    : 0;
+  return atLoad > 0 ? (shapeAt(x) / atLoad) * deflectionAtLoadMillimeters : 0;
 }
 
 export function bridgeActivity(raw: BridgeInputs) {
