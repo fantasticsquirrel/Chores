@@ -65,7 +65,7 @@ export function SoundPlaygroundSimulation() {
     playback.setProgress(0);
     if (!playback.playing) playback.toggle();
   };
-  const pressure = Array.from(
+  const midpointTrace = Array.from(
     { length: 361 },
     (_, i) =>
       `${i ? "L" : "M"}${i * 2},${45 - Math.sin((i / 360) * result.cyclesPerTenMilliseconds * Math.PI * 2 - playback.progress * Math.PI * 2) * amplitude * 4.7}`,
@@ -74,7 +74,7 @@ export function SoundPlaygroundSimulation() {
     <PhysicalLayout
       question="After the two fixed trials, change one control at a time. Can you make the trace show more cycles without changing the model amplitude?"
       explanation="For an ideal fixed string, fundamental frequency increases with tension and decreases with vibrating length. A larger pluck changes the string’s displacement, not that natural frequency. Pitch and loudness are perceptions: frequency strongly influences pitch, while loudness also depends on sound level, frequency, hearing, the instrument body and the room."
-      caveat="Model boundary: a uniform 1 g/m string vibrating in its fundamental mode, with air sound speed fixed at 343 m/s. String displacement is enlarged and motion is slowed. The pressure trace is a visual comparison, not a microphone or decibel reading; the A² index is relative only when length, tension and density stay fixed. The optional sound is a low-gain pure tone, not the wooden instrument, and actual volume depends on your device settings."
+      caveat="Model boundary: a uniform 1 g/m string vibrating in its fundamental mode, with air sound speed fixed at 343 m/s. String displacement is enlarged and motion is slowed. The trace shows modeled string midpoint displacement over 10 ms; no acoustic radiation is calculated. The A² index is relative only when length, tension and density stay fixed. The optional sound is a low-gain pure tone, not the wooden instrument, and actual volume depends on your device settings."
       controls={
         <>
           <SoundPredictionTrials
@@ -167,7 +167,7 @@ export function SoundPlaygroundSimulation() {
           }
           if (action.type === "pluck" && amplitude > 0) pluck();
         }}
-        description={`Mounted string instrument. The movable bridge sets a ${length} centimeter vibrating length at ${tension} newtons. The ideal fundamental is ${result.fundamentalFrequencyHz.toFixed(1)} hertz and the model displacement is ${amplitude} millimeters. ${result.hasVibration ? "The visible motion is enlarged and slowed." : "At zero displacement, the string is stationary."}`}
+        description={`Mounted string instrument. The movable bridge sets a ${length} centimeter vibrating length at ${tension} newtons. The ideal fundamental is ${result.fundamentalFrequencyHz.toFixed(1)} hertz and the modeled midpoint displacement amplitude is ${amplitude} millimeters. ${result.hasVibration ? "The visible motion is enlarged and slowed." : "At zero displacement, the string is stationary."}`}
         fallback={
           <SoundDrawing
             length={length}
@@ -198,19 +198,21 @@ export function SoundPlaygroundSimulation() {
       >
         <div className="dl-physical-trace">
           <div className="dl-physical-trace-heading">
-            <strong>Modeled pressure pattern at one point</strong>
+            <strong>Modeled string midpoint displacement</strong>
             <span>
-              {result.cyclesPerTenMilliseconds.toFixed(2)} cycles / 10 ms
+              ±{amplitude} mm · {result.cyclesPerTenMilliseconds.toFixed(2)}{" "}
+              cycles / 10 ms
             </span>
           </div>
           <svg
             viewBox="0 0 720 90"
             preserveAspectRatio="none"
-            aria-hidden="true"
+            role="img"
+            aria-label={`Modeled string midpoint displacement over 10 milliseconds. Amplitude ${amplitude} millimeters; ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles. No acoustic radiation is calculated.`}
           >
             <defs>
               <pattern
-                id="physical-pressure-grid"
+                id="physical-displacement-grid"
                 width="72"
                 height="22.5"
                 patternUnits="userSpaceOnUse"
@@ -223,10 +225,14 @@ export function SoundPlaygroundSimulation() {
                 />
               </pattern>
             </defs>
-            <rect width="720" height="90" fill="url(#physical-pressure-grid)" />
+            <rect
+              width="720"
+              height="90"
+              fill="url(#physical-displacement-grid)"
+            />
             <path d="M0 45H720" stroke="#627f85" strokeDasharray="3 4" />
             <path
-              d={pressure}
+              d={midpointTrace}
               fill="none"
               stroke="#a8e1ca"
               strokeWidth="2.5"
@@ -238,9 +244,8 @@ export function SoundPlaygroundSimulation() {
             <span>10 ms</span>
           </div>
           <p>
-            Count cycles for frequency; compare height for the model amplitude.
-            Shape and height do not by themselves measure perceived pitch or
-            loudness.
+            This is the string’s transverse displacement at its midpoint over 10
+            ms. Count cycles for frequency; compare height in millimeters.
           </p>
         </div>
       </PhysicalStage>

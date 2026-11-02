@@ -9,6 +9,15 @@ afterEach(() => {
 describe("native predictions and evidence", () => {
   it("gates sound comparisons behind predictions and records controlled evidence", () => {
     const view = render(<NativeExploration id="sound-playground" />);
+    expect(
+      view.getByText(/modeled midpoint displacement amplitude 3 mm/),
+    ).toBeTruthy();
+    expect(view.getByText(/no acoustic radiation is calculated/i)).toBeTruthy();
+    expect(
+      view.queryByText(
+        /modeled pressure pattern|air pressure at one point|pressure trace/i,
+      ),
+    ).toBeNull();
     expect(view.getByText("Compare string lengths")).toBeDisabled();
     fireEvent.press(view.getByText("Half as many cycles per second"));
     fireEvent.press(view.getByText("Compare string lengths"));

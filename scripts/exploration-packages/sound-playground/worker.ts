@@ -173,7 +173,7 @@ function run(input: any) {
     background: ["#10212b", "#142b35", "#10212b"],
   });
   model.dispose();
-  const pressure = Array.from(
+  const midpointTrace = Array.from(
     { length: 361 },
     (_, j) =>
       `${j * 2},${55 - Math.sin((j / 360) * result.cyclesPerTenMilliseconds * Math.PI * 2 - progress * Math.PI * 2) * inputs.amplitudeMm * 4.7}`,
@@ -262,7 +262,7 @@ function run(input: any) {
   return {
     vector: {
       viewBox: [0, 0, 720, 125],
-      description: `Visual comparison trace over 10 milliseconds: ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles. Its height follows the enlarged model displacement and is not a microphone or decibel reading.`,
+      description: `Modeled string midpoint displacement over 10 milliseconds: amplitude ${inputs.amplitudeMm} millimeters and ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles. No acoustic radiation is calculated.`,
       nodes: [
         {
           tag: "line",
@@ -279,7 +279,7 @@ function run(input: any) {
         {
           tag: "polyline",
           attrs: {
-            points: pressure,
+            points: midpointTrace,
             fill: "none",
             stroke: "#339a92",
             strokeWidth: 2,
@@ -290,7 +290,7 @@ function run(input: any) {
           tag: "text",
           attrs: { x: 10, y: 110, fill: "#294c49", fontSize: 16 },
           children: [
-            `Modeled pattern at one point · ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles in 10 ms`,
+            `String midpoint displacement · ±${inputs.amplitudeMm} mm · ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles in 10 ms`,
           ],
         },
       ],
@@ -300,7 +300,7 @@ function run(input: any) {
     pointerMode: "drag",
     scene3d,
     shapes: [],
-    description: `Fundamental ${result.fundamentalFrequencyHz.toFixed(1)} Hz; ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles in 10 ms. Length ${inputs.lengthCm} cm; tension ${inputs.tensionN} N; model amplitude ${inputs.amplitudeMm} mm; relative A² index ${result.relativeVibrationIndex}. ${result.hasVibration ? "Visible displacement is enlarged." : "The natural frequency remains defined, but the string is stationary at zero displacement."} ${playing ? "Slowed motion is playing." : "Slowed motion is paused."}`,
+    description: `Fundamental ${result.fundamentalFrequencyHz.toFixed(1)} Hz; ${result.cyclesPerTenMilliseconds.toFixed(2)} cycles in 10 ms. Length ${inputs.lengthCm} cm; tension ${inputs.tensionN} N; modeled midpoint displacement amplitude ${inputs.amplitudeMm} mm; relative A² index ${result.relativeVibrationIndex}. ${result.hasVibration ? "Visible displacement is enlarged." : "The natural frequency remains defined, but the string is stationary at zero displacement."} ${playing ? "Slowed motion is playing." : "Slowed motion is paused."}`,
     readoutColumns: 4,
     readouts: [
       {
@@ -404,7 +404,7 @@ function run(input: any) {
       {
         heading: "3. Explore one variable",
         text: freeExploration
-          ? "Controls are unlocked. Change one slider, then use the cycle count and measurements as evidence. Optional audio starts only when requested; the visual trace supplies the comparison without sound."
+          ? "Controls are unlocked. Change one slider, then use the cycle count and measurements as evidence. Optional audio starts only when requested; the midpoint-displacement trace supplies the comparison without sound."
           : "Complete both fixed comparisons to unlock the controls, slowed motion and optional pure tone.",
         buttonIds: buttons
           .filter((button) => ["play", "pluck", "listen"].includes(button.id))
@@ -416,7 +416,7 @@ function run(input: any) {
       },
     ],
     footnote:
-      "Model boundary: uniform 1 g/m ideal string, fixed ends and fundamental mode; air speed 343 m/s. String displacement is enlarged and motion slowed. The trace is not a microphone or dB reading. A² is relative only at fixed length, tension and density. Optional audio is a low-gain pure tone, not this instrument; actual volume depends on device settings. Real sounds add harmonics, body response and a time envelope.",
+      "Model boundary: uniform 1 g/m ideal string, fixed ends and fundamental mode; air speed 343 m/s. String displacement is enlarged and motion slowed. The trace is modeled string midpoint displacement in mm over 10 ms; no acoustic radiation is calculated. A² is relative only at fixed length, tension and density. Optional audio is a low-gain pure tone, not this instrument; actual volume depends on device settings. Real sounds add harmonics, body response and a time envelope.",
   };
 }
 

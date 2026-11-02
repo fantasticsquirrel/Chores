@@ -16,7 +16,7 @@ describe("physical world exploration controls", () => {
     FoodWebSimulation,
   ])("renders a labeled exhibit and experiment prompt", (Simulation) => {
     render(<Simulation />);
-    expect(screen.getByRole("img")).toBeTruthy();
+    expect(screen.getAllByRole("img").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Try this")).toBeTruthy();
     expect(
       screen.getByRole("button", { name: /^Reset(?: lesson)?$/ }),

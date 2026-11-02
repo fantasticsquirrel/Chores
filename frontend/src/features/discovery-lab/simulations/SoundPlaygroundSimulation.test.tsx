@@ -1,10 +1,51 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { SoundDrawing } from "./SoundDrawing";
 import { SoundPlaygroundSimulation } from "./SoundPlaygroundSimulation";
 
 afterEach(cleanup);
 
 describe("Sound Playground controlled investigation", () => {
+  it("identifies the time trace as string midpoint displacement, not pressure", () => {
+    render(<SoundPlaygroundSimulation />);
+
+    expect(
+      screen.getByRole("img", {
+        name: "Modeled string midpoint displacement over 10 milliseconds. Amplitude 3 millimeters; 2.36 cycles. No acoustic radiation is calculated.",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByText("Modeled string midpoint displacement"),
+    ).toBeVisible();
+    expect(screen.getByText("±3 mm · 2.36 cycles / 10 ms")).toBeVisible();
+    expect(
+      screen.queryByText(
+        /modeled pressure pattern|air pressure at one point|pressure trace/i,
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps the fallback trace labeled as midpoint displacement with units", () => {
+    render(
+      <svg>
+        <SoundDrawing
+          length={60}
+          amplitude={3}
+          progress={0}
+          frequency={235.7}
+        />
+      </svg>,
+    );
+
+    expect(
+      screen.getByText("STRING MIDPOINT DISPLACEMENT · ±3 mm"),
+    ).toBeVisible();
+    expect(
+      screen.getByText("More cycles in 10 ms = higher frequency"),
+    ).toBeVisible();
+    expect(screen.queryByText(/air pressure at one point/i)).toBeNull();
+  });
+
   it("gates both comparisons behind predictions and records controlled evidence", () => {
     render(<SoundPlaygroundSimulation />);
 

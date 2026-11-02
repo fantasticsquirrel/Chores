@@ -38,7 +38,7 @@ export function SoundExploration() {
     useState<AmplitudePrediction>("");
   const [amplitudeComplete, setAmplitudeComplete] = useState(false);
   const activity = soundActivity(inputs);
-  const summary = `Fundamental ${activity.fundamentalFrequencyHz.toFixed(1)} Hz; ${activity.cyclesPerTenMilliseconds.toFixed(2)} cycles per 10 ms; model amplitude ${inputs.amplitudeMm} mm; relative A² index ${activity.relativeVibrationIndex}.`;
+  const summary = `Fundamental ${activity.fundamentalFrequencyHz.toFixed(1)} Hz; ${activity.cyclesPerTenMilliseconds.toFixed(2)} cycles per 10 ms; modeled midpoint displacement amplitude ${inputs.amplitudeMm} mm; relative A² index ${activity.relativeVibrationIndex}.`;
   const showTrial = (trial: SoundInputs) => {
     setInputs(trial);
     setPhase(0);
@@ -279,10 +279,10 @@ export function SoundExploration() {
       <ModelNote>
         Model boundary: uniform 1 g/m ideal string, fixed ends, fundamental
         mode, and air speed 343 m/s. String wavelength is 2L; wavelength in air
-        is 343 ÷ frequency. Displacement is enlarged. The A² index is only a
-        relative comparison at fixed length, tension and density; it is not a
-        decibel or loudness reading. Real instruments add harmonics, an
-        instrument body and a time envelope.
+        is 343 ÷ frequency. Displacement is enlarged; no acoustic radiation is
+        calculated. The A² index is only a relative comparison at fixed length,
+        tension and density; it is not a decibel or loudness reading. Real
+        instruments add harmonics, an instrument body and a time envelope.
       </ModelNote>
     </LearningFrame>
   );

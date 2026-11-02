@@ -17,22 +17,22 @@
       "waves",
       "measurement"
     ],
-    "summary": "Predict and compare how string length and modeled displacement change frequency and wave height.",
-    "question": "How can two plucks keep the same modeled frequency while their vibration heights differ?",
-    "explanation": "Frequency counts cycles per second and strongly influences perceived pitch, but frequency and pitch are not identical. For this ideal uniform string’s fixed-end fundamental, doubling length while holding tension and mass per length fixed halves frequency. Doubling the modeled displacement does not change that natural frequency; it quadruples an A² comparison index. That index is not a decibel or loudness reading. Real musical sounds also depend on harmonics, the instrument body and how the sound changes over time.",
+    "summary": "Predict and compare how string length and modeled midpoint displacement change frequency.",
+    "question": "How can two plucks keep the same modeled frequency while their midpoint displacement amplitudes differ?",
+    "explanation": "Frequency counts cycles per second and strongly influences perceived pitch, but frequency and pitch are not identical. For this ideal uniform string’s fixed-end fundamental, doubling length while holding tension and mass per length fixed halves frequency. Doubling the modeled midpoint displacement does not change that natural frequency; it quadruples an A² comparison index. That index is not a decibel or loudness reading. No acoustic radiation is calculated. Real musical sounds also depend on harmonics, the instrument body and how the sound changes over time.",
     "experiments": [
       {
         "title": "Compare string lengths",
-        "instruction": "Keep tension and model displacement fixed. Predict what happens when vibrating length doubles from 60 to 120 cm, then run the fixed comparison.",
+        "instruction": "Keep tension and midpoint displacement fixed. Predict what happens when vibrating length doubles from 60 to 120 cm, then run the fixed comparison.",
         "observe": "The longer trial has half as many cycles per second. Use the unchanged-variable list to explain why length caused the difference."
       },
       {
-        "title": "Compare model displacements",
+        "title": "Compare midpoint displacements",
         "instruction": "Keep length and tension fixed. Predict whether changing modeled displacement from 3 to 6 mm changes frequency, then run the fixed comparison.",
-        "observe": "Frequency stays the same while wave height and the relative A² index change. Explain why this is not a loudness measurement."
+        "observe": "Frequency stays the same while midpoint displacement and the relative A² index change. Explain why this is not a loudness measurement."
       }
     ],
-    "misconception": "A taller modeled wave is not automatically a higher pitch or a direct loudness reading. Frequency strongly influences pitch; perceived loudness depends on sound level, frequency, hearing and listening conditions.",
+    "misconception": "A larger modeled string displacement is not automatically a higher pitch or a direct loudness reading. Frequency strongly influences pitch; perceived loudness depends on sound level, frequency, hearing and listening conditions.",
     "sources": [
       {
         "title": "OpenStax: Standing waves on strings",
@@ -58,7 +58,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "ed3ef8569e7c542c6f08c8c7ecec70798a2f23fb04f5fbbba3318aab408d4593"
+      "sha256": "e2fd9bf339f73fbc0803c52654467d0f82c3605b70880a5e7e90b08ba755d307"
     },
     {
       "path": "THREE-LICENSE.txt",

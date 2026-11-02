@@ -20,7 +20,7 @@ export function SoundDrawing({
         Math.cos(progress * Math.PI * 2);
     return `${i ? "L" : "M"}${x},${y}`;
   }).join(" ");
-  const pressure = Array.from(
+  const midpointTrace = Array.from(
     { length: 241 },
     (_, i) =>
       `${i ? "L" : "M"}${80 + i * 2.3},${315 - Math.sin((i / 240) * frequency * 0.01 * Math.PI * 2 - progress * Math.PI * 2) * amplitude * 4}`,
@@ -81,9 +81,9 @@ export function SoundDrawing({
         stroke="#31435d"
       />
       <path d="M80 315H632" stroke="#345473" strokeDasharray="3 4" />
-      <path d={pressure} stroke="#78e1d0" strokeWidth="2.5" fill="none" />
+      <path d={midpointTrace} stroke="#78e1d0" strokeWidth="2.5" fill="none" />
       <text x="80" y="286" className="dl-world-caption">
-        AIR PRESSURE AT ONE POINT
+        STRING MIDPOINT DISPLACEMENT · ±{amplitude} mm
       </text>
       <text x="80" y="388" className="dl-svg-small">
         0 ms
@@ -92,7 +92,7 @@ export function SoundDrawing({
         10 ms
       </text>
       <text x="360" y="388" textAnchor="middle" className="dl-svg-small">
-        More cycles in this window = higher pitch
+        More cycles in 10 ms = higher frequency
       </text>
     </>
   );

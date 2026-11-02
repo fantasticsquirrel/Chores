@@ -107,6 +107,20 @@ describe("ten independently authored rich explorations", () => {
   it("sound gates comparisons, separates pitch from amplitude and preserves opt-in audio/animation", () => {
     const send = worker("sound-playground");
     const initial = send();
+    expect(initial.vector.description).toContain(
+      "Modeled string midpoint displacement over 10 milliseconds: amplitude 3 millimeters and 2.36 cycles.",
+    );
+    expect(initial.vector.description).toContain(
+      "No acoustic radiation is calculated.",
+    );
+    expect(initial.vector.description).not.toMatch(/pressure/i);
+    expect(initial.vector.nodes.at(-1).children[0]).toBe(
+      "String midpoint displacement · ±3 mm · 2.36 cycles in 10 ms",
+    );
+    expect(initial.footnote).toContain(
+      "trace is modeled string midpoint displacement in mm over 10 ms",
+    );
+    expect(initial.footnote).not.toMatch(/pressure trace|air pressure/i);
     expect(initial.controls).toHaveLength(0);
     expect(initial.audio).toHaveLength(0);
     expect(
