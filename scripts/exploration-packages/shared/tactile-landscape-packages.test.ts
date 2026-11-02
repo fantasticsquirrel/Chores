@@ -899,11 +899,30 @@ describe("ten independently authored rich explorations", () => {
       [2, 3, 3, 4],
       [1, 6, 1, 3],
       [0, 2, 0, 12],
+      [-3, 2, 0, 1],
+      [-1, 2, 0, 1],
+      [96, 96, 48, 96],
+      [1, 95, 1, 96],
       [1, 0, 1, 2],
     ] as const)
       expect(addPackageFractionParts(...values)).toEqual(
         addSharedFractionParts(...values),
       );
+
+    for (const values of [
+      [-3, 2, 0, 1],
+      [-3, 2, 1, 4],
+      [1, 2, -3, 2],
+      [-1, 2, 0, 1],
+    ] as const) {
+      const addition = addPackageFractionParts(...values)!;
+      expect(
+        addition.wholeCount +
+          addition.remainder.numerator / addition.remainder.denominator,
+      ).toBe(addition.sum.numerator / addition.sum.denominator);
+      expect(Object.is(addition.wholeCount, -0)).toBe(false);
+      expect(Object.is(addition.remainder.numerator, -0)).toBe(false);
+    }
   });
   it("fraction package and web preserve identical dimensional pizza geometry", () => {
     const plates = [
@@ -918,7 +937,10 @@ describe("ten independently authored rich explorations", () => {
         const mesh = object as typeof object & {
           geometry?: {
             type: string;
-            attributes?: { position?: { count: number } };
+            attributes?: {
+              position?: { count: number; array?: ArrayLike<number> };
+            };
+            index?: { array?: ArrayLike<number> } | null;
           };
           material?: {
             color?: { getHexString(): string };
@@ -933,8 +955,13 @@ describe("ten independently authored rich explorations", () => {
           scale: object.scale.toArray(),
           slice: object.userData.slice,
           plate: object.userData.plate,
+          cutBoundary: object.userData.cutBoundary,
           geometry: mesh.geometry?.type,
           vertices: mesh.geometry?.attributes?.position?.count,
+          positions: Array.from(
+            mesh.geometry?.attributes?.position?.array ?? [],
+          ),
+          indices: Array.from(mesh.geometry?.index?.array ?? []),
           color: mesh.material?.color?.getHexString(),
           roughness: mesh.material?.roughness,
           metalness: mesh.material?.metalness,

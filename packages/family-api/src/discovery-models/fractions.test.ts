@@ -65,6 +65,48 @@ describe("exact bounded fraction model", () => {
     expect(addFractionParts(1, 0, 1, 3)).toBeNull();
   });
 
+  it.each([
+    [-3, 2, 0, 1],
+    [-3, 2, 1, 4],
+    [1, 2, -3, 2],
+    [-1, 2, 0, 1],
+    [-1, -2, -3, 2],
+  ])(
+    "keeps the signed mixed-number decomposition equal to %i/%i + %i/%i",
+    (leftNumerator, leftDenominator, rightNumerator, rightDenominator) => {
+      const addition = addFractionParts(
+        leftNumerator,
+        leftDenominator,
+        rightNumerator,
+        rightDenominator,
+      )!;
+      const exactSum = addition.sum.numerator / addition.sum.denominator;
+      const decomposed =
+        addition.wholeCount +
+        addition.remainder.numerator / addition.remainder.denominator;
+
+      expect(decomposed).toBe(exactSum);
+      expect(Object.is(addition.wholeCount, -0)).toBe(false);
+      expect(Object.is(addition.remainder.numerator, -0)).toBe(false);
+    },
+  );
+
+  it("reduces safe intermediates after validating bounded inputs", () => {
+    expect(addFractionParts(96, 96, 48, 96)).toMatchObject({
+      commonDenominator: 96,
+      commonSumNumerator: 144,
+      sum: { numerator: 3, denominator: 2 },
+      wholeCount: 1,
+      remainder: { numerator: 1, denominator: 2 },
+    });
+    expect(addFractionParts(1, 95, 1, 96)).toMatchObject({
+      commonDenominator: 9120,
+      commonSumNumerator: 191,
+      sum: { numerator: 191, denominator: 9120 },
+    });
+    expect(addFractionParts(97, 96, 0, 1)).toBeNull();
+  });
+
   it("defines two fixed fair comparisons", () => {
     expect(FRACTION_EQUIVALENCE_TRIAL.changed).toEqual([
       "piece count",

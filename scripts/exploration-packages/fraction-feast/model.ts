@@ -11,6 +11,24 @@ const gcd = (left: number, right: number) => {
   while (b !== 0) [a, b] = [b, a % b];
   return a;
 };
+const reduceSafeFraction = (
+  numerator: number,
+  denominator: number,
+): Fraction | null => {
+  if (
+    !Number.isSafeInteger(numerator) ||
+    !Number.isSafeInteger(denominator) ||
+    denominator === 0
+  )
+    return null;
+  if (numerator === 0) return { numerator: 0, denominator: 1 };
+  const sign = denominator < 0 ? -1 : 1;
+  const divisor = gcd(numerator, denominator);
+  return {
+    numerator: (numerator / divisor) * sign,
+    denominator: Math.abs(denominator / divisor),
+  };
+};
 const parts = (numerator: number, denominator: number): Fraction | null => {
   if (!boundedInteger(numerator) || !boundedInteger(denominator, false))
     return null;
@@ -22,12 +40,7 @@ const parts = (numerator: number, denominator: number): Fraction | null => {
 export function normalizeFraction(numerator: number, denominator: number) {
   const value = parts(numerator, denominator);
   if (!value) return null;
-  if (value.numerator === 0) return { numerator: 0, denominator: 1 };
-  const divisor = gcd(value.numerator, value.denominator);
-  return {
-    numerator: value.numerator / divisor,
-    denominator: value.denominator / divisor,
-  };
+  return reduceSafeFraction(value.numerator, value.denominator);
 }
 
 export function addFractionParts(
@@ -47,11 +60,20 @@ export function addFractionParts(
   const rightCommonNumerator =
     right.numerator * (commonDenominator / right.denominator);
   const commonSumNumerator = leftCommonNumerator + rightCommonNumerator;
-  const sum = normalizeFraction(commonSumNumerator, commonDenominator);
+  if (
+    !Number.isSafeInteger(commonDenominator) ||
+    !Number.isSafeInteger(leftCommonNumerator) ||
+    !Number.isSafeInteger(rightCommonNumerator) ||
+    !Number.isSafeInteger(commonSumNumerator)
+  )
+    return null;
+  const sum = reduceSafeFraction(commonSumNumerator, commonDenominator);
   if (!sum) return null;
-  const wholeCount = Math.trunc(commonSumNumerator / commonDenominator);
-  const remainder = normalizeFraction(
-    Math.abs(commonSumNumerator - wholeCount * commonDenominator),
+  const truncatedWhole = Math.trunc(commonSumNumerator / commonDenominator);
+  const wholeCount = truncatedWhole === 0 ? 0 : truncatedWhole;
+  const signedRemainder = commonSumNumerator - wholeCount * commonDenominator;
+  const remainder = reduceSafeFraction(
+    signedRemainder === 0 ? 0 : signedRemainder,
     commonDenominator,
   )!;
   return {

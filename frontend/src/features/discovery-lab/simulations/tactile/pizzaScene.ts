@@ -116,6 +116,7 @@ export function buildPizzaScene(
       0.135,
     );
     glazeArc.rotation.z = Math.PI * 0.72;
+    const selectedBoundaries = new Set<number>();
     for (let i = 0; i < plate.d; i++) {
       const span = (Math.PI * 2) / plate.d,
         start = Math.PI / 2 - (i + 1) * span;
@@ -162,33 +163,14 @@ export function buildPizzaScene(
         continue;
       }
       const piece = new THREE.Group();
-      piece.position.set(Math.cos(mid) * 0.016, Math.sin(mid) * 0.016, 0);
+      piece.position.set(0, 0, 0);
       piece.userData = { plate: p, slice: i };
       base.add(piece);
-      mesh(
-        piece,
-        sector(1.28, start + 0.003, span - 0.006, 0.13),
-        bread,
-        0,
-        0,
-        0.13,
-      );
-      mesh(
-        piece,
-        sector(1.19, start + 0.006, span - 0.012, 0.028),
-        sauce,
-        0,
-        0,
-        0.262,
-      );
-      mesh(
-        piece,
-        sector(1.17, start + 0.008, span - 0.016, 0.045),
-        cheese,
-        0,
-        0,
-        0.29,
-      );
+      selectedBoundaries.add(i);
+      selectedBoundaries.add((i + 1) % plate.d);
+      mesh(piece, sector(1.28, start, span, 0.13), bread, 0, 0, 0.13);
+      mesh(piece, sector(1.19, start, span, 0.028), sauce, 0, 0, 0.262);
+      mesh(piece, sector(1.17, start, span, 0.045), cheese, 0, 0, 0.29);
       const crust = mesh(
         piece,
         new THREE.TorusGeometry(
@@ -196,14 +178,14 @@ export function buildPizzaScene(
           0.105,
           12,
           Math.max(12, Math.ceil(72 / plate.d)),
-          span - 0.012,
+          span,
         ),
         bread,
         0,
         0,
         0.29,
       );
-      crust.rotation.z = start + 0.006;
+      crust.rotation.z = start;
       crust.scale.z = 0.75;
       // Ingredients are fixed on the whole, then assigned to their exact slice.
       for (let topping = 0; topping < 25; topping++) {
@@ -243,6 +225,30 @@ export function buildPizzaScene(
         }
       }
     }
+    const seamMaterial = new THREE.LineBasicMaterial({
+      color: "#704525",
+      transparent: true,
+      opacity: 0.68,
+    });
+    group.userData.ownedMaterials.push(seamMaterial);
+    selectedBoundaries.forEach((boundary) => {
+      const angle = Math.PI / 2 - boundary * ((Math.PI * 2) / plate.d);
+      const seam = new THREE.LineSegments(
+        new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0.03, 0, 0),
+          new THREE.Vector3(
+            Math.cos(angle) * 1.285,
+            Math.sin(angle) * 1.285,
+            0,
+          ),
+        ]),
+        seamMaterial,
+      );
+      seam.position.z = 0.342;
+      seam.userData = { plate: p, cutBoundary: boundary };
+      seam.castShadow = seam.receiveShadow = false;
+      base.add(seam);
+    });
   });
   return group;
 }

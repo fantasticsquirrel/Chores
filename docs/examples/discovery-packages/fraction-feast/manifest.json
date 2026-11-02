@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "fraction-feast-package",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "fraction-feast-package",
@@ -53,7 +53,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "daa7ed548bd000267254462c2c6623fd0092ae4a6142d064782589ec83f32a42"
+      "sha256": "6194fdd7025cc928cb302f728786cbdd4df9664c06df1a6f27a39d63f94dcab8"
     },
     {
       "path": "assets/bread.png",
