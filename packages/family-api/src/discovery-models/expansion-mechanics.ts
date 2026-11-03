@@ -15,21 +15,27 @@ export {
   type HeatHouseTrial,
   type HeatState,
 } from "./heat-house";
-export type PressureState = {
-  depthM: number;
-  outletM: number;
-  shape: "narrow" | "wide" | "tapered";
-};
+export {
+  ATMOSPHERIC_PRESSURE_PA,
+  GRAVITY_M_PER_S2,
+  PRESSURE_SENSOR_AREA_CM2,
+  PRESSURE_SENSOR_AREA_M2,
+  PRESSURE_TANK_MAX_HEIGHT_M,
+  WATER_DENSITY_KG_PER_M3,
+  defaultPressureState,
+  normalizePressure,
+  pressureResult,
+  pressureTankBoundary,
+  pressureTankTrials,
+  tankWidthAt,
+  type PressureState,
+  type PressureTankTrial,
+} from "./pressure-tank";
 export const defaultMachineState: MachineState = {
   mode: "pulley",
   loadKg: 40,
   advantage: 2,
   liftM: 0.5,
-};
-export const defaultPressureState: PressureState = {
-  depthM: 2,
-  outletM: 0.5,
-  shape: "narrow",
 };
 const bound = (n: number, min: number, max: number, fallback: number) =>
   Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
@@ -66,33 +72,5 @@ export function machineResult(input: MachineState) {
     inputTorqueNm: inputForceN * 0.2,
     outputTorqueNm: loadForceN * 0.2,
     crankTurns: inputDistanceM / (2 * Math.PI * 0.2),
-  };
-}
-export function normalizePressure(s: PressureState): PressureState {
-  return {
-    depthM: bound(s.depthM, 0.2, 3, 2),
-    outletM: bound(s.outletM, 0.1, 2.5, 0.5),
-    shape: s.shape === "wide" || s.shape === "tapered" ? s.shape : "narrow",
-  };
-}
-/** Square tanks, tapered width grows linearly from 0.8 m at floor to 1.8 m at 3 m. */
-export function tankWidthAt(shape: PressureState["shape"], heightM: number) {
-  return shape === "wide" ? 1.8 : shape === "tapered" ? 0.8 + heightM / 3 : 1;
-}
-export function pressureResult(input: PressureState) {
-  const s = normalizePressure(input),
-    headM = Math.max(0, s.depthM - s.outletM);
-  const pressurePa = 1000 * 9.81 * headM,
-    jetSpeedMps = Math.sqrt(2 * 9.81 * headM);
-  const volumeM3 =
-    s.shape === "tapered"
-      ? 0.64 * s.depthM + (0.8 * s.depthM ** 2) / 3 + s.depthM ** 3 / 27
-      : tankWidthAt(s.shape, 0) ** 2 * s.depthM;
-  return {
-    headM,
-    pressurePa,
-    jetSpeedMps,
-    rangeM: jetSpeedMps * Math.sqrt((2 * s.outletM) / 9.81),
-    volumeLiters: volumeM3 * 1000,
   };
 }

@@ -19,7 +19,9 @@ describe("nine additional native investigations", () => {
     expect(view.queryByText(/not available in this app yet/)).toBeNull();
     const reset = view.getByRole("button", {
       name:
-        id === "machine-workshop" || id === "heat-house"
+        id === "machine-workshop" ||
+        id === "heat-house" ||
+        id === "pressure-tank"
           ? "Reset lesson"
           : "Reset experiment",
     });

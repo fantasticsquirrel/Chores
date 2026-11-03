@@ -1,80 +1,88 @@
 import { useState } from "react";
 import {
   defaultPressureState,
-  pressureResult,
   normalizePressure,
+  pressureResult,
+  pressureTankBoundary,
+  pressureTankTrials,
   type PressureState,
-} from "@family-manager/family-api/discovery-models/expansion-mechanics";
+} from "@family-manager/family-api/discovery-models/pressure-tank";
 import { createPressureScene } from "@family-manager/discovery-scenes/expansion/mechanics/pressureScene";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
-import {
-  MechanicsComparison,
-  type MechanicsExperiment,
-} from "./MechanicsComparison";
+import { MechanicsComparison } from "./MechanicsComparison";
+import { usePressureHeadReplay } from "./usePressureHeadReplay";
 import "./mechanics.css";
-const experiments: readonly MechanicsExperiment<PressureState>[] = [
-  {
-    title: "Raise the water",
-    question:
-      "If the surface rises from 1 to 2 m while the outlet stays at 0.5 m, what happens to the tank pressure at that height?",
-    choices: [
-      "Pressure triples",
-      "Pressure doubles",
-      "Pressure stays the same",
-    ],
-    controlled:
-      "Keep the narrow tank and outlet height of 0.5 m. Compare water surfaces at 1 and 2 m. Measure the vertical depth below the surface, not the outlet’s height above the floor.",
-    before: { ...defaultPressureState, depthM: 1 },
-    after: { ...defaultPressureState, depthM: 2 },
-    change: "Raise surface to 2 m",
-    evidence:
-      "Head rises from 0.5 to 1.5 m. Tank gauge pressure triples from 4.905 to 14.715 kPa; ideal jet speed rises from 3.13 to 5.42 m/s, not threefold.",
-    explain:
-      "Why does tripling head triple the pressure but not the jet speed? Compare the head and speed readouts.",
-  },
-  {
-    title: "Change tank shape",
-    question:
-      "Will a wider tank send the jet faster at the same water level and outlet height?",
-    choices: ["Same speed", "Faster", "Slower"],
-    controlled:
-      "Keep the surface at 2 m and the outlet at 0.5 m. Change only the tank from narrow to wide. This is an instantaneous comparison, not a timed draining test.",
-    before: { ...defaultPressureState, shape: "narrow" },
-    after: { ...defaultPressureState, shape: "wide" },
-    change: "Use the wide tank",
-    evidence:
-      "Volume increases from 2,000 to 6,480 liters, but the head remains 1.5 m. Static gauge pressure stays 14.715 kPa and ideal jet speed stays 5.42 m/s.",
-    explain:
-      "Why can the wider tank hold more water without increasing pressure at the same depth? What would differ if both tanks were allowed to drain?",
-  },
-];
+
+const formatLiters = (liters: number) =>
+  liters.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
 export function PressureTankSimulation() {
   const [state, setState] = useState<PressureState>({
     ...defaultPressureState,
   });
+  const [comparisonVersion, setComparisonVersion] = useState(0);
+  const replay = usePressureHeadReplay(state.depthM, state.outletM);
   const set = <K extends keyof PressureState>(
     key: K,
     value: PressureState[K],
-  ) => setState((current) => normalizePressure({ ...current, [key]: value }));
-  const r = pressureResult(state);
-  const description = `${state.shape} open water tank. Surface ${state.depthM.toFixed(1)} meters above the floor; outlet ${state.outletM.toFixed(1)} meters above the floor. Head ${r.headM.toFixed(1)} meters. Static tank gauge pressure ${(r.pressurePa / 1000).toFixed(3)} kilopascals, ideal jet speed ${r.jetSpeedMps.toFixed(2)} meters per second. Drag the gold water-level marker or use the Water surface height slider.`;
+  ) => {
+    replay.cancel();
+    setState((current) => normalizePressure({ ...current, [key]: value }));
+    setComparisonVersion((current) => current + 1);
+  };
+  const reset = () => {
+    replay.cancel();
+    setState({ ...defaultPressureState });
+    setComparisonVersion((current) => current + 1);
+  };
+  const applyGuidedState = (next: PressureState) => {
+    replay.cancel();
+    setState(normalizePressure(next));
+  };
+  const visualState = { ...state, depthM: replay.visualSurfaceM };
+  const result = pressureResult(visualState);
+  const description =
+    `${state.shape} open water tank in a dimensional hydraulics lab. ` +
+    `Surface ${visualState.depthM.toFixed(1)} metres and horizontal outlet ${state.outletM.toFixed(1)} metres above the floor; head ${result.headM.toFixed(1)} metres. ` +
+    `The separate closed wall sensor at outlet height has calculated gauge pressure ${(result.gaugePressurePa / 1_000).toFixed(3)} kilopascals and absolute pressure ${(result.absolutePressurePa / 1_000).toFixed(3)} kilopascals. ` +
+    `Its net force is ${result.sensorNetForceN.toFixed(2)} newtons on 100 square centimetres because its back face is exposed to atmosphere. ` +
+    `A dark insulated electrical cable carries its signal to the remote gauge display; it is not a liquid pressure line. ` +
+    `Ideal outlet speed ${result.jetSpeedMps.toFixed(2)} metres per second and floor-level range ${result.rangeM.toFixed(2)} metres. ` +
+    `Tank volume ${formatLiters(result.volumeLiters)} litres. Drag the gold surface marker or use the Water surface height slider; exact visual callouts are repeated in text.`;
+
   return (
     <section className="mechanics-exhibit mechanics-pressure">
       <header className="mechanics-heading">
-        <h2>Does depth or water volume set the pressure?</h2>
+        <span className="mechanics-model-state">Open-water ideal model</span>
+        <h2>Test pressure on a wall sensor</h2>
         <p>
-          Compare the vertical distance from the water surface to the outlet in
-          different tanks.
+          The closed sensor and separate nozzle share a height. Predict first,
+          change one input, then compare pressure and the free jet.
         </p>
       </header>
       <ExpansionCanvas
         dragSelect
-        state={state}
+        state={visualState}
         buildScene={createPressureScene}
         description={description}
         onSelect={(value) => set("depthM", value)}
       />
+      <div className="mechanics-motion-toolbar">
+        <button
+          type="button"
+          className="mechanics-motion"
+          disabled={result.headM <= 0 || replay.running}
+          onClick={replay.replay}
+        >
+          {replay.running ? "Replaying pressure rise…" : "Replay pressure rise"}
+        </button>
+        {replay.status && (
+          <p className="mechanics-motion-status" role="status">
+            {replay.status}
+          </p>
+        )}
+      </div>
       <div className="mechanics-console">
         <div className="mechanics-inputs">
           <div className="mechanics-tabs" role="group" aria-label="Tank shape">
@@ -100,7 +108,7 @@ export function PressureTankSimulation() {
             max={3}
             step={0.1}
             unit=" m"
-            onChange={(v) => set("depthM", v)}
+            onChange={(value) => set("depthM", value)}
           />
           <Slider
             label="Outlet height above floor"
@@ -109,18 +117,14 @@ export function PressureTankSimulation() {
             max={2.5}
             step={0.1}
             unit=" m"
-            onChange={(v) => set("outletM", v)}
+            onChange={(value) => set("outletM", value)}
           />
           <p className="mechanics-control-note">
-            Both heights start at the tank floor. Head is the outlet’s depth
-            below the surface, not its height above the floor.
+            Both heights start at the tank floor. Head is surface height minus
+            outlet height when the outlet is underwater.
           </p>
-          <button
-            className="mechanics-reset"
-            type="button"
-            onClick={() => setState({ ...defaultPressureState })}
-          >
-            Reset tank
+          <button className="mechanics-reset" type="button" onClick={reset}>
+            Reset lesson
           </button>
         </div>
         <div
@@ -128,59 +132,75 @@ export function PressureTankSimulation() {
           aria-live="polite"
           aria-atomic="true"
         >
-          <div className="mechanics-measures">
+          <div className="mechanics-measures mechanics-pressure-measures">
             <div>
-              <span>Static tank gauge pressure</span>
+              <span>Water head</span>
               <strong>
-                {(r.pressurePa / 1000).toFixed(3)} <small>kPa</small>
+                {result.headM.toFixed(1)} <small>m</small>
+              </strong>
+            </div>
+            <div>
+              <span>Wall-sensor gauge pressure</span>
+              <strong>
+                {(result.gaugePressurePa / 1_000).toFixed(3)} <small>kPa</small>
+              </strong>
+            </div>
+            <div>
+              <span>Net force on 100 cm²</span>
+              <strong>
+                {result.sensorNetForceN.toFixed(2)} <small>N</small>
               </strong>
             </div>
             <div>
               <span>Ideal outlet speed</span>
               <strong>
-                {r.jetSpeedMps.toFixed(2)} <small>m/s</small>
+                {result.jetSpeedMps.toFixed(2)} <small>m/s</small>
               </strong>
             </div>
           </div>
+          <div
+            className="mechanics-pressure-equation"
+            aria-label={`Head ${result.headM.toFixed(1)} metres gives ${(result.gaugePressurePa / 1_000).toFixed(3)} kilopascals gauge pressure and ${result.sensorNetForceN.toFixed(2)} newtons net force on the fixed sensor area.`}
+          >
+            <span>head h</span>
+            <b aria-hidden="true">→</b>
+            <span>gauge pressure ρgh</span>
+            <b aria-hidden="true">→</b>
+            <span>net force = gauge pressure × area</span>
+          </div>
           <p>
-            <strong>{r.headM.toFixed(1)} m head</strong> = surface height minus
-            outlet height, when the outlet is underwater. Tank volume:{" "}
-            {r.volumeLiters.toLocaleString(undefined, {
-              maximumFractionDigits: 0,
-            })}{" "}
-            L.
+            Gauge pressure is above the surrounding air pressure. Here it is{" "}
+            <strong>{(result.gaugePressurePa / 1_000).toFixed(3)} kPa</strong>;
+            adding the fixed 101.325 kPa atmosphere gives{" "}
+            <strong>
+              {(result.absolutePressurePa / 1_000).toFixed(3)} kPa absolute
+            </strong>
+            . Because the closed sensor's opposite face is exposed to that
+            atmosphere, its net force is{" "}
+            <strong>{result.sensorNetForceN.toFixed(1)} N on 100 cm²</strong>.
+            The dark insulated cable carries an electrical sensor signal to the
+            remote display; it is not a liquid-filled pressure line.
           </p>
           <p>
-            {r.headM > 0
-              ? `The predicted horizontal range is ${r.rangeM.toFixed(2)} m from the nozzle to floor level. Lower outlets have more head but less falling time; the deepest outlet need not throw water farthest.`
-              : "The outlet is at or above the water surface. There is no outward water jet and no positive water gauge pressure there."}
+            {result.outletSubmerged
+              ? `The ideal horizontal jet starts at ${result.jetSpeedMps.toFixed(2)} m/s and reaches floor level ${result.rangeM.toFixed(2)} m from the nozzle. Outlet height sets fall time as head sets speed, so the lowest outlet need not give the longest range.`
+              : "The sensor and outlet are at or above the water surface. The model gives zero positive water gauge pressure, sensor net force, ideal jet speed and range there."}
           </p>
           <p>
-            Gauge pressure is pressure above the surrounding air pressure. The
-            tank reading is static pressure at the outlet’s height, not pressure
-            inside the emerging free jet, which is approximately atmospheric.
+            {state.shape[0].toUpperCase() + state.shape.slice(1)} tank volume at
+            this level: <strong>{formatLiters(result.volumeLiters)} L</strong>.
+            Volume changes with shape; equal head keeps pressure and ideal speed
+            unchanged. The nozzle is separate from the wall sensor; its emerging
+            free jet is approximately at atmospheric pressure.
           </p>
         </div>
       </div>
-      <MechanicsComparison experiments={experiments} onApply={setState} />
-      <details className="mechanics-details">
-        <summary>What sets pressure and speed?</summary>
-        <p>
-          Static gauge pressure = water density × gravitational acceleration ×
-          head. Water density is 1,000 kg/m³ and gravitational acceleration is
-          9.81 m/s² here. Ideal jet speed = √(2 × gravitational acceleration ×
-          head). Pressure grows directly with head; speed grows with its square
-          root.
-        </p>
-      </details>
-      <p className="mechanics-note">
-        Open tanks and a small horizontal outlet; water is treated as
-        incompressible. Each view is an instantaneous snapshot with the level
-        held fixed, not an animated draining forecast. Friction, viscosity,
-        turbulence, air drag and outlet contraction are omitted. Shape changes
-        volume and how the level would fall over time, not static pressure at
-        equal head.
-      </p>
+      <MechanicsComparison
+        key={comparisonVersion}
+        experiments={pressureTankTrials}
+        onApply={applyGuidedState}
+      />
+      <p className="mechanics-note">{pressureTankBoundary}</p>
     </section>
   );
 }

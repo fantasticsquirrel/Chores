@@ -70,7 +70,18 @@ export async function worker(topic) {
     const parsed = parseScene(result, "rich", new Set(), previous);
     assert.ok(
       parsed,
-      `${topic}: ${input.type} ${input.control ?? ""} frame validates`,
+      `${topic}: ${input.type} ${input.control ?? ""} frame validates (${JSON.stringify(
+        {
+          bytes: JSON.stringify(result).length,
+          description: result.description?.length,
+          geometries: result.scene3d?.geometries?.length,
+          materials: result.scene3d?.materials?.length,
+          nodes: result.scene3d?.nodes?.length,
+          labels: result.scene3d?.labels?.length,
+          sections: result.sections?.map((section) => section.text?.length),
+          footnote: result.footnote?.length,
+        },
+      )})`,
     );
     previous = parsed;
     return structuredClone({ ...result, scene3d: parsed.rich3d });
@@ -372,6 +383,55 @@ test("Heat House package preserves shared model, trials and scene boundary state
       JSON.parse(JSON.stringify(convertedScene)),
       JSON.parse(JSON.stringify(originalScene)),
       "Heat House package scene parity",
+    );
+  }
+});
+test("Pressure Tank package preserves shared model, trials and scene boundary states", async () => {
+  const contents = `
+    import {createPressureScene as original} from './packages/discovery-scenes/src/expansion/mechanics/pressureScene';
+    import {createPressureScene as converted} from './scripts/exploration-packages/pressure-tank/pressureScene';
+    import {pressureResult as originalResult, pressureTankTrials} from './packages/family-api/src/discovery-models/pressure-tank';
+    import {pressureResult as convertedResult} from './scripts/exploration-packages/pressure-tank/model';
+    import {experiments} from './scripts/exploration-packages/pressure-tank/lessons';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[];
+    for(const shape of ['narrow','wide','tapered']) for(const depthM of [0.2,1,2,3]) for(const outletM of [0.1,0.5,1,2.5]) states.push({shape,depthM,outletM});
+    globalThis.trials=[pressureTankTrials,experiments];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const output=[originalResult(state),convertedResult(state),serializeExpansionScene(a,p),serializeExpansionScene(b,p)];
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Pressure Tank package trial content parity",
+  );
+  for (const [
+    originalModel,
+    convertedModel,
+    originalScene,
+    convertedScene,
+  ] of context.result) {
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedModel)),
+      JSON.parse(JSON.stringify(originalModel)),
+      "Pressure Tank package model parity",
+    );
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedScene)),
+      JSON.parse(JSON.stringify(originalScene)),
+      "Pressure Tank package scene parity",
     );
   }
 });

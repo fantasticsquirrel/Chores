@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import {
+  GRAVITY_M_PER_S2,
   normalizePressure,
   pressureResult,
   tankWidthAt,
@@ -7,6 +8,7 @@ import {
 } from "./model";
 import type { ExpansionLabel, ExpansionScene } from "./types";
 import {
+  arrow,
   bar,
   bench,
   box,
@@ -18,8 +20,17 @@ import {
   rope,
   type Point,
 } from "./geometry";
-const tankX = -1.75,
-  floor = 0.18;
+import {
+  addHydraulicsLabBackdrop,
+  addPressureGaugePanel,
+} from "./pressureTankDetails";
+
+const tankX = -1.9;
+const floor = 0.22;
+const tankTopM = 3.18;
+// The 0.10 m square sensor must remain inside the narrowest tapered wall.
+const sensorZ = 0.34;
+
 function squareVolume(
   parent: THREE.Group,
   bottomWidth: number,
@@ -43,30 +54,42 @@ function squareVolume(
   mesh.rotation.y = Math.PI / 4;
   mesh.position.set(tankX, floor + height / 2, 0);
   mesh.name = name;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
 }
-function tank(root: THREE.Group, s: PressureState) {
-  const frame = material("#a7b7b6", 0.75, 0.3),
-    bottom = tankWidthAt(s.shape, 0),
-    top = tankWidthAt(s.shape, 3.1);
+
+function addTank(root: THREE.Group, state: PressureState) {
+  const frame = material("#9db5b8", 0.78, 0.26);
+  const darkFrame = material("#345662", 0.76, 0.28);
+  const bottom = tankWidthAt(state.shape, 0);
+  const top = tankWidthAt(state.shape, 3);
   box(
     root,
-    [bottom + 0.25, 0.13, bottom + 0.25],
-    [tankX, floor - 0.065, 0],
-    frame,
+    [bottom + 0.3, 0.14, bottom + 0.3],
+    [tankX, floor - 0.07, 0],
+    darkFrame,
+    "tank-base",
   );
   for (const signX of [-1, 1])
-    for (const signZ of [-1, 1])
+    for (const signZ of [-1, 1]) {
       bar(
         root,
         [tankX + (signX * bottom) / 2, floor, (signZ * bottom) / 2],
-        [tankX + (signX * top) / 2, 3.1 + floor, (signZ * top) / 2],
-        0.035,
+        [tankX + (signX * top) / 2, floor + tankTopM, (signZ * top) / 2],
+        0.042,
         frame,
       );
-  for (const height of [0, 3.1]) {
-    const half = tankWidthAt(s.shape, height) / 2;
+      box(
+        root,
+        [0.14, 0.12, 0.14],
+        [tankX + (signX * bottom) / 2, floor - 0.12, (signZ * bottom) / 2],
+        darkFrame,
+      );
+    }
+  for (const height of [0, tankTopM]) {
+    const half = tankWidthAt(state.shape, Math.min(3, height)) / 2;
     rope(
       root,
       [
@@ -77,221 +100,302 @@ function tank(root: THREE.Group, s: PressureState) {
         [tankX - half, floor + height, -half],
       ],
       frame,
-      0.045,
+      0.05,
     );
   }
-  const glass = new THREE.MeshStandardMaterial({
-    color: "#c0d9da",
-    metalness: 0.12,
+  const glass = new THREE.MeshPhysicalMaterial({
+    color: "#b9d9de",
+    metalness: 0.08,
     roughness: 0.08,
+    transmission: 0.28,
     transparent: true,
-    opacity: 0.14,
+    opacity: 0.24,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-  squareVolume(root, bottom, top, 3.1, glass, "tank-wall", true);
-  const water = new THREE.MeshStandardMaterial({
-    color: "#3eaabe",
-    roughness: 0.2,
-    metalness: 0.15,
+  squareVolume(root, bottom, top, tankTopM, glass, "tank-wall", true);
+  const water = new THREE.MeshPhysicalMaterial({
+    color: "#2d9eb5",
+    roughness: 0.18,
+    metalness: 0.08,
+    transmission: 0.08,
     transparent: true,
-    opacity: 0.64,
+    opacity: 0.72,
     depthWrite: false,
   });
   squareVolume(
     root,
-    bottom - 0.035,
-    tankWidthAt(s.shape, s.depthM) - 0.035,
-    s.depthM,
+    Math.max(0.1, bottom - 0.04),
+    Math.max(0.1, tankWidthAt(state.shape, state.depthM) - 0.04),
+    state.depthM,
     water,
     "water-volume",
   );
-  const surfaceWidth = tankWidthAt(s.shape, s.depthM) - 0.035;
-  for (let i = -2; i <= 2; i++)
+  const surfaceWidth = tankWidthAt(state.shape, state.depthM) - 0.04;
+  for (let index = -3; index <= 3; index++)
     bar(
       root,
       [
         tankX - surfaceWidth * 0.45,
-        floor + s.depthM + 0.006,
-        (i * surfaceWidth) / 6,
+        floor + state.depthM + 0.01,
+        (index * surfaceWidth) / 8,
       ],
       [
         tankX + surfaceWidth * 0.45,
-        floor + s.depthM + 0.006,
-        (i * surfaceWidth) / 6,
+        floor + state.depthM + 0.01,
+        (index * surfaceWidth) / 8,
       ],
-      0.007,
-      material("#9ee3e5"),
+      0.009,
+      material("#a7edf1", 0.1, 0.18),
     );
-  // Depth ruler and handle stay in the front plane so both touch and keyboard can set the water level.
+
+  // One scene unit is one metre. The front ruler and gold handle are the direct level control.
   box(
     root,
-    [0.11, 3.25, 0.08],
-    [-3.05, floor + 1.55, 0.9],
-    material("#d9ded1"),
+    [0.12, 3.35, 0.09],
+    [-3.23, floor + 1.58, 1.02],
+    material("#d8e0d7", 0.24, 0.42),
+    "surface-ruler",
   );
-  for (let i = 0; i <= 30; i++)
+  for (let tick = 0; tick <= 30; tick++)
     box(
       root,
-      [i % 10 === 0 ? 0.28 : 0.13, 0.012, 0.035],
-      [-2.92, floor + i / 10, 0.95],
-      frame,
+      [tick % 10 === 0 ? 0.34 : tick % 5 === 0 ? 0.24 : 0.15, 0.013, 0.04],
+      [-3.08, floor + tick / 10, 1.075],
+      darkFrame,
     );
   box(
     root,
-    [0.42, 0.11, 0.18],
-    [-3.03, floor + s.depthM, 0.99],
-    material("#f2c97b"),
+    [0.52, 0.12, 0.22],
+    [-3.2, floor + state.depthM, 1.1],
+    material("#f1c46e", 0.42, 0.3),
+    "surface-control-marker",
   );
-}
-function jet(root: THREE.Group, s: PressureState) {
-  const r = pressureResult(s),
-    brass = material("#bd9450", 0.7, 0.3),
-    x = tankX + tankWidthAt(s.shape, s.outletM) / 2;
-  bar(
-    root,
-    [x - 0.05, floor + s.outletM, 0.24],
-    [x + 0.32, floor + s.outletM, 0.24],
-    0.085,
-    brass,
-  );
-  const collar = cylinder(
-    root,
-    0.12,
-    0.08,
-    [x + 0.27, floor + s.outletM, 0.24],
-    brass,
-  );
-  collar.rotation.z = Math.PI / 2;
-  if (r.headM > 0) {
-    const points: Point[] = Array.from({ length: 41 }, (_, i) => {
-      const dx = (r.rangeM * i) / 40;
-      return [
-        x + 0.32 + dx,
-        floor + Math.max(0, s.outletM - (9.81 * (dx / r.jetSpeedMps) ** 2) / 2),
-        0.24,
-      ];
-    });
-    rope(root, points, material("#83e3e6", 0.1, 0.15), 0.035).name =
-      "water-jet";
-    for (let i = 4; i < points.length; i += 5) {
-      const droplet = new THREE.Mesh(
-        new THREE.SphereGeometry(0.052, 10, 8),
-        material("#b3edf1", 0.1, 0.1),
-      );
-      droplet.position.set(...points[i]);
-      root.add(droplet);
-    }
-    const puddle = cylinder(
+
+  const bracketZ = 1.08;
+  const bracketX = tankX - Math.max(bottom, top) / 2 - 0.18;
+  const lowY = floor + Math.min(state.outletM, state.depthM);
+  const highY = floor + state.depthM;
+  if (highY > lowY)
+    bar(
       root,
-      0.28,
-      0.013,
-      [x + 0.32 + r.rangeM, floor + 0.01, 0.24],
-      new THREE.MeshStandardMaterial({
-        color: "#52bdcc",
-        transparent: true,
-        opacity: 0.8,
-        roughness: 0.1,
-      }),
+      [bracketX, lowY, bracketZ],
+      [bracketX, highY, bracketZ],
+      0.022,
+      material("#f0d092"),
+    ).name = "head-bracket";
+  for (const y of new Set([lowY, highY]))
+    box(root, [0.3, 0.025, 0.06], [bracketX + 0.12, y, bracketZ], frame);
+}
+
+function addOutletAndJet(root: THREE.Group, state: PressureState) {
+  const result = pressureResult(state);
+  const brass = material("#bd9450", 0.75, 0.25);
+  const steel = material("#7fa3aa", 0.76, 0.24);
+  const cable = material("#243746", 0.08, 0.72);
+  const outletWallX = tankX + tankWidthAt(state.shape, state.outletM) / 2;
+  const outletY = floor + state.outletM;
+  const nozzleZ = 0.2;
+
+  box(
+    root,
+    [0.035, 0.1, 0.1],
+    [outletWallX + 0.02, outletY, sensorZ],
+    material("#e7dcc1", 0.25, 0.35),
+    "pressure-sensor-face",
+  );
+  if (result.gaugePressurePa > 0) {
+    const forceArrow = arrow(
+      root,
+      [outletWallX + 0.05, outletY, sensorZ],
+      0.18 + Math.min(0.62, result.gaugePressurePa / 30_000),
+      "#f2c47c",
+      [1, 0, 0],
     );
-    puddle.scale.z = 0.65;
+    forceArrow.name = "sensor-force-arrow";
   }
-  // Pressure tap before the open outlet. The free jet itself is at atmospheric pressure.
+  // Insulated electrical signal cable to the remote display, not a liquid line.
   rope(
     root,
     [
-      [x, floor + s.outletM, 0.24],
-      [x, 0.55, 0.65],
-      [tankX, 0.55, 0.8],
+      [outletWallX + 0.02, outletY, sensorZ],
+      [outletWallX + 0.2, outletY, sensorZ + 0.16],
+      [2.42, 1.82, -1.98],
     ],
-    brass,
-    0.025,
-  );
-  const dial = cylinder(
+    cable,
+    0.035,
+  ).name = "insulated-sensor-signal-cable";
+  box(
     root,
-    0.26,
-    0.08,
-    [tankX, 0.55, 0.84],
-    material("#efead5"),
+    [0.07, 0.07, 0.07],
+    [outletWallX + 0.04, outletY, sensorZ],
+    steel,
+    "sensor-cable-connector",
   );
-  dial.rotation.x = Math.PI / 2;
-  const a = Math.PI * 0.8 - Math.min(1, r.pressurePa / 30000) * Math.PI * 1.6;
+
   bar(
     root,
-    [tankX, 0.55, 0.9],
-    [tankX + Math.cos(a) * 0.2, 0.55 + Math.sin(a) * 0.2, 0.9],
-    0.013,
-    material("#d35d40"),
+    [outletWallX - 0.06, outletY, nozzleZ],
+    [outletWallX + 0.42, outletY, nozzleZ],
+    0.09,
+    brass,
+  ).name = "horizontal-outlet";
+  const collar = cylinder(
+    root,
+    0.135,
+    0.1,
+    [outletWallX + 0.36, outletY, nozzleZ],
+    steel,
   );
-  for (let i = 0; i <= 10; i++) {
-    const tick = Math.PI * 0.8 - (i / 10) * Math.PI * 1.6;
-    bar(
+  collar.rotation.z = Math.PI / 2;
+  const nozzleX = outletWallX + 0.47;
+
+  if (result.outletSubmerged) {
+    const points: Point[] = Array.from({ length: 49 }, (_, index) => {
+      const dx = (result.rangeM * index) / 48;
+      return [
+        nozzleX + dx,
+        floor +
+          Math.max(
+            0,
+            state.outletM -
+              (GRAVITY_M_PER_S2 * (dx / result.jetSpeedMps) ** 2) / 2,
+          ),
+        nozzleZ,
+      ];
+    });
+    rope(root, points, material("#8de6ec", 0.08, 0.15), 0.04).name =
+      "water-jet";
+    for (let index = 5; index < points.length - 1; index += 6) {
+      const droplet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 10, 8),
+        material("#b9f0f2", 0.05, 0.12),
+      );
+      droplet.position.set(...points[index]);
+      droplet.castShadow = true;
+      root.add(droplet);
+    }
+    const impact = cylinder(
       root,
-      [tankX + Math.cos(tick) * 0.21, 0.55 + Math.sin(tick) * 0.21, 0.9],
-      [tankX + Math.cos(tick) * 0.24, 0.55 + Math.sin(tick) * 0.24, 0.9],
-      0.008,
-      brass,
+      0.3,
+      0.014,
+      [nozzleX + result.rangeM, floor + 0.012, nozzleZ],
+      new THREE.MeshStandardMaterial({
+        color: "#52bdcc",
+        transparent: true,
+        opacity: 0.82,
+        roughness: 0.12,
+      }),
+      30,
     );
+    impact.name = "jet-impact-marker";
+    impact.scale.z = 0.62;
   }
-  for (let i = 0; i <= 6; i++)
+
+  // The range ruler starts at the nozzle and is marked every 0.1 m to 3 m.
+  for (let tick = 0; tick <= 30; tick++)
     box(
       root,
-      [0.018, 0.02, i % 2 ? 0.13 : 0.22],
-      [x + 0.32 + i * 0.5, floor + 0.01, 1.05],
-      material("#dbe6d6"),
+      [0.014, 0.018, tick % 5 === 0 ? 0.3 : 0.16],
+      [nozzleX + tick / 10, floor + 0.018, 1.15],
+      material(tick % 10 === 0 ? "#f0d092" : "#b9cbca"),
     );
-  return x + 0.32;
+  box(
+    root,
+    [3.03, 0.025, 0.06],
+    [nozzleX + 1.5, floor + 0.014, 1.15],
+    steel,
+    "range-ruler",
+  );
+  return { nozzleX, outletY };
 }
+
 export function createPressureScene(
   initial: PressureState,
 ): ExpansionScene<PressureState> {
   const group = new THREE.Group();
-  bench(group, 8.4, 4.4);
+  bench(group, 10, 5.8);
   box(
     group,
-    [7.6, 0.05, 2.7],
-    [0, floor - 0.025, 0],
-    material("#536f76", 0.45),
+    [9.1, 0.06, 3.85],
+    [0, floor - 0.03, 0.18],
+    material("#4c6b73", 0.48, 0.42),
+    "spill-tray",
   );
-  let dynamic: THREE.Group | undefined,
-    labels: ExpansionLabel[] = [];
+  addHydraulicsLabBackdrop(group);
+  let dynamic: THREE.Group | undefined;
+  let labels: ExpansionLabel[] = [];
   function update(input: PressureState) {
-    const s = normalizePressure(input),
-      r = pressureResult(s);
+    const state = normalizePressure(input);
+    const result = pressureResult(state);
     dynamic = replaceGroup(group, dynamic);
-    tank(dynamic, s);
-    const outletX = jet(dynamic, s);
+    addTank(dynamic, state);
+    const { nozzleX, outletY } = addOutletAndJet(dynamic, state);
+    addPressureGaugePanel(dynamic, result);
     labels = [
       {
-        text: `Surface ${s.depthM.toFixed(1)} m ↕`,
-        at: [-2.65, floor + s.depthM + 0.28, 0.8],
+        text: `Surface ${state.depthM.toFixed(1)} m`,
+        at: [-3.2, floor + state.depthM, 1.1],
+        left: 14,
+        top: 9,
       },
       {
-        text: `Outlet ${s.outletM.toFixed(1)} m`,
-        at: [outletX + 0.3, floor + s.outletM + 0.22, 0.3],
-      },
-      {
-        text: `Head ${r.headM.toFixed(1)} m`,
+        text: `Head ${result.headM.toFixed(1)} m`,
         at: [
-          tankX - 0.1,
-          floor + (s.depthM + Math.min(s.outletM, s.depthM)) / 2,
-          0.9,
+          tankX - 0.72,
+          floor + (state.depthM + Math.min(state.outletM, state.depthM)) / 2,
+          1.08,
         ],
+        left: 14,
+        top: 37,
       },
       {
-        text: `Static gauge ${(r.pressurePa / 1000).toFixed(1)} kPa`,
-        at: [-1.6, 0.15, 1.1],
+        text: `${formatVolume(result.volumeLiters)} L`,
+        at: [tankX, floor + state.depthM * 0.55, 0.5],
+        left: 45,
+        top: 9,
       },
       {
-        text:
-          r.headM > 0
-            ? `Ideal jet ${r.jetSpeedMps.toFixed(2)} m/s`
-            : "Dry outlet: no jet",
-        at: [1.2, 2.8, 0.4],
+        text: `Gauge ${(result.gaugePressurePa / 1_000).toFixed(3)} kPa`,
+        at: [2.53, 2.76, -2.08],
+        left: 79,
+        top: 13,
       },
       {
-        text: `Range ${r.rangeM.toFixed(2)} m from nozzle`,
-        at: [1.5, 0.1, 1.5],
+        text: `Absolute ${(result.absolutePressurePa / 1_000).toFixed(3)} kPa`,
+        at: [3.77, 2.76, -2.08],
+        left: 79,
+        top: 31,
+      },
+      {
+        text: `Net ${result.sensorNetForceN.toFixed(0)} N · 100 cm²`,
+        at: [
+          tankX + tankWidthAt(state.shape, state.outletM) / 2,
+          outletY,
+          sensorZ,
+        ],
+        left: 74,
+        top: 49,
+      },
+      {
+        text: result.outletSubmerged
+          ? `Ideal jet ${result.jetSpeedMps.toFixed(2)} m/s`
+          : "Dry outlet · no jet",
+        at: [nozzleX + Math.min(0.7, result.rangeM / 3), outletY, 0.2],
+        left: 79,
+        top: 68,
+      },
+      {
+        text: `Range ${result.rangeM.toFixed(2)} m`,
+        at: [nozzleX + result.rangeM, floor + 0.02, 0.2],
+        left: 50,
+        top: 91,
+      },
+      {
+        text: `Outlet ${state.outletM.toFixed(1)} m`,
+        at: [nozzleX, outletY, 0.2],
+        left: 15,
+        top: 80,
       },
     ];
   }
@@ -299,19 +403,28 @@ export function createPressureScene(
   return {
     group,
     view: {
-      position: [7.5, 5.7, 10],
-      target: [-0.2, 1.5, 0],
-      width: 9.3,
-      height: 5.9,
+      position: [9.4, 6.8, 12.5],
+      target: [-0.25, 1.62, 0],
+      // Desktop stays height-constrained; portrait crops decorative outskirts.
+      width: 6.5,
+      height: 6.7,
     },
     update,
     labels: () => labels,
     pick(ray) {
-      const p = pickPlane(ray, 0.99);
-      return p && p.x > -3.4 && p.x < -2.65 && p.y > floor && p.y < floor + 3.15
-        ? Math.round(Math.max(0.2, Math.min(3, p.y - floor)) * 10) / 10
+      const point = pickPlane(ray, 1.1);
+      return point &&
+        point.x > -3.48 &&
+        point.x < -2.85 &&
+        point.y > floor &&
+        point.y < floor + 3.12
+        ? Math.round(Math.max(0.2, Math.min(3, point.y - floor)) * 10) / 10
         : null;
     },
     dispose: () => disposeTree(group),
   };
+}
+
+function formatVolume(liters: number) {
+  return liters.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }

@@ -1,14 +1,13 @@
 {
   "schema_version": 1,
   "package_id": "pressure-tank-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "pressure-tank-package",
     "title": "Pressure Tank",
     "subject": "Physics",
     "grade_bands": [
-      "3-5",
       "6-8"
     ],
     "tags": [
@@ -17,30 +16,38 @@
       "fluids",
       "measurement"
     ],
-    "summary": "Compare water pressure and outlet speed in differently shaped tanks at the same water level.",
-    "question": "Does a wider tank make water leave faster when the depth above the outlet stays the same?",
-    "explanation": "In still water, pressure increases with depth below the surface. For an open tank with a small outlet, the depth above that outlet also determines the ideal initial exit speed. A wider tank can hold more water without increasing either quantity at the same depth. The pressure reading is the static gauge pressure at outlet depth, above atmospheric pressure; the emerging free jet itself is approximately at atmospheric pressure. The model shows an instant and omits flow losses, air drag and the falling water level during draining.",
+    "summary": "Change water height or tank shape and compare head, wall-sensor pressure, net force and ideal outlet speed.",
+    "question": "What sets static pressure on a wall sensor and ideal jet speed from a separate nozzle in an open water tank?",
+    "explanation": "In still water of fixed density, static gauge pressure on the separate closed wall sensor grows directly with vertical depth below the surface: gauge pressure = density × gravitational acceleration × head. Absolute pressure adds atmospheric pressure. Gauge pressure times the fixed 100 cm² area gives sensor net force because its opposite face is exposed to atmosphere. The nozzle is separate; its emerging free jet is approximately atmospheric. For an open tank with a small horizontal outlet, the same head sets ideal initial speed through √(2gh). A wider tank stores more water but does not change equal-head pressure, sensor net force or ideal speed. Range also depends on how long the horizontal jet falls from the outlet to floor level. The model holds the level fixed at one instant and omits draining, viscosity, turbulence, outlet contraction, air drag, splashing, wall stresses, temperature-dependent density and sealed-gas or pump effects. Calculated values use displayed teaching constants; dimensions and standard atmosphere are teaching inputs, not measurements, equipment specifications or operating guidance.",
     "experiments": [
       {
         "title": "Raise the water",
-        "instruction": "Choose Raise the water. If the surface rises from 1 to 2 m while the outlet stays at 0.5 m, what happens to the tank pressure at that height? Select your prediction, then Set baseline and Raise surface to 2 m. Keep the narrow tank and outlet height of 0.5 m. Compare water surfaces at 1 and 2 m. Measure the vertical depth below the surface, not the outlet’s height above the floor.",
-        "observe": "Head rises from 0.5 to 1.5 m. Tank gauge pressure triples from 4.905 to 14.715 kPa; ideal jet speed rises from 3.13 to 5.42 m/s, not threefold. Why does tripling head triple the pressure but not the jet speed? Compare the head and speed readouts."
+        "instruction": "Predict first. Set the surface to 1 m in the narrow tank with the outlet fixed at 0.5 m, then change only the surface to 2 m.",
+        "observe": "Head rises from 0.5 to 1.5 m. Calculated gauge pressure and net force on the fixed wall sensor triple, while ideal speed rises by √3. Explain why pressure and speed respond by different factors."
       },
       {
         "title": "Change tank shape",
-        "instruction": "Choose Change tank shape. Will a wider tank send the jet faster at the same water level and outlet height? Select your prediction, then Set baseline and Use the wide tank. Keep the surface at 2 m and the outlet at 0.5 m. Change only the tank from narrow to wide. This is an instantaneous comparison, not a timed draining test.",
-        "observe": "Volume increases from 2,000 to 6,480 liters, but the head remains 1.5 m. Static gauge pressure stays 14.715 kPa and ideal jet speed stays 5.42 m/s. Why can the wider tank hold more water without increasing pressure at the same depth? What would differ if both tanks were allowed to drain?"
+        "instruction": "Predict first. Keep the surface at 2 m and outlet at 0.5 m, then change only the tank from narrow to wide. Compare one instant before either tank drains.",
+        "observe": "Volume rises from 2,000 to 6,480 L, but head stays 1.5 m. Wall-sensor gauge pressure, sensor net force and ideal speed remain unchanged. Explain why volume alone does not set pressure at that depth."
       }
     ],
-    "misconception": "More water volume does not automatically mean greater pressure at a chosen depth. Tank shape can affect how the level falls during draining, which this instantaneous comparison does not calculate.",
+    "misconception": "More total water does not automatically mean greater pressure at a chosen depth. The closed wall sensor measures static pressure there; the separate emerging free jet is approximately atmospheric. Equal head in the same liquid gives equal static gauge pressure even when tank volume differs.",
     "sources": [
       {
         "title": "OpenStax: Pressure variation with fluid depth",
-        "url": "https://openstax.org/books/college-physics-ap-courses/pages/11-4-variation-of-pressure-with-depth-in-a-fluid"
+        "url": "https://openstax.org/books/college-physics/pages/11-4-variation-of-pressure-with-depth-in-a-fluid"
+      },
+      {
+        "title": "OpenStax: Gauge pressure and absolute pressure",
+        "url": "https://openstax.org/books/college-physics/pages/11-6-gauge-pressure-absolute-pressure-and-pressure-measurement"
       },
       {
         "title": "OpenStax: Torricelli’s theorem and ideal outlet speed",
         "url": "https://openstax.org/books/college-physics/pages/12-3-the-most-general-applications-of-bernoullis-equation"
+      },
+      {
+        "title": "OpenStax: Horizontal and vertical projectile motion",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/4-3-projectile-motion"
       }
     ],
     "duration_minutes": 12
@@ -50,7 +57,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "75864e7a02ef5c76b23639f2cff368866ff01cc161476e99dd6d4e98af16a66b"
+      "sha256": "eb4a3361019b13566dff0611ee9317f0dd18a616d7f75ba53122b749fb9bf4f4"
     },
     {
       "path": "THREE-LICENSE.txt",

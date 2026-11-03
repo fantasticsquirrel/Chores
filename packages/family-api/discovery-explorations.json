@@ -761,32 +761,40 @@
     "id": "pressure-tank",
     "title": "Pressure Tank",
     "subject": "Physics",
-    "grade_bands": ["3-5", "6-8"],
+    "grade_bands": ["6-8"],
     "tags": ["water", "pressure", "fluids", "measurement"],
-    "summary": "Compare water pressure and outlet speed in differently shaped tanks at the same water level.",
-    "question": "Does a wider tank make water leave faster when the depth above the outlet stays the same?",
-    "explanation": "In still water, pressure increases with depth below the surface. For an open tank with a small outlet, the depth above that outlet also determines the ideal initial exit speed. A wider tank can hold more water without increasing either quantity at the same depth. The pressure reading is the static gauge pressure at outlet depth, above atmospheric pressure; the emerging free jet itself is approximately at atmospheric pressure. The model shows an instant and omits flow losses, air drag and the falling water level during draining.",
+    "summary": "Change water height or tank shape and compare head, wall-sensor pressure, net force and ideal outlet speed.",
+    "question": "What sets static pressure on a wall sensor and ideal jet speed from a separate nozzle in an open water tank?",
+    "explanation": "In still water of fixed density, static gauge pressure on the separate closed wall sensor grows directly with vertical depth below the surface: gauge pressure = density × gravitational acceleration × head. Absolute pressure adds atmospheric pressure. Gauge pressure times the fixed 100 cm² area gives sensor net force because its opposite face is exposed to atmosphere. The nozzle is separate; its emerging free jet is approximately atmospheric. For an open tank with a small horizontal outlet, the same head sets ideal initial speed through √(2gh). A wider tank stores more water but does not change equal-head pressure, sensor net force or ideal speed. Range also depends on how long the horizontal jet falls from the outlet to floor level. The model holds the level fixed at one instant and omits draining, viscosity, turbulence, outlet contraction, air drag, splashing, wall stresses, temperature-dependent density and sealed-gas or pump effects. Calculated values use displayed teaching constants; dimensions and standard atmosphere are teaching inputs, not measurements, equipment specifications or operating guidance.",
     "experiments": [
       {
-        "title": "Change shape, keep depth",
-        "instruction": "Set water depth to 2 m and outlet height to 0.5 m. Predict how changing from a narrow to a wide tank affects static pressure and jet speed, then compare both shapes without changing the heights.",
-        "observe": "The wide tank holds more water, but the depth above the outlet, static pressure and ideal speed stay the same. Explain why total volume is not enough to determine pressure at the outlet depth."
+        "title": "Raise the water",
+        "instruction": "Predict first. Set the surface to 1 m in the narrow tank with the outlet fixed at 0.5 m, then change only the surface to 2 m.",
+        "observe": "Head rises from 0.5 to 1.5 m. Calculated gauge pressure and net force on the fixed wall sensor triple, while ideal speed rises by √3. Explain why pressure and speed respond by different factors."
       },
       {
-        "title": "Raise the water surface",
-        "instruction": "Keep the outlet at 0.5 m and the tank shape fixed. Predict what happens when water depth rises from 1 to 2 m, then compare the depth above the outlet, pressure and speed.",
-        "observe": "The depth above the outlet rises from 0.5 to 1.5 m. Static pressure triples, but speed increases by about 1.73 times. Explain why doubling the displayed water depth did not simply double either reading."
+        "title": "Change tank shape",
+        "instruction": "Predict first. Keep the surface at 2 m and outlet at 0.5 m, then change only the tank from narrow to wide. Compare one instant before either tank drains.",
+        "observe": "Volume rises from 2,000 to 6,480 L, but head stays 1.5 m. Wall-sensor gauge pressure, sensor net force and ideal speed remain unchanged. Explain why volume alone does not set pressure at that depth."
       }
     ],
-    "misconception": "More water volume does not automatically mean greater pressure at a chosen depth. Tank shape can affect how the level falls during draining, which this instantaneous comparison does not calculate.",
+    "misconception": "More total water does not automatically mean greater pressure at a chosen depth. The closed wall sensor measures static pressure there; the separate emerging free jet is approximately atmospheric. Equal head in the same liquid gives equal static gauge pressure even when tank volume differs.",
     "sources": [
       {
         "title": "OpenStax: Pressure variation with fluid depth",
-        "url": "https://openstax.org/books/college-physics-ap-courses/pages/11-4-variation-of-pressure-with-depth-in-a-fluid"
+        "url": "https://openstax.org/books/college-physics/pages/11-4-variation-of-pressure-with-depth-in-a-fluid"
+      },
+      {
+        "title": "OpenStax: Gauge pressure and absolute pressure",
+        "url": "https://openstax.org/books/college-physics/pages/11-6-gauge-pressure-absolute-pressure-and-pressure-measurement"
       },
       {
         "title": "OpenStax: Torricelli’s theorem and ideal outlet speed",
         "url": "https://openstax.org/books/college-physics/pages/12-3-the-most-general-applications-of-bernoullis-equation"
+      },
+      {
+        "title": "OpenStax: Horizontal and vertical projectile motion",
+        "url": "https://openstax.org/books/university-physics-volume-1/pages/4-3-projectile-motion"
       }
     ],
     "duration_minutes": 12

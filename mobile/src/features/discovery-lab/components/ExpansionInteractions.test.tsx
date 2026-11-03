@@ -46,9 +46,11 @@ const cases: {
   },
   {
     id: "pressure-tank",
-    action: "Increase Water depth (m)",
+    action: "Increase Water surface height (m)",
     changed: { depthM: 2.1 },
-    result: /Static gauge pressure at outlet depth 15696 Pa/,
+    result:
+      /closed wall sensor at outlet height has calculated gauge pressure 15\.696 kPa; absolute pressure 117\.021 kPa/,
+    reset: "Reset lesson",
   },
   {
     id: "moving-plates",
@@ -88,7 +90,6 @@ const cases: {
   },
 ];
 const comparisons = [
-  { id: "pressure-tank", titles: ["Water above outlet", "Tank width"] },
   { id: "moving-plates", titles: ["Boundary types", "Locked fault and slip"] },
   {
     id: "cloud-rain-lab",
@@ -218,6 +219,45 @@ describe("native nine-topic controls and paired investigations", () => {
     );
     expect(validSceneState(lastState())).toBe(true);
     expect(view.getByText(/Net outward heat-transfer power: -/)).toBeTruthy();
+  });
+  it("gives Pressure Tank exact evidence, prediction feedback and complete reset", () => {
+    const view = render(<NativeExploration id="pressure-tank" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Raise the water" }),
+    ).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Pressure triples" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Raise the water" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Raise the water" }),
+    );
+    expect(view.getByText(/supports your prediction/)).toBeTruthy();
+    expect(view.getByText(/4\.905 to 14\.715 kPa/)).toBeTruthy();
+    expect(view.getByText(/49\.05 to 147\.15 N/)).toBeTruthy();
+    fireEvent.press(view.getByRole("radio", { name: "Change tank shape" }));
+    fireEvent.press(view.getByRole("radio", { name: "Same speed" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Change tank shape" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Change tank shape" }),
+    );
+    expect(view.getByText(/2,000 to 6,480 L/)).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Reset lesson" }));
+    expect(view.queryByText(/supports your prediction/)).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Pressure doubles" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Raise the water" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Raise the water" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(
+      view.getByText(/teaching inputs, not equipment specifications/),
+    ).toBeTruthy();
   });
   it("gives Heat House exact energy evidence and correct or incorrect feedback", () => {
     const view = render(<NativeExploration id="heat-house" />);

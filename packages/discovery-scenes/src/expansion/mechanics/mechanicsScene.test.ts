@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   Box3,
+  BufferAttribute,
+  BufferGeometry,
   Group,
   Mesh,
   OrthographicCamera,
@@ -12,6 +14,7 @@ import {
   defaultMachineState,
   defaultHeatState,
   defaultPressureState,
+  tankWidthAt,
 } from "@family-manager/family-api/discovery-models/expansion-mechanics";
 import { createMachineScene } from "./machineScene";
 import {
@@ -25,10 +28,18 @@ const ray = (x: number, y: number) =>
   new Raycaster(new Vector3(x, y, 10), new Vector3(0, 0, -1));
 function finiteGeometry(group: Group) {
   group.traverse((child) => {
-    if (child instanceof Mesh) {
-      expect(child.position.toArray().every(Number.isFinite)).toBe(true);
-      const points = child.geometry.getAttribute("position");
-      expect(Array.from(points.array).every(Number.isFinite)).toBe(true);
+    expect(
+      child.position.toArray().every(Number.isFinite),
+      `${child.name || child.type} has a non-finite position`,
+    ).toBe(true);
+    if ("geometry" in child && child.geometry instanceof BufferGeometry) {
+      for (const [attributeName, attribute] of Object.entries(
+        child.geometry.attributes,
+      ) as [string, BufferAttribute][])
+        expect(
+          Array.from(attribute.array).every(Number.isFinite),
+          `${child.name || child.type} has non-finite ${attributeName} geometry`,
+        ).toBe(true);
     }
   });
 }
@@ -77,6 +88,49 @@ function expectSceneInsideView(
       `y at aspect ${aspect.toFixed(3)}, yaw ${yawOffset}, corner ${corner.join(",")}`,
     ).toBeLessThan(0.94);
   }
+}
+function expectNamedObjectInsidePressureView(
+  scene: ReturnType<typeof createPressureScene>,
+  name: string,
+  aspect: number,
+) {
+  scene.group.updateMatrixWorld(true);
+  const target = new Vector3(...scene.view.target);
+  const initial = new Vector3(...scene.view.position).sub(target);
+  const width = Math.max(scene.view.width, scene.view.height * aspect);
+  const height = width / aspect;
+  const camera = new OrthographicCamera(
+    -width / 2,
+    width / 2,
+    height / 2,
+    -height / 2,
+    0.1,
+    150,
+  );
+  camera.position.copy(initial).add(target);
+  camera.lookAt(target);
+  camera.updateMatrixWorld(true);
+  const object = scene.group.getObjectByName(name);
+  expect(object, `${name} exists`).toBeDefined();
+  let vertices = 0;
+  object!.traverse((child) => {
+    if (!(child instanceof Mesh)) return;
+    const positions = child.geometry.getAttribute("position");
+    for (let index = 0; index < positions.count; index++) {
+      vertices++;
+      const projected = new Vector3()
+        .fromBufferAttribute(positions, index)
+        .applyMatrix4(child.matrixWorld)
+        .project(camera);
+      expect(Math.abs(projected.x), `${name} x at ${aspect}`).toBeLessThan(
+        0.99,
+      );
+      expect(Math.abs(projected.y), `${name} y at ${aspect}`).toBeLessThan(
+        0.99,
+      );
+    }
+  });
+  expect(vertices, `${name} has projected geometry`).toBeGreaterThan(0);
 }
 describe("native-reusable mechanics scenes", () => {
   it("rebuilds all machine arrangements without invalid geometry and preserves a direct lift control", () => {
@@ -306,17 +360,74 @@ describe("native-reusable mechanics scenes", () => {
   });
   it("updates tank geometry and removes the jet when the outlet is dry", () => {
     const scene = createPressureScene(defaultPressureState);
+    expect(
+      scene.group.getObjectByName("hydraulics-lab-backdrop"),
+    ).toBeDefined();
+    expect(scene.group.getObjectByName("pressure-sensor-face")).toBeDefined();
+    expect(scene.group.getObjectByName("sensor-force-arrow")).toBeDefined();
+    expect(
+      scene.group.getObjectByName("insulated-sensor-signal-cable"),
+    ).toBeDefined();
+    expect(scene.group.getObjectByName("sensor-pressure-line")).toBeUndefined();
+    expect(scene.group.getObjectByName("pressure-gauge-panel")).toBeDefined();
     expect(scene.group.getObjectByName("water-jet")).toBeDefined();
-    for (const shape of ["narrow", "wide", "tapered"] as const) {
-      scene.update({ ...defaultPressureState, shape, depthM: 3 });
-      finiteGeometry(scene.group);
-    }
+    expect(scene.group.getObjectByName("jet-impact-marker")).toBeDefined();
+    expect(
+      scene
+        .labels()
+        .every((label) => label.left !== undefined && label.top !== undefined),
+    ).toBe(true);
+    expect(
+      scene
+        .labels()
+        .some((label) => label.text.includes("Absolute 116.040 kPa")),
+    ).toBe(true);
+    expect(
+      scene.labels().some((label) => label.text.includes("N · 100 cm²")),
+    ).toBe(true);
+    for (const shape of ["narrow", "wide", "tapered"] as const)
+      for (const outletM of [0.1, 0.5, 2.5]) {
+        scene.update({ ...defaultPressureState, shape, depthM: 3, outletM });
+        finiteGeometry(scene.group);
+        const sensor = scene.group.getObjectByName("pressure-sensor-face")!;
+        const force = scene.group.getObjectByName("sensor-force-arrow")!;
+        const wallHalfWidth = tankWidthAt(shape, outletM) / 2;
+        expect(Math.abs(sensor.position.z) + 0.05).toBeLessThanOrEqual(
+          wallHalfWidth,
+        );
+        expect(force.position.z).toBeCloseTo(sensor.position.z);
+        expect(sensor.position.y).toBeCloseTo(0.22 + outletM);
+      }
     scene.update({ ...defaultPressureState, depthM: 0.2, outletM: 2.5 });
+    finiteGeometry(scene.group);
     expect(scene.group.getObjectByName("water-jet")).toBeUndefined();
+    expect(scene.group.getObjectByName("sensor-force-arrow")).toBeUndefined();
+    expect(scene.group.getObjectByName("jet-impact-marker")).toBeUndefined();
     expect(
       scene.labels().some((label) => label.text.includes("Dry outlet")),
     ).toBe(true);
     expect(scene.pick?.(ray(-3, 2.18))).toBe(2);
+    scene.dispose();
+  });
+  it("uses a pressure-focused portrait view without cropping tank, jet or impact", () => {
+    const scene = createPressureScene(defaultPressureState);
+    const webAspect = 336 / 380;
+    const packageAspect = 365 / 510;
+    for (const [aspect, pixels] of [
+      [webAspect, 380],
+      [packageAspect, 510],
+      [390 / 320, 320],
+    ] as const) {
+      const worldHeight =
+        Math.max(scene.view.width, scene.view.height * aspect) / aspect;
+      expect((3.18 / worldHeight) * pixels).toBeGreaterThanOrEqual(150);
+    }
+    for (const shape of ["wide", "tapered"] as const) {
+      scene.update({ ...defaultPressureState, shape, depthM: 3, outletM: 1.5 });
+      for (const aspect of [webAspect, packageAspect, 390 / 320])
+        for (const name of ["tank-wall", "water-jet", "jet-impact-marker"])
+          expectNamedObjectInsidePressureView(scene, name, aspect);
+    }
     scene.dispose();
   });
 });

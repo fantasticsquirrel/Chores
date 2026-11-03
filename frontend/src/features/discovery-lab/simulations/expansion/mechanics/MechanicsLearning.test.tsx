@@ -178,21 +178,104 @@ describe("mechanics learning controls", () => {
   });
   it("compares pressure by head and keeps shape out of instantaneous speed", () => {
     render(<PressureTankSimulation />);
+    expect(screen.getByText(/116\.040 kPa absolute/)).toBeInTheDocument();
+    expect(screen.getByText(/147\.2 N on 100 cm²/)).toBeInTheDocument();
     click("Pressure triples");
     click("Set baseline");
     click("Raise surface to 2 m");
     expect(evidence()).toHaveTextContent("0.5 to 1.5 m");
+    expect(evidence()).toHaveTextContent("supports your prediction");
     click("Change tank shape");
     click("Same speed");
     click("Set baseline");
     click("Use the wide tank");
-    expect(evidence()).toHaveTextContent("2,000 to 6,480 liters");
+    expect(evidence()).toHaveTextContent("2,000 to 6,480 L");
+    expect(evidence()).toHaveTextContent("supports your prediction");
+    click("Reset lesson");
+    expect(screen.queryByText("Recorded comparison:")).not.toBeInTheDocument();
+    click("Pressure doubles");
+    click("Set baseline");
+    click("Raise surface to 2 m");
+    expect(evidence()).toHaveTextContent("does not support your prediction");
     change("Water surface height", 0.2);
     change("Outlet height above floor", 2.5);
-    expect(screen.getByText(/The outlet is at or above/)).toBeInTheDocument();
-    click("Reset tank");
+    expect(
+      screen.getByText(/The sensor and outlet are at or above/),
+    ).toBeInTheDocument();
+    click("Reset lesson");
     expect(
       screen.getByRole("slider", { name: "Water surface height" }),
     ).toHaveValue("2");
+  });
+
+  it("keeps the pressure-rise replay opt-in and respects reduced motion", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    render(<PressureTankSimulation />);
+    click("Replay pressure rise");
+    expect(
+      screen.getByText(
+        "Reduced motion is on; the final water level and pressure stay shown.",
+      ),
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it("shows and cancels the pressure replay when a control changes", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("requestAnimationFrame", () => 41);
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    render(<PressureTankSimulation />);
+    click("Replay pressure rise");
+    expect(
+      screen.getByRole("button", { name: "Replaying pressure rise…" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(/Replaying the water surface rising/),
+    ).toBeInTheDocument();
+    change("Water surface height", 2.4);
+    expect(
+      screen.getByRole("button", { name: "Replay pressure rise" }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByText(/Replaying the water surface rising/),
+    ).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+
+  it("cancels pressure replay for guided states and document hiding", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("requestAnimationFrame", () => 43);
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
+    render(<PressureTankSimulation />);
+    click("Replay pressure rise");
+    click("Pressure triples");
+    click("Set baseline");
+    expect(
+      screen.getByRole("button", { name: "Replay pressure rise" }),
+    ).toBeEnabled();
+    click("Replay pressure rise");
+    hidden.mockReturnValue(true);
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(
+      screen.getByRole("button", { name: "Replay pressure rise" }),
+    ).toBeEnabled();
+    expect(
+      screen.queryByText(/Replaying the water surface rising/),
+    ).not.toBeInTheDocument();
+    hidden.mockRestore();
+    vi.unstubAllGlobals();
+  });
+
+  it("cancels an active pressure replay on unmount", () => {
+    const cancelAnimationFrame = vi.fn();
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("requestAnimationFrame", () => 47);
+    vi.stubGlobal("cancelAnimationFrame", cancelAnimationFrame);
+    const { unmount } = render(<PressureTankSimulation />);
+    click("Replay pressure rise");
+    unmount();
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(47);
+    vi.unstubAllGlobals();
   });
 });

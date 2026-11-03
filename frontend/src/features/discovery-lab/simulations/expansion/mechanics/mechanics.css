@@ -155,6 +155,9 @@
 .mechanics-heat-measures {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.mechanics-pressure-measures {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .mechanics-results p,
 .mechanics-steps p {
   color: #c4d2d9;
@@ -247,6 +250,36 @@
   color: #d8e2e5;
   font-size: 0.8rem;
   font-weight: 500;
+}
+.mechanics-pressure-equation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.35fr) auto minmax(
+      0,
+      1.4fr
+    );
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  border: 1px solid #83dbe166;
+  border-radius: 12px;
+  background: #101f2a;
+  color: #e5f4f4;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: center;
+}
+.mechanics-pressure-equation span {
+  padding: 0.45rem;
+  border-radius: 7px;
+  background: repeating-linear-gradient(
+    135deg,
+    #203c48 0 8px,
+    #1b3440 8px 14px
+  );
+}
+.mechanics-pressure-equation b {
+  color: #8bdde3;
+  font-size: 1.1rem;
 }
 .mechanics-comparison {
   border: 1px solid #52697b70;
@@ -343,6 +376,9 @@
 .mechanics-heat .expansion-label {
   max-width: 168px;
 }
+.mechanics-pressure .expansion-label {
+  max-width: 174px;
+}
 @media (max-width: 850px) {
   .mechanics-console {
     grid-template-columns: 1fr;
@@ -360,11 +396,13 @@
 }
 @media (max-width: 460px) {
   .mechanics-machine .expansion-scene,
-  .mechanics-heat .expansion-scene {
+  .mechanics-heat .expansion-scene,
+  .mechanics-pressure .expansion-scene {
     height: 390px;
   }
   .mechanics-machine .expansion-label,
-  .mechanics-heat .expansion-label {
+  .mechanics-heat .expansion-label,
+  .mechanics-pressure .expansion-label {
     max-width: 136px;
     padding: 4px 6px;
     font-size: 12px;
@@ -386,6 +424,12 @@
   }
   .mechanics-heat-measures span {
     min-height: 0;
+  }
+  .mechanics-pressure-equation {
+    grid-template-columns: 1fr;
+  }
+  .mechanics-pressure-equation b {
+    transform: rotate(90deg);
   }
   .mechanics-tabs button {
     padding: 0.65rem 0.45rem;
@@ -417,6 +461,12 @@
 
 .mechanics-machine .expansion-scene {
   border: 1px solid #7fa0a977;
+  box-shadow:
+    inset 0 0 0 1px #ffffff0b,
+    0 20px 36px #050e1766;
+}
+.mechanics-pressure .expansion-scene {
+  border: 1px solid #77a8b177;
   box-shadow:
     inset 0 0 0 1px #ffffff0b,
     0 20px 36px #050e1766;
