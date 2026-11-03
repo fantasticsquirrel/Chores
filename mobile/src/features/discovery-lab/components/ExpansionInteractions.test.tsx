@@ -41,7 +41,8 @@ const cases: {
     id: "heat-house",
     action: "Increase Insulation (cm)",
     changed: { insulationCm: 6 },
-    result: /Net outward heat transfer:/,
+    result: /Net outward heat-transfer power:/,
+    reset: "Reset lesson",
   },
   {
     id: "pressure-tank",
@@ -87,7 +88,6 @@ const cases: {
   },
 ];
 const comparisons = [
-  { id: "heat-house", titles: ["Wall insulation", "Window area"] },
   { id: "pressure-tank", titles: ["Water above outlet", "Tank width"] },
   { id: "moving-plates", titles: ["Boundary types", "Locked fault and slip"] },
   {
@@ -212,12 +212,48 @@ describe("native nine-topic controls and paired investigations", () => {
         view.getByRole("button", { name: "Increase Outside temperature (°C)" }),
       );
     expect(lastState()).toMatchObject({ insideC: 20, outsideC: 20 });
-    expect(view.getByText(/Net outward heat transfer: 0 W/)).toBeTruthy();
+    expect(view.getByText(/Net outward heat-transfer power: 0 W/)).toBeTruthy();
     fireEvent.press(
       view.getByRole("button", { name: "Increase Outside temperature (°C)" }),
     );
     expect(validSceneState(lastState())).toBe(true);
-    expect(view.getByText(/Net outward heat transfer: -/)).toBeTruthy();
+    expect(view.getByText(/Net outward heat-transfer power: -/)).toBeTruthy();
+  });
+  it("gives Heat House exact energy evidence and correct or incorrect feedback", () => {
+    const view = render(<NativeExploration id="heat-house" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Wall insulation" }),
+    ).toBeNull();
+    fireEvent.press(
+      view.getByRole("radio", { name: "Window power stays the same" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Wall insulation" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Wall insulation" }),
+    );
+    expect(view.getByText(/supports your prediction/)).toBeTruthy();
+    expect(view.getAllByText(/448 W/).length).toBeGreaterThan(0);
+    expect(view.getAllByText(/kWh/).length).toBeGreaterThan(0);
+    expect(view.getByText(/Changed: added wall insulation/)).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Reset lesson" }));
+    fireEvent.press(view.getByRole("radio", { name: "Window power falls" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Wall insulation" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Wall insulation" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(
+      view.getByRole("button", { name: "Increase Elapsed time (h)" }),
+    ).toBeTruthy();
+    expect(view.queryByText(/rich scene|position-only/i)).toBeNull();
+    expect(
+      view.getByText(/Real building transfer includes conduction/),
+    ).toBeTruthy();
   });
   it("keeps island expected shares valid through the generation limit", () => {
     const view = render(<NativeExploration id="adaptation-island" />);

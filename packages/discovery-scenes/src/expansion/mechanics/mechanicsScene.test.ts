@@ -276,6 +276,34 @@ describe("native-reusable mechanics scenes", () => {
     expect(scene.pick?.(ray(-3.1, 0.4))).toBe(10);
     scene.dispose();
   });
+  it("keeps Heat House evidence callouts in authored gutters and shows elapsed energy", () => {
+    const scene = createHeatScene({
+      ...defaultHeatState,
+      elapsedHours: 24,
+      insulationCm: 20,
+      windowM2: 18,
+    });
+    const labels = scene.labels();
+    expect(labels.every((label) => label.left !== undefined)).toBe(true);
+    expect(labels.every((label) => label.top !== undefined)).toBe(true);
+    expect(labels.map((label) => label.text)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Walls"),
+        expect.stringContaining("Windows"),
+        expect.stringContaining("24 h"),
+        "Use thickness control",
+      ]),
+    );
+    expect(scene.group.getObjectByName("heat-house-backdrop")).toBeDefined();
+    expect(scene.group.getObjectByName("elapsed-energy-marker")).toBeDefined();
+    for (const label of labels) {
+      expect(label.left).toBeGreaterThanOrEqual(9);
+      expect(label.left).toBeLessThanOrEqual(91);
+      expect(label.top).toBeGreaterThanOrEqual(8);
+      expect(label.top).toBeLessThanOrEqual(92);
+    }
+    scene.dispose();
+  });
   it("updates tank geometry and removes the jet when the outlet is dry", () => {
     const scene = createPressureScene(defaultPressureState);
     expect(scene.group.getObjectByName("water-jet")).toBeDefined();

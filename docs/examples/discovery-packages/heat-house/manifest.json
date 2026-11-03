@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "heat-house-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "heat-house-package",
@@ -17,40 +17,48 @@
       "energy",
       "engineering"
     ],
-    "summary": "Change wall insulation, material and window area while comparing heat loss at matched temperatures.",
-    "question": "Why does adding wall insulation not stop heat loss through the windows?",
-    "explanation": "Thermal energy transfers from warmer places to cooler places. Insulation slows that transfer; it does not produce heat. This model holds the indoor and outdoor temperatures steady and calculates transfer through a fixed area of walls and windows. Adding windows replaces some opaque wall rather than enlarging the house. It omits the roof, floor, drafts, sunlight and stored heat. Material values describe a teaching example, not a real home or an energy-bill estimate.",
+    "summary": "Compare wall and window heat-transfer power, then track how transferred energy accumulates at fixed temperatures.",
+    "question": "How do wall insulation, window area and elapsed time change heat-transfer power and energy when temperatures stay fixed?",
+    "explanation": "Thermal energy transfers from warmer places toward cooler places. Power is the rate of energy transfer in watts (joules per second); energy transferred over time is reported in joules, megajoules and kilowatt-hours. Insulation adds thermal resistance and slows transfer through the wall path; it does not create thermal energy. Real buildings transfer energy by conduction through materials, convection with moving fluids and radiation by electromagnetic waves. This steady-state model folds assembly effects into fixed U-factors instead of calculating those mechanisms separately. It holds both temperatures steady, treats added windows as replacements for opaque wall inside a 60 m² envelope, and omits the roof, floor, air leaks, sunlight, moisture, thermal bridges, stored heat and equipment. The values are teaching inputs, not measurements, product ratings, a weather forecast or an energy-bill estimate.",
     "experiments": [
       {
-        "title": "Add wall insulation",
-        "instruction": "Choose Add wall insulation. Will adding wall insulation reduce the heat transfer through unchanged windows? Select your prediction, then Set baseline and Add 10 cm insulation. Keep brick walls, 8 m² of windows, 20°C inside and 0°C outside. Compare no added insulation with 10 cm. Both temperatures are held steady.",
-        "observe": "Wall transfer falls from 2066 W to 346 W. Window transfer stays 448 W. Combined transfer falls from 2514 W to 794 W. Why does extra wall insulation reduce only one heat-transfer path in this comparison? What else would need to change to reduce the window transfer?"
+        "title": "Wall insulation",
+        "instruction": "Choose Wall insulation. Predict what happens to window heat-transfer power, then Set baseline and Add 10 cm insulation. Keep brick, 8 m² windows, 20°C inside, 0°C outside and 6 h fixed; change only added insulation from 0 to 10 cm.",
+        "observe": "Wall power falls from 2066 W to 346 W while window power stays 448 W. Over 6 h, combined transferred energy falls from 15.09 kWh to 4.77 kWh. Explain why changing the wall path leaves the unchanged window path fixed."
       },
       {
-        "title": "Change window area",
-        "instruction": "Choose Change window area. With insulated walls, what happens to heat loss if windows replace more of the wall area? Select your prediction, then Set baseline and Use 18 m² windows. Keep 10 cm of added insulation, brick, 20°C inside and 0°C outside. Increase windows from 2 to 18 m² within the same 60 m² wall envelope.",
-        "observe": "Opaque wall area falls from 58 to 42 m². Combined transfer rises from 498 W to 1288 W because these windows transfer more heat per square meter than these insulated walls. Why must window area replace wall area for a fair comparison? Would every real window and wall have this same result?"
+        "title": "Window area",
+        "instruction": "Choose Window area. Predict what happens to combined outward power, then Set baseline and Use 18 m² windows. Keep brick, 10 cm insulation, 20°C inside, 0°C outside and 6 h fixed; change only window area from 2 to 18 m² inside the same 60 m² envelope.",
+        "observe": "Opaque wall area falls from 58 to 42 m², combined power rises from 498 W to 1288 W, and 6 h energy rises from 2.99 kWh to 7.73 kWh. Explain why both area and U-factor determine this teaching result."
       }
     ],
-    "misconception": "Insulation does not generate warmth or stop all heat transfer. It slows transfer through the part of the building where it is installed.",
+    "misconception": "Insulation does not generate warmth, and watts are not a temperature or an amount of energy. Insulation slows transfer through its path; at constant power, transferred energy still accumulates with elapsed time.",
     "sources": [
       {
-        "title": "OpenStax: Conduction and thermal resistance",
-        "url": "https://openstax.org/books/college-physics-2e/pages/14-5-conduction"
+        "title": "OpenStax: Conduction rate, resistance and elapsed energy",
+        "url": "https://openstax.org/books/college-physics/pages/14-5-conduction"
       },
       {
-        "title": "US Department of Energy: Window heat transfer and U-factor",
-        "url": "https://bsesc.energy.gov/energy-basics/energy-star-windows"
+        "title": "US Department of Energy: Conduction, convection and radiation",
+        "url": "https://bsesc.energy.gov/energy-basics/heat-flow"
+      },
+      {
+        "title": "US Department of Energy: Window U-factor and temperature difference",
+        "url": "https://www.energy.gov/cmei/femp/purchasing-energy-efficient-residential-windows-doors-and-skylights"
+      },
+      {
+        "title": "NIST: SI units for energy, power and thermal conductivity",
+        "url": "https://www.nist.gov/pml/special-publication-811/nist-guide-si-chapter-4-two-classes-si-units-and-si-prefixes"
       }
     ],
-    "duration_minutes": 12
+    "duration_minutes": 15
   },
   "entry": "worker.js",
   "assets": [
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "eeeee016deb2ed4cf0629891096d804fe8bd067f552ebbced35018d99d283e58"
+      "sha256": "cadc3d66e7bf6c47f260751f91f5cce82b8f654c71ea4b952304ae801eb70297"
     },
     {
       "path": "THREE-LICENSE.txt",

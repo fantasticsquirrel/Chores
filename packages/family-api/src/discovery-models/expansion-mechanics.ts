@@ -5,13 +5,16 @@ export type MachineState = {
   advantage: number;
   liftM: number;
 };
-export type HeatState = {
-  insulationCm: number;
-  windowM2: number;
-  material: "brick" | "wood" | "insulation";
-  insideC: number;
-  outsideC: number;
-};
+export {
+  defaultHeatState,
+  heatHouseBoundary,
+  heatHouseTrials,
+  heatResult,
+  heatWallMaterials,
+  normalizeHeat,
+  type HeatHouseTrial,
+  type HeatState,
+} from "./heat-house";
 export type PressureState = {
   depthM: number;
   outletM: number;
@@ -22,13 +25,6 @@ export const defaultMachineState: MachineState = {
   loadKg: 40,
   advantage: 2,
   liftM: 0.5,
-};
-export const defaultHeatState: HeatState = {
-  insulationCm: 5,
-  windowM2: 8,
-  material: "brick",
-  insideC: 20,
-  outsideC: 0,
 };
 export const defaultPressureState: PressureState = {
   depthM: 2,
@@ -70,48 +66,6 @@ export function machineResult(input: MachineState) {
     inputTorqueNm: inputForceN * 0.2,
     outputTorqueNm: loadForceN * 0.2,
     crankTurns: inputDistanceM / (2 * Math.PI * 0.2),
-  };
-}
-/** Representative teaching conductivities, not product specifications. */
-export const heatWallMaterials = {
-  brick: { label: "Brick", conductivity: 0.6 },
-  wood: { label: "Wood", conductivity: 0.12 },
-  insulation: { label: "Insulated panel", conductivity: 0.04 },
-} as const;
-export function normalizeHeat(s: HeatState): HeatState {
-  return {
-    insulationCm: bound(s.insulationCm, 0, 20, 5),
-    windowM2: bound(s.windowM2, 2, 18, 8),
-    material:
-      s.material === "wood" || s.material === "insulation"
-        ? s.material
-        : "brick",
-    insideC: bound(s.insideC, 16, 24, 20),
-    outsideC: bound(s.outsideC, -5, 25, 0),
-  };
-}
-export function heatResult(input: HeatState) {
-  const s = normalizeHeat(input),
-    deltaC = s.insideC - s.outsideC;
-  // 20 cm base wall + optional added insulation + fixed surface resistance.
-  const wallU =
-    1 /
-    (0.17 +
-      0.2 / heatWallMaterials[s.material].conductivity +
-      s.insulationCm / 100 / 0.04);
-  const windowU = 2.8,
-    wallAreaM2 = 60 - s.windowM2;
-  const wallWatts = wallU * wallAreaM2 * deltaC,
-    windowWatts = windowU * s.windowM2 * deltaC;
-  return {
-    wallWatts,
-    windowWatts,
-    totalWatts: wallWatts + windowWatts,
-    deltaC,
-    wallU,
-    windowU,
-    wallAreaM2,
-    windowAreaM2: s.windowM2,
   };
 }
 export function normalizePressure(s: PressureState): PressureState {

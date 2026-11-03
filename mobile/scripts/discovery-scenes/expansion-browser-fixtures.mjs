@@ -12,6 +12,7 @@ export const expansionCases = [
       material: "brick",
       insideC: 20,
       outsideC: 0,
+      elapsedHours: 6,
     },
     changed: {
       insulationCm: 20,
@@ -19,6 +20,7 @@ export const expansionCases = [
       material: "wood",
       insideC: 24,
       outsideC: -5,
+      elapsedHours: 24,
     },
   },
   {

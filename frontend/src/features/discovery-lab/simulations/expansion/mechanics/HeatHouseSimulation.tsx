@@ -1,101 +1,121 @@
 import { useState } from "react";
 import {
   defaultHeatState,
+  heatHouseBoundary,
+  heatHouseTrials,
   heatResult,
   heatWallMaterials,
   normalizeHeat,
   type HeatState,
-} from "@family-manager/family-api/discovery-models/expansion-mechanics";
+} from "@family-manager/family-api/discovery-models/heat-house";
 import { createHeatScene } from "@family-manager/discovery-scenes/expansion/mechanics/heatScene";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
-import {
-  MechanicsComparison,
-  type MechanicsExperiment,
-} from "./MechanicsComparison";
+import { MechanicsComparison } from "./MechanicsComparison";
+import { useHeatTransferReplay } from "./useHeatTransferReplay";
 import "./mechanics.css";
-const baseline = { ...defaultHeatState, insulationCm: 0 };
-const bare = heatResult(baseline),
-  insulated = heatResult({ ...baseline, insulationCm: 10 });
-const small = heatResult({
-    ...defaultHeatState,
-    insulationCm: 10,
-    windowM2: 2,
-  }),
-  large = heatResult({ ...defaultHeatState, insulationCm: 10, windowM2: 18 });
-const experiments: readonly MechanicsExperiment<HeatState>[] = [
-  {
-    title: "Add wall insulation",
-    question:
-      "Will adding wall insulation reduce the heat transfer through unchanged windows?",
-    choices: [
-      "Window transfer falls",
-      "Window transfer stays the same",
-      "Window transfer rises",
-    ],
-    controlled:
-      "Keep brick walls, 8 m² of windows, 20°C inside and 0°C outside. Compare no added insulation with 10 cm. Both temperatures are held steady.",
-    before: baseline,
-    after: { ...baseline, insulationCm: 10 },
-    change: "Add 10 cm insulation",
-    evidence: `Wall transfer falls from ${bare.wallWatts.toFixed(0)} W to ${insulated.wallWatts.toFixed(0)} W. Window transfer stays ${bare.windowWatts.toFixed(0)} W. Combined transfer falls from ${bare.totalWatts.toFixed(0)} W to ${insulated.totalWatts.toFixed(0)} W.`,
-    explain:
-      "Why does extra wall insulation reduce only one heat-transfer path in this comparison? What else would need to change to reduce the window transfer?",
-  },
-  {
-    title: "Change window area",
-    question:
-      "With insulated walls, what happens to heat loss if windows replace more of the wall area?",
-    choices: ["Heat loss rises", "Heat loss stays the same", "Heat loss falls"],
-    controlled:
-      "Keep 10 cm of added insulation, brick, 20°C inside and 0°C outside. Increase windows from 2 to 18 m² within the same 60 m² wall envelope.",
-    before: { ...defaultHeatState, insulationCm: 10, windowM2: 2 },
-    after: { ...defaultHeatState, insulationCm: 10, windowM2: 18 },
-    change: "Use 18 m² windows",
-    evidence: `Opaque wall area falls from 58 to 42 m². Combined transfer rises from ${small.totalWatts.toFixed(0)} W to ${large.totalWatts.toFixed(0)} W because these windows transfer more heat per square meter than these insulated walls.`,
-    explain:
-      "Why must window area replace wall area for a fair comparison? Would every real window and wall have this same result?",
-  },
-];
+
+const formatHours = (hours: number) =>
+  Number.isInteger(hours) ? hours.toFixed(0) : hours.toFixed(1);
+
 export function HeatHouseSimulation() {
   const [state, setState] = useState<HeatState>({ ...defaultHeatState });
-  const set = <K extends keyof HeatState>(key: K, value: HeatState[K]) =>
+  const [comparisonVersion, setComparisonVersion] = useState(0);
+  const replay = useHeatTransferReplay(state.elapsedHours);
+  const set = <K extends keyof HeatState>(key: K, value: HeatState[K]) => {
+    replay.cancel();
     setState((current) => normalizeHeat({ ...current, [key]: value }));
-  const r = heatResult(state),
-    magnitude = Math.abs(r.totalWatts),
-    direction =
-      r.deltaC > 0
-        ? "leaves the house"
-        : r.deltaC < 0
-          ? "enters the house"
-          : "has no net transfer";
+    setComparisonVersion((current) => current + 1);
+  };
+  const reset = () => {
+    replay.cancel();
+    setState({ ...defaultHeatState });
+    setComparisonVersion((current) => current + 1);
+  };
+  const applyGuidedState = (next: HeatState) => {
+    replay.cancel();
+    setState(normalizeHeat(next));
+  };
+  const visualState = { ...state, elapsedHours: replay.visualHours };
+  const result = heatResult(visualState);
+  const magnitudeWatts = Math.abs(result.totalWatts);
+  const magnitudeKWh = Math.abs(result.totalEnergyKWh);
+  const magnitudeMJ = Math.abs(result.totalEnergyJ) / 1_000_000;
+  const direction =
+    result.direction === "outward"
+      ? "out of the house"
+      : result.direction === "inward"
+        ? "into the house"
+        : "with no net direction";
   const wallShare =
-    magnitude > 0 ? (Math.abs(r.wallWatts) / magnitude) * 100 : 0;
-  const description = `Cutaway house, ${state.insulationCm} centimeters of added insulation, ${state.windowM2} square meters of windows. Indoor temperature held at ${state.insideC} degrees Celsius; outside ${state.outsideC}. Net outward wall heat transfer ${r.wallWatts.toFixed(0)} watts; window heat transfer ${r.windowWatts.toFixed(0)} watts. Drag the sample thickness marker or use the insulation slider.`;
+    magnitudeWatts > 0
+      ? (Math.abs(result.wallWatts) / magnitudeWatts) * 100
+      : 0;
+  const description =
+    "Dimensional cutaway teaching house. " +
+    state.insulationCm +
+    " centimeters of added wall insulation and " +
+    state.windowM2 +
+    " square meters of windows. Indoor temperature held at " +
+    state.insideC +
+    " degrees Celsius and outdoor temperature held at " +
+    state.outsideC +
+    ". Signed outward heat-transfer power: walls " +
+    result.wallWatts.toFixed(0) +
+    " watts, windows " +
+    result.windowWatts.toFixed(0) +
+    " watts, combined " +
+    result.totalWatts.toFixed(0) +
+    " watts. Over " +
+    formatHours(replay.visualHours) +
+    " hours, " +
+    magnitudeKWh.toFixed(2) +
+    " kilowatt-hours transfer " +
+    direction +
+    ". Use the insulation slider or thickness marker; authored callouts repeat every visual result in text.";
+
   return (
     <section className="mechanics-exhibit mechanics-heat">
       <header className="mechanics-heading">
-        <h2>Which path transfers more heat?</h2>
+        <span className="mechanics-model-state">Steady-temperature model</span>
+        <h2>Compare heat-transfer paths</h2>
         <p>
-          Hold temperatures steady and change one wall or window property at a
-          time.
+          Predict first, change one wall or window input, then compare power and
+          energy for equal elapsed time.
         </p>
       </header>
       <ExpansionCanvas
         dragSelect
-        state={state}
+        state={visualState}
         buildScene={createHeatScene}
         description={description}
         onSelect={(value) => set("insulationCm", value)}
       />
+      <div className="mechanics-motion-toolbar">
+        <button
+          type="button"
+          className="mechanics-motion"
+          disabled={state.elapsedHours <= 0 || replay.running}
+          onClick={replay.replay}
+        >
+          {replay.running
+            ? "Replaying energy transfer…"
+            : "Replay energy transfer"}
+        </button>
+        {replay.status && (
+          <p className="mechanics-motion-status" role="status">
+            {replay.status}
+          </p>
+        )}
+      </div>
       <div className="mechanics-console">
         <div className="mechanics-inputs">
           <label className="mechanics-select">
             Base wall material
             <select
               value={state.material}
-              onChange={(e) =>
-                set("material", e.target.value as HeatState["material"])
+              onChange={(event) =>
+                set("material", event.target.value as HeatState["material"])
               }
             >
               {(["brick", "wood", "insulation"] as const).map((key) => (
@@ -111,7 +131,7 @@ export function HeatHouseSimulation() {
             min={0}
             max={20}
             unit=" cm"
-            onChange={(v) => set("insulationCm", v)}
+            onChange={(value) => set("insulationCm", value)}
           />
           <Slider
             label="Window area"
@@ -119,7 +139,7 @@ export function HeatHouseSimulation() {
             min={2}
             max={18}
             unit=" m²"
-            onChange={(v) => set("windowM2", v)}
+            onChange={(value) => set("windowM2", value)}
           />
           <div className="mechanics-temperature">
             <Slider
@@ -128,7 +148,7 @@ export function HeatHouseSimulation() {
               min={16}
               max={24}
               unit="°C"
-              onChange={(v) => set("insideC", v)}
+              onChange={(value) => set("insideC", value)}
             />
             <Slider
               label="Outdoor temperature"
@@ -136,15 +156,19 @@ export function HeatHouseSimulation() {
               min={-5}
               max={25}
               unit="°C"
-              onChange={(v) => set("outsideC", v)}
+              onChange={(value) => set("outsideC", value)}
             />
           </div>
-          <button
-            className="mechanics-reset"
-            type="button"
-            onClick={() => setState({ ...defaultHeatState })}
-          >
-            Reset house
+          <Slider
+            label="Elapsed time"
+            value={state.elapsedHours}
+            min={0}
+            max={24}
+            unit=" h"
+            onChange={(value) => set("elapsedHours", value)}
+          />
+          <button type="button" className="mechanics-reset" onClick={reset}>
+            Reset lesson
           </button>
         </div>
         <div
@@ -152,63 +176,88 @@ export function HeatHouseSimulation() {
           aria-live="polite"
           aria-atomic="true"
         >
-          <div className="mechanics-measures">
+          <div className="mechanics-measures mechanics-heat-measures">
             <div>
-              <span>Opaque walls</span>
+              <span>Opaque-wall power</span>
               <strong>
-                {r.wallWatts.toFixed(0)} <small>W</small>
+                {result.wallWatts.toFixed(0)} <small>W</small>
               </strong>
             </div>
             <div>
-              <span>Windows</span>
+              <span>Window power</span>
               <strong>
-                {r.windowWatts.toFixed(0)} <small>W</small>
+                {result.windowWatts.toFixed(0)} <small>W</small>
+              </strong>
+            </div>
+            <div>
+              <span>Combined power</span>
+              <strong>
+                {result.totalWatts.toFixed(0)} <small>W</small>
               </strong>
             </div>
           </div>
           <div className="mechanics-heatbar" aria-hidden="true">
-            <span style={{ width: `${wallShare}%` }} />
-            <i style={{ width: `${magnitude === 0 ? 0 : 100 - wallShare}%` }} />
+            <span style={{ width: wallShare + "%" }} />
+            <i
+              style={{
+                width:
+                  (magnitudeWatts === 0 ? 0 : 100 - wallShare).toFixed(2) + "%",
+              }}
+            />
+          </div>
+          <div className="mechanics-energy-total">
+            <span>
+              Energy transferred over {formatHours(replay.visualHours)} h
+            </span>
+            <strong>
+              {magnitudeKWh.toFixed(2)} kWh{" "}
+              <small>({magnitudeMJ.toFixed(2)} MJ)</small>
+            </strong>
           </div>
           <p>
-            <strong>{magnitude.toFixed(0)} W</strong> of thermal energy{" "}
-            {direction}. Signed readings are outward: a negative value means
-            heat enters.
+            At a steady <strong>{magnitudeWatts.toFixed(0)} W</strong>, thermal
+            energy transfers {direction}. Power is energy each second: 1 W = 1
+            J/s. Energy accumulates with time: 1 kWh = 3.6 MJ.
           </p>
           <p>
-            {r.wallAreaM2} m² opaque wall + {r.windowAreaM2} m² windows = 60 m².
-            A watt is one joule transferred each second, not a temperature.
+            {result.wallAreaM2} m² opaque wall + {result.windowAreaM2} m²
+            windows = 60 m². Signed values are outward; negative values mean
+            transfer inward.
           </p>
           <p>
-            {r.deltaC === 0
-              ? "Equal indoor and outdoor temperatures give zero net transfer in this model, whatever the insulation."
-              : `The temperature difference is ${Math.abs(r.deltaC)}°C. Insulation slows transfer; it does not supply heat.`}
+            {result.deltaC === 0
+              ? "Equal indoor and outdoor temperatures give zero net transfer in this model, so elapsed energy also stays zero."
+              : "The temperature difference is " +
+                Math.abs(result.deltaK) +
+                " K (the same size as " +
+                Math.abs(result.deltaC) +
+                "°C). Insulation raises resistance; it does not generate thermal energy."}
           </p>
         </div>
       </div>
-      <MechanicsComparison experiments={experiments} onApply={setState} />
+      <MechanicsComparison
+        key={comparisonVersion}
+        experiments={heatHouseTrials}
+        onApply={applyGuidedState}
+      />
       <details className="mechanics-details">
-        <summary>How this comparison is calculated</summary>
+        <summary>Read the model equation and heat-transfer paths</summary>
         <p>
-          Transfer rate = U × area × temperature difference. U measures how
-          easily a square meter of an assembly transfers heat, in W/(m²·K). This
-          wall’s U is {r.wallU.toFixed(2)}; the fixed window U is 2.8. A
-          temperature difference of 1°C equals a difference of 1 K.
+          Heat-transfer power = U × area × temperature difference. U describes a
+          whole assembly in W/(m²·K). This wall U-factor is{" "}
+          {result.wallU.toFixed(2)} W/(m²·K); the teaching window U-factor is{" "}
+          {result.windowU.toFixed(1)} W/(m²·K). Lower U means less transfer for
+          the same area and temperature difference.
         </p>
         <p>
-          The base wall is 20 cm thick. Representative conductivities: brick
-          0.6, wood 0.12 and insulated panel 0.04 W/(m·K); added insulation 0.04
-          W/(m·K). A fixed surface resistance of 0.17 m²·K/W is included. These
-          are teaching values, not product ratings.
+          Conduction transfers energy through materials, convection transfers
+          energy with moving fluids such as air, and radiation transfers energy
+          by electromagnetic waves. The fixed U-factors lump assembly effects
+          together; this model does not calculate the three mechanisms
+          separately.
         </p>
       </details>
-      <p className="mechanics-note">
-        Steady wall-and-window comparison, not a whole-house heating bill.
-        Temperatures are maintained; no cooling timer. Roof, floor, drafts,
-        sunlight, moisture and construction joints are omitted. The facade and
-        cutaway are schematic; numerical areas define the comparison. Arrows
-        show direction and relative transfer per square meter.
-      </p>
+      <p className="mechanics-note">{heatHouseBoundary}</p>
     </section>
   );
 }

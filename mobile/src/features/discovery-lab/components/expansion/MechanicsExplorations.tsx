@@ -1,9 +1,7 @@
-import { HeatComparisons, PressureComparisons } from "./mechanicsComparisons";
+import { PressureComparisons } from "./mechanicsComparisons";
 import { useState } from "react";
 import {
-  defaultHeatState,
   defaultPressureState,
-  heatResult,
   pressureResult,
 } from "@family-manager/family-api/discovery-models/expansion-mechanics";
 import { Control, Dot, Line } from "../Primitives";
@@ -17,91 +15,7 @@ import {
 } from "../LearningPrimitives";
 
 export { MachineExploration } from "./machine/MachineExploration";
-
-export function HeatExploration() {
-  const [state, setState] = useState(defaultHeatState);
-  const result = heatResult(state);
-  const label = `Net outward heat transfer: ${result.totalWatts.toFixed(0)} W. Walls ${result.wallWatts.toFixed(0)} W; windows ${result.windowWatts.toFixed(0)} W.`;
-  return (
-    <LearningFrame onReset={() => setState(defaultHeatState)}>
-      <Diagram visualState={{ kind: "heat-house", ...state }} label={label}>
-        {(width) => (
-          <>
-            <Line x={45} y={185} x2={45} y2={90} />
-            <Line x={45} y={90} x2={width / 2} y2={45} />
-            <Line x={width / 2} y={45} x2={width - 45} y2={90} />
-            <Line x={width - 45} y={90} x2={width - 45} y2={185} />
-            <Line x={45} y={185} x2={width - 45} y2={185} />
-            <Dot
-              x={width / 2}
-              y={135}
-              size={35 + state.windowM2 * 2}
-              color="#a5d8eb"
-            />
-            <DiagramLabel x={18} y={220}>
-              Inside {state.insideC}°C · outside {state.outsideC}°C
-            </DiagramLabel>
-            <DiagramLabel x={18} y={250}>
-              {state.insulationCm} cm insulation
-            </DiagramLabel>
-          </>
-        )}
-      </Diagram>
-      <Explanation>
-        {label} Temperature difference: {result.deltaC.toFixed(0)}°C. Insulation
-        slows transfer through the walls; it does not produce heat. A watt is
-        one joule transferred each second.
-      </Explanation>
-      <Control
-        label="Insulation (cm)"
-        value={state.insulationCm}
-        min={0}
-        max={20}
-        onChange={(insulationCm) => setState({ ...state, insulationCm })}
-      />
-      <Control
-        label="Window area (m²)"
-        value={state.windowM2}
-        min={2}
-        max={18}
-        step={2}
-        onChange={(windowM2) => setState({ ...state, windowM2 })}
-      />
-      <Choice
-        label="Wall material"
-        value={state.material}
-        onChange={(material) => setState({ ...state, material })}
-        options={[
-          { value: "brick", label: "Brick" },
-          { value: "wood", label: "Wood" },
-          { value: "insulation", label: "Insulating panel" },
-        ]}
-      />
-      <Control
-        label="Inside temperature (°C)"
-        value={state.insideC}
-        min={16}
-        max={24}
-        onChange={(insideC) => setState({ ...state, insideC })}
-      />
-      <Control
-        label="Outside temperature (°C)"
-        value={state.outsideC}
-        min={-5}
-        max={25}
-        onChange={(outsideC) => setState({ ...state, outsideC })}
-      />
-      <HeatComparisons setState={setState} />
-      <ModelNote>
-        Steady conduction through walls and windows only. Roof, floor, air
-        leaks, sunlight, heating controls, and stored heat are omitted. Positive
-        watts mean net transfer out; negative watts mean net transfer in.
-        Material values describe this teaching house, not an energy-bill
-        estimate.
-      </ModelNote>
-    </LearningFrame>
-  );
-}
+export { HeatExploration } from "./heat/HeatExploration";
 
 export function PressureExploration() {
   const [state, setState] = useState(defaultPressureState);

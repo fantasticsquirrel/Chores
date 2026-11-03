@@ -1,40 +1,10 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  defaultHeatState,
   defaultPressureState,
-  type HeatState,
   type PressureState,
 } from "@family-manager/family-api/discovery-models/expansion-mechanics";
 import { ControlledComparison } from "./ControlledComparison";
 type Setter<T> = Dispatch<SetStateAction<T>>;
-export function HeatComparisons({ setState }: { setState: Setter<HeatState> }) {
-  return (
-    <>
-      <ControlledComparison
-        title="Wall insulation"
-        prediction="Predict: will adding wall insulation reduce heat transfer equally through walls and windows?"
-        baseline="Brick, 8 m² windows, 20°C inside, 0°C outside, no extra insulation."
-        change="Only insulation changed to 10 cm."
-        explain="Compare wall and window watts. Which path changed, and why?"
-        onBaseline={() => setState({ ...defaultHeatState, insulationCm: 0 })}
-        onChange={() => setState({ ...defaultHeatState, insulationCm: 10 })}
-      />
-      <ControlledComparison
-        title="Window area"
-        prediction="Predict: with the house area fixed, how will replacing insulated wall with more window change transfer?"
-        baseline="Brick, 10 cm insulation, 2 m² windows, 20°C inside and 0°C outside."
-        change="Only window area changed to 18 m²; windows replace wall area."
-        explain="Compare total watts. Why cannot wall insulation stop transfer through windows?"
-        onBaseline={() =>
-          setState({ ...defaultHeatState, insulationCm: 10, windowM2: 2 })
-        }
-        onChange={() =>
-          setState({ ...defaultHeatState, insulationCm: 10, windowM2: 18 })
-        }
-      />
-    </>
-  );
-}
 export function PressureComparisons({
   setState,
 }: {

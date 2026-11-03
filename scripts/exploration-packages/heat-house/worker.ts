@@ -1,4 +1,5 @@
 import { installLesson } from "../physical-lesson";
+import { serializeExpansionScene } from "../shared/serialize-scene";
 import { defaultHeatState, normalizeHeat, heatResult } from "./model";
 import { createHeatScene } from "./heatScene";
 import { experiments } from "./lessons";
@@ -6,9 +7,11 @@ installLesson({
   initial: defaultHeatState,
   normalize: normalizeHeat,
   build: createHeatScene,
-  title: "Which path transfers more heat?",
+  serialize: (scene, presentation) =>
+    serializeExpansionScene(scene, { ...presentation, showHeading: false }),
+  title: "Compare heat-transfer paths",
   introduction:
-    "Hold temperatures steady and change one wall or window property at a time.",
+    "Predict first, change one wall or window input, then compare power and energy for equal elapsed time.",
   drag: true,
   fields: [
     {
@@ -21,12 +24,19 @@ installLesson({
     { id: "windowM2", label: "Window area (m²)", min: 2, max: 18 },
     { id: "insideC", label: "Indoor temperature (°C)", min: 16, max: 24 },
     { id: "outsideC", label: "Outdoor temperature (°C)", min: -5, max: 25 },
+    { id: "elapsedHours", label: "Elapsed time (h)", min: 0, max: 24 },
   ],
   trials: experiments,
   select: (s, v) => ({ ...s, insulationCm: v }),
   describe: (s) => {
     const r = heatResult(s);
-    return `Net outward wall transfer ${r.wallWatts.toFixed(0)} W; window transfer ${r.windowWatts.toFixed(0)} W; total ${r.totalWatts.toFixed(0)} W. Negative means heat enters. ${r.wallAreaM2} m² opaque wall + ${r.windowAreaM2} m² windows = 60 m². Wall U ${r.wallU.toFixed(2)} W/(m²·K), window U 2.8. Temperature difference ${r.deltaC}°C. ${r.deltaC === 0 ? "Equal temperatures give zero net transfer whatever the insulation." : "Insulation slows transfer; it does not supply heat."} A watt is one joule per second, not a temperature.`;
+    const direction =
+      r.direction === "outward"
+        ? "out of the house"
+        : r.direction === "inward"
+          ? "into the house"
+          : "with no net direction";
+    return `Signed outward heat-transfer power: walls ${r.wallWatts.toFixed(0)} W; windows ${r.windowWatts.toFixed(0)} W; combined ${r.totalWatts.toFixed(0)} W. Over ${s.elapsedHours} h, ${Math.abs(r.totalEnergyKWh).toFixed(2)} kWh (${(Math.abs(r.totalEnergyJ) / 1_000_000).toFixed(2)} MJ) transfers ${direction}. ${r.wallAreaM2} m² opaque wall + ${r.windowAreaM2} m² windows = 60 m². Wall U ${r.wallU.toFixed(2)} W/(m²·K); fixed window U ${r.windowU.toFixed(1)} W/(m²·K). Temperature difference ${Math.abs(r.deltaK)} K, the same size as ${Math.abs(r.deltaC)}°C. ${r.deltaC === 0 ? "Equal temperatures give zero net power and zero elapsed energy." : "Insulation raises resistance; it does not generate thermal energy."} Power is energy each second: 1 W = 1 J/s. Energy accumulates with time: 1 kWh = 3.6 MJ.`;
   },
   vector: (s) => {
     const r = heatResult(s),
@@ -34,13 +44,13 @@ installLesson({
       wall = m ? Math.abs(r.wallWatts) / m : 0;
     return {
       viewBox: [0, 0, 400, 80],
-      description: `Wall transfer ${r.wallWatts.toFixed(0)} watts and window transfer ${r.windowWatts.toFixed(0)} watts. Bar compares magnitudes.`,
+      description: `Wall heat-transfer power ${r.wallWatts.toFixed(0)} watts and window power ${r.windowWatts.toFixed(0)} watts. Over ${s.elapsedHours} hours the combined transferred energy magnitude is ${Math.abs(r.totalEnergyKWh).toFixed(2)} kilowatt-hours. Bar compares power magnitudes; exact values do not depend on color.`,
       nodes: [
         {
           tag: "text",
           attrs: { x: 10, y: 20, fill: "#18332c", fontSize: 14 },
           children: [
-            `Walls ${r.wallWatts.toFixed(0)} W · Windows ${r.windowWatts.toFixed(0)} W`,
+            `Wall power ${r.wallWatts.toFixed(0)} W · Window power ${r.windowWatts.toFixed(0)} W`,
           ],
         },
         {
@@ -68,5 +78,5 @@ installLesson({
       ],
     };
   },
-  note: "Steady wall-and-window comparison, not a whole-house bill. Transfer rate = U × area × temperature difference. Base wall 20 cm; conductivities brick 0.6, wood 0.12, insulated panel/additional insulation 0.04 W/(m·K), surface resistance 0.17 m²·K/W: teaching values, not product ratings. Temperatures are maintained, no cooling timer. Roof, floor, drafts, sunlight, moisture and joints omitted. Facade/cutaway schematic; numerical areas define comparison. Arrows show direction and relative transfer per square meter.",
+  note: "This steady-state teaching model holds the indoor and outdoor temperatures fixed. It uses power = U × area × temperature difference for separate opaque-wall and whole-window paths, then multiplies that constant power by elapsed time to calculate transferred energy. The wall U-factor combines a 20 cm base layer, added insulation and a fixed surface resistance; the window U-factor is fixed at 2.8 W/(m²·K). These are ideal teaching inputs, not measurements, product ratings, a weather forecast or an energy-bill estimate. Real building transfer includes conduction through materials, convection in moving fluids and radiation across space; their combined effects are represented only by the simplified U-factors here, not calculated separately. Roof, floor, air leaks, sunlight, moisture, thermal bridges, stored heat and heating or cooling equipment are omitted. Insulation adds thermal resistance and slows transfer through its path; it does not generate thermal energy.",
 });

@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { chromium } from "@playwright/test";
-import * as THREE from "three";
 
 const viewport = { width: 390, height: 320 };
 const { html } = JSON.parse(
@@ -30,28 +29,6 @@ const labelCenter = async (page, text) =>
     x: Number.parseFloat(label.style.left),
     y: Number.parseFloat(label.style.top),
   }));
-
-const expectedProjectedCenter = (at, view) => {
-  const camera = new THREE.OrthographicCamera();
-  camera.position.set(...view.position);
-  camera.lookAt(...view.target);
-  const aspect = viewport.width / viewport.height;
-  const width = Math.max(view.width, view.height * aspect);
-  const height = width / aspect;
-  Object.assign(camera, {
-    left: -width / 2,
-    right: width / 2,
-    top: height / 2,
-    bottom: -height / 2,
-  });
-  camera.updateProjectionMatrix();
-  camera.updateMatrixWorld();
-  const point = new THREE.Vector3(...at).project(camera);
-  return {
-    x: ((point.x + 1) * viewport.width) / 2,
-    y: ((1 - point.y) * viewport.height) / 2,
-  };
-};
 
 test("offline expansion labels honor machine slots and retain projected fallback", async () => {
   const browser = await launchBrowser();
@@ -123,20 +100,20 @@ test("offline expansion labels honor machine slots and retain projected fallback
         material: "brick",
         insideC: 20,
         outsideC: 0,
+        elapsedHours: 6,
       }),
     );
     await page
       .locator("#labels span", { hasText: "20°C held inside" })
       .waitFor();
-    const projected = expectedProjectedCenter([0, 3.75, 0.2], {
-      position: [9, 6.8, 12],
-      target: [-0.4, 1.65, 0.3],
-      width: 10.4,
-      height: 6.2,
+    assert.deepEqual(await labelCenter(page, "20°C held inside"), {
+      x: (72 * viewport.width) / 100,
+      y: (9 * viewport.height) / 100,
     });
-    const fallback = await labelCenter(page, "20°C held inside");
-    assert.ok(Math.abs(fallback.x - projected.x) < 0.01);
-    assert.ok(Math.abs(fallback.y - projected.y) < 0.01);
+    assert.deepEqual(await labelCenter(page, "6 h ·"), {
+      x: (50 * viewport.width) / 100,
+      y: (91 * viewport.height) / 100,
+    });
   } finally {
     await browser.close();
   }

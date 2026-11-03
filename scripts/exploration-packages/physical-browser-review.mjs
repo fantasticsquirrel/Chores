@@ -16,8 +16,8 @@ const specs = [
   ],
   [
     "heat-house",
-    { insulationCm: 20, windowM2: 18 },
-    { insulationCm: 20, windowM2: 18 },
+    { insulationCm: 20, windowM2: 18, elapsedHours: 24 },
+    { insulationCm: 20, windowM2: 18, elapsedHours: 24 },
   ],
   [
     "pressure-tank",

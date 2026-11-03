@@ -25,12 +25,14 @@ export function validExpansionState(
           "material",
           "insideC",
           "outsideC",
+          "elapsedHours",
         ]) &&
         number(value.insulationCm, 0, 20) &&
         number(value.windowM2, 2, 18) &&
         ["brick", "wood", "insulation"].includes(value.material as string) &&
         number(value.insideC, 16, 24) &&
-        number(value.outsideC, -5, 25)
+        number(value.outsideC, -5, 25) &&
+        number(value.elapsedHours, 0, 24)
       );
     case "pressure-tank":
       return (

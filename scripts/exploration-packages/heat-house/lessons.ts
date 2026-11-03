@@ -1,51 +1,80 @@
 import type { Trial } from "../physical-lesson";
-import {
-  defaultHeatState,
-  heatResult,
-  heatWallMaterials,
-  normalizeHeat,
-  type HeatState,
-} from "./model";
-const baseline = { ...defaultHeatState, insulationCm: 0 };
-const bare = heatResult(baseline),
-  insulated = heatResult({ ...baseline, insulationCm: 10 });
-const small = heatResult({
-    ...defaultHeatState,
-    insulationCm: 10,
-    windowM2: 2,
-  }),
-  large = heatResult({ ...defaultHeatState, insulationCm: 10, windowM2: 18 });
+import { defaultHeatState, heatResult, type HeatState } from "./model";
+
+const noAddedInsulation = {
+  ...defaultHeatState,
+  insulationCm: 0,
+} as const;
+const tenCentimeters = {
+  ...defaultHeatState,
+  insulationCm: 10,
+} as const;
+const smallWindow = {
+  ...tenCentimeters,
+  windowM2: 2,
+} as const;
+const largeWindow = {
+  ...tenCentimeters,
+  windowM2: 18,
+} as const;
+const bareResult = heatResult(noAddedInsulation);
+const insulatedResult = heatResult(tenCentimeters);
+const smallWindowResult = heatResult(smallWindow);
+const largeWindowResult = heatResult(largeWindow);
+const heldTemperaturesAndTime = [
+  "brick base wall",
+  "20°C inside",
+  "0°C outside",
+  "6 h elapsed time",
+] as const;
+
 export const experiments: Trial<HeatState>[] = [
   {
-    title: "Add wall insulation",
+    id: "wall-insulation",
+    title: "Wall insulation",
     question:
-      "Will adding wall insulation reduce the heat transfer through unchanged windows?",
+      "When only added wall insulation changes from 0 to 10 cm, what happens to the heat-transfer power through the unchanged windows?",
     choices: [
-      "Window transfer falls",
-      "Window transfer stays the same",
-      "Window transfer rises",
+      "Window power falls",
+      "Window power stays the same",
+      "Window power rises",
     ],
+    correctChoice: "Window power stays the same",
     controlled:
-      "Keep brick walls, 8 m² of windows, 20°C inside and 0°C outside. Compare no added insulation with 10 cm. Both temperatures are held steady.",
-    before: baseline,
-    after: { ...baseline, insulationCm: 10 },
+      "Start with no added insulation, then change only to 10 cm. Keep brick, 8 m² of windows, both temperatures and elapsed time fixed.",
+    before: noAddedInsulation,
+    after: tenCentimeters,
     change: "Add 10 cm insulation",
-    evidence: `Wall transfer falls from ${bare.wallWatts.toFixed(0)} W to ${insulated.wallWatts.toFixed(0)} W. Window transfer stays ${bare.windowWatts.toFixed(0)} W. Combined transfer falls from ${bare.totalWatts.toFixed(0)} W to ${insulated.totalWatts.toFixed(0)} W.`,
+    changed: "added wall insulation, 0 to 10 cm",
+    held: [...heldTemperaturesAndTime, "8 m² window area"],
+    evidence: `Wall power falls from ${bareResult.wallWatts.toFixed(0)} W to ${insulatedResult.wallWatts.toFixed(0)} W; window power stays ${bareResult.windowWatts.toFixed(0)} W. Combined outward power falls from ${bareResult.totalWatts.toFixed(0)} W to ${insulatedResult.totalWatts.toFixed(0)} W. Over 6 h, transferred energy falls from ${bareResult.totalEnergyKWh.toFixed(2)} kWh to ${insulatedResult.totalEnergyKWh.toFixed(2)} kWh.`,
     explain:
-      "Why does extra wall insulation reduce only one heat-transfer path in this comparison? What else would need to change to reduce the window transfer?",
+      "Added insulation raises resistance only along the opaque-wall path. The window assembly did not change, so its power did not change. What would you need to change to reduce the window path?",
   },
   {
-    title: "Change window area",
+    id: "window-area",
+    title: "Window area",
     question:
-      "With insulated walls, what happens to heat loss if windows replace more of the wall area?",
-    choices: ["Heat loss rises", "Heat loss stays the same", "Heat loss falls"],
+      "When only window area grows from 2 to 18 m², what happens to combined outward heat-transfer power?",
+    choices: [
+      "Combined power rises",
+      "Combined power stays the same",
+      "Combined power falls",
+    ],
+    correctChoice: "Combined power rises",
     controlled:
-      "Keep 10 cm of added insulation, brick, 20°C inside and 0°C outside. Increase windows from 2 to 18 m² within the same 60 m² wall envelope.",
-    before: { ...defaultHeatState, insulationCm: 10, windowM2: 2 },
-    after: { ...defaultHeatState, insulationCm: 10, windowM2: 18 },
+      "Start with 2 m² of windows, then change only to 18 m². The windows replace opaque wall inside the same 60 m² envelope; keep insulation, material, temperatures and elapsed time fixed.",
+    before: smallWindow,
+    after: largeWindow,
     change: "Use 18 m² windows",
-    evidence: `Opaque wall area falls from 58 to 42 m². Combined transfer rises from ${small.totalWatts.toFixed(0)} W to ${large.totalWatts.toFixed(0)} W because these windows transfer more heat per square meter than these insulated walls.`,
+    changed: "window area, 2 to 18 m²",
+    held: [
+      ...heldTemperaturesAndTime,
+      "10 cm added insulation",
+      "60 m² wall-and-window envelope",
+    ],
+    evidence: `Opaque wall area falls from ${smallWindowResult.wallAreaM2.toFixed(0)} to ${largeWindowResult.wallAreaM2.toFixed(0)} m². Combined outward power rises from ${smallWindowResult.totalWatts.toFixed(0)} W to ${largeWindowResult.totalWatts.toFixed(0)} W. Over 6 h, transferred energy rises from ${smallWindowResult.totalEnergyKWh.toFixed(2)} kWh to ${largeWindowResult.totalEnergyKWh.toFixed(2)} kWh because this teaching window has a higher U-factor than the insulated wall.`,
     explain:
-      "Why must window area replace wall area for a fair comparison? Would every real window and wall have this same result?",
+      "Area and U-factor both matter. This result belongs to the stated teaching inputs; a different real window or wall can have different U-factors.",
   },
 ];

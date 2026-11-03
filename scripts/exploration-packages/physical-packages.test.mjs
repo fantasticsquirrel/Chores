@@ -136,8 +136,7 @@ test("machine package uses its compact annotation and external package heading",
   });
   assert.equal(gears.scene3d.presentation.showHeading, false);
   assert.equal(
-    gears.scene3d.labels.find((label) => label.text.startsWith("Crank/"))
-      ?.text,
+    gears.scene3d.labels.find((label) => label.text.startsWith("Crank/"))?.text,
     "Crank/drum r=0.20m",
   );
 });
@@ -324,6 +323,55 @@ test("machine package preserves shared model and scene boundary states", async (
       JSON.parse(JSON.stringify(convertedScene)),
       JSON.parse(JSON.stringify(originalScene)),
       "Machine Workshop package scene parity",
+    );
+  }
+});
+test("Heat House package preserves shared model, trials and scene boundary states", async () => {
+  const contents = `
+    import {createHeatScene as original} from './packages/discovery-scenes/src/expansion/mechanics/heatScene';
+    import {createHeatScene as converted} from './scripts/exploration-packages/heat-house/heatScene';
+    import {heatResult as originalResult, heatHouseTrials} from './packages/family-api/src/discovery-models/heat-house';
+    import {heatResult as convertedResult} from './scripts/exploration-packages/heat-house/model';
+    import {experiments} from './scripts/exploration-packages/heat-house/lessons';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[];
+    for(const material of ['brick','wood','insulation']) for(const insulationCm of [0,10,20]) for(const windowM2 of [2,18]) for(const outsideC of [-5,20,25]) for(const elapsedHours of [1,6,24]) states.push({material,insulationCm,windowM2,insideC:20,outsideC,elapsedHours});
+    globalThis.trials=[heatHouseTrials,experiments];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const output=[originalResult(state),convertedResult(state),serializeExpansionScene(a,p),serializeExpansionScene(b,p)];
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Heat House package trial content parity",
+  );
+  for (const [
+    originalModel,
+    convertedModel,
+    originalScene,
+    convertedScene,
+  ] of context.result) {
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedModel)),
+      JSON.parse(JSON.stringify(originalModel)),
+      "Heat House package model parity",
+    );
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedScene)),
+      JSON.parse(JSON.stringify(originalScene)),
+      "Heat House package scene parity",
     );
   }
 });

@@ -117,31 +117,64 @@ describe("mechanics learning controls", () => {
   it("compares insulation and window area under matched temperatures", () => {
     render(<HeatHouseSimulation />);
     expect(
-      screen.queryByText(/Why does extra wall insulation reduce only one/),
+      screen.queryByText(/Added insulation raises resistance only/),
     ).not.toBeInTheDocument();
-    click("Window transfer stays the same");
+    click("Window power stays the same");
     click("Set baseline");
     click("Add 10 cm insulation");
-    expect(evidence()).toHaveTextContent("Window transfer stays 448 W");
+    expect(evidence()).toHaveTextContent("window power stays 448 W");
+    expect(evidence()).toHaveTextContent("supports your prediction");
+    expect(evidence()).toHaveTextContent("6 h");
+    expect(evidence()).toHaveTextContent("kWh");
+    expect(evidence()).toHaveTextContent("Changed: added wall insulation");
     expect(
-      screen.getByText(/Why does extra wall insulation reduce only one/),
+      screen.getByText(/Added insulation raises resistance only/),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("slider", { name: "Added insulation" }),
     ).toHaveValue("10");
-    click("Change window area");
-    click("Heat loss rises");
+    click("Window area");
+    click("Combined power rises");
     click("Set baseline");
     click("Use 18 m² windows");
     expect(evidence()).toHaveTextContent("58 to 42 m²");
+    expect(evidence()).toHaveTextContent("supports your prediction");
+    expect(screen.getByRole("slider", { name: "Elapsed time" })).toHaveValue(
+      "6",
+    );
+    change("Elapsed time", 12);
+    expect(screen.getByText(/over 12 h/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Energy transferred over 12 h/i),
+    ).toBeInTheDocument();
     change("Outdoor temperature", 20);
     expect(
       screen.getByText(/Equal indoor and outdoor temperatures/),
     ).toBeInTheDocument();
     change("Outdoor temperature", 25);
     expect(
-      screen.getByText(/of thermal energy enters the house/),
+      screen.getByText(/thermal energy transfers into the house/),
     ).toBeInTheDocument();
+    click("Reset lesson");
+    expect(screen.getByRole("slider", { name: "Elapsed time" })).toHaveValue(
+      "6",
+    );
+    click("Window power falls");
+    click("Set baseline");
+    click("Add 10 cm insulation");
+    expect(evidence()).toHaveTextContent("does not support your prediction");
+  });
+
+  it("keeps Heat House transfer replay opt-in and respects reduced motion", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    render(<HeatHouseSimulation />);
+    click("Replay energy transfer");
+    expect(
+      screen.getByText(
+        "Reduced motion is on; the final 6-hour energy total stays shown.",
+      ),
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
   it("compares pressure by head and keeps shape out of instantaneous speed", () => {
     render(<PressureTankSimulation />);

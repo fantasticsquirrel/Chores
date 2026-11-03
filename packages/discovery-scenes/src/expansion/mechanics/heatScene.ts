@@ -4,7 +4,7 @@ import {
   heatWallMaterials,
   normalizeHeat,
   type HeatState,
-} from "@family-manager/family-api/discovery-models/expansion-mechanics";
+} from "@family-manager/family-api/discovery-models/heat-house";
 import type { ExpansionLabel, ExpansionScene } from "../types";
 import {
   arrow,
@@ -16,7 +16,15 @@ import {
   pickPlane,
   replaceGroup,
 } from "./geometry";
+import {
+  addElapsedEnergyRail,
+  addHeatHouseBackdrop,
+  addTemperatureThermometers,
+} from "./heatHouseDetails";
 function house(root: THREE.Group, s: HeatState) {
+  const shell = new THREE.Group();
+  shell.name = "house-shell";
+  root.add(shell);
   const wall = material(
     s.material === "brick"
       ? "#ad6c54"
@@ -30,20 +38,20 @@ function house(root: THREE.Group, s: HeatState) {
     insulation = material("#e2b875");
   const windowWidth = 0.65 + (s.windowM2 / 18) * 2.5,
     windowHeight = 1.15;
-  box(root, [5.2, 0.2, 3.2], [0, 0.2, 0], material("#6c7b79"));
+  box(shell, [5.2, 0.2, 3.2], [0, 0.2, 0], material("#6c7b79", 0.5, 0.38));
   for (let i = 0; i < 12; i++)
     box(
-      root,
+      shell,
       [0.395, 0.05, 2.8],
       [-2.2 + i * 0.4, 0.33, 0],
       material("#b18d5b"),
     );
-  box(root, [4.9, 2.5, 0.15], [0, 1.6, -1.4], wall);
+  box(shell, [4.9, 2.5, 0.15], [0, 1.6, -1.4], wall, "rear-wall");
   for (const x of [-2.4, 2.4]) {
-    box(root, [0.15, 2.5, 2.8], [x, 1.6, 0], wall);
+    box(shell, [0.15, 2.5, 2.8], [x, 1.6, 0], wall);
     if (s.insulationCm > 0)
       box(
-        root,
+        shell,
         [0.025 + s.insulationCm * 0.014, 2.45, 2.8],
         [x + Math.sign(x) * (0.09 + s.insulationCm * 0.007), 1.6, 0],
         insulation,
@@ -52,13 +60,13 @@ function house(root: THREE.Group, s: HeatState) {
   const sideWidth = (4.8 - windowWidth) / 2;
   for (const sign of [-1, 1])
     box(
-      root,
+      shell,
       [sideWidth, 2.5, 0.17],
       [sign * (windowWidth / 2 + sideWidth / 2), 1.6, 1.4],
       wall,
     );
-  box(root, [windowWidth, 0.6, 0.17], [0, 0.65, 1.4], wall);
-  box(root, [windowWidth, 0.75, 0.17], [0, 2.475, 1.4], wall);
+  box(shell, [windowWidth, 0.6, 0.17], [0, 0.65, 1.4], wall);
+  box(shell, [windowWidth, 0.75, 0.17], [0, 2.475, 1.4], wall);
   if (s.material === "brick") {
     for (let row = 0; row < 11; row++) {
       const y = 0.45 + row * 0.225;
@@ -70,16 +78,16 @@ function house(root: THREE.Group, s: HeatState) {
             ]
           : [[-2.4, 2.4]];
       sections.forEach(([a, b]) => {
-        box(root, [b - a, 0.018, 0.012], [(a + b) / 2, y, 1.492], mortar);
+        box(shell, [b - a, 0.018, 0.012], [(a + b) / 2, y, 1.492], mortar);
         for (let x = a + (row % 2 ? 0.2 : 0.4); x < b - 0.02; x += 0.45)
-          box(root, [0.015, 0.21, 0.012], [x, y + 0.11, 1.493], mortar);
+          box(shell, [0.015, 0.21, 0.012], [x, y + 0.11, 1.493], mortar);
       });
     }
   } else {
     for (let row = 0; row < 11; row++)
       for (const sign of [-1, 1])
         box(
-          root,
+          shell,
           [sideWidth, 0.015, 0.015],
           [sign * (windowWidth / 2 + sideWidth / 2), 0.5 + row * 0.21, 1.5],
           mortar,
@@ -92,22 +100,28 @@ function house(root: THREE.Group, s: HeatState) {
     roughness: 0.1,
     metalness: 0.3,
   });
-  box(root, [windowWidth, windowHeight, 0.035], [0, 1.525, 1.43], glass);
+  box(
+    shell,
+    [windowWidth, windowHeight, 0.035],
+    [0, 1.525, 1.43],
+    glass,
+    "window-glazing",
+  );
   for (const x of [-windowWidth / 2, 0, windowWidth / 2])
-    box(root, [0.065, windowHeight + 0.12, 0.15], [x, 1.525, 1.48], frame);
+    box(shell, [0.065, windowHeight + 0.12, 0.15], [x, 1.525, 1.48], frame);
   for (const y of [0.95, 1.525, 2.1])
-    box(root, [windowWidth + 0.12, 0.065, 0.15], [0, y, 1.48], frame);
-  box(root, [windowWidth + 0.32, 0.09, 0.35], [0, 0.92, 1.55], frame);
+    box(shell, [windowWidth + 0.12, 0.065, 0.15], [0, y, 1.48], frame);
+  box(shell, [windowWidth + 0.32, 0.09, 0.35], [0, 0.92, 1.55], frame);
   // Only the rear roof half remains: the opening makes the wall layers visible.
   for (let i = 0; i < 7; i++) {
     const x = -2.4 + i * 0.8;
-    bar(root, [x, 2.88, -1.58], [x, 3.7, 0], 0.07, frame);
-    bar(root, [x, 3.7, 0], [x, 2.88, 1.58], 0.045, frame);
+    bar(shell, [x, 2.88, -1.58], [x, 3.7, 0], 0.07, frame);
+    bar(shell, [x, 3.7, 0], [x, 2.88, 1.58], 0.045, frame);
   }
   for (let row = 0; row < 5; row++)
     for (let col = 0; col < 14; col++) {
       const tile = box(
-        root,
+        shell,
         [0.37, 0.055, 0.4],
         [-2.45 + col * 0.38, 2.94 + row * 0.17, -1.48 + row * 0.32],
         roof,
@@ -116,19 +130,19 @@ function house(root: THREE.Group, s: HeatState) {
     }
   for (let i = 0; i < 10; i++)
     box(
-      root,
+      shell,
       [0.09, 0.55, 0.15],
       [-0.65 + i * 0.14, 0.7, -1.18],
       material("#f4e4cb", 0.3),
     );
   const glow = new THREE.PointLight("#ffb36f", 4, 6);
   glow.position.set(0, 1.4, 0);
-  root.add(glow);
+  shell.add(glow);
   const r = heatResult(s);
   if (r.deltaC !== 0)
     for (const x of [-1.9, 1.9])
       arrow(
-        root,
+        shell,
         [x, 1.5, 1.53],
         Math.min(1.3, (r.wallU * Math.abs(r.deltaC)) / 35) + 0.08,
         "#ebb270",
@@ -136,7 +150,7 @@ function house(root: THREE.Group, s: HeatState) {
       );
   if (r.deltaC !== 0)
     arrow(
-      root,
+      shell,
       [0, 1.5, 1.55],
       Math.min(1.5, (r.windowU * Math.abs(r.deltaC)) / 35),
       "#7ad6df",
@@ -194,6 +208,7 @@ function wallSample(root: THREE.Group, s: HeatState) {
 export function createHeatScene(initial: HeatState): ExpansionScene<HeatState> {
   const group = new THREE.Group();
   bench(group, 9.4, 6);
+  addHeatHouseBackdrop(group);
   let dynamic: THREE.Group | undefined,
     labels: ExpansionLabel[] = [];
   function update(input: HeatState) {
@@ -202,16 +217,55 @@ export function createHeatScene(initial: HeatState): ExpansionScene<HeatState> {
     dynamic = replaceGroup(group, dynamic);
     house(dynamic, s);
     wallSample(dynamic, s);
+    addTemperatureThermometers(dynamic, s);
+    addElapsedEnergyRail(dynamic, s);
+    const energyKWh = Math.abs(result.totalEnergyKWh);
+    const elapsedLabel = Number.isInteger(s.elapsedHours)
+      ? s.elapsedHours.toFixed(0)
+      : s.elapsedHours.toFixed(1);
     labels = [
-      { text: `${s.insideC}°C held inside`, at: [0, 3.75, 0.2] },
-      { text: `${s.outsideC}°C outside`, at: [2.3, 0.3, 2.3] },
-      { text: `Walls ${result.wallWatts.toFixed(0)} W`, at: [2, 2.2, 2.1] },
-      { text: `Windows ${result.windowWatts.toFixed(0)} W`, at: [0, 0.8, 2.5] },
+      {
+        text: `${s.insideC}°C held inside`,
+        at: [0, 3.75, 0.2],
+        left: 72,
+        top: 9,
+      },
+      {
+        text: `${s.outsideC}°C outside`,
+        at: [3.65, 1.2, 1.74],
+        left: 82,
+        top: 75,
+      },
+      {
+        text: `Walls ${result.wallWatts.toFixed(0)} W`,
+        at: [2, 2.2, 2.1],
+        left: 82,
+        top: 25,
+      },
+      {
+        text: `Windows ${result.windowWatts.toFixed(0)} W`,
+        at: [0, 1.5, 1.55],
+        left: 82,
+        top: 42,
+      },
       {
         text: `${heatWallMaterials[s.material].label} + ${s.insulationCm} cm`,
         at: [-3.1, 2.55, 0.4],
+        left: 18,
+        top: 9,
       },
-      { text: "Drag thickness ↔", at: [-3.15, 0.12, 1.1] },
+      {
+        text: "Use thickness control",
+        at: [-3.15, 0.38, 0.58],
+        left: 18,
+        top: 62,
+      },
+      {
+        text: `${elapsedLabel} h · ${energyKWh.toFixed(2)} kWh`,
+        at: [3.7, 0.36 + (s.elapsedHours / 24) * 1.7, 0.7],
+        left: 50,
+        top: 91,
+      },
     ];
   }
   update(initial);
@@ -220,8 +274,8 @@ export function createHeatScene(initial: HeatState): ExpansionScene<HeatState> {
     view: {
       position: [9, 6.8, 12],
       target: [-0.4, 1.65, 0.3],
-      width: 10.4,
-      height: 6.2,
+      width: 11.2,
+      height: 7.2,
     },
     update,
     labels: () => labels,

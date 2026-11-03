@@ -11,6 +11,7 @@ export type HeatState = {
   material: "brick" | "wood" | "insulation";
   insideC: number;
   outsideC: number;
+  elapsedHours: number;
 };
 export type PressureState = {
   depthM: number;
@@ -29,6 +30,7 @@ export const defaultHeatState: HeatState = {
   material: "brick",
   insideC: 20,
   outsideC: 0,
+  elapsedHours: 6,
 };
 export const defaultPressureState: PressureState = {
   depthM: 2,
@@ -68,6 +70,11 @@ export const heatWallMaterials = {
   wood: { label: "Wood", conductivity: 0.12 },
   insulation: { label: "Insulated panel", conductivity: 0.04 },
 } as const;
+export const HEAT_HOUSE_ENVELOPE_AREA_M2 = 60;
+export const HEAT_HOUSE_BASE_WALL_THICKNESS_M = 0.2;
+export const HEAT_HOUSE_SURFACE_RESISTANCE_M2K_PER_W = 0.17;
+export const HEAT_HOUSE_WINDOW_U_W_PER_M2K = 2.8;
+export const HEAT_HOUSE_INSULATION_CONDUCTIVITY_W_PER_MK = 0.04;
 export function normalizeHeat(s: HeatState): HeatState {
   return {
     insulationCm: bound(s.insulationCm, 0, 20, 5),
@@ -78,28 +85,55 @@ export function normalizeHeat(s: HeatState): HeatState {
         : "brick",
     insideC: bound(s.insideC, 16, 24, 20),
     outsideC: bound(s.outsideC, -5, 25, 0),
+    elapsedHours: bound(s.elapsedHours, 0, 24, 6),
   };
 }
 export function heatResult(input: HeatState) {
-  const s = normalizeHeat(input),
-    deltaC = s.insideC - s.outsideC;
-  // 20 cm base wall + optional added insulation + fixed surface resistance.
-  const wallU =
-    1 /
-    (0.17 +
-      0.2 / heatWallMaterials[s.material].conductivity +
-      s.insulationCm / 100 / 0.04);
-  const windowU = 2.8,
-    wallAreaM2 = 60 - s.windowM2;
-  const wallWatts = wallU * wallAreaM2 * deltaC,
-    windowWatts = windowU * s.windowM2 * deltaC;
+  const s = normalizeHeat(input);
+  const deltaC = s.insideC - s.outsideC;
+  const baseWallResistanceM2KPerW =
+    HEAT_HOUSE_BASE_WALL_THICKNESS_M /
+    heatWallMaterials[s.material].conductivity;
+  const addedInsulationResistanceM2KPerW =
+    s.insulationCm / 100 / HEAT_HOUSE_INSULATION_CONDUCTIVITY_W_PER_MK;
+  const wallResistanceM2KPerW =
+    HEAT_HOUSE_SURFACE_RESISTANCE_M2K_PER_W +
+    baseWallResistanceM2KPerW +
+    addedInsulationResistanceM2KPerW;
+  const wallU = 1 / wallResistanceM2KPerW;
+  const windowU = HEAT_HOUSE_WINDOW_U_W_PER_M2K;
+  const wallAreaM2 = HEAT_HOUSE_ENVELOPE_AREA_M2 - s.windowM2;
+  const wallWatts = wallU * wallAreaM2 * deltaC;
+  const windowWatts = windowU * s.windowM2 * deltaC;
+  const totalWatts = wallWatts + windowWatts;
+  const elapsedSeconds = s.elapsedHours * 60 * 60;
+  const wallEnergyJ = wallWatts * elapsedSeconds;
+  const windowEnergyJ = windowWatts * elapsedSeconds;
+  const totalEnergyJ = totalWatts * elapsedSeconds;
   return {
     wallWatts,
     windowWatts,
-    totalWatts: wallWatts + windowWatts,
+    totalWatts,
+    wallEnergyJ,
+    windowEnergyJ,
+    totalEnergyJ,
+    wallEnergyKWh: wallEnergyJ / 3_600_000,
+    windowEnergyKWh: windowEnergyJ / 3_600_000,
+    totalEnergyKWh: totalEnergyJ / 3_600_000,
+    elapsedSeconds,
     deltaC,
+    deltaK: deltaC,
+    direction:
+      totalWatts > 0
+        ? ("outward" as const)
+        : totalWatts < 0
+          ? ("inward" as const)
+          : ("balanced" as const),
     wallU,
     windowU,
+    wallResistanceM2KPerW,
+    baseWallResistanceM2KPerW,
+    addedInsulationResistanceM2KPerW,
     wallAreaM2,
     windowAreaM2: s.windowM2,
   };
