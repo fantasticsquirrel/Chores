@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { build } from "esbuild";
+import { readFileSync } from "node:fs";
 import vm from "node:vm";
 const topics = [
   "machine-workshop",
@@ -482,6 +483,154 @@ test("Moving Plates package preserves shared model, trials and full scene bounda
       "Moving Plates package scene parity",
     );
   }
+});
+test("Cloud and Rain package preserves shared model, trials and rich scene across bounded states", async () => {
+  const contents = `
+    import {createCloudRainScene as original} from './packages/discovery-scenes/src/expansion/earth/clouds';
+    import {createCloudRainScene as converted} from './scripts/exploration-packages/cloud-rain-lab/clouds';
+    import {cloudResult as originalResult, cloudRainTrials as originalTrials} from './packages/family-api/src/discovery-models/cloud-rain';
+    import {cloudResult as convertedResult, cloudRainTrials as convertedTrials} from './scripts/exploration-packages/cloud-rain-lab/model';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[
+      {temperatureC:22,relativeHumidityPercent:30,upliftM:0,particleDiameterUm:10,subcloudRelativeHumidityPercent:20},
+      {temperatureC:32,relativeHumidityPercent:95,upliftM:2000,particleDiameterUm:2000,subcloudRelativeHumidityPercent:100},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:400,particleDiameterUm:20,subcloudRelativeHumidityPercent:80},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:1600,particleDiameterUm:20,subcloudRelativeHumidityPercent:80},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:1600,particleDiameterUm:200,subcloudRelativeHumidityPercent:20},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:1600,particleDiameterUm:200,subcloudRelativeHumidityPercent:99},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:1600,particleDiameterUm:500,subcloudRelativeHumidityPercent:100},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:1600,particleDiameterUm:1000,subcloudRelativeHumidityPercent:20},
+      {temperatureC:24,relativeHumidityPercent:60,upliftM:1600,particleDiameterUm:1000,subcloudRelativeHumidityPercent:80}
+    ];
+    globalThis.trials=[originalTrials,convertedTrials];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const originalModel=originalResult(state), convertedModel=convertedResult(state);
+      const originalScene=serializeExpansionScene(a,p), convertedScene=serializeExpansionScene(b,p);
+      const output={state,model:JSON.stringify(originalModel)===JSON.stringify(convertedModel),scene:JSON.stringify(originalScene)===JSON.stringify(convertedScene)};
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Cloud and Rain package trial content parity",
+  );
+  for (const result of context.result) {
+    assert.equal(
+      result.model,
+      true,
+      `Cloud and Rain package model parity ${JSON.stringify(result.state)}`,
+    );
+    assert.equal(
+      result.scene,
+      true,
+      `Cloud and Rain package scene parity ${JSON.stringify(result.state)}`,
+    );
+  }
+});
+test("Cloud and Rain package gates predictions and reports exact correct or incorrect evidence", async () => {
+  const send = await worker("cloud-rain-lab");
+  let frame = send({ type: "reset", values: {} });
+  assert.deepEqual(
+    frame.controls.map((control) => [control.id, control.min, control.max]),
+    [
+      ["temperatureC", 22, 32],
+      ["relativeHumidityPercent", 30, 95],
+      ["upliftM", 0, 2000],
+      ["particleDiameterUm", 10, 2000],
+      ["subcloudRelativeHumidityPercent", 20, 100],
+    ],
+  );
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /After comparing/);
+  send({ type: "control", control: "predict_1", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /supports your prediction/);
+  assert.match(frame.sections[2].text, /400 m.*1,600 m/);
+  assert.match(frame.sections[2].text, /g\/kg condensed/);
+  send({ type: "control", control: "trial_1", values: {} });
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /does not support your prediction/);
+  assert.match(frame.sections[2].text, /125,000 times the volume/);
+  assert.match(frame.description, /Rain reaches the ground/);
+  assert.match(frame.footnote, /does not mean air literally holds water/);
+});
+test("generated Cloud and Rain worker emits frames accepted by the actual rich UI parser", () => {
+  const code = readFileSync(
+    "docs/examples/discovery-packages/cloud-rain-lab/worker.js",
+    "utf8",
+  );
+  assert.ok(
+    Buffer.byteLength(code) <= 1048576,
+    "generated worker source budget",
+  );
+  let frame;
+  let previous;
+  const context = {
+    console,
+    TextEncoder,
+    TextDecoder,
+    structuredClone,
+    performance,
+    postMessage: (value) => {
+      frame = value;
+    },
+  };
+  vm.createContext(context);
+  vm.runInContext(code, context);
+  const send = (input) => {
+    context.onmessage({ data: input });
+    const parsed = parseScene(frame, "rich", new Set(), previous);
+    assert.ok(
+      parsed,
+      `generated Cloud and Rain frame rejected: ${JSON.stringify({
+        type: input.type,
+        control: input.control,
+        bytes: JSON.stringify(frame).length,
+        controlBounds: frame.controls?.map(({ id, min, max }) => ({
+          id,
+          min,
+          max,
+        })),
+        footnote: frame.footnote?.length,
+      })}`,
+    );
+    previous = parsed;
+    return frame;
+  };
+
+  const initial = send({ type: "reset", values: {} });
+  assert.equal(
+    initial.controls.find((control) => control.id === "upliftM").max,
+    2000,
+  );
+  for (const [control, value] of [
+    ["upliftM", 2000],
+    ["particleDiameterUm", 2000],
+    ["subcloudRelativeHumidityPercent", 20],
+  ])
+    send({ type: "control", control, values: { [control]: value } });
+  send({ type: "control", control: "predict_1", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  const comparison = send({
+    type: "control",
+    control: "comparison",
+    values: {},
+  });
+  assert.match(comparison.sections[2].text, /supports your prediction/);
 });
 test("mechanical marker drag rays update controls and misses leave orbit available", async () => {
   for (const [topic, control, point, expected] of [

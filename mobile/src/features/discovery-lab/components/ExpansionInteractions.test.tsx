@@ -61,9 +61,10 @@ const cases: {
   },
   {
     id: "cloud-rain-lab",
-    action: "Increase Uplift (m)",
-    changed: { upliftM: 1500 },
-    result: /Parcel temperature/,
+    action: "Increase Parcel lift (m)",
+    changed: { upliftM: 1700 },
+    result: /Parcel lifted 1700 m: temperature/,
+    reset: "Reset lesson",
   },
   {
     id: "magnetic-fields",
@@ -97,7 +98,7 @@ const comparisons = [
   },
   {
     id: "cloud-rain-lab",
-    titles: ["Rising and cooling", "Cloud is not always rain"],
+    titles: ["Lift to saturation", "Grow precipitation"],
   },
   { id: "magnetic-fields", titles: ["Facing poles", "Field cancellation"] },
   {
@@ -159,6 +160,18 @@ describe("native nine-topic controls and paired investigations", () => {
             }),
           );
         }
+        if (id === "cloud-rain-lab") {
+          if (index > 0)
+            fireEvent.press(view.getByRole("radio", { name: title }));
+          fireEvent.press(
+            view.getByRole("radio", {
+              name:
+                index === 0
+                  ? "Cloud only after more lift"
+                  : "Only the larger drop reaches",
+            }),
+          );
+        }
         fireEvent.press(
           view.getByRole("button", { name: `Set baseline: ${title}` }),
         );
@@ -172,6 +185,47 @@ describe("native nine-topic controls and paired investigations", () => {
       view.unmount();
     },
   );
+  it("gives Cloud and Rain exact evidence, feedback, state reset, and physical units", () => {
+    const view = render(<NativeExploration id="cloud-rain-lab" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Lift to saturation" }),
+    ).toBeNull();
+    fireEvent.press(
+      view.getByRole("radio", { name: "Cloud only after more lift" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Lift to saturation" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Lift to saturation" }),
+    );
+    expect(view.getByText(/supports your prediction/)).toBeTruthy();
+    expect(view.getAllByText(/400 m.*1,600 m/).length).toBeGreaterThan(0);
+    expect(view.getByText(/g\/kg condensed/)).toBeTruthy();
+    fireEvent.press(view.getByRole("radio", { name: "Grow precipitation" }));
+    fireEvent.press(view.getByRole("radio", { name: "Both reach the ground" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Grow precipitation" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Grow precipitation" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(view.getAllByText(/20 µm.*1,000 µm/).length).toBeGreaterThan(0);
+    expect(view.getByText(/125,000 times the volume/)).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Reset lesson" }));
+    expect(view.queryByText(/does not support your prediction/)).toBeNull();
+    expect(
+      view.getByRole("button", {
+        name: "Increase Representative particle diameter (µm)",
+      }),
+    ).toBeTruthy();
+    expect(
+      view.getByText(/does not mean air literally holds water/),
+    ).toBeTruthy();
+    view.unmount();
+  });
   it("requires a Machine Workshop prediction and reports exact evidence before reset", () => {
     const view = render(<NativeExploration id="machine-workshop" />);
     ready(view);

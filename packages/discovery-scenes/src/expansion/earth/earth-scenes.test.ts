@@ -78,8 +78,14 @@ describe("rich reusable earth scenes", () => {
     ).toBe(true);
     plates.dispose();
     const clouds = createCloudRainScene();
-    clouds.update({ ...initialCloud, upliftM: 1800, dropletGrowth: 90 });
-    expect(clouds.labels().some((l) => l.text.includes("rain"))).toBe(true);
+    clouds.update({
+      ...initialCloud,
+      upliftM: 1_600,
+      particleDiameterUm: 1_000,
+    });
+    expect(clouds.labels().some((l) => l.text.includes("rain at ground"))).toBe(
+      true,
+    );
     clouds.dispose();
     const magnets = createMagneticFieldsScene();
     magnets.update({ ...initialMagnetic, flipped: true });

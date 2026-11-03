@@ -48,16 +48,18 @@ export const expansionCases = [
   {
     kind: "cloud-rain-lab",
     initial: {
-      temperatureC: 22,
-      vaporGPerKg: 10,
-      upliftM: 1400,
-      dropletGrowth: 30,
+      temperatureC: 24,
+      relativeHumidityPercent: 60,
+      upliftM: 1600,
+      particleDiameterUm: 20,
+      subcloudRelativeHumidityPercent: 80,
     },
     changed: {
-      temperatureC: 22,
-      vaporGPerKg: 14,
+      temperatureC: 32,
+      relativeHumidityPercent: 95,
       upliftM: 2000,
-      dropletGrowth: 90,
+      particleDiameterUm: 1000,
+      subcloudRelativeHumidityPercent: 20,
     },
   },
   {

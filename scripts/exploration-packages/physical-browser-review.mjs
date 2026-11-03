@@ -33,7 +33,19 @@ const specs = [
     },
     { boundary: 1, rateCmPerYear: 8, elapsedMillionYears: 4 },
   ],
-  ["cloud-rain-lab", { dropletGrowth: 90 }, { dropletGrowth: 90 }],
+  [
+    "cloud-rain-lab",
+    {
+      upliftM: 1600,
+      particleDiameterUm: 1000,
+      subcloudRelativeHumidityPercent: 80,
+    },
+    {
+      upliftM: 1600,
+      particleDiameterUm: 1000,
+      subcloudRelativeHumidityPercent: 80,
+    },
+  ],
   ["magnetic-fields", { flipped: true, probeZ: 0 }, { flipped: 1, probeZ: 0 }],
   [
     "cell-explorer",

@@ -66,14 +66,16 @@ export function validExpansionState(
         exact(value, [
           "kind",
           "temperatureC",
-          "vaporGPerKg",
+          "relativeHumidityPercent",
           "upliftM",
-          "dropletGrowth",
+          "particleDiameterUm",
+          "subcloudRelativeHumidityPercent",
         ]) &&
-        number(value.temperatureC, 20, 35) &&
-        number(value.vaporGPerKg, 2, 14) &&
-        number(value.upliftM, 0, 2000) &&
-        number(value.dropletGrowth, 0, 100)
+        number(value.temperatureC, 22, 32) &&
+        number(value.relativeHumidityPercent, 30, 95) &&
+        number(value.upliftM, 0, 2_000) &&
+        number(value.particleDiameterUm, 10, 2_000) &&
+        number(value.subcloudRelativeHumidityPercent, 20, 100)
       );
     case "magnetic-fields":
       return (

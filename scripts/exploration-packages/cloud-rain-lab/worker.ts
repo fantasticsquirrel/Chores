@@ -1,73 +1,86 @@
 import { installLesson } from "../physical-lesson";
-import { initialCloud, normalizeCloud, cloudResult } from "./model";
+import {
+  CLOUD_MAX_LIFT_M,
+  cloudRainTrials,
+  cloudResult,
+  defaultCloudState,
+  normalizeCloud,
+} from "./model";
 import { createCloudRainScene } from "./clouds";
+
+const packageBoundary =
+  "Bounded warm-cloud parcel model: 22–32 °C start, 30–95% starting RH, 0–2,000 m lift, 10–2,000 µm representative liquid particle and 20–100% below-cloud RH. Water vapor is invisible. Relative humidity is actual vapor pressure divided by saturation vapor pressure; it does not mean air literally holds water. At fixed 1,000 hPa start, one numerical crossing sets 100% RH, cloud depth and condensate. Cooling rates (9.8 then fixed 6 °C/km) are simplified. A 200 µm representative particle gets a visible precipitation path, not a universal fall threshold; virga requires complete modeled evaporation before ground. The 500 µm rain-size name and invented 1,400 µm²/m D² evaporation coefficient are teaching choices. Condensate is not measured cloud water or particle supply. Real clouds include size distributions and liquid and/or ice; omitted mixing, detailed microphysics, wind, fall speed, breakup and changing weather matter. It cannot forecast cloud base or precipitation.";
+
+function outcome(result: ReturnType<typeof cloudResult>) {
+  if (result.outcome === "invisible-vapor")
+    return "No cloud yet; water vapor remains invisible.";
+  if (result.outcome === "cloud-droplets")
+    return "Visible liquid cloud droplets; no precipitation-sized particles.";
+  if (result.outcome === "virga")
+    return "Precipitation evaporates before reaching the ground (virga).";
+  if (result.outcome === "rain-at-ground") return "Rain reaches the ground.";
+  return "Drizzle reaches the ground.";
+}
+
 installLesson({
-  initial: initialCloud,
+  initial: defaultCloudState,
   normalize: normalizeCloud,
   build: createCloudRainScene,
-  title: "Why can rising air make a cloud without rain?",
+  title: "Cloud and Rain Lab",
   introduction:
-    "Rising air expands and cools. At saturation invisible vapor condenses into visible droplets; additional growth is needed for rain.",
+    "Lift one parcel to test cooling and saturation, then change one liquid-particle diameter to test why a visible cloud need not produce rain at the ground.",
   fields: [
     {
       id: "temperatureC",
-      label: "Starting air temperature (°C)",
-      min: 20,
-      max: 35,
+      label: "Starting parcel temperature (°C)",
+      min: 22,
+      max: 32,
     },
     {
-      id: "vaporGPerKg",
-      label: "Starting water vapor (g/kg dry air)",
-      min: 2,
-      max: 14,
+      id: "relativeHumidityPercent",
+      label: "Starting relative humidity (%)",
+      min: 30,
+      max: 95,
     },
     {
       id: "upliftM",
-      label: "Air parcel lift (m)",
+      label: "Parcel lift (m)",
       min: 0,
-      max: 2000,
+      max: CLOUD_MAX_LIFT_M,
       step: 100,
     },
     {
-      id: "dropletGrowth",
-      label: "Droplet-growth teaching index",
-      min: 0,
+      id: "particleDiameterUm",
+      label: "Representative particle diameter (µm)",
+      min: 10,
+      max: 2_000,
+      step: 10,
+    },
+    {
+      id: "subcloudRelativeHumidityPercent",
+      label: "Below-cloud relative humidity (%)",
+      min: 20,
       max: 100,
       step: 5,
     },
   ],
-  select: (s) => ({ ...s, upliftM: Math.min(2000, s.upliftM + 200) }),
-  describe: (s) => {
-    const r = cloudResult(s);
-    return `${r.rain ? "Cloud with falling drops" : r.cloud ? "Cloud without rain" : "No cloud yet"}. Lifted ${s.upliftM} m; parcel ${r.parcelTemperatureC.toFixed(1)}°C; approximate condensation level ${Math.round(r.condensationHeightM)} m. Growth teaching index ${s.dropletGrowth}. ${r.cloud ? (r.rain ? "Condensation and chosen growth condition are present." : "Cooling reached saturation, but growth does not yet produce falling drops.") : "Parcel has not reached condensation level; growth alone cannot make rain without cloud droplets."}`;
+  select: (state) => ({
+    ...state,
+    upliftM: Math.min(CLOUD_MAX_LIFT_M, state.upliftM + 200),
+  }),
+  describe: (state) => {
+    const result = cloudResult(state);
+    const ground = result.groundPrecipitation
+      ? `${result.groundParticleDiameterUm.toFixed(0)} µm at ground level`
+      : result.virga
+        ? "evaporated before ground level"
+        : "no ground precipitation";
+    return `${outcome(result)} Lift ${state.upliftM.toFixed(0)} m; parcel ${result.parcelTemperatureC.toFixed(1)} °C and ${result.parcelRelativeHumidityPercent.toFixed(0)}% RH. Estimated cloud base ${result.condensationHeightM.toFixed(0)} m; modeled condensed liquid water ${result.condensedWaterGPerKg.toFixed(2)} g/kg dry air. Representative particle ${state.particleDiameterUm.toFixed(0)} µm; ${ground}; below-cloud relative humidity ${state.subcloudRelativeHumidityPercent.toFixed(0)}%.`;
   },
-  trials: [
-    {
-      title: "Lift the same air",
-      question:
-        "Will lifting the same air to 600 m and 1800 m produce the same cloud state?",
-      choices: ["Same state", "Different states"],
-      controlled:
-        "Keep 22°C starting temperature, 10 g/kg vapor and growth 30. Change only lift from 600 to 1800 m.",
-      before: { ...initialCloud, upliftM: 600 },
-      after: { ...initialCloud, upliftM: 1800 },
-      change: "Lift to 1800 m",
-      explain:
-        "How did expansion and cooling connect lift to condensation? At fixed lift, why can warmer starting air remove the cloud?",
-    },
-    {
-      title: "Cloud is not rain",
-      question:
-        "If the parcel is already cloudy, does that guarantee falling rain?",
-      choices: ["Cloud always means rain", "Droplets need extra growth"],
-      controlled:
-        "Keep lift 1400 m, 22°C and 10 g/kg. Compare growth 30 with 90 and the unchanged parcel temperature.",
-      before: initialCloud,
-      after: { ...initialCloud, dropletGrowth: 90 },
-      change: "Set growth to 90",
-      explain:
-        "Which process formed the cloud, and which extra condition changed falling drops? Why is this teaching threshold not a forecast?",
-    },
-  ],
-  note: "Warm-cloud parcel starts at fixed 1000 hPa. Approximate condensation height; cooling uses 9.8°C/km before saturation and 6°C/km afterward. Mixing, ice and evaporation omitted. Gold dots mark air, not visible vapor; parcel is not a balloon. Growth is invented, with drops drawn at 65; not measured size, rainfall rate or forecast. Real droplet growth and air motion are more complex.",
+  trials: cloudRainTrials.map((trial) => ({
+    ...trial,
+    choices: [...trial.choices],
+    held: [...trial.held],
+  })),
+  note: packageBoundary,
 });

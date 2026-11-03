@@ -1,40 +1,10 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  initialCloud,
   initialMagnetic,
-  type CloudState,
   type MagneticState,
 } from "@family-manager/family-api/discovery-models/expansion-earth";
 import { ControlledComparison } from "./ControlledComparison";
 type Setter<T> = Dispatch<SetStateAction<T>>;
-export function CloudComparisons({
-  setState,
-}: {
-  setState: Setter<CloudState>;
-}) {
-  return (
-    <>
-      <ControlledComparison
-        title="Rising and cooling"
-        prediction="Predict: will air lifted farther be warmer or cooler, and when will droplets first appear?"
-        baseline="22°C, 10 g/kg vapor, growth index 30, uplift 600 m."
-        change="Only uplift changed to 1800 m."
-        explain="Compare parcel temperature and cloud presence. Why does the visible cloud mark liquid droplets rather than vapor?"
-        onBaseline={() => setState({ ...initialCloud, upliftM: 600 })}
-        onChange={() => setState({ ...initialCloud, upliftM: 1800 })}
-      />
-      <ControlledComparison
-        title="Cloud is not always rain"
-        prediction="Predict: does any cloud automatically produce rain in this model?"
-        baseline="22°C, 10 g/kg vapor, uplift 1400 m, growth index 30."
-        change="Only the droplet growth index changed to 90."
-        explain="Compare cloud and rain states. What extra condition does falling rain require?"
-        onBaseline={() => setState(initialCloud)}
-        onChange={() => setState({ ...initialCloud, dropletGrowth: 90 })}
-      />
-    </>
-  );
-}
 export function MagnetComparisons({
   setState,
 }: {

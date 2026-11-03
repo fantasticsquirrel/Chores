@@ -1,5 +1,10 @@
 import type { Group, Raycaster } from "three";
-export type ExpansionLabel = { text: string; at: [number, number, number] };
+export type ExpansionLabel = {
+  text: string;
+  at: [number, number, number];
+  left?: number;
+  top?: number;
+};
 export type ExpansionScene<S> = {
   group: Group;
   view: {

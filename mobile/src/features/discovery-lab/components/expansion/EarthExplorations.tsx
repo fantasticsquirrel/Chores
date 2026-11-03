@@ -1,101 +1,18 @@
-import { CloudComparisons, MagnetComparisons } from "./earthComparisons";
+import { MagnetComparisons } from "./earthComparisons";
 import { useState } from "react";
 import {
-  initialCloud,
-  cloudResult,
   initialMagnetic,
   magneticResult,
 } from "@family-manager/family-api/discovery-models/expansion-earth";
 import { ActionButton } from "../../../../components/ActionButton";
 import { Control, Dot, Line } from "../Primitives";
 import {
-  Choice,
   Diagram,
   DiagramLabel,
   Explanation,
   LearningFrame,
-  Meter,
   ModelNote,
 } from "../LearningPrimitives";
-
-export function CloudExploration() {
-  const [state, setState] = useState(initialCloud);
-  const result = cloudResult(state);
-  const label = `Parcel temperature ${result.parcelTemperatureC.toFixed(1)}°C; condensation level about ${result.condensationHeightM.toFixed(0)} m. ${result.cloud ? "Cloud droplets are present" : "No cloud droplets yet"}; ${result.rain ? "rain is represented" : "no rain is represented"}.`;
-  return (
-    <LearningFrame onReset={() => setState(initialCloud)}>
-      <Diagram visualState={{ kind: "cloud-rain-lab", ...state }} label={label}>
-        {(width) => (
-          <>
-            <Line x={35} y={260} x2={35} y2={40} />
-            <Dot
-              x={width / 2}
-              y={245 - state.upliftM / 15}
-              size={result.cloud ? 70 : 35}
-              color={result.cloud ? "#dbe7ee" : "#ebba67"}
-            />
-            {result.rain &&
-              [0, 1, 2, 3].map((i) => (
-                <Line
-                  key={i}
-                  x={width / 2 - 25 + i * 16}
-                  y={145}
-                  x2={width / 2 - 30 + i * 16}
-                  y2={215}
-                  color="#77d0f4"
-                />
-              ))}
-            <DiagramLabel x={18} y={280}>
-              Lift {state.upliftM} m · droplet growth {state.dropletGrowth}
-            </DiagramLabel>
-          </>
-        )}
-      </Diagram>
-      <Explanation>
-        {label} Rising air expands and cools. Condensation forms tiny liquid
-        droplets, while rain requires droplets to grow enough to fall. A visible
-        cloud is not invisible water vapor.
-      </Explanation>
-      <Control
-        label="Starting temperature (°C)"
-        value={state.temperatureC}
-        min={20}
-        max={35}
-        onChange={(temperatureC) => setState({ ...state, temperatureC })}
-      />
-      <Control
-        label="Water vapor (g/kg)"
-        value={state.vaporGPerKg}
-        min={2}
-        max={14}
-        onChange={(vaporGPerKg) => setState({ ...state, vaporGPerKg })}
-      />
-      <Control
-        label="Uplift (m)"
-        value={state.upliftM}
-        min={0}
-        max={2000}
-        step={100}
-        onChange={(upliftM) => setState({ ...state, upliftM })}
-      />
-      <Control
-        label="Droplet growth index"
-        value={state.dropletGrowth}
-        min={0}
-        max={100}
-        step={5}
-        onChange={(dropletGrowth) => setState({ ...state, dropletGrowth })}
-      />
-      <CloudComparisons setState={setState} />
-      <ModelNote>
-        Approximate condensation height and fixed cooling rates at a starting
-        pressure of 1000 hPa. Mixing, ice, changing weather, and droplet-size
-        distributions are omitted. The rain threshold and growth index are
-        invented teaching values, not a forecast.
-      </ModelNote>
-    </LearningFrame>
-  );
-}
 
 export function MagnetExploration() {
   const [state, setState] = useState(initialMagnetic);

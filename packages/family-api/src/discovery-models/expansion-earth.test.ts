@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   advancePlate,
-  cloudResult,
-  initialCloud,
   initialMagnetic,
   initialPlate,
   magneticFieldAt,
   magneticResult,
-  normalizeCloud,
   normalizeMagnetic,
   normalizePlate,
   plateResult,
@@ -44,57 +41,6 @@ describe("plate boundary teaching model", () => {
       }).rateCmPerYear,
     ).toBe(4);
     expect(advancePlate(initialPlate, -2)).toEqual(initialPlate);
-  });
-});
-describe("cloud formation and rain are distinct", () => {
-  it("can show clear air, cloud without rain and rain at identical vapor and temperature", () => {
-    expect(cloudResult({ ...initialCloud, upliftM: 0 }).cloud).toBe(false);
-    expect(cloudResult(initialCloud).cloud).toBe(true);
-    expect(cloudResult(initialCloud).rain).toBe(false);
-    expect(cloudResult({ ...initialCloud, dropletGrowth: 90 }).rain).toBe(true);
-  });
-  it("more vapor lowers condensation height; warming at fixed vapor raises it", () => {
-    expect(
-      cloudResult({ ...initialCloud, vaporGPerKg: 14 }).condensationHeightM,
-    ).toBeLessThan(cloudResult(initialCloud).condensationHeightM);
-    expect(
-      cloudResult({ ...initialCloud, temperatureC: 32 }).condensationHeightM,
-    ).toBeGreaterThan(cloudResult(initialCloud).condensationHeightM);
-    expect(
-      cloudResult({
-        ...initialCloud,
-        vaporGPerKg: 2,
-        upliftM: 3000,
-        dropletGrowth: 100,
-      }).rain,
-    ).toBe(false);
-  });
-  it("handles exact saturation and bounded extremes", () => {
-    const atGround = cloudResult({
-      temperatureC: 20,
-      vaporGPerKg: 14,
-      upliftM: 0,
-      dropletGrowth: 0,
-    });
-    expect(atGround.condensationHeightM).toBeGreaterThan(0);
-    expect(atGround.cloud).toBe(false);
-    expect(
-      normalizeCloud({ ...initialCloud, upliftM: Infinity, temperatureC: -100 })
-        .temperatureC,
-    ).toBe(20);
-    for (const temperatureC of [20, 35])
-      for (const vaporGPerKg of [2, 14]) {
-        const result = cloudResult({
-          temperatureC,
-          vaporGPerKg,
-          upliftM: 3000,
-          dropletGrowth: 100,
-        });
-        expect(Number.isFinite(result.parcelTemperatureC)).toBe(true);
-        expect(result.parcelTemperatureC).toBeGreaterThan(0);
-        expect(result.rainIndex).toBeGreaterThanOrEqual(0);
-        expect(result.rainIndex).toBeLessThanOrEqual(100);
-      }
   });
 });
 describe("magnet field and compass", () => {

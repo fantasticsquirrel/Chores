@@ -1,143 +1,279 @@
 import { useState } from "react";
 import {
+  CLOUD_MAX_LIFT_M,
+  cloudRainCoreBoundary,
+  cloudRainBoundary,
   cloudResult,
-  initialCloud,
+  defaultCloudState,
+  normalizeCloud,
   type CloudState,
-} from "@family-manager/family-api/discovery-models/expansion-earth";
+} from "@family-manager/family-api/discovery-models/cloud-rain";
 import { createCloudRainScene } from "@family-manager/discovery-scenes/expansion/earth/clouds";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
-import { LandscapeInvestigation } from "../../landscape/LandscapeExhibit";
-import { EarthExhibit, EarthMetric } from "./EarthExhibit";
+import { CloudRainComparison } from "./CloudRainComparison";
+import { useCloudLiftReplay } from "./useCloudLiftReplay";
+import "../mechanics/mechanics.css";
+import "./cloud-rain.css";
+
+function outcomeText(result: ReturnType<typeof cloudResult>) {
+  if (result.outcome === "invisible-vapor")
+    return "No cloud yet: water vapor remains invisible.";
+  if (result.outcome === "cloud-droplets")
+    return "Visible cloud droplets; no precipitation-sized particles.";
+  if (result.outcome === "virga")
+    return "Precipitation falls from the cloud but evaporates before the ground (virga).";
+  if (result.outcome === "rain-at-ground") return "Rain reaches the ground.";
+  return "Small liquid precipitation reaches the ground as drizzle.";
+}
+
 export function CloudRainSimulation() {
-  const [state, setState] = useState<CloudState>(initialCloud),
-    result = cloudResult(state);
-  const change = (key: keyof CloudState) => (value: number) =>
-    setState((s) => ({ ...s, [key]: value }));
-  const cloudState = result.rain
-    ? "Cloud with falling drops"
-    : result.cloud
-      ? "Cloud without rain"
-      : "No cloud yet";
-  const description = `${cloudState}. Air lifted ${state.upliftM} metres cools to ${result.parcelTemperatureC.toFixed(1)} degrees Celsius. Approximate condensation level ${Math.round(result.condensationHeightM)} metres. Droplet-growth teaching index ${state.dropletGrowth}.`;
+  const [state, setState] = useState<CloudState>({ ...defaultCloudState });
+  const [comparisonVersion, setComparisonVersion] = useState(0);
+  const replay = useCloudLiftReplay(state.upliftM);
+  const visualState = { ...state, upliftM: replay.visualLiftM };
+  const result = cloudResult(visualState);
+  const update = (next: CloudState) => {
+    replay.cancel();
+    setState(normalizeCloud(next));
+    setComparisonVersion((value) => value + 1);
+  };
+  const applyGuidedState = (next: CloudState) => {
+    replay.cancel();
+    setState(normalizeCloud(next));
+  };
+  const reset = () => update({ ...defaultCloudState });
+  const stateText = outcomeText(result);
+  const groundDiameter = result.groundPrecipitation
+    ? result.groundParticleDiameterUm.toFixed(0) + " µm"
+    : result.virga
+      ? "evaporated"
+      : "—";
+  const description =
+    "Dimensional terrain, lake and lifted warm-air parcel. Starting temperature " +
+    state.temperatureC.toFixed(0) +
+    " degrees Celsius and relative humidity " +
+    state.relativeHumidityPercent.toFixed(0) +
+    " percent. At " +
+    visualState.upliftM.toFixed(0) +
+    " metres of lift, parcel temperature is " +
+    result.parcelTemperatureC.toFixed(1) +
+    " degrees Celsius and relative humidity is " +
+    result.parcelRelativeHumidityPercent.toFixed(0) +
+    " percent. Estimated cloud base " +
+    result.condensationHeightM.toFixed(0) +
+    " metres; modeled condensed liquid water " +
+    result.condensedWaterGPerKg.toFixed(2) +
+    " grams per kilogram of dry air. Representative particle diameter " +
+    state.particleDiameterUm.toFixed(0) +
+    " micrometres; below-cloud relative humidity " +
+    state.subcloudRelativeHumidityPercent.toFixed(0) +
+    " percent. " +
+    stateText +
+    " Water-vapor markers, liquid droplets, precipitation paths and text labels distinguish states without relying on color or motion. Vapor itself is invisible; real clouds may contain liquid droplets, ice crystals or both.";
+
   return (
-    <EarthExhibit
-      question="Why can rising air make a cloud without rain?"
-      introduction="Rising air expands and cools. At saturation, invisible water vapor can condense onto tiny particles, making visible cloud droplets. Droplets need additional growth before they fall as rain; cloud formation alone is not enough."
-      scene={
-        <ExpansionCanvas
-          state={state}
-          buildScene={createCloudRainScene}
-          description={description}
-          onSelect={() =>
-            setState((s) => ({
-              ...s,
-              upliftM: Math.min(2000, s.upliftM + 200),
-            }))
-          }
-        />
-      }
-      controls={
-        <>
+    <section className="cloud-exhibit">
+      <header className="cloud-heading">
+        <h2>When does a cloud form, and when does rain reach the ground?</h2>
+        <p>
+          Predict first. Lift one parcel to test cooling and saturation, then
+          change one particle-size input to test why a visible cloud need not
+          produce rain at the ground.
+        </p>
+      </header>
+      <ExpansionCanvas
+        state={visualState}
+        buildScene={createCloudRainScene}
+        description={description}
+        onSelect={() =>
+          update({
+            ...state,
+            upliftM: Math.min(CLOUD_MAX_LIFT_M, state.upliftM + 200),
+          })
+        }
+      />
+      <div className="cloud-motion-toolbar">
+        <button
+          type="button"
+          disabled={state.upliftM <= 0 || replay.running}
+          onClick={replay.replay}
+        >
+          {replay.running ? "Replaying parcel lift…" : "Replay parcel lift"}
+        </button>
+        {replay.status && (
+          <p className="cloud-motion-status" role="status">
+            {replay.status}
+          </p>
+        )}
+      </div>
+      <div className="cloud-console">
+        <div className="cloud-inputs">
           <Slider
-            label="Starting air temperature"
+            label="Starting parcel temperature"
             value={state.temperatureC}
-            min={20}
-            max={35}
+            min={22}
+            max={32}
             unit=" °C"
-            onChange={change("temperatureC")}
+            onChange={(temperatureC) => update({ ...state, temperatureC })}
           />
           <Slider
-            label="Starting water vapor"
-            value={state.vaporGPerKg}
-            min={2}
-            max={14}
-            unit=" g/kg dry air"
-            onChange={change("vaporGPerKg")}
+            label="Starting relative humidity"
+            value={state.relativeHumidityPercent}
+            min={30}
+            max={95}
+            unit=" %"
+            onChange={(relativeHumidityPercent) =>
+              update({ ...state, relativeHumidityPercent })
+            }
           />
           <Slider
-            label="Air parcel lift"
+            label="Parcel lift"
             value={state.upliftM}
             min={0}
-            max={2000}
+            max={CLOUD_MAX_LIFT_M}
             step={100}
             unit=" m"
-            onChange={change("upliftM")}
+            onChange={(upliftM) => update({ ...state, upliftM })}
           />
           <Slider
-            label="Droplet-growth teaching index"
-            value={state.dropletGrowth}
-            min={0}
+            label="Representative particle diameter"
+            value={state.particleDiameterUm}
+            min={10}
+            max={2_000}
+            step={10}
+            unit=" µm"
+            onChange={(particleDiameterUm) =>
+              update({ ...state, particleDiameterUm })
+            }
+          />
+          <Slider
+            label="Below-cloud relative humidity"
+            value={state.subcloudRelativeHumidityPercent}
+            min={20}
             max={100}
             step={5}
-            onChange={change("dropletGrowth")}
+            unit=" %"
+            onChange={(subcloudRelativeHumidityPercent) =>
+              update({ ...state, subcloudRelativeHumidityPercent })
+            }
           />
-          <div className="earth-buttons">
-            <button onClick={() => setState(initialCloud)}>
-              Reset all conditions
-            </button>
+          <p className="cloud-control-note">
+            Tap the parcel or cloud to add 200 m of lift. The gold points mark
+            the parcel for the diagram; they are not visible water vapor.
+          </p>
+          <button className="cloud-reset" type="button" onClick={reset}>
+            Reset lesson
+          </button>
+        </div>
+        <div className="cloud-results" aria-live="polite" aria-atomic="true">
+          <div className="cloud-measures">
+            <div>
+              <span>Parcel temperature</span>
+              <strong>
+                {result.parcelTemperatureC.toFixed(1)} <small>°C</small>
+              </strong>
+            </div>
+            <div>
+              <span>Parcel relative humidity</span>
+              <strong>
+                {result.parcelRelativeHumidityPercent.toFixed(0)}{" "}
+                <small>%</small>
+              </strong>
+            </div>
+            <div>
+              <span>Estimated cloud base</span>
+              <strong>
+                {result.condensationHeightM.toFixed(0)} <small>m</small>
+              </strong>
+            </div>
+            <div>
+              <span>Modeled condensed water</span>
+              <strong>
+                {result.condensedWaterGPerKg.toFixed(2)} <small>g/kg</small>
+              </strong>
+            </div>
+            <div>
+              <span>Particle in cloud</span>
+              <strong>
+                {state.particleDiameterUm.toFixed(0)} <small>µm</small>
+              </strong>
+            </div>
+            <div>
+              <span>Estimated at ground</span>
+              <strong className="cloud-ground-value">{groundDiameter}</strong>
+            </div>
           </div>
-          <p className="earth-control-note">
-            Tap the parcel or cloud to add 200 m of lift. The highlighted parcel
-            marks a volume of air, not a balloon; the small gold dots are
-            diagram markers, not visible water vapor.
-          </p>
-        </>
-      }
-      evidence={
-        <>
-          <EarthMetric
-            label="Lifted parcel temperature"
-            value={`${result.parcelTemperatureC.toFixed(1)} °C`}
-          />
-          <EarthMetric
-            label="Approximate condensation level"
-            value={`${Math.round(result.condensationHeightM)} m`}
-          />
-          <EarthMetric label="Observed model state" value={cloudState} />
+          <div
+            className="cloud-process"
+            aria-label={
+              "Lift to " +
+              visualState.upliftM.toFixed(0) +
+              " metres cools the parcel to " +
+              result.parcelTemperatureC.toFixed(1) +
+              " degrees Celsius and changes relative humidity to " +
+              result.parcelRelativeHumidityPercent.toFixed(0) +
+              " percent. " +
+              stateText
+            }
+          >
+            <span>lift and expansion</span>
+            <b aria-hidden="true">→</b>
+            <span>cooling</span>
+            <b aria-hidden="true">→</b>
+            <span>saturation at 100% RH</span>
+            <b aria-hidden="true">→</b>
+            <span>condensation</span>
+          </div>
+          <h3>{stateText}</h3>
           <p>
-            {result.cloud
-              ? result.rain
-                ? "Condensation and the chosen growth condition are both present, so this diagram shows falling drops."
-                : "Cooling has reached saturation, but the growth setting does not yet produce falling drops in this diagram."
-              : "This parcel has not reached its estimated condensation level. Increasing drop growth alone cannot make rain without cloud droplets."}
+            Relative humidity compares actual vapor pressure with saturation
+            vapor pressure at the same temperature. Rising and cooling raise
+            this percentage here; at 100%, condensation and evaporation can both
+            continue while liquid droplets make the cloud visible.
           </p>
-        </>
-      }
-      investigations={
-        <LandscapeInvestigation
-          items={[
-            {
-              label: "Lift the same air",
-              predict:
-                "Will lifting the same air to 600 m and 1,800 m produce the same cloud state?",
-              options: ["Same state", "Different states"],
-              action:
-                "Set up 600 m at 22 °C, 10 g/kg water vapor and growth 30. Note temperature and cloud state. Change only lift to 1,800 m and compare.",
-              explain:
-                "How did expansion and cooling connect the lift to condensation? Now hold lift fixed and increase starting temperature: why can that remove the cloud?",
-              test: () => setState({ ...initialCloud, upliftM: 600 }),
-              testLabel: "Set lift to 600 m",
-            },
-            {
-              label: "Cloud is not rain",
-              predict:
-                "If the parcel is already cloudy, does that guarantee falling rain?",
-              options: [
-                "Cloud always means rain",
-                "Droplets need extra growth",
-              ],
-              action:
-                "Set up a cloud at 1,400 m, 22 °C and 10 g/kg, with growth 30. Keep those conditions fixed and change only growth to 90. Compare falling drops and the unchanged parcel temperature.",
-              explain:
-                "Which process formed the cloud, and which extra condition changed the falling-drop picture? Why is this teaching threshold not a forecast for a real cloud?",
-              test: () => setState(initialCloud),
-              testLabel: "Set cloud without rain",
-            },
-          ]}
-        />
-      }
-      note="This warm-cloud parcel starts at a fixed 1,000 hPa. Condensation height is approximate; cooling uses fixed 9.8 °C/km before saturation and 6 °C/km afterward. Controls keep this parcel above freezing. Mixing, ice and evaporation are omitted. Growth is an invented index, with falling drops drawn at 65; it is not a measured droplet size, rainfall rate, or forecast. Real droplet growth and air motion are more complex."
-    />
+          <p>
+            The representative particle is{" "}
+            <strong>{state.particleDiameterUm.toFixed(0)} µm</strong>. A sphere
+            of that diameter has{" "}
+            <strong>
+              {result.particleVolumeRatioToCloudDroplet.toLocaleString(
+                "en-US",
+                {
+                  maximumFractionDigits: 0,
+                },
+              )}
+              ×
+            </strong>{" "}
+            the volume of a 20 µm cloud droplet. Warm-cloud collision and
+            coalescence can build larger drops; the model does not simulate each
+            collision.
+          </p>
+          <p>
+            {!result.cloud
+              ? "No condensed cloud is modeled at this lift, so no precipitation particle is drawn."
+              : result.fallingPrecipitation
+                ? result.virga
+                  ? "The simplified evaporation path reduces the " +
+                    state.particleDiameterUm.toFixed(0) +
+                    " µm particle to zero before ground level, so the scene shows virga."
+                  : "The simplified evaporation path estimates " +
+                    result.groundParticleDiameterUm.toFixed(0) +
+                    " µm at the ground through a " +
+                    state.subcloudRelativeHumidityPercent.toFixed(0) +
+                    "% RH layer."
+                : "This particle remains part of the cloud in the model. A visible cloud is evidence of condensed droplets, not proof that rain will reach the ground."}
+          </p>
+        </div>
+      </div>
+      <CloudRainComparison key={comparisonVersion} onApply={applyGuidedState} />
+      <div className="cloud-note">
+        <p>{cloudRainCoreBoundary}</p>
+        <details>
+          <summary>Detailed model boundaries and assumptions</summary>
+          <p>{cloudRainBoundary}</p>
+        </details>
+      </div>
+    </section>
   );
 }

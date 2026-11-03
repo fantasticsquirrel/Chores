@@ -861,30 +861,50 @@
     "subject": "Earth science",
     "grade_bands": ["3-5", "6-8"],
     "tags": ["weather", "clouds", "water", "temperature"],
-    "summary": "Change air temperature, water vapor and uplift, then test why a cloud need not produce rain.",
-    "question": "Why can rising air make a cloud without making rain?",
-    "explanation": "Rising air expands as pressure decreases and usually cools. Near saturation, water vapor can condense into tiny visible droplets. Those droplets need additional growth before they can become rain. This warm-cloud model estimates a condensation height from starting temperature and moisture, with fixed cooling rates before and after saturation. Its droplet-growth index and rain threshold are invented teaching values. It omits mixing, detailed droplet growth and ice processes, so it cannot forecast rainfall.",
+    "summary": "Predict, then test how parcel cooling forms a visible cloud and how particle growth and evaporation affect rain at the ground.",
+    "question": "When does invisible water vapor form a visible cloud, and when does liquid precipitation reach the ground?",
+    "explanation": "Water vapor is an invisible gas. As a rising parcel expands and cools, its saturation vapor pressure decreases and relative humidity rises. At saturation, some vapor can condense on particles into visible liquid droplets while condensation and evaporation both continue. A warm cloud still needs particle growth—often collision and coalescence—before liquid precipitation falls; a drier layer below cloud can completely evaporate falling drops into virga. Real clouds may contain liquid droplets, ice crystals or both. This bounded warm-cloud teaching model uses one numerical saturation crossing, fixed cooling rates, a chosen representative particle size and an invented evaporation-path coefficient. It is not a forecast.",
     "experiments": [
       {
-        "title": "Lift the same air",
-        "instruction": "Set starting temperature to 22°C, water vapor to 10 g/kg and droplet growth to 30. Predict whether lifting the air 600 m or 1800 m produces the same cloud state, then compare those heights.",
-        "observe": "Compare parcel temperature, estimated condensation height and the presence of cloud droplets. Explain how lifting can cause condensation without adding more water vapor."
+        "title": "Lift to saturation",
+        "instruction": "Predict first. Start with 400 m of parcel lift, then change only lift to 1,600 m. Hold starting temperature at 24 °C, starting relative humidity at 60%, particle diameter at 20 µm and below-cloud relative humidity at 80%.",
+        "observe": "Compare parcel temperature, relative humidity, estimated cloud base and modeled condensate. Explain why cooling to saturation can turn some invisible vapor into visible liquid droplets without producing precipitation-sized particles."
       },
       {
-        "title": "A cloud without rain",
-        "instruction": "Keep starting temperature at 22°C, water vapor at 10 g/kg and uplift at 1400 m. Predict whether cloud droplets alone mean rain, then compare droplet-growth indices 30 and 90.",
-        "observe": "The model shows a cloud in both cases but represents rain only with greater growth. Explain what must happen after cloud formation, and why an invented growth index is not a measured rain forecast."
+        "title": "Grow precipitation",
+        "instruction": "Predict first. In the same saturated warm cloud, start with 20 µm droplets, then change only representative particle diameter to 1,000 µm. Hold lift, temperature and both relative-humidity settings fixed.",
+        "observe": "Compare the unchanged cloud measurements, the particle's 125,000-fold volume change and its estimated diameter at ground level. Explain why cloud particles must grow and why precipitation aloft can evaporate before the ground."
       }
     ],
-    "misconception": "A visible cloud consists of tiny liquid droplets or ice particles, not invisible water vapor. Cloud formation does not guarantee rain at the ground.",
+    "misconception": "Air does not literally hold water. Relative humidity compares actual vapor pressure with saturation vapor pressure at the same temperature. A visible cloud consists of liquid droplets, ice crystals or both—not the invisible vapor itself—and not every cloud produces rain at the ground.",
     "sources": [
       {
         "title": "NOAA: How clouds form",
         "url": "https://www.noaa.gov/jetstream/clouds/how-clouds-form"
       },
       {
+        "title": "NOAA: Parcel theory and lapse-rate assumptions",
+        "url": "https://www.noaa.gov/jetstream/upperair/parcel-theory"
+      },
+      {
         "title": "NOAA: How cloud particles grow into precipitation",
         "url": "https://www.noaa.gov/jetstream/atmosphere/precipitation"
+      },
+      {
+        "title": "NOAA NESDIS: Humidity, relative humidity and dew point",
+        "url": "https://www.nesdis.noaa.gov/about/k-12-education/atmosphere/what-humidity"
+      },
+      {
+        "title": "Met Office: Clouds and visible droplets or ice crystals",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/types-of-weather/clouds"
+      },
+      {
+        "title": "Met Office: The water cycle",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/how-weather-works/water-cycle"
+      },
+      {
+        "title": "National Weather Service glossary: Virga",
+        "url": "https://forecast.weather.gov/glossary.php?word=VIRGA"
       }
     ],
     "duration_minutes": 15

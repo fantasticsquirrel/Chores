@@ -3,10 +3,8 @@ import {
   HeatExploration,
   PressureExploration,
 } from "./expansion/MechanicsExplorations";
-import {
-  CloudExploration,
-  MagnetExploration,
-} from "./expansion/EarthExplorations";
+import { MagnetExploration } from "./expansion/EarthExplorations";
+import { CloudExploration } from "./expansion/cloud/CloudExploration";
 import { PlatesExploration } from "./expansion/plates/PlatesExploration";
 import {
   CellExploration,

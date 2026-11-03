@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "cloud-rain-lab-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "cloud-rain-lab-package",
@@ -17,30 +17,50 @@
       "water",
       "temperature"
     ],
-    "summary": "Change air temperature, water vapor and uplift, then test why a cloud need not produce rain.",
-    "question": "Why can rising air make a cloud without making rain?",
-    "explanation": "Rising air expands as pressure decreases and usually cools. Near saturation, water vapor can condense into tiny visible droplets. Those droplets need additional growth before they can become rain. This warm-cloud model estimates a condensation height from starting temperature and moisture, with fixed cooling rates before and after saturation. Its droplet-growth index and rain threshold are invented teaching values. It omits mixing, detailed droplet growth and ice processes, so it cannot forecast rainfall.",
+    "summary": "Predict, then test how parcel cooling forms a visible cloud and how particle growth and evaporation affect rain at the ground.",
+    "question": "When does invisible water vapor form a visible cloud, and when does liquid precipitation reach the ground?",
+    "explanation": "Water vapor is an invisible gas. As a rising parcel expands and cools, its saturation vapor pressure decreases and relative humidity rises. At saturation, some vapor can condense on particles into visible liquid droplets while condensation and evaporation both continue. A warm cloud still needs particle growth—often collision and coalescence—before liquid precipitation falls; a drier layer below cloud can completely evaporate falling drops into virga. Real clouds may contain liquid droplets, ice crystals or both. This bounded warm-cloud teaching model uses one numerical saturation crossing, fixed cooling rates, a chosen representative particle size and an invented evaporation-path coefficient. It is not a forecast.",
     "experiments": [
       {
-        "title": "Lift the same air",
-        "instruction": "Choose Lift the same air. Will lifting the same air to 600 m and 1800 m produce the same cloud state? Select your prediction, then Set baseline and Lift to 1800 m. Keep 22°C starting temperature, 10 g/kg vapor and growth 30. Change only lift from 600 to 1800 m.",
-        "observe": "Cloud without rain. Lifted 1800 m; parcel 7.3°C; approximate condensation level 1018 m. Growth teaching index 30. Cooling reached saturation, but growth does not yet produce falling drops. How did expansion and cooling connect lift to condensation? At fixed lift, why can warmer starting air remove the cloud?"
+        "title": "Lift to saturation",
+        "instruction": "Predict first. Start with 400 m of parcel lift, then change only lift to 1,600 m. Hold starting temperature at 24 °C, starting relative humidity at 60%, particle diameter at 20 µm and below-cloud relative humidity at 80%.",
+        "observe": "Compare parcel temperature, relative humidity, estimated cloud base and condensed liquid water. Explain why cooling to saturation can turn some invisible vapor into visible liquid droplets without making precipitation-sized particles."
       },
       {
-        "title": "Cloud is not rain",
-        "instruction": "Choose Cloud is not rain. If the parcel is already cloudy, does that guarantee falling rain? Select your prediction, then Set baseline and Set growth to 90. Keep lift 1400 m, 22°C and 10 g/kg. Compare growth 30 with 90 and the unchanged parcel temperature.",
-        "observe": "Cloud with falling drops. Lifted 1400 m; parcel 9.7°C; approximate condensation level 1018 m. Growth teaching index 90. Condensation and chosen growth condition are present. Which process formed the cloud, and which extra condition changed falling drops? Why is this teaching threshold not a forecast?"
+        "title": "Grow precipitation",
+        "instruction": "Predict first. In the same saturated warm cloud, start with 20 µm droplets, then change only representative particle diameter to 1,000 µm. Hold lift, temperature and both relative-humidity settings fixed.",
+        "observe": "Both states keep the same saturated cloud and modeled condensate. Compare the particle's 125,000-fold volume change and estimated diameter at ground level. Explain why cloud droplets must grow, and why evaporation below cloud can produce virga."
       }
     ],
-    "misconception": "A visible cloud consists of tiny liquid droplets or ice particles, not invisible water vapor. Cloud formation does not guarantee rain at the ground.",
+    "misconception": "Air does not literally hold water. Relative humidity compares actual vapor pressure with saturation vapor pressure at the same temperature. A visible cloud consists of liquid droplets, ice crystals or both—not the invisible vapor itself—and not every cloud produces rain at the ground.",
     "sources": [
       {
         "title": "NOAA: How clouds form",
         "url": "https://www.noaa.gov/jetstream/clouds/how-clouds-form"
       },
       {
+        "title": "NOAA: Parcel theory and lapse-rate assumptions",
+        "url": "https://www.noaa.gov/jetstream/upperair/parcel-theory"
+      },
+      {
         "title": "NOAA: How cloud particles grow into precipitation",
         "url": "https://www.noaa.gov/jetstream/atmosphere/precipitation"
+      },
+      {
+        "title": "NOAA NESDIS: Humidity, relative humidity and dew point",
+        "url": "https://www.nesdis.noaa.gov/about/k-12-education/atmosphere/what-humidity"
+      },
+      {
+        "title": "Met Office: Clouds and visible droplets or ice crystals",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/types-of-weather/clouds"
+      },
+      {
+        "title": "Met Office: The water cycle",
+        "url": "https://weather.metoffice.gov.uk/learn-about/weather/how-weather-works/water-cycle"
+      },
+      {
+        "title": "National Weather Service glossary: Virga",
+        "url": "https://forecast.weather.gov/glossary.php?word=VIRGA"
       }
     ],
     "duration_minutes": 15
@@ -50,7 +70,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "a7c55481ab6ce2a4cfff34bef634af6db9a9db61f020b23bfb9d2503d4c9a2c7"
+      "sha256": "afb10339904ea00391c2d321dd8cc948a39e03c52d40b10466e050b44756c995"
     },
     {
       "path": "THREE-LICENSE.txt",
