@@ -1,83 +1,69 @@
 import { installLesson } from "../physical-lesson";
 import {
-  initialPlate,
+  advanceFaultLoading,
+  defaultPlateState,
+  movingPlatesBoundary,
+  movingPlatesTrials,
   normalizePlate,
-  advancePlate,
   plateResult,
 } from "./model";
 import { createMovingPlatesScene } from "./plates";
+
+const motion = (value: number) =>
+  value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+
 installLesson({
-  initial: initialPlate,
+  initial: defaultPlateState,
   normalize: normalizePlate,
   build: createMovingPlatesScene,
-  title: "How does plate motion change a boundary?",
+  title: "Plate boundaries",
   introduction:
-    "Earth’s rigid outer plates move over a slowly deforming mantle. Compare the arrows and cutaway, not just the surface.",
+    "Compare equal rates and times using arrows and the lithosphere cutaway.",
   fields: [
     {
       id: "boundary",
-      label: "Boundary type",
+      label: "Boundary motion",
       options: ["divergent", "convergent", "transform"],
       labels: ["Apart", "Together", "Sideways"],
     },
-    { id: "movement", label: "Terrain diagram progress (%)", min: 0, max: 100 },
+    {
+      id: "rateCmPerYear",
+      label: "Relative plate rate (cm/yr)",
+      min: 1,
+      max: 10,
+      step: 1,
+    },
+    {
+      id: "elapsedMillionYears",
+      label: "Elapsed model time (million years)",
+      min: 0,
+      max: 5,
+      step: 0.25,
+    },
   ],
-  change: (s, k, v) =>
-    k === "boundary"
-      ? { ...initialPlate, boundary: v, movement: 0 }
-      : s.boundary === "transform" && k === "movement"
-        ? s
-        : { ...s, [k]: v },
-  select: (s) => advancePlate(s),
+  change: (state, key, value) =>
+    normalizePlate(
+      key === "boundary"
+        ? { ...state, boundary: value, loadingStep: 0, slips: 0 }
+        : { ...state, [key]: value },
+    ),
+  select: (state) => advanceFaultLoading(state),
   actions: [
     {
       id: "step",
-      label: "Advance diagram / add one loading step",
-      run: (s) => advancePlate(s),
+      label: "Add one locked-fault loading step",
+      run: (state) => advanceFaultLoading(state),
     },
     {
       id: "resetBoundary",
       label: "Reset this boundary",
-      run: (s) => ({ ...initialPlate, boundary: s.boundary, movement: 0 }),
+      run: (state) => normalizePlate({ ...state, loadingStep: 0, slips: 0 }),
     },
   ],
-  describe: (s) => {
-    const r = plateResult(s);
-    return `${r.terrain}. Plates move ${r.motion}. Diagram progress ${s.movement}%; stored deformation index ${s.stress} / 60 threshold; ${s.slips} illustrated slips. ${s.boundary === "transform" ? (s.slips > 0 && s.stress === 12 ? "The latest slip released stored deformation; the road is now offset." : "Loading bends the road before the next illustrated slip.") : "Progress is not elapsed years."}`;
+  describe: (state) => {
+    const result = plateResult(state);
+    return `${result.summary} Plates move ${result.motion}. Rate ${state.rateCmPerYear.toFixed(0)} cm/yr over ${state.elapsedMillionYears.toFixed(2).replace(/0$/, "")} million years gives ${motion(result.relativeMotionKm)} km of relative motion. ${result.crustChange}. Invented elastic-loading index ${result.elasticLoadingPercent}%; ${state.slips} illustrated ${state.slips === 1 ? "slip" : "slips"}. Scene distance and relief are schematic.`;
   },
-  trials: [
-    {
-      title: "Compare directions",
-      question:
-        "At equal diagram progress, will pulling apart and pushing together make the same boundary shape?",
-      choices: ["Same shape", "Different shapes"],
-      controlled:
-        "Compare Apart and Together at the same 40% diagram stage; vertical relief is not a measurement.",
-      before: { ...initialPlate, movement: 40 },
-      after: { ...initialPlate, boundary: "convergent", movement: 40 },
-      change: "Compare Together at 40%",
-      explain:
-        "Which adds crust at the boundary and which carries oceanic crust beneath another plate? Use arrows and cutaway.",
-    },
-    {
-      title: "Load, then slip",
-      question:
-        "Will the road shift gradually at every loading step, or suddenly after deformation builds?",
-      choices: ["Gradually each step", "After deformation builds"],
-      controlled:
-        "Compare Sideways after four identical loading steps and one further step. Use the index, offset and slip count.",
-      before: advancePlate(
-        { ...initialPlate, boundary: "transform", movement: 0 },
-        4,
-      ),
-      after: advancePlate(
-        { ...initialPlate, boundary: "transform", movement: 0 },
-        5,
-      ),
-      change: "Add the fifth loading step",
-      explain:
-        "Why can slowly accumulating motion lead to a sudden slip? Does this invented threshold predict a real earthquake?",
-    },
-  ],
-  note: "Terrain and time are schematic. Together shows oceanic–continental subduction, not every collision. Earthquakes occur at all three boundary types and within plates; only Sideways has a loading model here. Its threshold, regular repetition and index are invented, not timing or magnitude predictions. The mantle is mostly solid, not liquid magma.",
+  trials: movingPlatesTrials,
+  note: movingPlatesBoundary,
 });

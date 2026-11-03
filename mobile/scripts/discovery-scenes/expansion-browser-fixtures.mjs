@@ -30,8 +30,20 @@ export const expansionCases = [
   },
   {
     kind: "moving-plates",
-    initial: { boundary: "divergent", movement: 20, stress: 0, slips: 0 },
-    changed: { boundary: "convergent", movement: 70, stress: 0, slips: 0 },
+    initial: {
+      boundary: "divergent",
+      rateCmPerYear: 4,
+      elapsedMillionYears: 2,
+      loadingStep: 0,
+      slips: 0,
+    },
+    changed: {
+      boundary: "convergent",
+      rateCmPerYear: 7,
+      elapsedMillionYears: 4,
+      loadingStep: 0,
+      slips: 0,
+    },
   },
   {
     kind: "cloud-rain-lab",

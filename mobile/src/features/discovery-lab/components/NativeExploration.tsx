@@ -4,10 +4,10 @@ import {
   PressureExploration,
 } from "./expansion/MechanicsExplorations";
 import {
-  PlatesExploration,
   CloudExploration,
   MagnetExploration,
 } from "./expansion/EarthExplorations";
+import { PlatesExploration } from "./expansion/plates/PlatesExploration";
 import {
   CellExploration,
   ShapeExploration,

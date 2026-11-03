@@ -73,9 +73,12 @@
   }
 }
 @media (max-width: 600px) {
-  .package-rich-anchored {
-    max-width: 95px;
+  .package-rich-visual .package-rich-anchored {
+    max-width: 110px;
     white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: center;
+    line-height: 1.15;
     font-size: 9px;
     padding: 3px 4px;
   }

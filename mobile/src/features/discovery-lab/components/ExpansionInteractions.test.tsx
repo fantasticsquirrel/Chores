@@ -54,9 +54,10 @@ const cases: {
   },
   {
     id: "moving-plates",
-    action: "Advance one step",
-    changed: { movement: 24 },
-    result: /Movement 24 diagram units/,
+    action: "Increase Elapsed time (million years)",
+    changed: { elapsedMillionYears: 2.25 },
+    result: /2\.25 million years.*90 km/i,
+    reset: "Reset lesson",
   },
   {
     id: "cloud-rain-lab",
@@ -90,7 +91,10 @@ const cases: {
   },
 ];
 const comparisons = [
-  { id: "moving-plates", titles: ["Boundary types", "Locked fault and slip"] },
+  {
+    id: "moving-plates",
+    titles: ["Boundary direction", "Locked fault slip"],
+  },
   {
     id: "cloud-rain-lab",
     titles: ["Rising and cooling", "Cloud is not always rain"],
@@ -142,10 +146,19 @@ describe("native nine-topic controls and paired investigations", () => {
     ({ id, titles }) => {
       const view = render(<NativeExploration id={id} />);
       ready(view);
-      for (const title of titles) {
+      for (const [index, title] of titles.entries()) {
         expect(
           view.queryByRole("button", { name: `Compare: ${title}` }),
         ).toBeNull();
+        if (id === "moving-plates") {
+          if (index > 0)
+            fireEvent.press(view.getByRole("radio", { name: title }));
+          fireEvent.press(
+            view.getByRole("radio", {
+              name: index === 0 ? "Different structures" : "A sudden slip",
+            }),
+          );
+        }
         fireEvent.press(
           view.getByRole("button", { name: `Set baseline: ${title}` }),
         );

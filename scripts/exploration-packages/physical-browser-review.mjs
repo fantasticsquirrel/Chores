@@ -26,8 +26,12 @@ const specs = [
   ],
   [
     "moving-plates",
-    { boundary: "convergent", movement: 80 },
-    { boundary: 1, movement: 80 },
+    {
+      boundary: "convergent",
+      rateCmPerYear: 8,
+      elapsedMillionYears: 4,
+    },
+    { boundary: 1, rateCmPerYear: 8, elapsedMillionYears: 4 },
   ],
   ["cloud-rain-lab", { dropletGrowth: 90 }, { dropletGrowth: 90 }],
   ["magnetic-fields", { flipped: true, probeZ: 0 }, { flipped: 1, probeZ: 0 }],

@@ -1,152 +1,225 @@
 import { useState } from "react";
 import {
-  advancePlate,
-  initialPlate,
+  advanceFaultLoading,
+  defaultPlateState,
+  FAULT_SLIP_LIMIT,
+  movingPlatesBoundary,
+  normalizePlate,
   plateResult,
   type PlateBoundary,
   type PlateState,
-} from "@family-manager/family-api/discovery-models/expansion-earth";
+} from "@family-manager/family-api/discovery-models/moving-plates";
 import { createMovingPlatesScene } from "@family-manager/discovery-scenes/expansion/earth/plates";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
-import { LandscapeInvestigation } from "../../landscape/LandscapeExhibit";
-import { EarthExhibit, EarthMetric } from "./EarthExhibit";
+import { MovingPlatesComparison } from "./MovingPlatesComparison";
+import { formatPlateTime, usePlateMotionReplay } from "./usePlateMotionReplay";
+import "../mechanics/mechanics.css";
+import "./moving-plates.css";
+
+const formatMotion = (value: number) =>
+  value.toLocaleString("en-US", { maximumFractionDigits: 1 });
+
 export function MovingPlatesSimulation() {
-  const [state, setState] = useState<PlateState>(initialPlate),
-    result = plateResult(state);
-  const boundary = (value: PlateBoundary) =>
-    setState({ ...initialPlate, boundary: value, movement: 0 });
-  const step = () => setState((s) => advancePlate(s));
-  const description = `${result.terrain}. Plates move ${result.motion}. Stored deformation index ${state.stress}; ${state.slips} illustrated slips. Transform surface offsets only when a slip occurs.`;
+  const [state, setState] = useState<PlateState>({ ...defaultPlateState });
+  const [comparisonVersion, setComparisonVersion] = useState(0);
+  const replay = usePlateMotionReplay(state.elapsedMillionYears);
+  const visualState = {
+    ...state,
+    elapsedMillionYears: replay.visualElapsedMillionYears,
+  };
+  const result = plateResult(visualState);
+  const update = (next: PlateState) => {
+    replay.cancel();
+    setState(normalizePlate(next));
+    setComparisonVersion((value) => value + 1);
+  };
+  const setBoundary = (boundary: PlateBoundary) =>
+    update({ ...state, boundary, loadingStep: 0, slips: 0 });
+  const loadFault = () => {
+    replay.cancel();
+    setState((current) => advanceFaultLoading(current));
+    setComparisonVersion((value) => value + 1);
+  };
+  const resetBoundary = () => update({ ...state, loadingStep: 0, slips: 0 });
+  const reset = () => update({ ...defaultPlateState });
+  const description =
+    `${result.summary} Plates move ${result.motion}. ` +
+    `${state.rateCmPerYear.toFixed(0)} centimetres per year over ${formatPlateTime(visualState.elapsedMillionYears)} million years gives ${formatMotion(result.relativeMotionKm)} kilometres of relative motion. ` +
+    `The plates are lithosphere, which includes crust and rigid uppermost mantle. The asthenosphere below is hot, slowly deforming solid rock. ` +
+    `Elastic-loading index ${result.elasticLoadingPercent} percent; ${state.slips} illustrated ${state.slips === 1 ? "slip" : "slips"}. ` +
+    "Arrows, labels and the front cutaway identify the motion and materials; scene distances and relief are schematic.";
+
   return (
-    <EarthExhibit
-      question="How does plate motion change a boundary?"
-      introduction="Earth’s rigid outer plates move over a slowly deforming mantle. Separation can create crust; convergence can carry oceanic crust downward; sideways motion offsets features along faults. Compare the arrows and the cutaway, not just the surface."
-      scene={
-        <ExpansionCanvas
-          state={state}
-          buildScene={createMovingPlatesScene}
-          description={description}
-          onSelect={step}
-        />
-      }
-      controls={
-        <>
+    <section className="plates-exhibit">
+      <header className="plates-heading">
+        <h2>Compare plate boundaries</h2>
+        <p>
+          Predict first, then compare equal rates and times. Use the motion
+          arrows and the lithosphere cutaway to explain each boundary.
+        </p>
+      </header>
+      <ExpansionCanvas
+        state={visualState}
+        buildScene={createMovingPlatesScene}
+        description={description}
+        onSelect={state.boundary === "transform" ? loadFault : undefined}
+      />
+      <div className="plates-motion-toolbar">
+        <button
+          type="button"
+          disabled={state.elapsedMillionYears <= 0 || replay.running}
+          onClick={replay.replay}
+        >
+          {replay.running
+            ? "Replaying relative-motion sweep…"
+            : "Replay relative-motion sweep"}
+        </button>
+        {replay.status && (
+          <p className="plates-motion-status" role="status">
+            {replay.status}
+          </p>
+        )}
+      </div>
+      <div className="plates-console">
+        <div className="plates-inputs">
           <div>
-            <strong>Boundary type</strong>
-            <div className="earth-buttons">
+            <strong>Boundary motion</strong>
+            <div
+              className="plates-tabs"
+              role="group"
+              aria-label="Boundary motion"
+            >
               {(
                 [
                   ["divergent", "Apart"],
                   ["convergent", "Together"],
                   ["transform", "Sideways"],
                 ] as const
-              ).map(([value, label]) => (
+              ).map(([boundary, label]) => (
                 <button
-                  key={value}
-                  aria-pressed={state.boundary === value}
-                  onClick={() => boundary(value)}
+                  type="button"
+                  key={boundary}
+                  aria-pressed={state.boundary === boundary}
+                  onClick={() => setBoundary(boundary)}
                 >
                   {label}
                 </button>
               ))}
             </div>
           </div>
-          {state.boundary !== "transform" && (
-            <Slider
-              label="Terrain diagram progress"
-              value={state.movement}
-              min={0}
-              max={100}
-              unit="%"
-              onChange={(movement) => setState((s) => ({ ...s, movement }))}
-            />
+          <Slider
+            label="Relative plate rate"
+            value={state.rateCmPerYear}
+            min={1}
+            max={10}
+            step={1}
+            unit=" cm/yr"
+            onChange={(rateCmPerYear) => update({ ...state, rateCmPerYear })}
+          />
+          <Slider
+            label="Elapsed model time"
+            value={state.elapsedMillionYears}
+            min={0}
+            max={5}
+            step={0.25}
+            unit=" million yr"
+            onChange={(elapsedMillionYears) =>
+              update({ ...state, elapsedMillionYears })
+            }
+          />
+          {state.boundary === "transform" && (
+            <div className="plates-fault-control">
+              <strong>Locked-fault illustration</strong>
+              <button
+                type="button"
+                onClick={loadFault}
+                disabled={state.slips >= FAULT_SLIP_LIMIT}
+              >
+                {state.slips >= FAULT_SLIP_LIMIT
+                  ? "Slip display limit reached"
+                  : "Add one loading step"}
+              </button>
+              <p>
+                The fifth step illustrates a slip. Steps have no time or
+                magnitude units.
+              </p>
+            </div>
           )}
-          <div className="earth-buttons">
-            <button onClick={step}>
-              {state.boundary === "transform"
-                ? "Add one loading step"
-                : "Advance diagram"}
-            </button>
-            <button
-              onClick={() =>
-                setState({
-                  ...initialPlate,
-                  boundary: state.boundary,
-                  movement: 0,
-                })
-              }
-            >
+          <div className="plates-reset-row">
+            <button type="button" onClick={resetBoundary}>
               Reset this boundary
             </button>
+            <button type="button" onClick={reset}>
+              Reset lesson
+            </button>
           </div>
-          <p className="earth-control-note">
-            Tap a plate to advance one step. Changing boundary resets the
-            diagram. In Sideways, the marked road bends while the fault is
-            locked, then shifts when it slips.
-          </p>
-        </>
-      }
-      evidence={
-        <>
-          <EarthMetric label="Relative plate motion" value={result.motion} />
-          <EarthMetric
-            label="Stored deformation · relative index"
-            value={`${state.stress} / 60 slip threshold`}
-          />
-          <EarthMetric
-            label="Illustrated fault slips"
-            value={`${state.slips}`}
-          />
+        </div>
+        <div className="plates-results" aria-live="polite" aria-atomic="true">
+          <div className="plates-measures">
+            <div>
+              <span>Relative rate</span>
+              <strong>
+                {state.rateCmPerYear.toFixed(0)} <small>cm/yr</small>
+              </strong>
+            </div>
+            <div>
+              <span>Elapsed model time</span>
+              <strong>
+                {formatPlateTime(visualState.elapsedMillionYears)}{" "}
+                <small>million yr</small>
+              </strong>
+            </div>
+            <div>
+              <span>Calculated relative motion</span>
+              <strong>
+                {formatMotion(result.relativeMotionKm)} <small>km</small>
+              </strong>
+            </div>
+            <div>
+              <span>Invented fault loading</span>
+              <strong>
+                {result.elasticLoadingPercent} <small>%</small>
+              </strong>
+            </div>
+          </div>
+          <div
+            className="plates-equation"
+            aria-label={`${state.rateCmPerYear} centimetres per year times ${formatPlateTime(visualState.elapsedMillionYears)} million years equals ${formatMotion(result.relativeMotionKm)} kilometres of relative motion.`}
+          >
+            <span>rate</span>
+            <b aria-hidden="true">×</b>
+            <span>geologic time</span>
+            <b aria-hidden="true">→</b>
+            <span>relative motion</span>
+          </div>
+          <h3>{result.feature}</h3>
+          <p>{result.summary}</p>
           <p>
-            {result.terrain}.{" "}
-            {state.boundary === "transform"
-              ? state.slips > 0 && state.stress === 12
-                ? "The latest slip released stored deformation; the road is now offset."
-                : "Loading bends the marked road before the next illustrated slip."
-              : "The step count is diagram progress, not elapsed years."}
+            <strong>Crust/lithosphere result:</strong> {result.crustChange}. The
+            calculated {formatMotion(result.relativeMotionKm)} km is a
+            relative-motion comparison; the drawing is not to that spatial
+            scale.
           </p>
-        </>
-      }
-      investigations={
-        <LandscapeInvestigation
-          items={[
-            {
-              label: "Compare directions",
-              predict:
-                "At equal diagram progress, will pulling apart and pushing together make the same boundary shape?",
-              options: ["Same shape", "Different shapes"],
-              action:
-                "Set up Apart at 40%. Note the central ridge. Choose Together, then return progress to 40%. Compare the same diagram stage; the vertical relief is not a measurement.",
-              explain:
-                "Which diagram adds crust at the boundary, and which carries oceanic crust beneath another plate? Use the arrows and cutaway as evidence.",
-              test: () => setState({ ...initialPlate, movement: 40 }),
-              testLabel: "Set Apart to 40%",
-            },
-            {
-              label: "Load, then slip",
-              predict:
-                "Will the road shift gradually at every loading step, or suddenly after deformation builds?",
-              options: [
-                "Gradually each step",
-                "After stored deformation builds",
-              ],
-              action:
-                "Set up Sideways at zero. Add four loading steps and note the index and road. Add one more step and compare the index, offset and slip count.",
-              explain:
-                "Why can slowly accumulating plate motion lead to a sudden fault slip? Does this invented repeatable threshold tell us when a real earthquake will occur?",
-              test: () =>
-                setState({
-                  ...initialPlate,
-                  boundary: "transform",
-                  movement: 0,
-                }),
-              testLabel: "Reset Sideways loading",
-            },
-          ]}
-        />
-      }
-      note="Terrain and time are schematic. Together shows oceanic–continental subduction, not every kind of collision. Earthquakes can occur at all three boundary types and within plates; only the Sideways fault has a loading model here. Its threshold, regular repetition and deformation index are invented, not earthquake timing or magnitude predictions. The mantle is mostly solid, not an ocean of liquid magma."
-    />
+          {state.boundary === "transform" && (
+            <p>
+              Invented elastic-loading index:{" "}
+              <strong>{result.elasticLoadingPercent}%</strong>. Illustrated
+              slips: <strong>{state.slips}</strong>. The marker bends while the
+              fault is locked and gains a schematic offset only on a modeled
+              slip.
+            </p>
+          )}
+        </div>
+      </div>
+      <MovingPlatesComparison
+        key={comparisonVersion}
+        onApply={(next) => {
+          replay.cancel();
+          setState(normalizePlate(next));
+        }}
+      />
+      <p className="plates-note">{movingPlatesBoundary}</p>
+    </section>
   );
 }

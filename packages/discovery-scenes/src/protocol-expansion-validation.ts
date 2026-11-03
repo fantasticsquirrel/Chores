@@ -43,12 +43,21 @@ export function validExpansionState(
       );
     case "moving-plates":
       return (
-        exact(value, ["kind", "boundary", "movement", "stress", "slips"]) &&
+        exact(value, [
+          "kind",
+          "boundary",
+          "rateCmPerYear",
+          "elapsedMillionYears",
+          "loadingStep",
+          "slips",
+        ]) &&
         ["divergent", "convergent", "transform"].includes(
           value.boundary as string,
         ) &&
-        number(value.movement, 0, 100) &&
-        number(value.stress, 0, 100) &&
+        number(value.rateCmPerYear, 1, 10) &&
+        number(value.elapsedMillionYears, 0, 5) &&
+        number(value.loadingStep, 0, 4) &&
+        Number.isInteger(value.loadingStep) &&
         number(value.slips, 0, 20) &&
         Number.isInteger(value.slips)
       );

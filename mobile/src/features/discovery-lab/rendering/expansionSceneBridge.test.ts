@@ -104,7 +104,8 @@ describe("bounded nine-topic offline expansion protocol", () => {
   it("rejects fractional machine ratios, invalid populations and unknown kinds", () => {
     for (const state of [
       { ...states[0], advantage: 1.5 },
-      { ...states[3], slips: 0.5 },
+      { ...states[3], loadingStep: 0.5 },
+      { ...states[3], rateCmPerYear: 0.5 },
       { ...states[8], generation: 1.5 },
       { ...states[8], darkCount: 90, lightCount: 90 },
       { kind: "dig-through-time" },

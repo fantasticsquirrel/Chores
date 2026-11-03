@@ -14,33 +14,35 @@ import {
 } from "./expansion-earth";
 
 describe("plate boundary teaching model", () => {
-  it("builds and releases transform stress rather than retaining a monotone score", () => {
+  it("builds and releases the transform loading index", () => {
     const start = {
       ...initialPlate,
       boundary: "transform" as const,
-      movement: 0,
+      loadingStep: 0,
     };
     const before = advancePlate(start, 4),
       after = advancePlate(before);
-    expect(before.stress).toBe(48);
-    expect(after.stress).toBe(12);
+    expect(plateResult(before).elasticLoadingPercent).toBe(80);
+    expect(plateResult(after).elasticLoadingPercent).toBe(0);
     expect(after.slips).toBe(1);
-    expect(after.movement).toBeGreaterThan(before.movement);
   });
   it("does not pretend to predict earthquakes at the other boundaries", () => {
     expect(advancePlate(initialPlate, 10).slips).toBe(0);
     expect(
-      plateResult({ ...initialPlate, boundary: "convergent" }).terrain,
+      plateResult({ ...initialPlate, boundary: "convergent" }).feature,
     ).toContain("subduction");
   });
   it("bounds repeated steps and handles nonfinite inputs", () => {
     let state = { ...initialPlate, boundary: "transform" as const };
     for (let i = 0; i < 500; i++) state = advancePlate(state);
-    expect(state.movement).toBe(100);
     expect(state.slips).toBe(20);
     expect(
-      normalizePlate({ ...state, movement: NaN, stress: Infinity }).movement,
-    ).toBe(20);
+      normalizePlate({
+        ...state,
+        rateCmPerYear: NaN,
+        elapsedMillionYears: Infinity,
+      }).rateCmPerYear,
+    ).toBe(4);
     expect(advancePlate(initialPlate, -2)).toEqual(initialPlate);
   });
 });

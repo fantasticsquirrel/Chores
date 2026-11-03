@@ -1,64 +1,9 @@
-/** Bounded teaching inputs shared by web, native controls and scene builders. */
+/** Focused exports retained here for compatibility with existing Earth consumers. */
+export * from "./moving-plates";
+
+/** Bounded teaching inputs shared by the remaining Earth models. */
 const bound = (n: number, min: number, max: number, fallback: number) =>
   Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
-export type PlateBoundary = "divergent" | "convergent" | "transform";
-export interface PlateState {
-  boundary: PlateBoundary;
-  movement: number;
-  stress: number;
-  slips: number;
-}
-export const initialPlate: PlateState = {
-  boundary: "divergent",
-  movement: 20,
-  stress: 0,
-  slips: 0,
-};
-export function normalizePlate(s: PlateState): PlateState {
-  return {
-    boundary: ["divergent", "convergent", "transform"].includes(s.boundary)
-      ? s.boundary
-      : "divergent",
-    movement: bound(s.movement, 0, 100, 20),
-    stress: bound(s.stress, 0, 100, 0),
-    slips: Math.floor(bound(s.slips, 0, 20, 0)),
-  };
-}
-/** A step is a diagram increment, not years. Slip threshold and residual are invented. */
-export function advancePlate(input: PlateState, steps = 1): PlateState {
-  const s = normalizePlate(input);
-  for (let i = 0; i < Math.floor(bound(steps, 0, 20, 0)); i++) {
-    s.movement = Math.min(100, s.movement + 4);
-    if (s.boundary === "transform") {
-      s.stress += 12;
-      if (s.stress >= 60) {
-        s.stress = 12;
-        s.slips = Math.min(20, s.slips + 1);
-      }
-    } else s.stress = 0;
-  }
-  return s;
-}
-export function plateResult(input: PlateState) {
-  const s = normalizePlate(input);
-  const terrain =
-    s.boundary === "divergent"
-      ? "Rift opens; magma forms new crust"
-      : s.boundary === "convergent"
-        ? "Oceanic plate bends into a subduction zone"
-        : "Crust slides sideways along a fault";
-  return {
-    terrain,
-    stress: s.stress,
-    slips: s.slips,
-    motion:
-      s.boundary === "divergent"
-        ? "apart"
-        : s.boundary === "convergent"
-          ? "together"
-          : "past each other",
-  };
-}
 export interface CloudState {
   temperatureC: number;
   vaporGPerKg: number;

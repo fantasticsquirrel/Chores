@@ -1,13 +1,6 @@
-import {
-  PlatesComparisons,
-  CloudComparisons,
-  MagnetComparisons,
-} from "./earthComparisons";
+import { CloudComparisons, MagnetComparisons } from "./earthComparisons";
 import { useState } from "react";
 import {
-  initialPlate,
-  advancePlate,
-  plateResult,
   initialCloud,
   cloudResult,
   initialMagnetic,
@@ -24,80 +17,6 @@ import {
   Meter,
   ModelNote,
 } from "../LearningPrimitives";
-
-export function PlatesExploration() {
-  const [state, setState] = useState(initialPlate);
-  const result = plateResult(state);
-  const label = `${result.terrain}. Movement ${state.movement} diagram units; stress index ${state.stress}; ${state.slips} modeled slips.`;
-  return (
-    <LearningFrame onReset={() => setState(initialPlate)}>
-      <Diagram visualState={{ kind: "moving-plates", ...state }} label={label}>
-        {(width) => (
-          <>
-            <Line
-              x={20}
-              y={120}
-              x2={width / 2 - state.movement / 3}
-              y2={120}
-              color="#a2d5eb"
-            />
-            <Line
-              x={width / 2 + state.movement / 3}
-              y={state.boundary === "convergent" ? 145 : 120}
-              x2={width - 20}
-              y2={120}
-              color="#e9bd7a"
-            />
-            <Line
-              x={width / 2 - 20}
-              y={155}
-              x2={width / 2 + 20}
-              y2={state.boundary === "convergent" ? 200 : 155}
-              color="#ec8a66"
-            />
-            <DiagramLabel x={18} y={220}>
-              Plates move {result.motion}
-            </DiagramLabel>
-          </>
-        )}
-      </Diagram>
-      <Explanation>
-        {label}{" "}
-        {state.boundary === "transform"
-          ? "Locked segments build stress; a slip releases some of the stored strain. This repeating threshold is invented, not an earthquake clock."
-          : state.boundary === "convergent"
-            ? "This example shows denser oceanic crust subducting beneath a continent. Continental collisions behave differently."
-            : "At this divergent boundary, plates separate and rising magma can form new oceanic crust."}
-      </Explanation>
-      <Choice
-        label="Boundary motion"
-        value={state.boundary}
-        onChange={(boundary) => setState({ ...initialPlate, boundary })}
-        options={[
-          { value: "divergent", label: "Move apart" },
-          { value: "convergent", label: "Move together" },
-          { value: "transform", label: "Slide past" },
-        ]}
-      />
-      <ActionButton
-        label="Advance one step"
-        onPress={() => setState(advancePlate(state))}
-      />
-      <ActionButton
-        label="Advance five steps"
-        onPress={() => setState(advancePlate(state, 5))}
-      />
-      <Meter label="Stored stress index" value={state.stress} />
-      <PlatesComparisons setState={setState} />
-      <ModelNote>
-        A step is a diagram increment, not years. Crust thickness, movement, and
-        fault threshold are schematic; these controls cannot predict
-        earthquakes. Changing boundary resets movement and stress for a fair
-        comparison.
-      </ModelNote>
-    </LearningFrame>
-  );
-}
 
 export function CloudExploration() {
   const [state, setState] = useState(initialCloud);

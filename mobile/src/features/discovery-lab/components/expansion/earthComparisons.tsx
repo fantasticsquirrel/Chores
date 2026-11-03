@@ -1,50 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  initialPlate,
   initialCloud,
   initialMagnetic,
-  advancePlate,
-  type PlateState,
   type CloudState,
   type MagneticState,
 } from "@family-manager/family-api/discovery-models/expansion-earth";
 import { ControlledComparison } from "./ControlledComparison";
 type Setter<T> = Dispatch<SetStateAction<T>>;
-export function PlatesComparisons({
-  setState,
-}: {
-  setState: Setter<PlateState>;
-}) {
-  const transform: PlateState = {
-    ...initialPlate,
-    boundary: "transform",
-    movement: 0,
-  };
-  return (
-    <>
-      <ControlledComparison
-        title="Boundary types"
-        prediction="Predict: will separating plates and colliding plates produce the same crust pattern?"
-        baseline="Divergent boundary at 40 diagram units of movement."
-        change="Reset and selected convergent motion at the same diagram progress."
-        explain="Compare the rift with the subducting plate. What direction moved the crust?"
-        onBaseline={() => setState({ ...initialPlate, movement: 40 })}
-        onChange={() =>
-          setState({ ...initialPlate, boundary: "convergent", movement: 40 })
-        }
-      />
-      <ControlledComparison
-        title="Locked fault and slip"
-        prediction="Predict: can motion build stress while a locked fault has not yet slipped?"
-        baseline="Restored a transform boundary at zero movement and stress, then advanced four equal steps."
-        change="Restored the same start, then advanced five steps."
-        explain="Compare stress and slip count. How can stress fall even as total loading progress increases?"
-        onBaseline={() => setState(advancePlate(transform, 4))}
-        onChange={() => setState(advancePlate(transform, 5))}
-      />
-    </>
-  );
-}
 export function CloudComparisons({
   setState,
 }: {

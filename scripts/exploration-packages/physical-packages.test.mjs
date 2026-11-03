@@ -435,6 +435,54 @@ test("Pressure Tank package preserves shared model, trials and scene boundary st
     );
   }
 });
+test("Moving Plates package preserves shared model, trials and full scene boundary states", async () => {
+  const contents = `
+    import {createMovingPlatesScene as original} from './packages/discovery-scenes/src/expansion/earth/plates';
+    import {createMovingPlatesScene as converted} from './scripts/exploration-packages/moving-plates/plates';
+    import {plateResult as originalResult, movingPlatesTrials as originalTrials} from './packages/family-api/src/discovery-models/moving-plates';
+    import {plateResult as convertedResult, movingPlatesTrials as convertedTrials} from './scripts/exploration-packages/moving-plates/model';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[];
+    for(const boundary of ['divergent','convergent','transform']) for(const rateCmPerYear of [1,4,10]) for(const elapsedMillionYears of [0,2,5]) for(const loadingStep of [0,4]) for(const slips of [0,1,20]) states.push({boundary,rateCmPerYear,elapsedMillionYears,loadingStep,slips});
+    globalThis.trials=[originalTrials,convertedTrials];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const output=[originalResult(state),convertedResult(state),serializeExpansionScene(a,p),serializeExpansionScene(b,p)];
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Moving Plates package trial content parity",
+  );
+  for (const [
+    originalModel,
+    convertedModel,
+    originalScene,
+    convertedScene,
+  ] of context.result) {
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedModel)),
+      JSON.parse(JSON.stringify(originalModel)),
+      "Moving Plates package model parity",
+    );
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedScene)),
+      JSON.parse(JSON.stringify(originalScene)),
+      "Moving Plates package scene parity",
+    );
+  }
+});
 test("mechanical marker drag rays update controls and misses leave orbit available", async () => {
   for (const [topic, control, point, expected] of [
     ["machine-workshop", "liftM", [-3.25, 1.16, 20], 0.8],

@@ -21,7 +21,8 @@ describe("nine additional native investigations", () => {
       name:
         id === "machine-workshop" ||
         id === "heat-house" ||
-        id === "pressure-tank"
+        id === "pressure-tank" ||
+        id === "moving-plates"
           ? "Reset lesson"
           : "Reset experiment",
     });
