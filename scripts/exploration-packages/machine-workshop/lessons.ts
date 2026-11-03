@@ -7,33 +7,55 @@ import {
 } from "./model";
 export const experiments: Trial<MachineState>[] = [
   {
-    title: "Rope sections",
+    id: "pulley-sections",
+    title: "Pulley sections",
     question:
-      "With two supporting rope sections instead of one, what happens to the pulling force?",
-    choices: ["Less force", "Same force", "More force"],
+      "If two rope sections support the load instead of one, what happens to the ideal pulling force and rope travel?",
+    choices: [
+      "Less force, more rope",
+      "Same force and rope",
+      "More force, less rope",
+    ],
+    correctChoice: "Less force, more rope",
     controlled:
-      "Keep the load at 40 kg and lift it 0.5 m. Compare one supporting section with two. Count the sections lifting the moving load, not the wheels.",
+      "Start with one supporting section, then change only to two. Count rope sections lifting the moving load—not pulley wheels.",
     before: { ...defaultMachineState, advantage: 1 },
     after: { ...defaultMachineState, advantage: 2 },
     change: "Use two sections",
+    changed: "supporting rope sections, 1 to 2",
+    held: ["40 kg load mass", "0.5 m lift height", "local gravity 9.81 m/s²"],
     evidence:
-      "Pulling force falls from 392.4 N to 196.2 N; rope pulled increases from 0.5 m to 1.0 m. Input and output work are both 196.2 J.",
+      "Ideal pulling force falls from 392.4 N to 196.2 N; rope travel rises from 0.5 m to 1.0 m. Ideal input work and the load's gravitational energy gain are both 196.2 J.",
     explain:
-      "Why must you pull farther when less force lifts the same load through the same height? Use force × distance as evidence.",
+      "The same energy transfer is spread across twice the input distance, so the ideal input force is half as large. Why does this not mean the machine created energy?",
   },
   {
-    title: "Gear turns",
+    id: "gear-ratio",
+    title: "Gear ratio",
     question:
-      "What happens to the number of crank turns when a 12-tooth driver turns a 48-tooth gear instead of a 12-tooth gear?",
-    choices: ["More turns", "Same turns", "Fewer turns"],
+      "With the 12-tooth driver fixed, what happens to crank turns and hand force at the crank when the driven gear changes from 12 to 48 teeth?",
+    choices: [
+      "More crank turns, less hand force",
+      "Same turns and force",
+      "Fewer crank turns, more hand force",
+    ],
+    correctChoice: "More crank turns, less hand force",
     controlled:
-      "Keep the load at 40 kg and lift at 0.5 m. Both the crank and rope drum have a 0.2 m radius. Change only the driven gear tooth count.",
+      "Start with 12 driven teeth, then change only to 48. The driver stays at 12 teeth; crank and drum radii stay 0.20 m.",
     before: { ...defaultMachineState, mode: "gears", advantage: 1 },
     after: { ...defaultMachineState, mode: "gears", advantage: 4 },
     change: "Use 48 driven teeth",
+    changed: "driven gear teeth, 12 to 48 (ratio 1:1 to 4:1)",
+    held: [
+      "40 kg load mass",
+      "0.5 m lift height",
+      "local gravity 9.81 m/s²",
+      "12-tooth driver",
+      "0.20 m crank and drum radii",
+    ],
     evidence:
-      "Crank turns increase from 0.40 to 1.59; input torque falls from 78.48 to 19.62 N·m. Output torque stays at 78.48 N·m, and work stays at 196.2 J.",
+      "Crank turns rise from 0.40 to 1.59; ideal hand force at the crank falls from 392.4 N to 98.1 N; input torque falls from 78.48 to 19.62 N·m. Output torque stays 78.48 N·m and ideal work stays 196.2 J.",
     explain:
-      "Torque is a turning effect. Why does a larger driven gear turn less per input turn while providing greater output torque than input torque?",
+      "For the fixed load and drum, required output torque stays fixed. At 4:1, output torque is four times the input torque, so ideal input torque falls to one quarter while the driver makes four times as many turns for the same lift.",
   },
 ];

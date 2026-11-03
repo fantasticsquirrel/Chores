@@ -599,7 +599,12 @@ export function serializeExpansionScene(
   scene: {
     group: T.Group;
     view: { position: Vec; target: Vec; width: number; height: number };
-    labels: () => { text: string; at: Vec }[];
+    labels: () => {
+      text: string;
+      at: Vec;
+      left?: number;
+      top?: number;
+    }[];
   },
   presentation: Presentation,
 ): RichScene {
@@ -636,6 +641,11 @@ export function serializeExpansionScene(
     presentation,
     labels: scene
       .labels()
-      .map((label) => ({ text: label.text, position: label.at })),
+      .map((label) => ({
+        text: label.text,
+        position: label.at,
+        ...(label.left === undefined ? {} : { left: label.left }),
+        ...(label.top === undefined ? {} : { top: label.top }),
+      })),
   });
 }

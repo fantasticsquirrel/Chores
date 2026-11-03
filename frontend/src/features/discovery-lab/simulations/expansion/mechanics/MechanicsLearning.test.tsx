@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   MachineWorkshopSimulation,
@@ -16,12 +16,13 @@ const change = (name: string, value: number) =>
   fireEvent.change(screen.getByRole("slider", { name }), {
     target: { value },
   });
-const evidence = () => screen.getByText("Recorded comparison:").parentElement;
+const evidence = () =>
+  screen.getByText("Recorded comparison:").closest(".mechanics-evidence");
 describe("mechanics learning controls", () => {
   it("requires a prediction and compares force with distance for conserved work", () => {
     render(<MachineWorkshopSimulation />);
     expect(screen.getByRole("button", { name: "Set baseline" })).toBeDisabled();
-    click("Less force");
+    click("Less force, more rope");
     click("Set baseline");
     expect(
       screen.getByRole("slider", { name: "Supporting rope sections" }),
@@ -29,19 +30,89 @@ describe("mechanics learning controls", () => {
     click("Use two sections");
     expect(evidence()).toHaveTextContent("392.4 N to 196.2 N");
     expect(evidence()).toHaveTextContent("0.5 m to 1.0 m");
-    click("Gear turns");
+    expect(evidence()).toHaveTextContent("supports your prediction");
+    change("Load mass", 50);
     expect(screen.queryByText("Recorded comparison:")).not.toBeInTheDocument();
-    click("More turns");
+    click("Gear ratio");
+    expect(screen.queryByText("Recorded comparison:")).not.toBeInTheDocument();
+    click("More crank turns, less hand force");
     click("Set baseline");
     click("Use 48 driven teeth");
     expect(
       screen.getByRole("slider", { name: "Driven teeth ÷ driver teeth" }),
     ).toHaveValue("4");
     expect(evidence()).toHaveTextContent("78.48 to 19.62 N·m");
-    click("Reset machine");
+    expect(evidence()).toHaveTextContent("supports your prediction");
+    click("Reset lesson");
     expect(
       screen.getByRole("slider", { name: "Supporting rope sections" }),
     ).toHaveValue("2");
+    expect(screen.queryByText("Recorded comparison:")).not.toBeInTheDocument();
+    click("Same force and rope");
+    click("Set baseline");
+    click("Use two sections");
+    expect(evidence()).toHaveTextContent("does not support your prediction");
+  });
+  it("keeps lift replay opt-in and respects reduced motion", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    render(<MachineWorkshopSimulation />);
+    click("Replay lift");
+    expect(
+      screen.getByText(
+        "Reduced motion is on; the final lift position stays shown.",
+      ),
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+  it("cancels a lift replay when another machine control changes", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("requestAnimationFrame", () => 17);
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    render(<MachineWorkshopSimulation />);
+    click("Replay lift");
+    expect(
+      screen.getByRole("button", { name: "Replaying lift…" }),
+    ).toBeDisabled();
+    click("Gear winch");
+    expect(screen.getByRole("button", { name: "Replay lift" })).toBeEnabled();
+    expect(
+      screen.queryByText(/Replaying the load movement/),
+    ).not.toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
+  it("cancels replay before guided baseline and after states with the same lift", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("requestAnimationFrame", () => 23);
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    render(<MachineWorkshopSimulation />);
+    click("Replay lift");
+    expect(
+      screen.getByRole("button", { name: "Replaying lift…" }),
+    ).toBeDisabled();
+    click("Less force, more rope");
+    click("Set baseline");
+    expect(screen.getByRole("button", { name: "Replay lift" })).toBeEnabled();
+    expect(
+      screen.queryByText(/Replaying the load movement/),
+    ).not.toBeInTheDocument();
+    click("Use two sections");
+    expect(evidence()).toHaveTextContent("supports your prediction");
+    vi.unstubAllGlobals();
+  });
+  it("cancels replay when the document becomes hidden", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: false }));
+    vi.stubGlobal("requestAnimationFrame", () => 31);
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    render(<MachineWorkshopSimulation />);
+    click("Replay lift");
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(screen.getByRole("button", { name: "Replay lift" })).toBeEnabled();
+    expect(
+      screen.queryByText(/Replaying the load movement/),
+    ).not.toBeInTheDocument();
+    hidden.mockRestore();
+    vi.unstubAllGlobals();
   });
   it("compares insulation and window area under matched temperatures", () => {
     render(<HeatHouseSimulation />);

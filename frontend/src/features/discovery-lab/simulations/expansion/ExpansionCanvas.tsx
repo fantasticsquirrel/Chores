@@ -114,10 +114,12 @@ export function ExpansionCanvas<S>({
         span.hidden = point.z > 1 || point.z < -1;
         const w = span.offsetWidth,
           h = span.offsetHeight;
+        const anchorX = ((point.x + 1) * width) / 2,
+          anchorY = ((1 - point.y) * height) / 2;
         const { x, y } = placeLabel(
           {
-            x: ((point.x + 1) * width) / 2,
-            y: ((1 - point.y) * height) / 2,
+            x: label.left === undefined ? anchorX : (label.left * width) / 100,
+            y: label.top === undefined ? anchorY : (label.top * height) / 100,
             w,
             h,
           },
@@ -129,20 +131,18 @@ export function ExpansionCanvas<S>({
         span.style.top = `${y}px`;
         if (!span.hidden) {
           placed.push({ x, y, w, h });
-          const ax = ((point.x + 1) * width) / 2,
-            ay = ((1 - point.y) * height) / 2;
-          if (Math.hypot(ax - x, ay - y) > 14) {
+          if (Math.hypot(anchorX - x, anchorY - y) > 14) {
             const line = document.createElementNS(svgNS, "line");
             for (const [key, value] of Object.entries({
-              x1: ax,
-              y1: ay,
+              x1: anchorX,
+              y1: anchorY,
               x2: x,
               y2: y,
             }))
               line.setAttribute(key, String(value));
             const dot = document.createElementNS(svgNS, "circle");
-            dot.setAttribute("cx", String(ax));
-            dot.setAttribute("cy", String(ay));
+            dot.setAttribute("cx", String(anchorX));
+            dot.setAttribute("cy", String(anchorY));
             dot.setAttribute("r", "2");
             leaders.append(line, dot);
           }

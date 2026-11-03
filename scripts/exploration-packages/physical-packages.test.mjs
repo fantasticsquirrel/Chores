@@ -125,12 +125,40 @@ for (const topic of topics)
     ))
       send({ type: "control", control: button.id, values: {} });
   });
+test("machine package uses its compact annotation and external package heading", async () => {
+  const machine = await worker("machine-workshop");
+  const initial = machine({ type: "step", values: {} });
+  assert.equal(initial.scene3d.presentation.showHeading, false);
+  const gears = machine({
+    type: "control",
+    control: "mode",
+    values: { mode: 2 },
+  });
+  assert.equal(gears.scene3d.presentation.showHeading, false);
+  assert.equal(
+    gears.scene3d.labels.find((label) => label.text.startsWith("Crank/"))
+      ?.text,
+    "Crank/drum r=0.20m",
+  );
+});
 test("specific physical relationships stay observable", async () => {
   const machine = await worker("machine-workshop");
   machine({ type: "step", values: {} });
   let s = machine({ type: "control", control: "liftM", values: { liftM: 0 } });
-  assert.match(s.description, /Input work 0.0 J/);
-  assert.match(s.description, /Effort 196.2 N/);
+  assert.match(s.description, /Ideal input work 0.0 J/);
+  assert.match(s.description, /Ideal input force 196.2 N/);
+  machine({ type: "reset", values: {} });
+  machine({ type: "control", control: "predict_0", values: {} });
+  machine({ type: "control", control: "baseline", values: {} });
+  s = machine({ type: "control", control: "comparison", values: {} });
+  assert.match(s.sections[2].text, /supports your prediction/);
+  assert.match(s.sections[2].text, /Changed: supporting rope sections/);
+  assert.match(s.sections[2].text, /Held: 40 kg load mass, 0.5 m lift height/);
+  machine({ type: "reset", values: {} });
+  machine({ type: "control", control: "predict_1", values: {} });
+  machine({ type: "control", control: "baseline", values: {} });
+  s = machine({ type: "control", control: "comparison", values: {} });
+  assert.match(s.sections[2].text, /does not support your prediction/);
   const pressure = await worker("pressure-tank");
   pressure({ type: "step", values: {} });
   s = pressure({
@@ -249,9 +277,59 @@ test("all nine package-local scenes and teaching models preserve original defaul
     );
   }
 });
+test("machine package preserves shared model and scene boundary states", async () => {
+  const contents = `
+    import {createMachineScene as original} from './packages/discovery-scenes/src/expansion/mechanics/machineScene';
+    import {createMachineScene as converted} from './scripts/exploration-packages/machine-workshop/machineScene';
+    import {machineResult as originalResult} from './packages/family-api/src/discovery-models/expansion-mechanics';
+    import {machineResult as convertedResult} from './scripts/exploration-packages/machine-workshop/model';
+    import {machineWorkshopTrials} from './packages/family-api/src/discovery-models/machine-workshop';
+    import {experiments} from './scripts/exploration-packages/machine-workshop/lessons';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[];
+    for(const mode of ['pulley','lever','gears']) for(const advantage of [1,2,3,4]) for(const liftM of [0,0.5,1]) states.push({mode,advantage,liftM,loadKg:40});
+    globalThis.trials=[machineWorkshopTrials,experiments];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const output=[originalResult(state),convertedResult(state),serializeExpansionScene(a,p),serializeExpansionScene(b,p)];
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Machine Workshop package trial content parity",
+  );
+  for (const [
+    originalModel,
+    convertedModel,
+    originalScene,
+    convertedScene,
+  ] of context.result) {
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedModel)),
+      JSON.parse(JSON.stringify(originalModel)),
+      "Machine Workshop package model parity",
+    );
+    assert.deepEqual(
+      JSON.parse(JSON.stringify(convertedScene)),
+      JSON.parse(JSON.stringify(originalScene)),
+      "Machine Workshop package scene parity",
+    );
+  }
+});
 test("mechanical marker drag rays update controls and misses leave orbit available", async () => {
   for (const [topic, control, point, expected] of [
-    ["machine-workshop", "liftM", [-2.8, 1.26, 20], 0.8],
+    ["machine-workshop", "liftM", [-3.25, 1.16, 20], 0.8],
     ["heat-house", "insulationCm", [-3.1, 0.4, 20], 10],
     ["pressure-tank", "depthM", [-3, 2.48, 20], 2.3],
   ]) {

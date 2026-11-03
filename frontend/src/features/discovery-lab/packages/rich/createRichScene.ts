@@ -75,7 +75,7 @@ export function createRichScene(
             text: l.text,
             x: l.left ?? (p.x + 1) * 50,
             y: l.top ?? (1 - p.y) * 50,
-            ...(l.left !== undefined && l.top !== undefined
+            ...(l.left !== undefined || l.top !== undefined
               ? { anchorX: (p.x + 1) * 50, anchorY: (1 - p.y) * 50 }
               : {}),
           };

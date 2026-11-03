@@ -3,14 +3,18 @@ import { Raycaster, Vector3 } from "three";
 import { serializeExpansionScene } from "./shared/serialize-scene";
 import { createFrameCompactor } from "./shared/compact-frame";
 export type Trial<S> = {
+  id?: string;
   title: string;
   question: string;
   choices: string[];
+  correctChoice?: string;
   controlled: string;
   before: S;
   after: S;
   change: string;
   evidence?: string;
+  changed?: string;
+  held?: string[];
   explain: string;
 };
 export type Field = {
@@ -234,7 +238,7 @@ export function installLesson<S extends Record<string, any>>(
           heading: "3. Explain",
           text:
             stage === 2
-              ? `${t.evidence ?? lesson.describe(state)} ${t.explain}`
+              ? `${t.correctChoice ? `The evidence ${t.choices[prediction!] === t.correctChoice ? "supports" : "does not support"} your prediction. ` : ""}${t.evidence ?? lesson.describe(state)}${t.changed && t.held ? ` Changed: ${t.changed}. Held: ${t.held.join(", ")}.` : ""} ${t.explain}`
               : "After comparing, use the two sets of evidence to explain what changed and what stayed fixed.",
         },
       ],

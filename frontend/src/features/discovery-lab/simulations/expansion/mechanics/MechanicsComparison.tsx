@@ -9,6 +9,9 @@ export type MechanicsExperiment<S> = {
   change: string;
   evidence: string;
   explain: string;
+  correctChoice?: string;
+  changed?: string;
+  held?: readonly string[];
 };
 export function MechanicsComparison<S>({
   experiments,
@@ -101,9 +104,28 @@ export function MechanicsComparison<S>({
         <div>
           <span className="mechanics-step">3. Explain</span>
           {step === "compared" && (
-            <p className="mechanics-evidence" role="status">
-              <strong>Recorded comparison:</strong> {experiment.evidence}
-            </p>
+            <div className="mechanics-evidence" role="status">
+              {experiment.correctChoice && (
+                <p className="mechanics-feedback">
+                  <strong>
+                    The evidence{" "}
+                    {prediction === experiment.correctChoice
+                      ? "supports"
+                      : "does not support"}{" "}
+                    your prediction.
+                  </strong>
+                </p>
+              )}
+              <p>
+                <strong>Recorded comparison:</strong> {experiment.evidence}
+              </p>
+              {experiment.changed && experiment.held && (
+                <p className="mechanics-controlled-summary">
+                  <strong>Changed:</strong> {experiment.changed}.{" "}
+                  <strong>Held:</strong> {experiment.held.join(", ")}.
+                </p>
+              )}
+            </div>
           )}
           <p>
             {step === "compared"

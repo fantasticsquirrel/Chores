@@ -65,8 +65,8 @@ export function createExpansionScene(host, initial, fail, onLabels) {
                 label.text === "Drag thickness ↔"
                   ? "Use insulation control"
                   : label.text,
-              x: (point.x + 1) * 50,
-              y: (1 - point.y) * 50,
+              x: label.left ?? (point.x + 1) * 50,
+              y: label.top ?? (1 - point.y) * 50,
             };
           }),
         );

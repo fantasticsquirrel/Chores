@@ -17,7 +17,9 @@ describe("nine additional native investigations", () => {
   it.each(ids)("%s has working native controls, result, and reset", (id) => {
     const view = render(<NativeExploration id={id} />);
     expect(view.queryByText(/not available in this app yet/)).toBeNull();
-    const reset = view.getByRole("button", { name: "Reset experiment" });
+    const reset = view.getByRole("button", {
+      name: id === "machine-workshop" ? "Reset lesson" : "Reset experiment",
+    });
     expect(view.getAllByRole("button").length).toBeGreaterThan(1);
     fireEvent.press(reset);
     view.unmount();

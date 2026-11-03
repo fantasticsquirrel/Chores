@@ -683,30 +683,34 @@
     "subject": "Engineering",
     "grade_bands": ["3-5", "6-8"],
     "tags": ["machines", "forces", "energy", "ratios"],
-    "summary": "Change a lever, pulley system or geared hoist and compare the effort with the distance moved.",
-    "question": "When a machine reduces the force you need, what changes about how far you must move?",
-    "explanation": "A lever turns around a pivot; supporting rope sections share a pulley load; gears transfer turning motion. Mechanical advantage compares the load force with the input force. In an ideal machine, reducing the input force requires more input travel for the same lift. The geared hoist has an equal-radius crank handle and lifting drum, so its force and distance readings describe the hand and load. This model assumes slow lifting with no friction, rope stretch or machine weight.",
+    "summary": "Compare ideal pulleys and a gear winch while holding the load and lift fixed.",
+    "question": "How can a machine reduce input force without reducing the energy transferred to a lifted load?",
+    "explanation": "Mass is measured in kilograms. In this model, weight is the force of gravity on that mass, calculated in newtons with a fixed gravitational field strength of 9.81 N/kg. Ideal mechanical advantage compares load force with input force and input travel with load travel. Supporting rope sections share a pulley load; a gear ratio compares driven teeth with driver teeth. For the same slow lift, an ideal machine trades less input force for more input travel, so ideal input work equals the load's gravitational energy gain. Real friction and flexing require extra input energy, so real efficiency is below 100%.",
     "experiments": [
       {
-        "title": "Less force, more travel",
-        "instruction": "Choose the pulley with a 40 kg load and a 0.5 m lift. Predict what happens to the input force and travel when mechanical advantage changes from 1 to 2, then compare both settings.",
-        "observe": "The input force halves while the input distance doubles. Compare input and output work, then explain why needing less force did not create energy."
+        "title": "Change only supporting sections",
+        "instruction": "Predict first. Keep the load at 40 kg and the lift at 0.5 m. Compare one supporting rope section with two; change nothing else.",
+        "observe": "Ideal pulling force changes from 392.4 N to 196.2 N while rope travel changes from 0.5 m to 1.0 m. Ideal input work and the load's gravitational energy gain both stay 196.2 J. Explain why less force requires more rope."
       },
       {
-        "title": "Compare the geared hoist",
-        "instruction": "Choose the geared hoist and keep the 40 kg load and 0.5 m lift fixed. Predict the difference between mechanical advantages 1 and 4, then compare the hand force, hand travel and work.",
-        "observe": "The higher ratio needs less hand force but more hand travel for the same load movement. Explain how this is the same trade-off you observed with pulleys, even though the crank turns."
+        "title": "Change only driven gear teeth",
+        "instruction": "Predict first. Keep the driver at 12 teeth, the load at 40 kg, the lift at 0.5 m and both crank and drum radii at 0.20 m. Compare 12 with 48 driven teeth; change nothing else.",
+        "observe": "Crank turns change from 0.40 to 1.59 while ideal hand force changes from 392.4 N to 98.1 N. Ideal work stays 196.2 J. Explain why the larger driven gear requires more hand travel."
       }
     ],
-    "misconception": "A machine can reduce the force needed without reducing the ideal work needed. Force and distance must be considered together.",
+    "misconception": "A machine does not remove the minimum energy transfer for a lift. It trades force for distance in the ideal model; real losses make actual input work greater than useful output work.",
     "sources": [
       {
         "title": "OpenStax: Mechanical advantage and work in simple machines",
         "url": "https://openstax.org/books/physics/pages/9-3-simple-machines"
       },
       {
-        "title": "NYU: Gear ratios and torque",
-        "url": "https://mechatronics.engineering.nyu.edu/pdf/gear-ratio-and-torque.pdf"
+        "title": "UC San Diego MAE: Gear ratios",
+        "url": "https://mae3.eng.ucsd.edu/machine-design/gear-ratios"
+      },
+      {
+        "title": "NASA Glenn: Work, force and distance",
+        "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/work/"
       }
     ],
     "duration_minutes": 15

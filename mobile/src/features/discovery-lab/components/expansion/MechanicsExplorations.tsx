@@ -1,14 +1,8 @@
-import {
-  MachineComparisons,
-  HeatComparisons,
-  PressureComparisons,
-} from "./mechanicsComparisons";
+import { HeatComparisons, PressureComparisons } from "./mechanicsComparisons";
 import { useState } from "react";
 import {
-  defaultMachineState,
   defaultHeatState,
   defaultPressureState,
-  machineResult,
   heatResult,
   pressureResult,
 } from "@family-manager/family-api/discovery-models/expansion-mechanics";
@@ -22,91 +16,7 @@ import {
   ModelNote,
 } from "../LearningPrimitives";
 
-export function MachineExploration() {
-  const [state, setState] = useState(defaultMachineState);
-  const result = machineResult(state);
-  const label = `Input force ${result.inputForceN.toFixed(1)} N; input distance ${result.inputDistanceM.toFixed(2)} m. Load rises ${state.liftM.toFixed(2)} m.`;
-  return (
-    <LearningFrame onReset={() => setState(defaultMachineState)}>
-      <Diagram
-        visualState={{ kind: "machine-workshop", ...state }}
-        label={label}
-      >
-        {(width) => (
-          <>
-            <Line x={30} y={55} x2={width - 30} y2={55} />
-            <Line
-              x={width * 0.6}
-              y={55}
-              x2={width * 0.6}
-              y2={200 - state.liftM * 80}
-            />
-            <Dot
-              x={width * 0.6}
-              y={200 - state.liftM * 80}
-              size={36}
-              color="#e3ac5c"
-            />
-            <DiagramLabel x={18} y={225}>
-              {state.loadKg} kg load · ratio {state.advantage}:1
-            </DiagramLabel>
-          </>
-        )}
-      </Diagram>
-      <Explanation>
-        {label} Input work {result.inputWorkJ.toFixed(1)} J; output work{" "}
-        {result.outputWorkJ.toFixed(1)} J. A larger mechanical advantage trades
-        less force for more input distance; it does not create energy.
-      </Explanation>
-      <Choice
-        label="Machine"
-        value={state.mode}
-        onChange={(mode) => setState({ ...state, mode })}
-        options={[
-          { value: "pulley", label: "Pulley" },
-          { value: "lever", label: "Lever" },
-          { value: "gears", label: "Geared hoist" },
-        ]}
-      />
-      <Control
-        label="Load (kg)"
-        value={state.loadKg}
-        min={10}
-        max={100}
-        step={10}
-        onChange={(loadKg) => setState({ ...state, loadKg })}
-      />
-      <Control
-        label="Mechanical advantage"
-        value={state.advantage}
-        min={1}
-        max={4}
-        onChange={(advantage) => setState({ ...state, advantage })}
-      />
-      <Control
-        label="Lift distance (m)"
-        value={state.liftM}
-        min={0}
-        max={1}
-        step={0.1}
-        onChange={(liftM) => setState({ ...state, liftM })}
-      />
-      {state.mode === "gears" && (
-        <Explanation>
-          Input torque {result.inputTorqueNm.toFixed(2)} N·m; output torque{" "}
-          {result.outputTorqueNm.toFixed(2)} N·m. The crank turns{" "}
-          {result.crankTurns.toFixed(3)} times for this lift.
-        </Explanation>
-      )}
-      <MachineComparisons setState={setState} />
-      <ModelNote>
-        Ideal slow lifting with no friction, rope stretch, or machine weight.
-        The geared hoist converts a rotating crank into lifting motion; the
-        reported force is at an equal-radius handle, not a torque measurement.
-      </ModelNote>
-    </LearningFrame>
-  );
-}
+export { MachineExploration } from "./machine/MachineExploration";
 
 export function HeatExploration() {
   const [state, setState] = useState(defaultHeatState);

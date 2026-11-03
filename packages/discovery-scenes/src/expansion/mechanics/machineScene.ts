@@ -20,18 +20,16 @@ import {
   wheel,
   type Point,
 } from "./geometry";
-function arc(
-  cx: number,
-  cy: number,
-  radius: number,
-  start: number,
-  end: number,
-): Point[] {
-  return Array.from({ length: 17 }, (_, i) => {
-    const a = start + ((end - start) * i) / 16;
-    return [cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, 0.24];
-  });
-}
+import {
+  addCrateStartReference,
+  addWorkshopDetails,
+} from "./machineWorkshopDetails";
+import {
+  gearKinematics,
+  leverKinematics,
+  MACHINE_LIFT_SCALE,
+  pulleyKinematics,
+} from "./machineKinematics";
 function crate(root: THREE.Group, y: number, x = 0) {
   const wood = material("#bd8d4b"),
     band = material("#4b6165", 0.6);
@@ -55,25 +53,21 @@ function crate(root: THREE.Group, y: number, x = 0) {
   bar(group, [0.3, 0.33, 0], [0, 0.62, 0], 0.02, band);
 }
 function pulley(root: THREE.Group, s: MachineState): ExpansionLabel[] {
-  const steel = material("#547e8b", 0.65),
+  const steel = material("#6795a2", 0.65),
     cord = material("#f1ca71"),
-    top = 4.45,
-    bottom = 1.38 + s.liftM;
+    layout = pulleyKinematics(s),
+    top = layout.topY,
+    bottom = layout.movingPulleyY;
   for (const x of [-1.8, 1.8]) {
     box(root, [0.2, 4.65, 0.22], [x, 2.3, -0.2], steel);
     box(root, [0.7, 0.12, 1.1], [x, 0.12, -0.2], steel);
     bar(root, [x, 3.8, -0.2], [x * 0.65, 4.6, -0.2], 0.06, steel);
   }
   box(root, [3.8, 0.23, 0.34], [0, 4.65, -0.2], steel);
-  let points: Point[];
-  const end = 4.2 - s.liftM * s.advantage;
+  const points: Point[] = layout.ropePoints;
+  const end = layout.freeEndY;
   if (s.advantage === 1) {
     wheel(root, 0.3, [0, top, 0.24]);
-    points = [
-      [-0.3, bottom, 0.24],
-      ...arc(0, top, 0.3, Math.PI, 0),
-      [0.3, end, 0.24],
-    ];
     bar(
       root,
       [-0.3, bottom, 0.24],
@@ -84,67 +78,77 @@ function pulley(root: THREE.Group, s: MachineState): ExpansionLabel[] {
   } else if (s.advantage === 2) {
     wheel(root, 0.25, [0, bottom, 0.24]);
     wheel(root, 0.25, [0.5, top, 0.24]);
-    points = [
-      [-0.25, top, 0.24],
-      ...arc(0, bottom, 0.25, Math.PI, Math.PI * 2),
-      ...arc(0.5, top, 0.25, Math.PI, 0),
-      [0.75, end, 0.24],
-    ];
   } else if (s.advantage === 3) {
     wheel(root, 0.2, [0, bottom, 0.24]);
     wheel(root, 0.2, [-0.4, top, 0.24]);
     wheel(root, 0.2, [0.4, top, 0.24]);
-    points = [
-      [-0.6, bottom, 0.24],
-      ...arc(-0.4, top, 0.2, Math.PI, 0),
-      ...arc(0, bottom, 0.2, Math.PI, Math.PI * 2),
-      ...arc(0.4, top, 0.2, Math.PI, 0),
-      [0.6, end, 0.24],
-    ];
     bar(root, [-0.6, bottom, 0.24], [0, bottom, 0.24], 0.045, steel);
   } else {
     for (const x of [-0.4, 0.4]) wheel(root, 0.2, [x, bottom, 0.24]);
     for (const x of [0, 0.8]) wheel(root, 0.2, [x, top, 0.24]);
-    points = [
-      [-0.6, top, 0.24],
-      ...arc(-0.4, bottom, 0.2, Math.PI, Math.PI * 2),
-      ...arc(0, top, 0.2, Math.PI, 0),
-      ...arc(0.4, bottom, 0.2, Math.PI, Math.PI * 2),
-      ...arc(0.8, top, 0.2, Math.PI, 0),
-      [1, end, 0.24],
-    ];
     bar(root, [-0.4, bottom, 0.24], [0.4, bottom, 0.24], 0.045, steel);
+  }
+  if (layout.fixedAnchor) {
+    const anchor = new THREE.Group();
+    anchor.name = "fixed-rope-anchor";
+    anchor.position.set(
+      layout.fixedAnchor[0],
+      layout.fixedAnchor[1] + 0.14,
+      layout.fixedAnchor[2],
+    );
+    root.add(anchor);
+    box(anchor, [0.3, 0.12, 0.22], [0, 0.05, 0], material("#d7b766", 0.7));
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.1, 0.035, 7, 20),
+      material("#e5cf8a", 0.7),
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -0.08;
+    anchor.add(ring);
   }
   rope(root, points, cord);
   if (s.advantage > 1)
     bar(root, [0, bottom, 0.24], [0, 1.12 + s.liftM, 0.1], 0.04, steel);
   const endPoint = points[points.length - 1];
+  const forceArrowLength = 0.65 / s.advantage + 0.1;
   box(root, [0.34, 0.12, 0.18], endPoint, material("#e2754d"));
   arrow(
     root,
-    [endPoint[0] + 0.28, end, 0.24],
-    0.65 / s.advantage + 0.1,
+    [endPoint[0] + 0.28, end + forceArrowLength + 0.15, 0.24],
+    forceArrowLength,
     "#ec9b64",
     [0, -1, 0],
   );
-  crate(root, 0.5 + s.liftM);
+  crate(root, layout.loadCenterY);
   return [
     {
-      text: `${s.advantage} supporting rope ${s.advantage === 1 ? "section" : "sections"}`,
-      at: [-0.75, 3.1, 0.3],
+      text: `${s.advantage} support ${s.advantage === 1 ? "section" : "sections"}`,
+      at: [0.25, (top + bottom) / 2, 0.3],
+      left: 76,
+      top: 10,
     },
-    { text: "Pull ↓", at: [endPoint[0] + 0.4, end + 0.3, 0.3] },
+    {
+      text: "Free end ↓",
+      at: [endPoint[0], endPoint[1], 0.3],
+      left: 76,
+      top: 24,
+    },
   ];
 }
 function lever(root: THREE.Group, s: MachineState): ExpansionLabel[] {
-  const pivotX = -1,
-    pivotY = 2.2,
-    outputArm = 0.65,
-    angle = -Math.asin((s.liftM * 0.5) / outputArm);
-  const base = material("#537d8d", 0.5),
+  const layout = leverKinematics(s);
+  const { pivotX, pivotY, outputArmM: outputArm, angle } = layout;
+  const base = material("#6795a2", 0.58),
     beam = material("#ca9f55", 0.3);
-  const fulcrum = new THREE.Mesh(new THREE.ConeGeometry(0.45, pivotY, 3), base);
-  fulcrum.position.set(pivotX, pivotY / 2, 0);
+  box(
+    root,
+    [0.22, pivotY - 0.25, 0.34],
+    [pivotX, (pivotY - 0.25) / 2, -0.18],
+    base,
+  );
+  box(root, [0.85, 0.15, 0.75], [pivotX, 0.08, -0.18], base);
+  const fulcrum = new THREE.Mesh(new THREE.ConeGeometry(0.38, 0.7, 3), base);
+  fulcrum.position.set(pivotX, pivotY - 0.38, 0);
   root.add(fulcrum);
   const arm = new THREE.Group();
   arm.position.set(pivotX, pivotY, 0);
@@ -160,38 +164,62 @@ function lever(root: THREE.Group, s: MachineState): ExpansionLabel[] {
     box(arm, [0.025, 0.025, 0.3], [i * outputArm, 0.075, 0], base);
   const axle = cylinder(root, 0.12, 0.55, [pivotX, pivotY, 0], base);
   axle.rotation.x = Math.PI / 2;
-  const loadX = pivotX - outputArm * Math.cos(angle),
-    loadY = pivotY - outputArm * Math.sin(angle);
-  crate(root, loadY - 0.66, loadX);
-  const inputX = pivotX + outputArm * s.advantage * Math.cos(angle),
-    inputY = pivotY + outputArm * s.advantage * Math.sin(angle);
-  arrow(root, [inputX, inputY + 0.9, 0], 0.6, "#e6a067", [0, -1, 0]);
+  crate(root, layout.loadCenterY, layout.loadX);
+  const effort = new THREE.Group();
+  effort.name = "lever-effort-point";
+  effort.position.set(layout.effortX, layout.effortY, 0);
+  root.add(effort);
+  arrow(effort, [0, 0.78, 0], 0.55, "#e6a067", [0, -1, 0]);
   return [
-    { text: `Load arm : effort arm = 1 : ${s.advantage}`, at: [0.2, 3.3, 0] },
-    { text: "Fulcrum", at: [pivotX, 0.4, 0.5] },
-    { text: "Push down", at: [inputX, inputY + 1.15, 0.1] },
+    {
+      text: `Arms · 1:${s.advantage}`,
+      at: [pivotX + outputArm, pivotY, 0],
+      left: 80,
+      top: 9,
+    },
+    {
+      text: "Fulcrum",
+      at: [pivotX, pivotY - 0.15, 0.5],
+      left: 50,
+      top: 77,
+    },
+    {
+      text: `Effort ↓ ${(s.advantage * s.liftM).toFixed(1)} m`,
+      at: [layout.effortX, layout.effortY, 0.1],
+      left: 80,
+      top: 91,
+    },
   ];
 }
 function gears(root: THREE.Group, s: MachineState): ExpansionLabel[] {
-  const steel = material("#567888", 0.65),
-    r = 0.22,
-    outputR = r * s.advantage,
-    outputX = 0.55,
-    y = 3;
-  const turns = machineResult(s).crankTurns,
-    inputX = outputX - r - outputR - 0.04;
+  const steel = material("#6795a2", 0.68),
+    layout = gearKinematics(s),
+    r = layout.driverRadius,
+    outputR = layout.drivenRadius,
+    outputX = layout.drivenX,
+    y = layout.gearY,
+    inputX = layout.driverX;
   for (const x of [-2.4, 2.3])
     box(root, [0.2, 3.7, 0.25], [x, 1.85, -0.3], steel);
   box(root, [4.9, 0.2, 0.35], [0, y, -0.3], steel);
-  gear(root, r, 12, [inputX, y, 0.1], "#a4c0c3", -turns * Math.PI * 2);
-  gear(
+  const driver = gear(
+    root,
+    r,
+    layout.driverTeeth,
+    [inputX, y, 0.1],
+    "#b7d4d7",
+    layout.inputAngle,
+  );
+  driver.name = "driver-gear";
+  const driven = gear(
     root,
     outputR,
-    12 * s.advantage,
+    layout.drivenTeeth,
     [outputX, y, 0.1],
     "#bb995a",
-    (turns * Math.PI * 2) / s.advantage + Math.PI / (12 * s.advantage),
+    layout.outputAngle,
   );
+  driven.name = "driven-gear";
   const drum = cylinder(
     root,
     0.2,
@@ -199,6 +227,7 @@ function gears(root: THREE.Group, s: MachineState): ExpansionLabel[] {
     [outputX, y, 0.5],
     material("#7e9aa4", 0.8),
   );
+  drum.name = "rope-drum";
   drum.rotation.x = Math.PI / 2;
   for (let i = 0; i < 8; i++) {
     const ring = new THREE.Mesh(
@@ -209,8 +238,9 @@ function gears(root: THREE.Group, s: MachineState): ExpansionLabel[] {
     root.add(ring);
   }
   const crank = new THREE.Group();
+  crank.name = "input-crank";
   crank.position.set(inputX, y, 0.4);
-  crank.rotation.z = -turns * Math.PI * 2;
+  crank.rotation.z = layout.inputAngle;
   root.add(crank);
   bar(crank, [0, 0, 0], [0.2, 0, 0], 0.045, steel);
   bar(crank, [0.2, 0, 0], [0.2, 0, 0.35], 0.065, material("#df8e58"));
@@ -222,11 +252,26 @@ function gears(root: THREE.Group, s: MachineState): ExpansionLabel[] {
     ],
     material("#f0d083"),
   );
-  crate(root, 0.5 + s.liftM, outputX + 0.2);
+  crate(root, layout.loadCenterY, outputX + 0.2);
   return [
-    { text: `12 → ${12 * s.advantage} teeth`, at: [-0.6, 4.15, 0.1] },
-    { text: "0.2 m crank", at: [inputX - 0.2, 2.45, 0.6] },
-    { text: "0.2 m drum", at: [1.4, 3.55, 0.5] },
+    {
+      text: "Driver · 12 teeth",
+      at: [inputX, y, 0.1],
+      left: 20,
+      top: 9,
+    },
+    {
+      text: `Driven · ${layout.drivenTeeth} teeth`,
+      at: [outputX, y, 0.1],
+      left: 80,
+      top: 9,
+    },
+    {
+      text: "Crank + drum radii · 0.20 m",
+      at: [(inputX + outputX) / 2, y, 0.5],
+      left: 50,
+      top: 23,
+    },
   ];
 }
 export function createMachineScene(
@@ -234,6 +279,7 @@ export function createMachineScene(
 ): ExpansionScene<MachineState> {
   const group = new THREE.Group();
   bench(group, 7.3, 3.8);
+  addWorkshopDetails(group);
   let dynamic: THREE.Group | undefined,
     labels: ExpansionLabel[] = [],
     state = normalizeMachine(initial);
@@ -246,33 +292,55 @@ export function createMachineScene(
         : state.mode === "lever"
           ? lever(dynamic, state)
           : gears(dynamic, state);
+    addCrateStartReference(dynamic, state);
     const m = machineResult(state);
+    const load = dynamic.getObjectByName("lifted-load");
     labels.push({
-      text: `${state.loadKg} kg · ${m.loadForceN.toFixed(0)} N`,
-      at: [
-        state.mode === "gears" ? 0.75 : state.mode === "lever" ? -1.6 : 0,
-        state.mode === "lever" ? 1.05 : 0.2 + state.liftM,
-        0.6,
-      ],
+      text: `Load ${state.loadKg} kg · ${m.loadForceN.toFixed(0)} N`,
+      at: [load?.position.x ?? 0, load?.position.y ?? 0.5, 0.6],
+      left: 20,
+      top: state.mode === "lever" ? 9 : 91,
     });
+    if (state.liftM > 0) {
+      const start = dynamic.getObjectByName("lift-start-reference");
+      labels.push({
+        text: "Start · 0 m",
+        at: [
+          start?.position.x ?? 0,
+          start?.position.y ?? 0.5,
+          0.7,
+        ],
+        left: state.mode === "lever" ? 20 : 80,
+        top: 91,
+      });
+    }
     const rail = material("#95b8bd", 0.5);
-    box(dynamic, [0.12, 1.3, 0.12], [-2.8, 0.9, 0.45], rail);
+    box(
+      dynamic,
+      [0.12, 1.12, 0.12],
+      [-3.25, 0.86, 0.45],
+      rail,
+      "lift-height-scale",
+    );
     for (let i = 0; i <= 10; i++)
       box(
         dynamic,
         [i % 5 ? 0.12 : 0.22, 0.012, 0.02],
-        [-2.65, 0.3 + i * 0.12, 0.55],
+        [-3.1, 0.36 + i * 0.1, 0.55],
         rail,
       );
     box(
       dynamic,
       [0.4, 0.09, 0.2],
-      [-2.8, 0.3 + state.liftM * 1.2, 0.55],
+      [-3.25, 0.36 + state.liftM * MACHINE_LIFT_SCALE, 0.55],
       material("#f4c36d"),
+      "lift-height-marker",
     );
     labels.push({
-      text: `Lift ${state.liftM.toFixed(1)} m ↕`,
-      at: [-2.8, 1.9, 0.6],
+      text: `Load rise · ${state.liftM.toFixed(1)} m`,
+      at: [-3.1, 1.75, 0.6],
+      left: 18,
+      top: 55,
     });
   }
   update(initial);
@@ -280,16 +348,16 @@ export function createMachineScene(
     group,
     view: {
       position: [7, 5.5, 10],
-      target: [0, 2.2, 0],
-      width: 7.8,
-      height: 6.1,
+      target: [0, 2.3, 0],
+      width: 9.8,
+      height: 8.2,
     },
     update,
     labels: () => labels,
     pick(ray) {
       const p = pickPlane(ray, 0.55);
-      return p && p.x > -3.2 && p.x < -2.35 && p.y > 0.15 && p.y < 1.65
-        ? Math.round(Math.max(0, Math.min(1, (p.y - 0.3) / 1.2)) * 10) / 10
+      return p && p.x > -3.65 && p.x < -2.75 && p.y > 0.2 && p.y < 1.55
+        ? Math.round(Math.max(0, Math.min(1, p.y - 0.36)) * 10) / 10
         : null;
     },
     dispose: () => disposeTree(group),

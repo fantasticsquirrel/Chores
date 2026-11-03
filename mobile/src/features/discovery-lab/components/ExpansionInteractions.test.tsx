@@ -23,12 +23,19 @@ jest.mock("react-native-webview", () => {
 afterEach(() => {
   jest.clearAllMocks();
 });
-const cases = [
+const cases: {
+  id: string;
+  action: string;
+  changed: Record<string, unknown>;
+  result: RegExp;
+  reset?: string;
+}[] = [
   {
     id: "machine-workshop",
-    action: "Increase Mechanical advantage",
+    action: "Increase Supporting rope sections",
     changed: { advantage: 3 },
-    result: /Input force 130.8 N/,
+    result: /input force 130.8 N/i,
+    reset: "Reset lesson",
   },
   {
     id: "heat-house",
@@ -80,7 +87,6 @@ const cases = [
   },
 ];
 const comparisons = [
-  { id: "machine-workshop", titles: ["Supporting strands", "Gear ratio"] },
   { id: "heat-house", titles: ["Wall insulation", "Window area"] },
   { id: "pressure-tank", titles: ["Water above outlet", "Tank width"] },
   { id: "moving-plates", titles: ["Boundary types", "Locked fault and slip"] },
@@ -113,7 +119,7 @@ function ready(view: ReturnType<typeof render>) {
 describe("native nine-topic controls and paired investigations", () => {
   it.each(cases)(
     "$id changes its model without reloading the offline document",
-    ({ id, action, changed, result }) => {
+    ({ id, action, changed, result, reset = "Reset experiment" }) => {
       const view = render(<NativeExploration id={id} />),
         source = ready(view),
         initial = lastState();
@@ -125,7 +131,7 @@ describe("native nine-topic controls and paired investigations", () => {
         view.getByTestId("expansion-scene", { includeHiddenElements: true })
           .props.source,
       ).toBe(source);
-      fireEvent.press(view.getByRole("button", { name: "Reset experiment" }));
+      fireEvent.press(view.getByRole("button", { name: reset }));
       expect(lastState()).toEqual(initial);
       view.unmount();
     },
@@ -152,6 +158,52 @@ describe("native nine-topic controls and paired investigations", () => {
       view.unmount();
     },
   );
+  it("requires a Machine Workshop prediction and reports exact evidence before reset", () => {
+    const view = render(<NativeExploration id="machine-workshop" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Pulley sections" }),
+    ).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Less force, more rope" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Pulley sections" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Pulley sections" }),
+    );
+    expect(view.getByText(/392.4 N to 196.2 N/)).toBeTruthy();
+    expect(view.getByText(/supports your prediction/)).toBeTruthy();
+    fireEvent.press(view.getByRole("radio", { name: "Gear ratio" }));
+    fireEvent.press(
+      view.getByRole("radio", {
+        name: "More crank turns, less hand force",
+      }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Gear ratio" }),
+    );
+    expect(
+      view.getByRole("button", {
+        name: "Increase Driven teeth divided by driver teeth",
+      }),
+    ).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Compare: Gear ratio" }));
+    expect(view.getByText(/0.40 to 1.59/)).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Reset lesson" }));
+    expect(view.queryByText(/supports your prediction/)).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Same force and rope" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Pulley sections" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Pulley sections" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    fireEvent.press(view.getByRole("radio", { name: "Gear winch" }));
+    expect(view.getByText(/required output torque stays fixed/i)).toBeTruthy();
+    expect(view.getByText(/0\.20 m crank and drum radii/i)).toBeTruthy();
+    view.unmount();
+  });
   it("supports zero and reversed heat flow without changing the indoor temperature", () => {
     const view = render(<NativeExploration id="heat-house" />);
     ready(view);

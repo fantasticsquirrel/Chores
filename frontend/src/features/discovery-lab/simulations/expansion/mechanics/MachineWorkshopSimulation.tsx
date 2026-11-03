@@ -5,68 +5,72 @@ import {
   normalizeMachine,
   type MachineState,
 } from "@family-manager/family-api/discovery-models/expansion-mechanics";
+import {
+  machineWorkshopBoundary,
+  machineWorkshopTrials,
+} from "@family-manager/family-api/discovery-models/machine-workshop";
 import { createMachineScene } from "@family-manager/discovery-scenes/expansion/mechanics/machineScene";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
-import {
-  MechanicsComparison,
-  type MechanicsExperiment,
-} from "./MechanicsComparison";
+import { MechanicsComparison } from "./MechanicsComparison";
+import { useMachineLiftReplay } from "./useMachineLiftReplay";
 import "./mechanics.css";
-const experiments: readonly MechanicsExperiment<MachineState>[] = [
-  {
-    title: "Rope sections",
-    question:
-      "With two supporting rope sections instead of one, what happens to the pulling force?",
-    choices: ["Less force", "Same force", "More force"],
-    controlled:
-      "Keep the load at 40 kg and lift it 0.5 m. Compare one supporting section with two. Count the sections lifting the moving load, not the wheels.",
-    before: { ...defaultMachineState, advantage: 1 },
-    after: { ...defaultMachineState, advantage: 2 },
-    change: "Use two sections",
-    evidence:
-      "Pulling force falls from 392.4 N to 196.2 N; rope pulled increases from 0.5 m to 1.0 m. Input and output work are both 196.2 J.",
-    explain:
-      "Why must you pull farther when less force lifts the same load through the same height? Use force × distance as evidence.",
-  },
-  {
-    title: "Gear turns",
-    question:
-      "What happens to the number of crank turns when a 12-tooth driver turns a 48-tooth gear instead of a 12-tooth gear?",
-    choices: ["More turns", "Same turns", "Fewer turns"],
-    controlled:
-      "Keep the load at 40 kg and lift at 0.5 m. Both the crank and rope drum have a 0.2 m radius. Change only the driven gear tooth count.",
-    before: { ...defaultMachineState, mode: "gears", advantage: 1 },
-    after: { ...defaultMachineState, mode: "gears", advantage: 4 },
-    change: "Use 48 driven teeth",
-    evidence:
-      "Crank turns increase from 0.40 to 1.59; input torque falls from 78.48 to 19.62 N·m. Output torque stays at 78.48 N·m, and work stays at 196.2 J.",
-    explain:
-      "Torque is a turning effect. Why does a larger driven gear turn less per input turn while providing greater output torque than input torque?",
-  },
-];
 export function MachineWorkshopSimulation() {
   const [state, setState] = useState<MachineState>({ ...defaultMachineState });
-  const set = <K extends keyof MachineState>(key: K, value: MachineState[K]) =>
+  const [comparisonVersion, setComparisonVersion] = useState(0);
+  const liftReplay = useMachineLiftReplay(state.liftM);
+  const set = <K extends keyof MachineState>(
+    key: K,
+    value: MachineState[K],
+  ) => {
+    liftReplay.cancel();
     setState((current) => normalizeMachine({ ...current, [key]: value }));
+    setComparisonVersion((current) => current + 1);
+  };
+  const reset = () => {
+    liftReplay.cancel();
+    setState({ ...defaultMachineState });
+    setComparisonVersion((value) => value + 1);
+  };
+  const applyGuidedState = (next: MachineState) => {
+    liftReplay.cancel();
+    setState(normalizeMachine(next));
+  };
+  const visualState = { ...state, liftM: liftReplay.visualLiftM };
   const r = machineResult(state),
-    description = `${state.mode} lifting model. Load ${state.loadKg} kg. Mechanical advantage ${r.ratio}. Input force ${r.inputForceN.toFixed(1)} newtons over ${r.inputDistanceM.toFixed(2)} meters; load rises ${state.liftM.toFixed(1)} meters. Input and output work ${r.outputWorkJ.toFixed(1)} joules. Drag the gold lift marker or use the Lift height slider.`;
+    description = `${state.mode} ideal lifting model. Load mass ${r.loadMassKg} kilograms; weight ${r.loadWeightN.toFixed(1)} newtons. Ideal mechanical advantage ${r.ratio}. Input force ${r.idealInputForceN.toFixed(1)} newtons through ${r.inputTravelM.toFixed(2)} meters; load rises ${state.liftM.toFixed(1)} meters and gains ${r.gravitationalEnergyGainJ.toFixed(1)} joules of gravitational energy. Drag the gold lift marker or use the Lift height slider.`;
   return (
     <section className="mechanics-exhibit mechanics-machine">
       <header className="mechanics-heading">
-        <h2>Can less force lift the same load?</h2>
+        <span className="mechanics-model-state">Ideal lifting model</span>
+        <h2>Test the force–distance trade-off</h2>
         <p>
-          Compare a pulley, lever and gear-driven winch. Less effort force
-          trades for more effort distance.
+          Predict first, change one ratio, then compare force, travel and energy
+          for the same load and lift.
         </p>
       </header>
       <ExpansionCanvas
         dragSelect
-        state={state}
+        state={visualState}
         buildScene={createMachineScene}
         description={description}
         onSelect={(value) => set("liftM", value)}
       />
+      <div className="mechanics-motion-toolbar">
+        <button
+          type="button"
+          className="mechanics-motion"
+          disabled={state.liftM <= 0 || liftReplay.running}
+          onClick={liftReplay.replay}
+        >
+          {liftReplay.running ? "Replaying lift…" : "Replay lift"}
+        </button>
+        {liftReplay.status && (
+          <p className="mechanics-motion-status" role="status">
+            {liftReplay.status}
+          </p>
+        )}
+      </div>
       <div className="mechanics-console">
         <div className="mechanics-inputs">
           <div
@@ -120,12 +124,8 @@ export function MachineWorkshopSimulation() {
             unit=" m"
             onChange={(v) => set("liftM", v)}
           />
-          <button
-            type="button"
-            className="mechanics-reset"
-            onClick={() => setState({ ...defaultMachineState })}
-          >
-            Reset machine
+          <button type="button" className="mechanics-reset" onClick={reset}>
+            Reset lesson
           </button>
         </div>
         <div
@@ -137,10 +137,10 @@ export function MachineWorkshopSimulation() {
             <div>
               <span>
                 {state.mode === "gears"
-                  ? "Tangential crank force"
+                  ? "Ideal hand force"
                   : state.mode === "lever"
-                    ? "Downward effort force"
-                    : "Pulling force"}
+                    ? "Ideal effort force"
+                    : "Ideal pulling force"}
               </span>
               <strong>
                 {r.inputForceN.toFixed(1)} <small>N</small>
@@ -149,9 +149,9 @@ export function MachineWorkshopSimulation() {
             <div>
               <span>
                 {state.mode === "gears"
-                  ? "Crank-hand travel"
+                  ? "Hand travel"
                   : state.mode === "lever"
-                    ? "Vertical effort travel"
+                    ? "Effort travel"
                     : "Rope pulled"}
               </span>
               <strong>
@@ -160,35 +160,45 @@ export function MachineWorkshopSimulation() {
             </div>
           </div>
           <p>
-            The load weighs {r.loadForceN.toFixed(1)} N. Its mass stays{" "}
-            {state.loadKg} kg; the machine changes the required effort, not the
-            load’s weight.
+            <strong>{r.loadMassKg} kg mass</strong> has a{" "}
+            {r.loadWeightN.toFixed(1)} N weight in this model. The machine
+            changes the ideal input force, not the mass or weight.
           </p>
           {state.mode === "gears" && (
             <p>
-              <strong>{r.crankTurns.toFixed(2)} crank turns</strong> ·{" "}
+              <strong>{r.crankTurns.toFixed(2)} input crank turns</strong> ·{" "}
               {r.inputTorqueNm.toFixed(2)} N·m input torque →{" "}
-              {r.outputTorqueNm.toFixed(2)} N·m output torque.
+              {r.outputTorqueNm.toFixed(2)} N·m output torque. Torque uses N·m
+              because it is a turning effect; work and energy are reported in J.
             </p>
           )}
-          <div className="mechanics-work">
-            <span>Input work: {r.inputWorkJ.toFixed(1)} J</span>
-            <span>Output work: {r.outputWorkJ.toFixed(1)} J</span>
-            <div className="mechanics-work-line" />
+          <div className="mechanics-work" aria-label="Ideal energy accounting">
+            <span>Ideal input work: {r.idealInputWorkJ.toFixed(1)} J</span>
+            <span aria-hidden="true">=</span>
+            <span>
+              Gravitational energy gained:{" "}
+              {r.gravitationalEnergyGainJ.toFixed(1)} J
+            </span>
+            <div className="mechanics-work-line" aria-hidden="true" />
           </div>
           <p>
-            Work is force × distance in the force’s direction. At zero lift,
-            balancing the load still takes force, but no displacement means no
-            lifting work.
+            One joule (J) is one newton-metre of work. At zero lift, balancing
+            still takes force, but zero displacement means zero lifting work and
+            zero gravitational energy gain.
           </p>
         </div>
       </div>
-      <MechanicsComparison experiments={experiments} onApply={setState} />
+      <MechanicsComparison
+        key={comparisonVersion}
+        experiments={machineWorkshopTrials}
+        onApply={applyGuidedState}
+      />
       <p className="mechanics-note">
-        Ideal, slow lifting: no friction, rope stretch or machine mass. Real
-        machines need extra input work. Gear torque = force × radius; crank and
-        drum radii are both 0.2 m. Lever arms and travel are shown at a reduced
-        drawing scale. This is not a lifting-equipment design.
+        {machineWorkshopBoundary} In this model, the hand pushes at a right
+        angle to the 0.20 m crank, so input torque is hand force × 0.20 m. The
+        drum radius is also 0.20 m. The ruler and every load use one scene unit
+        per metre of vertical rise; lever effort travel follows the shown arm
+        ratio.
       </p>
     </section>
   );

@@ -105,11 +105,14 @@ describe("independent rich scene serialization", () => {
           width: 16,
           height: 12,
         },
-        labels: () => [{ text: "Sphere", at: [0, 1, 0] }],
+        labels: () => [
+          { text: "Sphere", at: [0, 1, 0], left: 18, top: 12 },
+        ],
       },
       presentation,
     );
     expect(output.labels[0].position).toEqual([0, 1, 0]);
+    expect(output.labels[0]).toMatchObject({ left: 18, top: 12 });
     expect(parseRichScene(output)).not.toBeNull();
   });
   it("preserves full-resolution extrusion curves without transferring expanded buffers", () => {

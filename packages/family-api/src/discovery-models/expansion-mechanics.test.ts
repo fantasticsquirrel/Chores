@@ -48,6 +48,44 @@ describe("ideal machine work", () => {
     expect(still.outputWorkJ).toBe(0);
     expect(still.inputForceN).toBeGreaterThan(0);
   });
+  it("normalizes every trusted UI boundary and keeps all outputs finite", () => {
+    const cases = [
+      {
+        input: {
+          mode: "unknown",
+          advantage: Number.NaN,
+          loadKg: Number.NaN,
+          liftM: Number.NaN,
+        },
+        expected: defaultMachineState,
+      },
+      {
+        input: { mode: "lever", advantage: 3.6, loadKg: 101, liftM: 2 },
+        expected: { mode: "lever", advantage: 4, loadKg: 100, liftM: 1 },
+      },
+      {
+        input: { mode: "gears", advantage: 1.4, loadKg: 9, liftM: -1 },
+        expected: { mode: "gears", advantage: 1, loadKg: 10, liftM: 0 },
+      },
+    ] as const;
+    for (const { input, expected } of cases) {
+      const normalized = normalizeMachine(input as typeof defaultMachineState);
+      expect(normalized).toEqual(expected);
+      expect(
+        Object.values(machineResult(input as typeof defaultMachineState))
+          .filter((value): value is number => typeof value === "number")
+          .every(Number.isFinite),
+      ).toBe(true);
+    }
+    for (const mode of ["pulley", "lever", "gears"] as const)
+      for (const advantage of [1, 4])
+        for (const liftM of [0, 1])
+          expect(
+            Object.values(machineResult({ mode, advantage, liftM, loadKg: 40 }))
+              .filter((value): value is number => typeof value === "number")
+              .every(Number.isFinite),
+          ).toBe(true);
+  });
 });
 
 describe("steady wall and window heat transfer", () => {

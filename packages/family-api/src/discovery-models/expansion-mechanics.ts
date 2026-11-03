@@ -50,13 +50,23 @@ export function machineResult(input: MachineState) {
     loadForceN = s.loadKg * 9.81;
   const inputForceN = loadForceN / s.advantage,
     inputDistanceM = s.liftM * s.advantage;
+  const outputWorkJ = loadForceN * s.liftM,
+    inputWorkJ = inputForceN * inputDistanceM;
   return {
     ratio: s.advantage,
+    loadMassKg: s.loadKg,
     loadForceN,
+    loadWeightN: loadForceN,
     inputForceN,
+    idealInputForceN: inputForceN,
     inputDistanceM,
-    outputWorkJ: loadForceN * s.liftM,
-    inputWorkJ: inputForceN * inputDistanceM,
+    inputTravelM: inputDistanceM,
+    outputWorkJ,
+    gravitationalEnergyGainJ: outputWorkJ,
+    inputWorkJ,
+    idealInputWorkJ: inputWorkJ,
+    // This is the defining ideal-model assumption, not a measured ratio at zero lift.
+    idealEfficiencyPercent: 100 as const,
     inputTorqueNm: inputForceN * 0.2,
     outputTorqueNm: loadForceN * 0.2,
     crankTurns: inputDistanceM / (2 * Math.PI * 0.2),

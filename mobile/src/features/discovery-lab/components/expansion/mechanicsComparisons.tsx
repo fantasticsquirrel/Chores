@@ -1,46 +1,12 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  defaultMachineState,
   defaultHeatState,
   defaultPressureState,
-  type MachineState,
   type HeatState,
   type PressureState,
 } from "@family-manager/family-api/discovery-models/expansion-mechanics";
 import { ControlledComparison } from "./ControlledComparison";
 type Setter<T> = Dispatch<SetStateAction<T>>;
-export function MachineComparisons({
-  setState,
-}: {
-  setState: Setter<MachineState>;
-}) {
-  return (
-    <>
-      <ControlledComparison
-        title="Supporting strands"
-        prediction="Predict: if two rope strands support the same load instead of one, what happens to effort and pulling distance?"
-        baseline="Pulley, 40 kg, 0.5 m lift, advantage 1."
-        change="Only advantage changed to 2."
-        explain="Compare force, distance, and work. Why is reduced force not free energy?"
-        onBaseline={() => setState({ ...defaultMachineState, advantage: 1 })}
-        onChange={() => setState({ ...defaultMachineState, advantage: 2 })}
-      />
-      <ControlledComparison
-        title="Gear ratio"
-        prediction="Predict: will a 4:1 geared hoist need fewer crank turns or less input torque than a 1:1 hoist?"
-        baseline="Geared hoist, 40 kg, 0.5 m lift, ratio 1:1."
-        change="Only the ratio changed to 4:1."
-        explain="Compare crank torque and turns. How does work stay the same?"
-        onBaseline={() =>
-          setState({ ...defaultMachineState, mode: "gears", advantage: 1 })
-        }
-        onChange={() =>
-          setState({ ...defaultMachineState, mode: "gears", advantage: 4 })
-        }
-      />
-    </>
-  );
-}
 export function HeatComparisons({ setState }: { setState: Setter<HeatState> }) {
   return (
     <>
