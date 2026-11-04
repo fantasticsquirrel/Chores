@@ -13,20 +13,19 @@ const ids = [
   "shape-slicer",
   "adaptation-island",
 ];
+
+const resetLabels: Record<string, string> = {
+  "cell-explorer": "Reset cell explorer",
+  "shape-slicer": "Reset shape slicer",
+  "adaptation-island": "Reset adaptation island",
+};
+
 describe("nine additional native investigations", () => {
   it.each(ids)("%s has working native controls, result, and reset", (id) => {
     const view = render(<NativeExploration id={id} />);
     expect(view.queryByText(/not available in this app yet/)).toBeNull();
     const reset = view.getByRole("button", {
-      name:
-        id === "machine-workshop" ||
-        id === "heat-house" ||
-        id === "pressure-tank" ||
-        id === "moving-plates" ||
-        id === "cloud-rain-lab" ||
-        id === "magnetic-fields"
-          ? "Reset lesson"
-          : "Reset experiment",
+      name: resetLabels[id] ?? "Reset lesson",
     });
     expect(view.getAllByRole("button").length).toBeGreaterThan(1);
     fireEvent.press(reset);
