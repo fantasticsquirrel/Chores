@@ -1,0 +1,289 @@
+.magnet-exhibit {
+  color: #eef6f3;
+  background: #10272d;
+  border: 1px solid #4c6d70;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.magnet-heading {
+  padding: 1.45rem 1.65rem 1rem;
+  background:
+    radial-gradient(circle at 18% -40%, #356a70 0, transparent 45%),
+    linear-gradient(115deg, #183d44, #0b2228 74%);
+}
+.magnet-heading h2 {
+  margin: 0 0 0.4rem;
+  font-family: Georgia, serif;
+  font-size: clamp(1.6rem, 2.6vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.15;
+}
+.magnet-heading p,
+.discovery-lab .magnet-heading p {
+  max-width: 80ch;
+  margin: 0;
+  color: #c9ddda;
+  line-height: 1.55;
+}
+.magnet-exhibit .expansion-scene {
+  min-height: 560px;
+  border: 0;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 50% 12%, #1d4650 0, #0b1d23 64%), #0b1d23;
+}
+.magnet-exhibit .expansion-label {
+  max-width: 178px;
+  color: #fff9e9;
+  background: #123f3de8;
+  border-color: #a3c9b8;
+  box-shadow: 0 4px 18px #02090d99;
+}
+.magnet-exhibit .expansion-view-help,
+.discovery-lab .magnet-exhibit .expansion-view-help {
+  margin: 0;
+  padding: 0.65rem 1.5rem 0.8rem;
+  color: #b5ceca;
+  background: #0c2026;
+}
+.magnet-motion-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-height: 58px;
+  padding: 0.55rem 1rem;
+  background: #0c2026;
+  border-top: 1px solid #36555b;
+}
+.magnet-motion-status,
+.discovery-lab .magnet-motion-status {
+  margin: 0;
+  color: #c9dbd8;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.magnet-console {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.18fr);
+  gap: 1rem;
+  padding: 1rem;
+  background: #122e34;
+  border-top: 1px solid #41676a;
+}
+.magnet-inputs,
+.magnet-results {
+  display: grid;
+  align-content: start;
+  gap: 0.95rem;
+  min-width: 0;
+  padding: 1.15rem;
+  background: #1a3940;
+  border: 1px solid #49696b;
+  border-radius: 14px;
+}
+.magnet-inputs .dl-slider {
+  margin: 0;
+}
+.magnet-inputs input[type="range"] {
+  width: 100%;
+  accent-color: #73cbd0;
+}
+.magnet-inputs .dl-value {
+  color: #ffd28d;
+}
+.magnet-inputs label,
+.magnet-inputs .dl-range-labels {
+  color: #dce9e6;
+}
+.magnet-inputs > div > strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #eef5eb;
+  font-size: 0.82rem;
+}
+.magnet-orientation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.magnet-exhibit button {
+  min-height: 42px;
+  padding: 0.55rem 0.75rem;
+  color: #f6f4e7;
+  background: #285159;
+  border: 1px solid #67888b;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.magnet-exhibit button:hover {
+  background: #35666d;
+}
+.magnet-exhibit button:disabled {
+  color: #a8b9b7;
+  background: #203c42;
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+.magnet-exhibit button[aria-pressed="true"] {
+  color: #172c30;
+  background: #f0c986;
+  border-color: #ffdfa8;
+}
+.magnet-exhibit button:focus-visible,
+.magnet-exhibit input:focus-visible,
+.magnet-exhibit summary:focus-visible {
+  outline: 3px solid #ffe0a0;
+  outline-offset: 3px;
+}
+.magnet-control-note,
+.discovery-lab .magnet-control-note {
+  margin: 0;
+  color: #c2d5d1;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.magnet-reset {
+  justify-self: start;
+}
+.magnet-measures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.35rem;
+}
+.magnet-measures > div {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+.magnet-measures span {
+  color: #bdd3cf;
+  font-size: 0.74rem;
+}
+.magnet-measures strong {
+  color: #83dce2;
+  font-size: clamp(1.2rem, 2.2vw, 1.75rem);
+  line-height: 1.08;
+}
+.magnet-measures .magnet-direction {
+  font-size: clamp(1rem, 1.8vw, 1.3rem);
+}
+.magnet-vector-sum {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1.15fr;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.65rem;
+  color: #daf0ec;
+  background: #0c2a30;
+  border: 1px solid #3d7073;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  text-align: center;
+}
+.magnet-vector-sum span {
+  padding: 0.42rem;
+  background: #214d53;
+  border-radius: 6px;
+}
+.magnet-results h3 {
+  margin: 0.15rem 0 0;
+  color: #ffd493;
+  font-family: Georgia, serif;
+  font-size: 1.14rem;
+}
+.magnet-results p,
+.discovery-lab .magnet-results p {
+  margin: 0;
+  color: #d9e6e2;
+  font-size: 0.86rem;
+  line-height: 1.62;
+}
+.magnet-exhibit .mechanics-comparison {
+  border-top: 1px solid #49696b;
+}
+.magnet-note,
+.discovery-lab .magnet-note {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  color: #bdd2ce;
+  background: #0c2026;
+  border-left: 3px solid #70a2a6;
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+.magnet-note p,
+.discovery-lab .magnet-note p {
+  margin: 0;
+  color: #bdd2ce;
+}
+.magnet-note details,
+.discovery-lab .magnet-note details {
+  margin-top: 0.45rem;
+}
+.magnet-note summary,
+.discovery-lab .magnet-note summary {
+  width: fit-content;
+  color: #e5f0ed;
+  cursor: pointer;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+.magnet-note details p,
+.discovery-lab .magnet-note details p {
+  margin-top: 0.65rem;
+}
+@media (max-width: 850px) {
+  .magnet-console {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .magnet-heading {
+    padding: 1rem;
+  }
+  .magnet-exhibit .expansion-scene {
+    min-height: 420px;
+    height: 420px;
+  }
+  .magnet-exhibit .expansion-label {
+    max-width: 108px;
+    font-size: 10px;
+    white-space: normal;
+  }
+  .magnet-motion-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .magnet-console {
+    padding: 0.65rem;
+  }
+  .magnet-inputs,
+  .magnet-results {
+    padding: 0.85rem;
+  }
+  .magnet-measures {
+    gap: 0.85rem;
+  }
+  .magnet-measures strong {
+    font-size: 1.25rem;
+  }
+  .magnet-measures .magnet-direction {
+    font-size: 1rem;
+  }
+  .magnet-vector-sum {
+    grid-template-columns: 1fr;
+  }
+  .magnet-vector-sum b {
+    transform: rotate(90deg);
+  }
+  .magnet-note {
+    padding: 0.9rem 1rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .magnet-exhibit button {
+    transition: none;
+  }
+}

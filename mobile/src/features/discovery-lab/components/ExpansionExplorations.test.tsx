@@ -23,7 +23,8 @@ describe("nine additional native investigations", () => {
         id === "heat-house" ||
         id === "pressure-tank" ||
         id === "moving-plates" ||
-        id === "cloud-rain-lab"
+        id === "cloud-rain-lab" ||
+        id === "magnetic-fields"
           ? "Reset lesson"
           : "Reset experiment",
     });

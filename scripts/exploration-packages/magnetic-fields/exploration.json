@@ -2,13 +2,13 @@
   "experiments": [
     {
       "title": "Reverse one magnet",
-      "instruction": "Choose Reverse one magnet. Will reversing only the right magnet change attraction to repulsion? Select your prediction, then Set baseline and Reverse right bar. Keep gap 2 and probe (0,2). Compare facing pole letters, force arrows and compass before and after reversing the right bar.",
-      "observe": "Facing poles repel. North tip 90° from +x; field strength 0.26 relative units. The compass follows the vector sum, not simply the nearest magnet. Which poles face across the gap in each case? How does the compass respond to the combined field?"
+      "instruction": "Predict first. Start with N–S facing, then reverse only the right magnet to make N–N face. Hold the 2-unit gap, probe position (0, 2) and identical bars fixed.",
+      "observe": "N–S facing poles attract; N–N facing poles repel. Compare the north-seeking direction and normalized field index. Explain why reversing one complete bar changes both its pole labels and its contribution to the combined field."
     },
     {
       "title": "Test cancellation",
-      "instruction": "Choose Test cancellation. With north poles facing, will the compass have a direction exactly halfway between them? Select your prediction, then Set baseline and Move compass z to 2. Keep north poles facing with gap 2. Compare probe (0,0) and (0,2), changing only z.",
-      "observe": "Facing poles repel. North tip 90° from +x; field strength 0.26 relative units. The compass follows the vector sum, not simply the nearest magnet. Why can equal opposing contributions cancel at one point but not everywhere? Does weak field mean the magnets stopped being magnets?"
+      "instruction": "Predict first. Keep N–N poles facing at gap 2. Start with the probe at (0, 0), then change only probe z to 2. Hold both magnets and probe x fixed.",
+      "observe": "At the exact midpoint, two equal nonzero contributions oppose and the normalized combined index is 0, so there is no preferred direction. Away from the midpoint the combined field is nonzero. Explain why cancellation at one point does not switch off either magnet."
     }
   ]
 }

@@ -1,154 +1,237 @@
 import { useState } from "react";
 import {
-  initialMagnetic,
+  defaultMagneticState,
+  magneticFieldsBoundary,
+  magneticFieldsCoreBoundary,
   magneticResult,
+  normalizeMagnetic,
   type MagneticState,
-} from "@family-manager/family-api/discovery-models/expansion-earth";
+} from "@family-manager/family-api/discovery-models/magnetic-fields";
 import { createMagneticFieldsScene } from "@family-manager/discovery-scenes/expansion/earth/magnets";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
-import { LandscapeInvestigation } from "../../landscape/LandscapeExhibit";
-import { EarthExhibit, EarthMetric } from "./EarthExhibit";
+import { MagneticFieldsComparison } from "./MagneticFieldsComparison";
+import { useCompassAlignmentReplay } from "./useCompassAlignmentReplay";
+import "../mechanics/mechanics.css";
+import "./magnetic-fields.css";
+
+function fieldIndex(result: ReturnType<typeof magneticResult>) {
+  return result.relativeFieldIndex === null
+    ? "outside model"
+    : `${result.relativeFieldIndex} / 100`;
+}
+
 export function MagneticFieldsSimulation() {
-  const [state, setState] = useState<MagneticState>(initialMagnetic),
-    result = magneticResult(state);
-  const change = (key: "gap" | "probeX" | "probeZ") => (value: number) =>
-    setState((s) => ({ ...s, [key]: value }));
-  const direction = result.insideMagnet
-    ? "Probe inside a bar"
-    : result.direction === null
-      ? "No preferred direction"
-      : `${Math.round(result.direction)}° from +x`;
-  const description = `The facing poles ${result.interaction}. Compass reading: ${direction}. Exterior field strength is ${result.strength.toFixed(2)} relative units. The north tip of each compass follows the combined local field.`;
+  const [state, setState] = useState<MagneticState>({
+    ...defaultMagneticState,
+  });
+  const [comparisonVersion, setComparisonVersion] = useState(0);
+  const replay = useCompassAlignmentReplay(
+    `${state.gap}:${state.flipped}:${state.probeX}:${state.probeZ}`,
+  );
+  const visualState = { ...state, alignmentProgress: replay.alignmentProgress };
+  const result = magneticResult(state);
+
+  const update = (next: MagneticState) => {
+    replay.cancel();
+    setState(normalizeMagnetic(next));
+    setComparisonVersion((value) => value + 1);
+  };
+  const applyGuidedState = (next: MagneticState) => {
+    replay.cancel();
+    setState(normalizeMagnetic(next));
+  };
+  const reset = () => update({ ...defaultMagneticState });
+  const description =
+    `Two dimensional bar magnets on a marked tabletop. Facing ${result.facingPoles} poles ${result.interaction}. ` +
+    (result.insideMagnet
+      ? "The enlarged probe is inside a bar, outside this exterior-field model's domain. "
+      : result.directionDegrees === null
+        ? `At probe (${state.probeX.toFixed(1)}, ${state.probeZ.toFixed(1)}), equal opposing contributions give a 0 normalized field index and no preferred compass direction. `
+        : `At probe (${state.probeX.toFixed(1)}, ${state.probeZ.toFixed(1)}), the north-seeking end points ${result.directionLabel}; normalized field index ${result.relativeFieldIndex} out of 100. `) +
+    `Left and right source-contribution indices are ${result.leftContributionIndex} and ${result.rightContributionIndex}. ` +
+    "Pole letters, force-direction arrows, compass needles and text labels provide noncolor evidence. Exterior line arrows run from north toward south and represent field direction, not physical threads or particle paths.";
+
   const select = (index: number) => {
-    if (index === 1 || index === 2)
-      setState((s) => ({ ...s, flipped: index === 1 }));
+    if (index === 1 || index === 2) {
+      update({ ...state, flipped: index === 1 });
+      return;
+    }
     if (index >= 10) {
-      const i = index - 10;
-      setState((s) => ({
-        ...s,
-        probeX: Math.round((-5.4 + (i % 7) * 1.8) * 10) / 10,
-        probeZ: -2.9 + Math.floor(i / 7) * 2.9,
-      }));
+      const compassIndex = index - 10;
+      update({
+        ...state,
+        probeX: Math.round((-5.4 + (compassIndex % 7) * 1.8) * 10) / 10,
+        probeZ: -2.9 + Math.floor(compassIndex / 7) * 2.9,
+      });
     }
   };
+
   return (
-    <EarthExhibit
-      question="Which way does a compass point between two magnets?"
-      introduction="A compass’s north-seeking tip follows the combined magnetic field at its position. Outside a magnet, field direction goes from north toward south. Opposite facing poles attract; like facing poles repel. Moving the compass changes which local field it samples."
-      scene={
-        <ExpansionCanvas
-          state={state}
-          buildScene={createMagneticFieldsScene}
-          description={description}
-          onSelect={select}
-        />
-      }
-      controls={
-        <>
+    <section className="magnet-exhibit">
+      <header className="magnet-heading">
+        <h2>How do two magnets set a compass direction?</h2>
+        <p>
+          Predict first. Reverse one bar to compare facing poles, then move one
+          probe away from an exact cancellation point while every magnet stays
+          fixed.
+        </p>
+      </header>
+      <ExpansionCanvas
+        state={visualState}
+        buildScene={createMagneticFieldsScene}
+        description={description}
+        onSelect={select}
+      />
+      <div className="magnet-motion-toolbar">
+        <button type="button" disabled={replay.running} onClick={replay.replay}>
+          {replay.running
+            ? "Replaying compass alignment…"
+            : "Replay compass alignment"}
+        </button>
+        {replay.status && (
+          <p className="magnet-motion-status" role="status">
+            {replay.status}
+          </p>
+        )}
+      </div>
+      <div className="magnet-console">
+        <div className="magnet-inputs">
           <Slider
-            label="Gap between bars · diagram units"
+            label="Gap between bars"
             value={state.gap}
             min={0.5}
             max={4.5}
             step={0.1}
-            onChange={change("gap")}
+            unit=" diagram units"
+            onChange={(gap) => update({ ...state, gap })}
           />
-          <div className="earth-buttons">
-            <button
-              aria-pressed={state.flipped}
-              onClick={() => setState((s) => ({ ...s, flipped: !s.flipped }))}
+          <div>
+            <strong>Right magnet orientation</strong>
+            <div
+              className="magnet-orientation"
+              role="group"
+              aria-label="Right magnet orientation"
             >
-              Flip right magnet
-            </button>
-            <button onClick={() => setState(initialMagnetic)}>
-              Reset magnets and probe
-            </button>
+              <button
+                type="button"
+                aria-pressed={!state.flipped}
+                onClick={() => update({ ...state, flipped: false })}
+              >
+                N–S facing
+              </button>
+              <button
+                type="button"
+                aria-pressed={state.flipped}
+                onClick={() => update({ ...state, flipped: true })}
+              >
+                N–N facing
+              </button>
+            </div>
           </div>
           <Slider
-            label="Compass x · diagram units"
+            label="Compass x position"
             value={state.probeX}
             min={-6}
             max={6}
             step={0.1}
-            onChange={change("probeX")}
+            unit=" diagram units"
+            onChange={(probeX) => update({ ...state, probeX })}
           />
           <Slider
-            label="Compass z · diagram units"
+            label="Compass z position"
             value={state.probeZ}
             min={-4}
             max={4}
             step={0.1}
-            onChange={change("probeZ")}
+            unit=" diagram units"
+            onChange={(probeZ) => update({ ...state, probeZ })}
           />
-          <p className="earth-control-note">
-            Tap a small compass to sample its location. On the right bar, tap
-            the left half to face north inward, or the right half to face south
-            inward. The enlarged compass is your probe.
+          <p className="magnet-control-note">
+            Tap a small compass to sample that location. The enlarged compass is
+            the probe. Pole letters and arrowheads carry the meaning without
+            relying on red or blue.
           </p>
-        </>
-      }
-      evidence={
-        <>
-          <EarthMetric
-            label="Facing-pole interaction"
-            value={result.interaction}
-          />
-          <EarthMetric label="Compass north-tip direction" value={direction} />
-          <EarthMetric
-            label="Field strength · relative units"
-            value={
-              result.insideMagnet
-                ? "Outside model domain"
-                : result.strength.toFixed(2)
-            }
-          />
+          <button className="magnet-reset" type="button" onClick={reset}>
+            Reset lesson
+          </button>
+        </div>
+        <div className="magnet-results" aria-live="polite" aria-atomic="true">
+          <div className="magnet-measures">
+            <div>
+              <span>Facing poles</span>
+              <strong>{result.facingPoles}</strong>
+            </div>
+            <div>
+              <span>Interaction</span>
+              <strong>{result.interaction}</strong>
+            </div>
+            <div>
+              <span>North-seeking end</span>
+              <strong className="magnet-direction">
+                {result.directionLabel}
+              </strong>
+            </div>
+            <div>
+              <span>Normalized field index</span>
+              <strong>{fieldIndex(result)}</strong>
+            </div>
+            <div>
+              <span>Left-bar contribution</span>
+              <strong>{result.leftContributionIndex} / 100</strong>
+            </div>
+            <div>
+              <span>Right-bar contribution</span>
+              <strong>{result.rightContributionIndex} / 100</strong>
+            </div>
+          </div>
+          <div
+            className="magnet-vector-sum"
+            aria-label="The left bar field vector plus the right bar field vector gives the combined local field followed by the compass north-seeking end."
+          >
+            <span>left field vector</span>
+            <b aria-hidden="true">+</b>
+            <span>right field vector</span>
+            <b aria-hidden="true">→</b>
+            <span>combined local field</span>
+          </div>
+          <h3>
+            {result.insideMagnet
+              ? "Move the probe outside either bar."
+              : result.directionDegrees === null
+                ? "Equal and opposite here: the vector sum is zero."
+                : `The north-seeking end points ${result.directionLabel}.`}
+          </h3>
+          <p>
+            A compass is a small magnet. Its north-seeking end aligns with the
+            combined local magnetic field. Outside a bar magnet, conventional
+            field direction runs from its north pole toward its south pole.
+          </p>
           <p>
             {result.insideMagnet
-              ? "Move the probe outside either bar. This model calculates exterior fields only."
-              : result.direction === null
-                ? "The two contributions cancel here. A compass has no preferred orientation in this idealized zero field; Earth’s field and other nearby objects are omitted."
-                : "The red north tip follows the vector sum of both fields, not simply the direction toward the nearest magnet."}
+              ? "The paired-source surrogate is defined only outside the drawn bars, so no interior direction or index is reported."
+              : result.directionDegrees === null
+                ? `The left and right contribution indices are both ${result.leftContributionIndex}, but their vectors oppose at this symmetric point. The magnets still produce nonzero fields elsewhere.`
+                : `The displayed ${result.relativeFieldIndex} / 100 index is a normalized comparison from the paired-source surrogate. It is not tesla, force, or a measurement of either bar.`}
           </p>
-        </>
-      }
-      investigations={
-        <LandscapeInvestigation
-          items={[
-            {
-              label: "Reverse one magnet",
-              predict:
-                "Will reversing only the right magnet change attraction to repulsion?",
-              options: ["Interaction stays the same", "Interaction reverses"],
-              action:
-                "Reset to gap 2 and probe (0, 2). Compare the facing pole letters and force arrows before and after Flip right magnet. Keep gap and probe fixed.",
-              explain:
-                "Which pole pair faces across the gap in each case? How does the compass respond to the changed combined field?",
-              test: () => setState(initialMagnetic),
-              testLabel: "Set opposite facing poles",
-            },
-            {
-              label: "Test cancellation",
-              predict:
-                "With two north poles facing, will the compass have a direction exactly halfway between them?",
-              options: ["A definite direction", "Contributions cancel"],
-              action:
-                "Set up north poles facing with gap 2 and the probe at (0, 0). Note the direction result. Change only Compass z to 2 and compare.",
-              explain:
-                "Why can equal, opposing field contributions cancel at one point but not everywhere nearby? Does a weak field mean the magnets have stopped being magnets?",
-              test: () =>
-                setState({
-                  ...initialMagnetic,
-                  flipped: true,
-                  probeX: 0,
-                  probeZ: 0,
-                }),
-              testLabel: "Set midpoint between north poles",
-            },
-          ]}
-        />
-      }
-      note="Positions and field strengths use diagram units, not metres or tesla. Identical magnets are represented by paired, softened pole sources for the exterior field; magnetic poles do not exist separately in this model or as known isolated magnetic charges. Lines show direction, not physical threads or particle tracks. Compass needles are ideal; friction and Earth’s field are omitted. At exact cancellation, no direction is drawn."
-    />
+          <p>
+            {result.facingPoles} poles {result.interaction}. This interaction
+            label gives force direction only; the lesson does not calculate
+            force magnitude or magnet motion.
+          </p>
+        </div>
+      </div>
+      <MagneticFieldsComparison
+        key={comparisonVersion}
+        onApply={applyGuidedState}
+      />
+      <div className="magnet-note">
+        <p>{magneticFieldsCoreBoundary}</p>
+        <details>
+          <summary>Detailed model boundaries and assumptions</summary>
+          <p>{magneticFieldsBoundary}</p>
+        </details>
+      </div>
+    </section>
   );
 }

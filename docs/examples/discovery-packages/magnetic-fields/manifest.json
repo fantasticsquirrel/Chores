@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "magnetic-fields-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "magnetic-fields-package",
@@ -17,26 +17,34 @@
       "forces",
       "direction"
     ],
-    "summary": "Flip a magnet and move a compass to investigate the direction of the combined magnetic field.",
-    "question": "What happens to a compass where two magnetic fields cancel?",
-    "explanation": "A compass is a small magnet whose north-seeking end aligns with the local magnetic field. Outside a bar magnet, field direction runs away from its north pole and toward its south pole. Fields from several magnets combine; a compass does not simply choose the nearest one. This model approximates exterior directions with paired sources, excludes meaningful readings inside the bars and omits Earth’s field. Strength and spacing are relative diagram quantities, not measured force or tesla.",
+    "summary": "Predict, then test how reversing one complete bar changes its interaction and how two nonzero fields can cancel at one exact probe location.",
+    "question": "How do two complete bar magnets set one compass direction, and when can their fields cancel?",
+    "explanation": "A compass is a small magnet whose north-seeking end aligns with the local magnetic field. Outside a bar magnet, conventional field direction runs from its north pole toward its south pole. Fields from both bars combine by vector addition, so a compass responds to the local sum rather than simply choosing the nearest pole. Unlike facing poles attract and like facing poles repel. In this model, equal opposing contributions cancel at the exact midpoint between like facing poles, but each magnet still produces a field elsewhere. The bars are represented by paired softened signed sources only to approximate the exterior tabletop field; these are not isolated magnetic poles. The 0–100 field index and diagram-unit distances are normalized comparisons, not tesla, metres, force measurements or a prediction of magnet motion.",
     "experiments": [
       {
         "title": "Reverse one magnet",
-        "instruction": "Choose Reverse one magnet. Will reversing only the right magnet change attraction to repulsion? Select your prediction, then Set baseline and Reverse right bar. Keep gap 2 and probe (0,2). Compare facing pole letters, force arrows and compass before and after reversing the right bar.",
-        "observe": "Facing poles repel. North tip 90° from +x; field strength 0.26 relative units. The compass follows the vector sum, not simply the nearest magnet. Which poles face across the gap in each case? How does the compass respond to the combined field?"
+        "instruction": "Predict first. Start with N–S facing, then reverse only the right magnet to make N–N face. Hold the 2-unit gap, probe position (0, 2) and identical bars fixed.",
+        "observe": "N–S facing poles attract; N–N facing poles repel. Compare the north-seeking direction and normalized field index. Explain why reversing one complete bar changes both its pole labels and its contribution to the combined field."
       },
       {
         "title": "Test cancellation",
-        "instruction": "Choose Test cancellation. With north poles facing, will the compass have a direction exactly halfway between them? Select your prediction, then Set baseline and Move compass z to 2. Keep north poles facing with gap 2. Compare probe (0,0) and (0,2), changing only z.",
-        "observe": "Facing poles repel. North tip 90° from +x; field strength 0.26 relative units. The compass follows the vector sum, not simply the nearest magnet. Why can equal opposing contributions cancel at one point but not everywhere? Does weak field mean the magnets stopped being magnets?"
+        "instruction": "Predict first. Keep N–N poles facing at gap 2. Start with the probe at (0, 0), then change only probe z to 2. Hold both magnets and probe x fixed.",
+        "observe": "At the exact midpoint, two equal nonzero contributions oppose and the normalized combined index is 0, so there is no preferred direction. Away from the midpoint the combined field is nonzero. Explain why cancellation at one point does not switch off either magnet."
       }
     ],
-    "misconception": "Field lines are not material strings or streams of magnetic substance. They represent directions and continue through real magnets in closed loops.",
+    "misconception": "Field lines are a mapping tool, not material threads, flowing substance or particle paths. For a real magnet they form closed loops, including through the magnet; the displayed exterior lines and their spacing are illustrative.",
     "sources": [
       {
-        "title": "OpenStax: Magnetic field direction, compasses and combined fields",
+        "title": "OpenStax: Field direction, compasses and magnetic forces",
         "url": "https://openstax.org/books/physics/pages/20-1-magnetic-fields-field-lines-and-force"
+      },
+      {
+        "title": "MIT OpenCourseWare: Magnetic-field superposition",
+        "url": "https://ocw.mit.edu/courses/8-02t-electricity-and-magnetism-spring-2005/resources/ch9sourc_b_field/"
+      },
+      {
+        "title": "National MagLab: Mapping magnetic fields with compasses",
+        "url": "https://nationalmaglab.org/magnet-academy/try-this-at-home/mapping-magnetic-fields/"
       }
     ],
     "duration_minutes": 12
@@ -46,7 +54,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "f7571a163e9859b96608d5a4951f4ce9dfad6c850b1125bf03d803dfa7fa6860"
+      "sha256": "122366937076cea44f4a62af1cb9c0f345846a5f2dc3e66a452f786886048249"
     },
     {
       "path": "THREE-LICENSE.txt",

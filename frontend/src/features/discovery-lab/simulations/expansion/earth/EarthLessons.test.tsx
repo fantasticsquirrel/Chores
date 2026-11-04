@@ -173,21 +173,76 @@ describe("earth exploration controls and evidence", () => {
   });
   it("makes cancellation accessible without relying on a color or arrow", () => {
     render(<MagneticFieldsSimulation />);
-    fireEvent.click(screen.getByRole("button", { name: "Flip right magnet" }));
+    fireEvent.click(screen.getByRole("button", { name: "N–N facing" }));
     fireEvent.change(
-      screen.getByRole("slider", { name: "Compass z · diagram units" }),
+      screen.getByRole("slider", { name: "Compass z position" }),
       { target: { value: "0" } },
     );
     expect(screen.getByRole("img")).toHaveAccessibleName(
-      /repel.*No preferred direction/,
+      /repel.*no preferred compass direction/i,
     );
     fireEvent.change(
-      screen.getByRole("slider", { name: "Compass z · diagram units" }),
+      screen.getByRole("slider", { name: "Compass z position" }),
       { target: { value: "2" } },
     );
     expect(screen.getByRole("img")).not.toHaveAccessibleName(
-      /No preferred direction/,
+      /no preferred compass direction/i,
     );
+  });
+  it("requires a prediction, reports negative evidence, and clears stale magnetic evidence", () => {
+    render(<MagneticFieldsSimulation />);
+    expect(screen.getByRole("button", { name: "Set baseline" })).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Interaction stays the same" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Set baseline" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reverse right magnet" }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /evidence does not support your prediction/i,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /Changed: right magnet orientation/i,
+    );
+    fireEvent.change(screen.getByRole("slider", { name: "Gap between bars" }), {
+      target: { value: "3" },
+    });
+    expect(screen.queryByText(/evidence does not support/i)).toBeNull();
+  });
+
+  it("reports cancellation evidence and clears it on a complete reset", () => {
+    render(<MagneticFieldsSimulation />);
+    fireEvent.click(screen.getByRole("button", { name: "Test cancellation" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Cancellation only at the midpoint" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Set baseline" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Move compass to z = 2" }),
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /0 normalized field index.*two nonzero contributions/i,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Reset lesson" }));
+    expect(screen.queryByText(/two nonzero contributions/i)).toBeNull();
+    expect(screen.getByRole("img")).toHaveAccessibleName(
+      /facing N–S poles attract/i,
+    );
+  });
+
+  it("keeps compass alignment replay opt-in and respects reduced motion", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true }));
+    render(<MagneticFieldsSimulation />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Replay compass alignment" }),
+    );
+    expect(
+      screen.getByText(
+        "Reduced motion is on; the final compass directions stay shown.",
+      ),
+    ).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
   it("requires predictions and reports exact controlled cloud evidence", () => {
     render(<CloudRainSimulation />);

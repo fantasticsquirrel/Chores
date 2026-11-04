@@ -118,3 +118,68 @@ test("offline expansion labels honor machine slots and retain projected fallback
     await browser.close();
   }
 });
+
+test("offline magnetic field keeps both tabletop axes visible", async () => {
+  const browser = await launchBrowser();
+  try {
+    const page = await browser.newPage({ viewport });
+    await page.evaluate(() => {
+      window.ReactNativeWebView = { postMessage: () => {} };
+    });
+    await page.setContent(html);
+    await page.evaluate(() =>
+      window.discoveryScene.setState({
+        kind: "magnetic-fields",
+        gap: 2,
+        flipped: false,
+        probeX: 0,
+        probeZ: 2,
+      }),
+    );
+    await page.waitForFunction(
+      () => document.getElementById("scene")?.dataset.surfaceReady === "true",
+    );
+
+    const axes = await page.locator("#labels span").evaluateAll((labels) =>
+      labels
+        .filter(
+          (label) =>
+            label.textContent === "+x axis" || label.textContent === "+z axis",
+        )
+        .map((label) => {
+          const box = label.getBoundingClientRect();
+          return {
+            text: label.textContent,
+            left: box.left,
+            right: box.right,
+            top: box.top,
+            bottom: box.bottom,
+          };
+        }),
+    );
+    assert.deepEqual(
+      axes.map(({ text }) => text),
+      ["+x axis", "+z axis"],
+    );
+    for (const axis of axes) {
+      assert.ok(
+        axis.left >= 0 && axis.right <= viewport.width,
+        `${axis.text} must fit horizontally`,
+      );
+      assert.ok(
+        axis.top >= 0 && axis.bottom <= viewport.height,
+        `${axis.text} must fit vertically`,
+      );
+    }
+    assert.equal(
+      axes[0].left < axes[1].right &&
+        axes[0].right > axes[1].left &&
+        axes[0].top < axes[1].bottom &&
+        axes[0].bottom > axes[1].top,
+      false,
+      "+x axis must not overlap +z axis",
+    );
+  } finally {
+    await browser.close();
+  }
+});

@@ -182,7 +182,7 @@ test("specific physical relationships stay observable", async () => {
   magnet({ type: "step", values: {} });
   magnet({ type: "control", control: "flipped", values: { flipped: 1 } });
   s = magnet({ type: "control", control: "probeZ", values: { probeZ: 0 } });
-  assert.match(s.description, /no preferred compass direction/);
+  assert.match(s.description, /north-seeking end has no preferred direction/);
   const cell = await worker("cell-explorer");
   cell({ type: "step", values: {} });
   s = cell({ type: "control", control: "transfer", values: {} });
@@ -537,6 +537,97 @@ test("Cloud and Rain package preserves shared model, trials and rich scene acros
       `Cloud and Rain package scene parity ${JSON.stringify(result.state)}`,
     );
   }
+});
+test("Magnetic Fields package preserves shared model, trials and rich scene across bounded states", async () => {
+  const contents = `
+    import {createMagneticFieldsScene as original} from './packages/discovery-scenes/src/expansion/earth/magnets';
+    import {createMagneticFieldsScene as converted} from './scripts/exploration-packages/magnetic-fields/magnets';
+    import {magneticResult as originalResult, magneticFieldsTrials as originalTrials} from './packages/family-api/src/discovery-models/magnetic-fields';
+    import {magneticResult as convertedResult, magneticFieldsTrials as convertedTrials} from './scripts/exploration-packages/magnetic-fields/model';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[
+      {gap:0.5,flipped:false,probeX:-6,probeZ:-4},
+      {gap:4.5,flipped:true,probeX:6,probeZ:4},
+      {gap:2,flipped:false,probeX:0,probeZ:2},
+      {gap:2,flipped:true,probeX:0,probeZ:2},
+      {gap:2,flipped:true,probeX:0,probeZ:0},
+      {gap:2,flipped:false,probeX:-2,probeZ:0}
+    ];
+    globalThis.trials=[originalTrials,convertedTrials];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const originalModel=originalResult(state), convertedModel=convertedResult(state);
+      const originalScene=serializeExpansionScene(a,p), convertedScene=serializeExpansionScene(b,p);
+      const output={state,model:JSON.stringify(originalModel)===JSON.stringify(convertedModel),scene:JSON.stringify(originalScene)===JSON.stringify(convertedScene)};
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Magnetic Fields package trial content parity",
+  );
+  for (const result of context.result) {
+    assert.equal(
+      result.model,
+      true,
+      `Magnetic Fields package model parity ${JSON.stringify(result.state)}`,
+    );
+    assert.equal(
+      result.scene,
+      true,
+      `Magnetic Fields package scene parity ${JSON.stringify(result.state)}`,
+    );
+  }
+});
+test("Magnetic Fields package gates predictions, clears stale evidence and resets", async () => {
+  const send = await worker("magnetic-fields");
+  const initial = send({ type: "reset", values: {} });
+  assert.deepEqual(
+    initial.controls.map((control) => [control.id, control.min, control.max]),
+    [
+      ["gap", 0.5, 4.5],
+      ["flipped", 0, 1],
+      ["probeX", -6, 6],
+      ["probeZ", -4, 4],
+    ],
+  );
+  let frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /After comparing/);
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /does not support your prediction/);
+  assert.match(frame.sections[2].text, /N–S poles attract.*N–N poles repel/);
+  assert.match(frame.sections[2].text, /Changed: right magnet orientation/);
+  frame = send({
+    type: "control",
+    control: "probeX",
+    values: { probeX: 1 },
+  });
+  assert.match(frame.sections[2].text, /After comparing/);
+
+  send({ type: "control", control: "trial_1", values: {} });
+  send({ type: "control", control: "predict_1", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /supports your prediction/);
+  assert.match(frame.sections[2].text, /two nonzero contributions/);
+  assert.match(frame.sections[2].text, /combined index is/);
+
+  frame = send({ type: "reset", values: {} });
+  assert.deepEqual(frame.controls, initial.controls);
+  assert.equal(frame.description, initial.description);
+  assert.match(frame.sections[2].text, /After comparing/);
 });
 test("Cloud and Rain package gates predictions and reports exact correct or incorrect evidence", async () => {
   const send = await worker("cloud-rain-lab");

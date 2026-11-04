@@ -70,7 +70,8 @@ const cases: {
     id: "magnetic-fields",
     action: "Flip right magnet",
     changed: { flipped: true },
-    result: /Facing poles repel/,
+    result: /Facing N–N poles repel/,
+    reset: "Reset lesson",
   },
   {
     id: "cell-explorer",
@@ -100,7 +101,10 @@ const comparisons = [
     id: "cloud-rain-lab",
     titles: ["Lift to saturation", "Grow precipitation"],
   },
-  { id: "magnetic-fields", titles: ["Facing poles", "Field cancellation"] },
+  {
+    id: "magnetic-fields",
+    titles: ["Reverse one magnet", "Test cancellation"],
+  },
   {
     id: "cell-explorer",
     titles: ["Different molecules", "Glucose and carrier"],
@@ -172,6 +176,18 @@ describe("native nine-topic controls and paired investigations", () => {
             }),
           );
         }
+        if (id === "magnetic-fields") {
+          if (index > 0)
+            fireEvent.press(view.getByRole("radio", { name: title }));
+          fireEvent.press(
+            view.getByRole("radio", {
+              name:
+                index === 0
+                  ? "Interaction reverses"
+                  : "Cancellation only at the midpoint",
+            }),
+          );
+        }
         fireEvent.press(
           view.getByRole("button", { name: `Set baseline: ${title}` }),
         );
@@ -224,6 +240,42 @@ describe("native nine-topic controls and paired investigations", () => {
     expect(
       view.getByText(/does not mean air literally holds water/),
     ).toBeTruthy();
+    view.unmount();
+  });
+  it("gives Magnetic Fields negative feedback, cancellation evidence, and a complete reset", () => {
+    const view = render(<NativeExploration id="magnetic-fields" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Reverse one magnet" }),
+    ).toBeNull();
+    fireEvent.press(
+      view.getByRole("radio", { name: "Interaction stays the same" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Reverse one magnet" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Reverse one magnet" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(view.getByText(/Changed: right magnet orientation/)).toBeTruthy();
+
+    fireEvent.press(view.getByRole("radio", { name: "Test cancellation" }));
+    fireEvent.press(
+      view.getByRole("radio", { name: "Cancellation only at the midpoint" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Test cancellation" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Test cancellation" }),
+    );
+    expect(
+      view.getByText(/0 normalized field index.*two nonzero contributions/i),
+    ).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Reset lesson" }));
+    expect(view.queryByText(/supports your prediction/)).toBeNull();
+    expect(view.getByText(/Facing N–S poles attract/)).toBeTruthy();
     view.unmount();
   });
   it("requires a Machine Workshop prediction and reports exact evidence before reset", () => {

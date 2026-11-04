@@ -61,10 +61,10 @@ describe("magnet field and compass", () => {
       }).direction,
     ).toBeNull();
   });
-  it("weakens the relative interaction with distance and excludes probes inside bars", () => {
+  it("weakens the normalized exterior field farther from the bars and excludes probes inside bars", () => {
     expect(
-      magneticResult({ ...initialMagnetic, gap: 4 }).interactionIndex,
-    ).toBeLessThan(magneticResult(initialMagnetic).interactionIndex);
+      magneticResult({ ...initialMagnetic, probeZ: 4 }).relativeFieldIndex,
+    ).toBeLessThan(magneticResult(initialMagnetic).relativeFieldIndex!);
     expect(
       magneticResult({ ...initialMagnetic, probeX: -2, probeZ: 0 })
         .insideMagnet,

@@ -37,7 +37,7 @@ const onLabels = (items) => {
   const placed = [],
     width = host.clientWidth,
     height = host.clientHeight;
-  for (const item of items.slice(0, 8)) {
+  for (const item of items.slice(0, 9)) {
     const label = document.createElement("span");
     label.textContent = item.text;
     labels.append(label);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import * as T from "three";
 import {
+  MAGNETIC_BAR_DEPTH,
+  MAGNETIC_BAR_LENGTH,
   initialCloud,
   initialMagnetic,
   initialPlate,
@@ -90,6 +92,43 @@ describe("rich reusable earth scenes", () => {
     const magnets = createMagneticFieldsScene();
     magnets.update({ ...initialMagnetic, flipped: true });
     expect(magnets.labels().some((l) => l.text.includes("repel"))).toBe(true);
+    magnets.dispose();
+  });
+
+  it("matches the magnetic model footprint and exposes world-fixed tabletop axes", () => {
+    const magnets = createMagneticFieldsScene();
+    magnets.group.updateMatrixWorld(true);
+    const left = magnets.group.getObjectByName("left-bar-magnet");
+    const right = magnets.group.getObjectByName("right-bar-magnet");
+    expect(left).toBeTruthy();
+    expect(right).toBeTruthy();
+
+    const leftBounds = new T.Box3().setFromObject(left!);
+    const rightBounds = new T.Box3().setFromObject(right!);
+    const leftSize = leftBounds.getSize(new T.Vector3());
+    const rightSize = rightBounds.getSize(new T.Vector3());
+    expect(leftSize.x).toBeCloseTo(MAGNETIC_BAR_LENGTH, 6);
+    expect(rightSize.x).toBeCloseTo(MAGNETIC_BAR_LENGTH, 6);
+    expect(leftSize.z).toBeCloseTo(MAGNETIC_BAR_DEPTH, 6);
+    expect(rightSize.z).toBeCloseTo(MAGNETIC_BAR_DEPTH, 6);
+    expect(rightBounds.min.x - leftBounds.max.x).toBeCloseTo(
+      initialMagnetic.gap,
+      6,
+    );
+
+    const positiveX = magnets.group.getObjectByName("tabletop-positive-x-axis");
+    const positiveZ = magnets.group.getObjectByName("tabletop-positive-z-axis");
+    expect(positiveX).toBeTruthy();
+    expect(positiveZ).toBeTruthy();
+    const arrowDirection = (axis: T.Object3D) =>
+      new T.Vector3(0, 1, 0).applyQuaternion(
+        axis.getWorldQuaternion(new T.Quaternion()),
+      );
+    expect(arrowDirection(positiveX!).x).toBeCloseTo(1, 8);
+    expect(arrowDirection(positiveZ!).z).toBeCloseTo(1, 8);
+    expect(magnets.labels().map((label) => label.text)).toEqual(
+      expect.arrayContaining(["+x axis", "+z axis"]),
+    );
     magnets.dispose();
   });
 
