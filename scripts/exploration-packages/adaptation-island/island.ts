@@ -198,7 +198,10 @@ export function createAdaptationIslandScene(
       draw();
     },
     labels: () => [
-      { text: `Generation ${state.generation}`, at: [-2.8, 0.3, -3.7] },
+      {
+        text: `Gen ${state.generation} · dark/pale ${state.darkCount.toFixed(0)}/${state.lightCount.toFixed(0)}%`,
+        at: [-2.8, 0.3, -1.2],
+      },
       {
         text: state.habitat === "dark" ? "Dark ground" : "Pale ground",
         at: [0, 0, 3.6],

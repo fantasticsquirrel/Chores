@@ -73,7 +73,7 @@ describe("React-free life and geometry scenes", () => {
       generation: 20,
     });
     expect(scene.labels().map((label) => label.text)).toEqual([
-      "Generation 20",
+      "Gen 20 · dark/pale 50/50%",
       "Pale ground",
       "Predation excluded",
     ]);

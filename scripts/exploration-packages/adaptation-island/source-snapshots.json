@@ -1,0 +1,17 @@
+{
+  "reviewed": "2026-11-04",
+  "snapshots": [
+    {
+      "file": "openstax-understanding-evolution.html",
+      "url": "https://openstax.org/books/biology-2e/pages/18-1-understanding-evolution",
+      "bytes": 397413,
+      "sha256": "0c551e1c322e697b8eb531bb363a3854365051f72c9efe44a1ddb16d153b1c49"
+    },
+    {
+      "file": "openstax-population-genetics.html",
+      "url": "https://openstax.org/books/biology-2e/pages/19-2-population-genetics",
+      "bytes": 384564,
+      "sha256": "ea92364080d2dfccd8707fc6e62113cb93e1a8c57c0c666caeca19de43c1e788"
+    }
+  ]
+}

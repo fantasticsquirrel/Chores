@@ -92,6 +92,7 @@ const cases: {
     action: "Next generation",
     changed: { generation: 1 },
     result: /Generation 1: dark shells 64.3%, pale shells 35.7%/,
+    reset: "Reset adaptation island",
   },
 ];
 const comparisons = [
@@ -114,7 +115,7 @@ const comparisons = [
   { id: "shape-slicer", titles: ["Rotate a cube", "Move through a sphere"] },
   {
     id: "adaptation-island",
-    titles: ["Habitat and survival", "Predation and selection"],
+    titles: ["Compare habitats", "Remove predation"],
   },
 ];
 function lastState() {
@@ -208,6 +209,18 @@ describe("native nine-topic controls and paired investigations", () => {
             }),
           );
         }
+        if (id === "adaptation-island") {
+          if (index > 0)
+            fireEvent.press(view.getByRole("radio", { name: title }));
+          fireEvent.press(
+            view.getByRole("radio", {
+              name:
+                index === 0
+                  ? "Different proportions"
+                  : "Proportions stay fixed",
+            }),
+          );
+        }
         fireEvent.press(
           view.getByRole("button", { name: `Set baseline: ${title}` }),
         );
@@ -271,6 +284,35 @@ describe("native nine-topic controls and paired investigations", () => {
       tilt: 0,
       turn: 0,
       offset: 0,
+    });
+    view.unmount();
+  });
+  it("gives Adaptation Island evidence and clears wrong stale feedback", () => {
+    const view = render(<NativeExploration id="adaptation-island" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Compare habitats" }),
+    ).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Same proportions" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Compare habitats" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Compare habitats" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(view.getByText(/95.0% dark.*5.0% dark/)).toBeTruthy();
+    fireEvent.press(view.getByRole("button", { name: "Remove predators" }));
+    expect(view.queryByText(/does not support your prediction/)).toBeNull();
+    fireEvent.press(
+      view.getByRole("button", { name: "Reset adaptation island" }),
+    );
+    expect(lastState()).toMatchObject({
+      habitat: "dark",
+      predators: true,
+      generation: 0,
+      darkCount: 50,
+      lightCount: 50,
     });
     view.unmount();
   });

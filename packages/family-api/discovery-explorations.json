@@ -1025,30 +1025,30 @@
     "subject": "Biology",
     "grade_bands": ["3-5", "6-8"],
     "tags": ["evolution", "inheritance", "variation", "populations"],
-    "summary": "Change a habitat and follow inherited shell colors through generations of a model population.",
-    "question": "How can a population change over generations without individuals choosing new traits?",
-    "explanation": "Individuals can differ in inherited traits. In this fictional population, predators are less likely to find shells that blend with the ground. Surviving individuals contribute offspring with the same shell-color type, so the proportions can change across generations. Individuals do not change their own shell color. The model shows deterministic expected percentages using invented survival weights, not sampled animal counts. It holds population size constant and omits mutation, migration, chance and other traits.",
+    "summary": "Predict how inherited shell-color proportions respond when habitat or visual predation changes in a bounded population model.",
+    "question": "How can inherited variation and unequal survival change a population across generations?",
+    "explanation": "Natural selection requires heritable variation and differences in survival or reproduction. In this fictional population, visual predators give the better-camouflaged shell variant a larger relative survival-and-descendant weight. The resulting expected proportions change across generations, but individuals retain their shell color. The deterministic 0.9 and 0.5 weights are invented teaching values, not measured probabilities. The model normalizes the population to 100% and omits genes and mating, mutation, migration, random drift, population-size change and other traits.",
     "experiments": [
       {
-        "title": "Compare two habitats",
-        "instruction": "Start with 50% dark shells and predators present. Predict the five-generation trend on dark ground and on light ground. Run each habitat for five generations, using Reset population before the second run to restore the same starting mix.",
-        "observe": "Different shell colors become more common in the two habitats. Explain the change through inherited variation and different survival, rather than individuals choosing the color they need."
+        "title": "Compare habitats",
+        "instruction": "Predict whether the same inherited variation reaches the same proportions on dark and pale ground. Start both trials at 50% dark and 50% pale with predators and the same invented weights; change only ground color and compare exactly five generations.",
+        "observe": "Dark ground gives 95.0% dark and 5.0% pale; pale ground gives 5.0% dark and 95.0% pale. Explain the reversal through environment-dependent differential survival, not individuals changing color."
       },
       {
-        "title": "Remove this selection pressure",
-        "instruction": "Use dark ground and a starting dark-shell share of 50%. Predict how removing predators changes the trend. Compare five generations with predators and five without, restarting to the same initial mix before each run.",
-        "observe": "Without predators, both colors have equal survival weights and their expected proportions stay fixed in this model. Explain why inherited variation alone did not produce the same trend as variation with unequal survival."
+        "title": "Remove predation",
+        "instruction": "Predict whether proportions change when both variants have equal weights. Keep dark ground, a 50/50 start and five generations fixed; change only predation.",
+        "observe": "Predation with unequal 0.9/0.5 weights gives 95.0% dark. Without predation, both weights are 0.9 and proportions remain 50.0% dark and 50.0% pale. Explain why variation alone does not favor either variant."
       }
     ],
-    "misconception": "Natural selection does not plan ahead, create a needed trait on demand or guarantee progress. It changes the frequency of existing inherited variants under particular conditions.",
+    "misconception": "Natural selection does not plan ahead or make an individual acquire a needed trait. It changes populations when existing heritable variants differ in survival or descendant contribution under particular conditions.",
     "sources": [
       {
-        "title": "UC Berkeley: Variation, heredity and natural selection",
-        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/natural-selection/"
+        "title": "OpenStax Biology 2e: Understanding evolution and natural selection",
+        "url": "https://openstax.org/books/biology-2e/pages/18-1-understanding-evolution"
       },
       {
-        "title": "UC Berkeley: Misconceptions about natural selection",
-        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/misconceptions-about-natural-selection/"
+        "title": "OpenStax Biology 2e: Population genetics and evolutionary forces",
+        "url": "https://openstax.org/books/biology-2e/pages/19-2-population-genetics"
       }
     ],
     "duration_minutes": 15

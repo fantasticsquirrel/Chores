@@ -4,19 +4,20 @@ import {
   nextIslandGeneration,
   resetIsland,
   islandObservation,
+  adaptationIslandBoundary,
+  adaptationIslandCoreBoundary,
+  adaptationIslandTrials,
+  advanceIslandGenerations,
+  normalizeAdaptationIslandState,
 } from "./model";
 import { createAdaptationIslandScene } from "./island";
-const five = (s: typeof initial) =>
-  Array.from({ length: 5 }).reduce<typeof initial>(
-    (p) => nextIslandGeneration(p),
-    s,
-  );
 installLesson({
   initial,
+  normalize: normalizeAdaptationIslandState,
   build: createAdaptationIslandScene,
   title: "Which inherited variant becomes more common?",
   introduction:
-    "Compare shell-color proportions across generations. Change the ground or remove predation, then start from the same population.",
+    "Predict a population trend, change one selective condition, and use five-generation proportions to explain the evidence.",
   fields: [
     {
       id: "habitat",
@@ -42,12 +43,12 @@ installLesson({
     {
       id: "five",
       label: "Advance up to five generations (maximum 20)",
-      run: five,
+      run: (state) => advanceIslandGenerations(state, 5),
     },
     { id: "resetPopulation", label: "Reset population", run: resetIsland },
   ],
   describe: (s) =>
-    `${islandObservation(s)} Initial dark ${s.initialDark.toFixed(1)}%; pale ${(100 - s.initialDark).toFixed(1)}%. Current dark ${s.darkCount.toFixed(1)}%; pale ${s.lightCount.toFixed(1)}%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. ${s.predators ? "Matching shells have survival weight 0.9; contrasting shells 0.5." : "Both colors have survival weight 0.9 without predation."} ${s.darkCount === 0 || s.lightCount === 0 ? "Missing colors cannot appear without mutation or migration." : ""}`,
+    `${islandObservation(s)} Initial dark ${s.initialDark.toFixed(1)}%; pale ${(100 - s.initialDark).toFixed(1)}%. Current dark ${s.darkCount.toFixed(1)}%; pale ${s.lightCount.toFixed(1)}%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. ${s.predators ? "Matching shells have relative survival-and-contribution weight 0.9; contrasting shells 0.5." : "Both colors have equal relative weight 0.9 without predation."} ${s.darkCount === 0 || s.lightCount === 0 ? "Missing colors cannot appear without mutation or migration." : ""}`,
   vector: (s) => {
     const bar = (label: string, dark: number, y: number) => [
       {
@@ -84,33 +85,10 @@ installLesson({
       ],
     };
   },
-  trials: [
-    {
-      title: "Change the environment",
-      question:
-        "Will the same starting variants reach the same proportions on dark and pale ground?",
-      choices: ["Same proportions", "Different proportions"],
-      controlled:
-        "Start 50% each variant with predation and compare exactly five generations, changing only habitat. Each comparison resets the same population.",
-      before: five({ ...initial, habitat: "dark", predators: true }),
-      after: five({ ...initial, habitat: "light", predators: true }),
-      change: "Compare pale ground after five generations",
-      explain:
-        "Which variant increased? How does relative survival change descendant proportions without changing individual shell colors?",
-    },
-    {
-      title: "Remove predation",
-      question:
-        "Will proportions change when both variants have equal survival?",
-      choices: ["Proportions stay fixed", "One color increases"],
-      controlled:
-        "Use dark ground, 50% each variant and five generations. Change only predation, with identical starting population.",
-      before: five({ ...initial, habitat: "dark", predators: true }),
-      after: five({ ...initial, habitat: "dark", predators: false }),
-      change: "Compare no predation after five generations",
-      explain:
-        "Compare initial and current proportions. Which difference is necessary for selection to shift proportions here?",
-    },
-  ],
-  note: "Deterministic expected frequencies, not sampled population or real-beetle forecast. Survival weights invented; offspring copy parental variant without mating or genes, normalized to 100%. Population size, mutation, migration and random drift omitted. Natural selection changes populations across generations, not individuals choosing useful traits. Initial-share changes reset generation 0; habitat/predation change future generations only; reset for a fair trial.",
+  trials: adaptationIslandTrials.map((trial) => ({
+    ...trial,
+    choices: [...trial.choices],
+    held: [...trial.held],
+  })),
+  note: `${adaptationIslandCoreBoundary} ${adaptationIslandBoundary} Initial-share changes reset generation 0; habitat or predation changes affect future generations only, so reset for a fair manual trial.`,
 });

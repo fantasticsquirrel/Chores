@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "adaptation-island-package",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "runtime": "worker-rich-v1",
   "exploration": {
     "id": "adaptation-island-package",
@@ -17,30 +17,30 @@
       "variation",
       "populations"
     ],
-    "summary": "Change a habitat and follow inherited shell colors through generations of a model population.",
-    "question": "How can a population change over generations without individuals choosing new traits?",
-    "explanation": "Individuals can differ in inherited traits. In this fictional population, predators are less likely to find shells that blend with the ground. Surviving individuals contribute offspring with the same shell-color type, so the proportions can change across generations. Individuals do not change their own shell color. The model shows deterministic expected percentages using invented survival weights, not sampled animal counts. It holds population size constant and omits mutation, migration, chance and other traits.",
+    "summary": "Predict how inherited shell-color proportions respond when habitat or visual predation changes in a bounded population model.",
+    "question": "How can inherited variation and unequal survival change a population across generations?",
+    "explanation": "Natural selection requires heritable variation and differences in survival or reproduction. In this fictional population, visual predators give the better-camouflaged shell variant a larger relative survival-and-descendant weight. The resulting expected proportions change across generations, but individuals retain their shell color. The deterministic 0.9 and 0.5 weights are invented teaching values, not measured probabilities. The model normalizes the population to 100% and omits genes and mating, mutation, migration, random drift, population-size change and other traits.",
     "experiments": [
       {
-        "title": "Change the environment",
-        "instruction": "Choose Change the environment. Will the same starting variants reach the same proportions on dark and pale ground? Select your prediction, then Set baseline and Compare pale ground after five generations. Start 50% each variant with predation and compare exactly five generations, changing only habitat. Each comparison resets the same population.",
-        "observe": "Generation 5: dark shells 5.0%, pale shells 95.0%. On light ground, pale shells have the higher survival weight. Individuals do not change shell color; inherited variants change in proportion across generations. Initial dark 50.0%; pale 50.0%. Current dark 5.0%; pale 95.0%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. Matching shells have survival weight 0.9; contrasting shells 0.5.  Which variant increased? How does relative survival change descendant proportions without changing individual shell colors?"
+        "title": "Compare habitats",
+        "instruction": "Predict whether the same inherited variation reaches the same proportions on dark and pale ground. Start both trials at 50% dark and 50% pale with predators and identical invented weights; change only ground color and compare exactly five generations.",
+        "observe": "Dark ground gives 95.0% dark and 5.0% pale; pale ground gives 5.0% dark and 95.0% pale. Explain the reversal through environment-dependent differential survival, not individuals changing color."
       },
       {
         "title": "Remove predation",
-        "instruction": "Choose Remove predation. Will proportions change when both variants have equal survival? Select your prediction, then Set baseline and Compare no predation after five generations. Use dark ground, 50% each variant and five generations. Change only predation, with identical starting population.",
-        "observe": "Generation 5: dark shells 50.0%, pale shells 50.0%. Without predation, both shell colors have the same survival weight. Individuals do not change shell color; inherited variants change in proportion across generations. Initial dark 50.0%; pale 50.0%. Current dark 50.0%; pale 50.0%. Twenty symbols approximate shares, each 5 percentage points, not tracked individuals. Both colors have survival weight 0.9 without predation.  Compare initial and current proportions. Which difference is necessary for selection to shift proportions here?"
+        "instruction": "Predict whether proportions change when both variants have equal weights. Keep dark ground, a 50/50 start and five generations fixed; change only predation.",
+        "observe": "Predation with unequal 0.9/0.5 weights gives 95.0% dark. Without predation, both weights are 0.9 and proportions remain 50.0% dark and 50.0% pale. Explain why inherited variation alone does not favor either variant."
       }
     ],
-    "misconception": "Natural selection does not plan ahead, create a needed trait on demand or guarantee progress. It changes the frequency of existing inherited variants under particular conditions.",
+    "misconception": "Natural selection does not plan ahead or make an individual acquire a needed trait. It changes populations when existing heritable variants differ in survival or descendant contribution under particular conditions.",
     "sources": [
       {
-        "title": "UC Berkeley: Variation, heredity and natural selection",
-        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/natural-selection/"
+        "title": "OpenStax Biology 2e: Understanding evolution and natural selection",
+        "url": "https://openstax.org/books/biology-2e/pages/18-1-understanding-evolution"
       },
       {
-        "title": "UC Berkeley: Misconceptions about natural selection",
-        "url": "https://evolution.berkeley.edu/evolution-101/mechanisms-the-processes-of-evolution/misconceptions-about-natural-selection/"
+        "title": "OpenStax Biology 2e: Population genetics and evolutionary forces",
+        "url": "https://openstax.org/books/biology-2e/pages/19-2-population-genetics"
       }
     ],
     "duration_minutes": 15
@@ -50,7 +50,7 @@
     {
       "path": "worker.js",
       "mime_type": "text/javascript",
-      "sha256": "78b2394d454daed61356d3d999a0daa04eacbff2bbe65099d74f7a67dbebc365"
+      "sha256": "cf78191206b2807794d9ea5b962facfd4e012e193ee38e543296dd9898780dfb"
     },
     {
       "path": "THREE-LICENSE.txt",

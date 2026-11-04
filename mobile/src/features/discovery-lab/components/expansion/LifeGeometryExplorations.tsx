@@ -1,4 +1,3 @@
-import { AdaptationComparisons } from "./lifeGeometryComparisons";
 import { useState, type SetStateAction } from "react";
 import {
   cellExplorerBoundary,
@@ -17,12 +16,18 @@ import {
   type CellExplorerState,
   type CellPart,
   type ShapeSlicerState,
+  type AdaptationIslandState,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
 import {
   diagonalCubeState,
   shapeSlicerBoundary,
   shapeSlicerCoreBoundary,
 } from "@family-manager/family-api/discovery-models/shape-slicer";
+import {
+  adaptationIslandBoundary,
+  adaptationIslandCoreBoundary,
+  advanceIslandGenerations,
+} from "@family-manager/family-api/discovery-models/adaptation-island";
 import { ActionButton } from "../../../../components/ActionButton";
 import { Control, Dot, Line } from "../Primitives";
 import {
@@ -36,6 +41,7 @@ import {
 } from "../LearningPrimitives";
 import { CellComparison } from "./cells/CellComparison";
 import { ShapeComparison } from "./shapes/ShapeComparison";
+import { IslandComparison } from "./adaptation/IslandComparison";
 
 export function CellExploration() {
   const [state, setState] = useState(defaultCellExplorerState);
@@ -245,9 +251,17 @@ export function ShapeExploration() {
 
 export function AdaptationExploration() {
   const [state, setState] = useState(defaultAdaptationIslandState);
+  const [comparisonReset, setComparisonReset] = useState(0);
+  const setManualState = (next: SetStateAction<AdaptationIslandState>) => {
+    setState(next);
+    setComparisonReset((value) => value + 1);
+  };
   const label = islandObservation(state);
   return (
-    <LearningFrame onReset={() => setState(defaultAdaptationIslandState)}>
+    <LearningFrame
+      resetLabel="Reset adaptation island"
+      onReset={() => setManualState(defaultAdaptationIslandState)}
+    >
       <Diagram
         visualState={{ kind: "adaptation-island", ...state }}
         label={label}
@@ -286,7 +300,7 @@ export function AdaptationExploration() {
       <Choice
         label="Habitat"
         value={state.habitat}
-        onChange={(habitat) => setState({ ...state, habitat })}
+        onChange={(habitat) => setManualState({ ...state, habitat })}
         options={[
           { value: "dark", label: "Dark ground" },
           { value: "light", label: "Light ground" },
@@ -294,7 +308,9 @@ export function AdaptationExploration() {
       />
       <ActionButton
         label={state.predators ? "Remove predators" : "Add predators"}
-        onPress={() => setState({ ...state, predators: !state.predators })}
+        onPress={() =>
+          setManualState({ ...state, predators: !state.predators })
+        }
       />
       <Control
         label="Starting dark-shell share (%)"
@@ -303,39 +319,27 @@ export function AdaptationExploration() {
         max={100}
         step={10}
         onChange={(initialDark) =>
-          setState(resetIsland({ ...state, initialDark }))
+          setManualState(resetIsland({ ...state, initialDark }))
         }
       />
       <ActionButton
         label="Restart generations"
-        onPress={() => setState(resetIsland(state))}
+        onPress={() => setManualState(resetIsland(state))}
         variant="secondary"
       />
       <ActionButton
         label="Next generation"
         disabled={state.generation >= 20}
-        onPress={() => setState(nextIslandGeneration(state))}
+        onPress={() => setManualState(nextIslandGeneration(state))}
       />
       <ActionButton
         label="Advance five generations"
         disabled={state.generation >= 20}
-        onPress={() =>
-          setState(
-            Array.from({ length: 5 }).reduce<typeof state>(
-              (next) => nextIslandGeneration(next),
-              state,
-            ),
-          )
-        }
+        onPress={() => setManualState(advanceIslandGenerations(state, 5))}
       />
-      <AdaptationComparisons setState={setState} />
+      <IslandComparison onApply={setState} resetKey={comparisonReset} />
       <ModelNote>
-        Deterministic expected proportions, not sampled animal counts. Twenty
-        symbols approximate shares; percentages are authoritative. Invented
-        survival weights favor camouflage only when predators are present.
-        Reproduction returns the total to 100%; mutation, migration, chance, and
-        other traits are omitted. Individuals do not choose new traits because
-        they need them.
+        {adaptationIslandCoreBoundary} {adaptationIslandBoundary}
       </ModelNote>
     </LearningFrame>
   );

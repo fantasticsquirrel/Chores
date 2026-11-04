@@ -801,6 +801,92 @@ test("Shape Slicer package gates predictions, clears evidence and resets", async
   assert.equal(frame.description, initial.description);
   assert.match(frame.sections[2].text, /After comparing/);
 });
+test("Adaptation Island package preserves shared model, trials and rich scene", async () => {
+  const contents = `
+    import {createAdaptationIslandScene as original} from './packages/discovery-scenes/src/expansion/life-geometry/island';
+    import {createAdaptationIslandScene as converted} from './scripts/exploration-packages/adaptation-island/island';
+    import {nextIslandGeneration as originalNext} from './packages/family-api/src/discovery-models/expansion-life-geometry';
+    import {adaptationIslandTrials as originalTrials} from './packages/family-api/src/discovery-models/adaptation-island';
+    import {nextIslandGeneration as convertedNext, adaptationIslandTrials as convertedTrials} from './scripts/exploration-packages/adaptation-island/model';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[
+      {habitat:'dark',predators:true,generation:0,darkCount:50,lightCount:50,initialDark:50},
+      {habitat:'light',predators:true,generation:4,darkCount:10,lightCount:90,initialDark:50},
+      {habitat:'dark',predators:false,generation:8,darkCount:25,lightCount:75,initialDark:25},
+      {habitat:'light',predators:false,generation:20,darkCount:100,lightCount:0,initialDark:100}
+    ];
+    globalThis.trials=[originalTrials,convertedTrials];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const originalModel=originalNext(state), convertedModel=convertedNext(state);
+      const originalScene=serializeExpansionScene(a,p), convertedScene=serializeExpansionScene(b,p);
+      const output={state,model:JSON.stringify(originalModel)===JSON.stringify(convertedModel),scene:JSON.stringify(originalScene)===JSON.stringify(convertedScene)};
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Adaptation Island package trial content parity",
+  );
+  for (const result of context.result) {
+    assert.equal(
+      result.model,
+      true,
+      `Adaptation Island model parity ${JSON.stringify(result.state)}`,
+    );
+    assert.equal(
+      result.scene,
+      true,
+      `Adaptation Island scene parity ${JSON.stringify(result.state)}`,
+    );
+  }
+});
+test("Adaptation Island package gates predictions, clears evidence and resets", async () => {
+  const send = await worker("adaptation-island");
+  const initial = send({ type: "reset", values: {} });
+  assert.deepEqual(
+    initial.controls.map((control) => [control.id, control.min, control.max]),
+    [
+      ["habitat", 0, 1],
+      ["predators", 0, 1],
+      ["initialDark", 0, 100],
+    ],
+  );
+  let frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /After comparing/);
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /does not support your prediction/);
+  assert.match(frame.sections[2].text, /95\.0% dark.*5\.0% dark/);
+  assert.match(frame.sections[2].text, /Changed: ground color/);
+  frame = send({ type: "control", control: "habitat", values: { habitat: 0 } });
+  assert.match(frame.sections[2].text, /After comparing/);
+
+  send({ type: "control", control: "trial_1", values: {} });
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /supports your prediction/);
+  assert.match(frame.sections[2].text, /remains 50\.0% dark and 50\.0% pale/);
+  assert.match(frame.footnote, /invented teaching values/);
+  assert.match(frame.footnote, /mutation, migration, random genetic drift/);
+
+  frame = send({ type: "reset", values: {} });
+  assert.deepEqual(frame.controls, initial.controls);
+  assert.equal(frame.description, initial.description);
+  assert.match(frame.sections[2].text, /After comparing/);
+});
 test("Cloud and Rain package gates predictions and reports exact correct or incorrect evidence", async () => {
   const send = await worker("cloud-rain-lab");
   let frame = send({ type: "reset", values: {} });

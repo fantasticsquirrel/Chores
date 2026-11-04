@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type SetStateAction } from "react";
 import {
   defaultAdaptationIslandState,
   islandObservation,
@@ -6,17 +6,17 @@ import {
   resetIsland,
   type AdaptationIslandState,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
+import {
+  adaptationIslandBoundary,
+  adaptationIslandCoreBoundary,
+  adaptationIslandTrials,
+  advanceIslandGenerations,
+} from "@family-manager/family-api/discovery-models/adaptation-island";
 import { createAdaptationIslandScene } from "@family-manager/discovery-scenes/expansion/life-geometry/index";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
 import { LifeInvestigations } from "./LifeInvestigations";
 import "./life-geometry.css";
-function fiveGenerations(state: AdaptationIslandState) {
-  return Array.from({ length: 5 }).reduce<AdaptationIslandState>(
-    (previous) => nextIslandGeneration(previous),
-    state,
-  );
-}
 function PopulationBar({ label, dark }: { label: string; dark: number }) {
   return (
     <div className="life-population">
@@ -34,17 +34,14 @@ export function AdaptationIslandSimulation() {
   const [state, setState] = useState<AdaptationIslandState>(
     defaultAdaptationIslandState,
   );
-  const observation = islandObservation(state);
-  const run = (
-    habitat: AdaptationIslandState["habitat"],
-    predators: boolean,
-  ) => {
-    const next = fiveGenerations({
-      ...defaultAdaptationIslandState,
-      habitat,
-      predators,
-    });
+  const [investigationReset, setInvestigationReset] = useState(0);
+  const setManualState = (next: SetStateAction<AdaptationIslandState>) => {
     setState(next);
+    setInvestigationReset((value) => value + 1);
+  };
+  const observation = islandObservation(state);
+  const run = (next: AdaptationIslandState) => {
+    setState({ ...next });
     return islandObservation(next);
   };
   return (
@@ -52,8 +49,8 @@ export function AdaptationIslandSimulation() {
       <header>
         <h2>Which inherited variant becomes more common?</h2>
         <p>
-          Compare shell-color proportions across generations. Change the ground
-          or remove predation, then start again from the same population.
+          Predict a population trend, change one selective condition, and use
+          five-generation proportions to explain the evidence.
         </p>
       </header>
       <div className="life-workspace">
@@ -74,7 +71,7 @@ export function AdaptationIslandSimulation() {
             <select
               value={state.habitat}
               onChange={(event) =>
-                setState((previous) => ({
+                setManualState((previous) => ({
                   ...previous,
                   habitat: event.target
                     .value as AdaptationIslandState["habitat"],
@@ -90,7 +87,7 @@ export function AdaptationIslandSimulation() {
               type="checkbox"
               checked={state.predators}
               onChange={(event) =>
-                setState((previous) => ({
+                setManualState((previous) => ({
                   ...previous,
                   predators: event.target.checked,
                 }))
@@ -106,7 +103,9 @@ export function AdaptationIslandSimulation() {
             step={5}
             unit="%"
             onChange={(initialDark) =>
-              setState((previous) => resetIsland({ ...previous, initialDark }))
+              setManualState((previous) =>
+                resetIsland({ ...previous, initialDark }),
+              )
             }
           />
           <p className="life-hint">
@@ -118,21 +117,31 @@ export function AdaptationIslandSimulation() {
             <button
               type="button"
               disabled={state.generation >= 20}
-              onClick={() => setState(nextIslandGeneration)}
+              onClick={() => setManualState(nextIslandGeneration)}
             >
               Next generation
             </button>
             <button
               type="button"
               disabled={state.generation >= 20}
-              onClick={() => setState(fiveGenerations)}
+              onClick={() =>
+                setManualState((previous) =>
+                  advanceIslandGenerations(previous, 5),
+                )
+              }
             >
               {state.generation > 15
                 ? "Advance to generation 20"
                 : "Advance 5 generations"}
             </button>
-            <button type="button" onClick={() => setState(resetIsland)}>
+            <button type="button" onClick={() => setManualState(resetIsland)}>
               Reset population
+            </button>
+            <button
+              type="button"
+              onClick={() => setManualState(defaultAdaptationIslandState)}
+            >
+              Reset adaptation island
             </button>
           </div>
           <div className="life-generation">
@@ -148,8 +157,8 @@ export function AdaptationIslandSimulation() {
             <h3>Survival and inheritance</h3>
             <p>
               {state.predators
-                ? "Matching shells have survival weight 0.9; contrasting shells have weight 0.5."
-                : "Without predation, both colors have survival weight 0.9."}{" "}
+                ? "Matching shells have relative survival-and-contribution weight 0.9; contrasting shells have weight 0.5."
+                : "Without predation, both colors have relative weight 0.9."}{" "}
               Offspring inherit the parental color variant. The next generation
               is normalized to 100%.
             </p>
@@ -167,45 +176,29 @@ export function AdaptationIslandSimulation() {
         )}
       </div>
       <LifeInvestigations
-        items={[
-          {
-            label: "Change the environment",
-            predict:
-              "Will the same starting variants reach the same proportions on dark and pale ground?",
-            choices: ["Same proportions", "Different proportions"],
-            fixed:
-              "Start with 50% of each inherited variant and predation included. Compare exactly five generations, changing only the ground color. Each button resets the starting population.",
-            cases: [
-              ["Dark ground · 5 generations", () => run("dark", true)],
-              ["Pale ground · 5 generations", () => run("light", true)],
-            ],
-            explain:
-              "Which variant increased in each habitat? Explain how a change in relative survival changes the descendants’ proportions without changing an individual’s shell color.",
-          },
-          {
-            label: "Remove predation",
-            predict:
-              "Will shell proportions still change when both variants have equal survival?",
-            choices: ["Proportions stay fixed", "One color increases"],
-            fixed:
-              "Use dark ground, 50% of each variant and five generations in both trials. Change only predation; each button resets the same starting population.",
-            cases: [
-              ["Predation on · 5 generations", () => run("dark", true)],
-              ["Predation off · 5 generations", () => run("dark", false)],
-            ],
-            explain:
-              "Compare the initial and current bars. Which difference between variants is necessary for selection to shift their proportions in this model?",
-          },
-        ]}
+        resetKey={investigationReset}
+        items={adaptationIslandTrials.map((trial) => ({
+          label: trial.title,
+          predict: trial.question,
+          choices: trial.choices,
+          correctChoice: trial.correctChoice,
+          fixed: trial.controlled,
+          cases: [
+            [trial.caseLabels[0], () => run(trial.before)],
+            [trial.caseLabels[1], () => run(trial.after)],
+          ],
+          evidence: `${trial.evidence} Changed: ${trial.changed}. Held: ${trial.held.join(", ")}.`,
+          explain: trial.explain,
+        }))}
       />
       <p className="life-model-note">
-        This is a deterministic expected-frequency model, not a sampled
-        population or a forecast for real beetles. Survival weights are invented
-        teaching values. Reproduction copies the parental variant without
-        modeling mating or genes; population size, mutation, migration and
-        random drift are omitted. Natural selection changes populations across
-        generations, not individuals choosing or acquiring a useful trait.
+        {adaptationIslandCoreBoundary} Twenty symbols round the calculated
+        shares; use the percentages as evidence.
       </p>
+      <details className="life-boundary">
+        <summary>Model boundary</summary>
+        <p>{adaptationIslandBoundary}</p>
+      </details>
     </section>
   );
 }

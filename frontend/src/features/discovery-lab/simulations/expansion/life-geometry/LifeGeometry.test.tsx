@@ -205,5 +205,29 @@ describe("controlled investigations", () => {
     expect(screen.getByRole("status").textContent).toContain(
       "Generation 5: dark shells 50.0%",
     );
+    expect(screen.getByText(/supports your prediction/i)).toBeVisible();
+    expect(screen.getByText(/Changed: predation/i)).toBeVisible();
+  });
+  it("marks a wrong island prediction and clears stale evidence after a manual change", () => {
+    render(<AdaptationIslandSimulation />);
+    fireEvent.click(screen.getByRole("button", { name: "Same proportions" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dark ground · 5 generations" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Pale ground · 5 generations" }),
+    );
+    expect(screen.getByText(/does not support your prediction/i)).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Ground color"), {
+      target: { value: "dark" },
+    });
+    expect(
+      screen.queryByText(/does not support your prediction/i),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset adaptation island" }),
+    );
+    expect(screen.getByLabelText("Ground color")).toHaveValue("dark");
+    expect(screen.getByRole("status").textContent).toContain("Generation 0");
   });
 });
