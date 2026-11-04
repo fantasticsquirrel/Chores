@@ -99,4 +99,11 @@ rich-package gate, and must not be silently described as passing:
 
 The preserved source log is
 `/root/.openclaw/workspace/media/exploration-series/moving-plates/logs/package-broad-shared.log`.
-This durable queue item remains open for the full-series final verification.
+Resolved 2026-11-04: the Fraction regression now completes the two required
+guided comparisons before exercising free controls, then verifies the selected
+slice stays within the reduced denominator. The Machine regression verifies the
+current “Ideal input work 490.5 J” description and confirms fixed 196.2 J
+evidence is cleared. The Moon/Orbit regression now uses each current prediction
+and comparison control plus its topic-specific reward copy, checking both wrong
+and correct paths. `education-regressions.test.ts` passes 9/9. Final integrated
+verification remains pending.

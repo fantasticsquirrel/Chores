@@ -49,6 +49,10 @@ function worker(id: string) {
 it("fraction slice selection remains in range after reducing the denominator", () => {
   const send = worker("fraction-feast");
   send();
+  send("equivalentSame");
+  send("compareEquivalent");
+  send("additionAbove");
+  send("compareAddition");
   send("denominator", 7);
   send("slice", 24);
   send("denominator", 0);
@@ -108,26 +112,38 @@ it("changing a controlled variable clears stale fixed numerical comparison evide
   send("baseline");
   send("comparison");
   const result = send("loadKg", 100);
-  expect(result.description).toContain("Input work 490.5 J");
+  expect(result.description).toContain("Ideal input work 490.5 J");
   expect(result.sections?.[2].text).not.toContain("both 196.2 J");
 }, 30000);
 it("wrong Moon and orbit predictions never receive a matching-prediction reward", () => {
-  for (const [topic, wrong, right] of [
-    ["moon-phases", "predict0", "predict50"],
-    ["orbital-mechanics", "predict0", "predict1"],
+  for (const { topic, wrong, right, compare, reward } of [
+    {
+      topic: "moon-phases",
+      wrong: "quarter25",
+      right: "quarter50",
+      compare: "runQuarter",
+      reward: "The result matches your prediction",
+    },
+    {
+      topic: "orbital-mechanics",
+      wrong: "predict0",
+      right: "predict1",
+      compare: "test",
+      reward: "Your prediction matches:",
+    },
   ]) {
     const send = worker(topic);
     send();
     send(wrong);
-    const wrongResult = send("test");
+    const wrongResult = send(compare);
     expect(wrongResult.sections?.map((s) => s.text).join(" ")).not.toContain(
-      "Your prediction matches:",
+      reward,
     );
     send();
     send(right);
-    const rightResult = send("test");
+    const rightResult = send(compare);
     expect(rightResult.sections?.map((s) => s.text).join(" ")).toContain(
-      "Your prediction matches:",
+      reward,
     );
   }
 }, 30000);
