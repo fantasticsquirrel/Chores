@@ -1,7 +1,4 @@
-import {
-  ShapeComparisons,
-  AdaptationComparisons,
-} from "./lifeGeometryComparisons";
+import { AdaptationComparisons } from "./lifeGeometryComparisons";
 import { useState, type SetStateAction } from "react";
 import {
   cellExplorerBoundary,
@@ -19,7 +16,13 @@ import {
   islandObservation,
   type CellExplorerState,
   type CellPart,
+  type ShapeSlicerState,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
+import {
+  diagonalCubeState,
+  shapeSlicerBoundary,
+  shapeSlicerCoreBoundary,
+} from "@family-manager/family-api/discovery-models/shape-slicer";
 import { ActionButton } from "../../../../components/ActionButton";
 import { Control, Dot, Line } from "../Primitives";
 import {
@@ -32,6 +35,7 @@ import {
   ModelNote,
 } from "../LearningPrimitives";
 import { CellComparison } from "./cells/CellComparison";
+import { ShapeComparison } from "./shapes/ShapeComparison";
 
 export function CellExploration() {
   const [state, setState] = useState(defaultCellExplorerState);
@@ -148,10 +152,18 @@ export function CellExploration() {
 
 export function ShapeExploration() {
   const [state, setState] = useState(defaultShapeSlicerState);
+  const [comparisonReset, setComparisonReset] = useState(0);
+  const setManualState = (next: SetStateAction<ShapeSlicerState>) => {
+    setState(next);
+    setComparisonReset((value) => value + 1);
+  };
   const result = crossSection(state),
     label = shapeObservation(state);
   return (
-    <LearningFrame onReset={() => setState(defaultShapeSlicerState)}>
+    <LearningFrame
+      resetLabel="Reset shape slicer"
+      onReset={() => setManualState(defaultShapeSlicerState)}
+    >
       <Diagram visualState={{ kind: "shape-slicer", ...state }} label={label}>
         {(width) => (
           <>
@@ -184,7 +196,7 @@ export function ShapeExploration() {
       <Choice
         label="Solid"
         value={state.solid}
-        onChange={(solid) => setState({ ...state, solid })}
+        onChange={(solid) => setManualState({ ...state, solid })}
         options={[
           { value: "cube", label: "Cube" },
           { value: "tetrahedron", label: "Tetrahedron" },
@@ -197,7 +209,7 @@ export function ShapeExploration() {
         min={0}
         max={90}
         step={5}
-        onChange={(tilt) => setState({ ...state, tilt })}
+        onChange={(tilt) => setManualState({ ...state, tilt })}
       />
       <Control
         label="Turn (degrees)"
@@ -205,7 +217,7 @@ export function ShapeExploration() {
         min={0}
         max={90}
         step={5}
-        onChange={(turn) => setState({ ...state, turn })}
+        onChange={(turn) => setManualState({ ...state, turn })}
       />
       <Control
         label="Slice offset (units)"
@@ -213,23 +225,19 @@ export function ShapeExploration() {
         min={-1.75}
         max={1.75}
         step={0.05}
-        onChange={(offset) => setState({ ...state, offset })}
+        onChange={(offset) => setManualState({ ...state, offset })}
       />
       <ActionButton
         label="Center slice"
-        onPress={() => setState({ ...state, offset: 0 })}
+        onPress={() => setManualState({ ...state, offset: 0 })}
       />
       <ActionButton
         label="Diagonal cube slice"
-        onPress={() =>
-          setState({ solid: "cube", tilt: 45, turn: 35.26438968, offset: 0 })
-        }
+        onPress={() => setManualState(diagonalCubeState)}
       />
-      <ShapeComparisons setState={setState} />
+      <ShapeComparison onApply={setState} resetKey={comparisonReset} />
       <ModelNote>
-        Ideal geometric solids: cube side 2 units, sphere radius 1 unit. Tilting
-        or turning the solid changes its orientation relative to the same flat
-        slice. A plane beyond the solid makes no cross-section.
+        {shapeSlicerCoreBoundary} {shapeSlicerBoundary}
       </ModelNote>
     </LearningFrame>
   );

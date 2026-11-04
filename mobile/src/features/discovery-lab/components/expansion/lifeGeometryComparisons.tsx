@@ -1,47 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  defaultShapeSlicerState,
   defaultAdaptationIslandState,
   nextIslandGeneration,
-  type ShapeSlicerState,
   type AdaptationIslandState,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
 import { ControlledComparison } from "./ControlledComparison";
 type Setter<T> = Dispatch<SetStateAction<T>>;
-export function ShapeComparisons({
-  setState,
-}: {
-  setState: Setter<ShapeSlicerState>;
-}) {
-  return (
-    <>
-      <ControlledComparison
-        title="Cube orientation"
-        prediction="Predict: must every flat slice through a cube have four sides?"
-        baseline="Cube with a center slice and no tilt or turn."
-        change="Kept the slice centered; tilted the cube 45° and turned it about 35.26°."
-        explain="Count the cross-section edges. How can it have more edges than any single cube face?"
-        onBaseline={() => setState(defaultShapeSlicerState)}
-        onChange={() =>
-          setState({ ...defaultShapeSlicerState, tilt: 45, turn: 35.26438968 })
-        }
-      />
-      <ControlledComparison
-        title="Sphere slice position"
-        prediction="Predict: will a slice away from a sphere's center have a different shape, size, or both?"
-        baseline="Sphere of radius 1, center slice at offset 0."
-        change="Only the slice offset changed to 0.6 units."
-        explain="Compare the radius and area. Why does the shape remain a circle?"
-        onBaseline={() =>
-          setState({ ...defaultShapeSlicerState, solid: "sphere" })
-        }
-        onChange={() =>
-          setState({ ...defaultShapeSlicerState, solid: "sphere", offset: 0.6 })
-        }
-      />
-    </>
-  );
-}
 const generations = (state: AdaptationIslandState) =>
   Array.from({ length: 5 }).reduce<AdaptationIslandState>(
     (next) => nextIslandGeneration(next),

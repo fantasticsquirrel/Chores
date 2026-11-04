@@ -224,7 +224,10 @@ export function createShapeSlicerScene(
         text: `Cut height ${state.offset.toFixed(2)}`,
         at: [2.55, state.offset, 0],
       },
-      { text: crossSection(state).name, at: [-1.4, state.offset + 0.12, 1.6] },
+      {
+        text: `Section · ${crossSection(state).name}`,
+        at: [-1.4, state.offset + 0.12, 1.6],
+      },
     ],
     pick(ray) {
       const hit = ray

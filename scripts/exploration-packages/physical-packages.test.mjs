@@ -710,6 +710,97 @@ test("Cell Explorer package gates predictions, clears stale evidence and resets"
   assert.equal(frame.description, initial.description);
   assert.match(frame.sections[2].text, /After comparing/);
 });
+test("Shape Slicer package preserves shared model, trials and rich scene", async () => {
+  const contents = `
+    import {createShapeSlicerScene as original} from './packages/discovery-scenes/src/expansion/life-geometry/shape';
+    import {createShapeSlicerScene as converted} from './scripts/exploration-packages/shape-slicer/shape';
+    import {crossSection as originalSection} from './packages/family-api/src/discovery-models/expansion-life-geometry';
+    import {shapeSlicerTrials as originalTrials} from './packages/family-api/src/discovery-models/shape-slicer';
+    import {crossSection as convertedSection, shapeSlicerTrials as convertedTrials} from './scripts/exploration-packages/shape-slicer/model';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[
+      {solid:'cube',tilt:0,turn:0,offset:0},
+      {solid:'cube',tilt:45,turn:35.26438968,offset:0},
+      {solid:'tetrahedron',tilt:25,turn:40,offset:0.35},
+      {solid:'sphere',tilt:0,turn:0,offset:0.6},
+      {solid:'sphere',tilt:0,turn:0,offset:1.25}
+    ];
+    globalThis.trials=[originalTrials,convertedTrials];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const originalModel=originalSection(state), convertedModel=convertedSection(state);
+      const originalScene=serializeExpansionScene(a,p), convertedScene=serializeExpansionScene(b,p);
+      const output={state,model:JSON.stringify(originalModel)===JSON.stringify(convertedModel),scene:JSON.stringify(originalScene)===JSON.stringify(convertedScene)};
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Shape Slicer package trial content parity",
+  );
+  for (const result of context.result) {
+    assert.equal(
+      result.model,
+      true,
+      `Shape Slicer model parity ${JSON.stringify(result.state)}`,
+    );
+    assert.equal(
+      result.scene,
+      true,
+      `Shape Slicer scene parity ${JSON.stringify(result.state)}`,
+    );
+  }
+});
+test("Shape Slicer package gates predictions, clears evidence and resets", async () => {
+  const send = await worker("shape-slicer");
+  const initial = send({ type: "reset", values: {} });
+  assert.deepEqual(
+    initial.controls.map((control) => [control.id, control.min, control.max]),
+    [
+      ["solid", 0, 2],
+      ["tilt", 0, 90],
+      ["turn", 0, 90],
+      ["offset", -1.75, 1.75],
+    ],
+  );
+  let frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /After comparing/);
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /does not support your prediction/);
+  assert.match(
+    frame.sections[2].text,
+    /square with 4 sides.*hexagon with 6 sides/,
+  );
+  assert.match(frame.sections[2].text, /Changed: cube orientation/);
+  frame = send({ type: "control", control: "offset", values: { offset: 0.2 } });
+  assert.match(frame.sections[2].text, /After comparing/);
+
+  send({ type: "control", control: "trial_1", values: {} });
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /supports your prediction/);
+  assert.match(frame.sections[2].text, /Radius changes from 1\.00 to 0\.80/);
+  assert.match(frame.footnote, /two-dimensional intersection/);
+  assert.match(frame.footnote, /Camera motion changes only the view/);
+
+  frame = send({ type: "reset", values: {} });
+  assert.deepEqual(frame.controls, initial.controls);
+  assert.equal(frame.description, initial.description);
+  assert.match(frame.sections[2].text, /After comparing/);
+});
 test("Cloud and Rain package gates predictions and reports exact correct or incorrect evidence", async () => {
   const send = await worker("cloud-rain-lab");
   let frame = send({ type: "reset", values: {} });

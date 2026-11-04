@@ -1,34 +1,39 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type SetStateAction } from "react";
 import {
   crossSection,
   defaultShapeSlicerState,
   shapeObservation,
   type ShapeSlicerState,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
+import {
+  diagonalCubeState,
+  shapeSlicerBoundary,
+  shapeSlicerCoreBoundary,
+  shapeSlicerTrials,
+} from "@family-manager/family-api/discovery-models/shape-slicer";
 import { createShapeSlicerScene } from "@family-manager/discovery-scenes/expansion/life-geometry/index";
 import { ExpansionCanvas } from "../ExpansionCanvas";
 import { Slider } from "../../SimulationPrimitives";
 import { LifeInvestigations } from "./LifeInvestigations";
 import "./life-geometry.css";
-const diagonal = {
-  solid: "cube" as const,
-  tilt: 45,
-  turn: 35.26438968,
-  offset: 0,
-};
 export function ShapeSlicerSimulation() {
   const [state, setState] = useState<ShapeSlicerState>(defaultShapeSlicerState),
+    [investigationReset, setInvestigationReset] = useState(0),
     dragging = useRef(false);
+  const setManualState = (next: SetStateAction<ShapeSlicerState>) => {
+    setState(next);
+    setInvestigationReset((value) => value + 1);
+  };
   const section = crossSection(state),
     observation = shapeObservation(state);
   const set = <K extends keyof ShapeSlicerState>(
     key: K,
     value: ShapeSlicerState[K],
-  ) => setState((previous) => ({ ...previous, [key]: value }));
+  ) => setManualState((previous) => ({ ...previous, [key]: value }));
   const moveCut = (value: number) =>
     set("offset", Math.round(Math.max(-1.75, Math.min(1.75, value)) * 20) / 20);
   const run = (next: ShapeSlicerState) => {
-    setState(next);
+    setState({ ...next });
     return shapeObservation(next);
   };
   const points = section.points
@@ -37,10 +42,10 @@ export function ShapeSlicerSimulation() {
   return (
     <section className="life-lesson life-shape">
       <header>
-        <h2>Can a cube make a hexagon?</h2>
+        <h2>How does a plane make a cross-section?</h2>
         <p>
-          A cross-section is the flat region where a plane meets a solid. Rotate
-          the solid or move the cutting plane.
+          Predict the section, change only orientation or plane height, and use
+          side, radius and area evidence to explain the result.
         </p>
       </header>
       <div className="life-workspace">
@@ -101,14 +106,17 @@ export function ShapeSlicerSimulation() {
             <button type="button" onClick={() => set("offset", 0)}>
               Center the cut
             </button>
-            <button type="button" onClick={() => setState(diagonal)}>
+            <button
+              type="button"
+              onClick={() => setManualState(diagonalCubeState)}
+            >
               Diagonal cube cut
             </button>
             <button
               type="button"
-              onClick={() => setState(defaultShapeSlicerState)}
+              onClick={() => setManualState(defaultShapeSlicerState)}
             >
-              Reset solid
+              Reset shape slicer
             </button>
           </div>
           <div className="life-section-view">
@@ -231,55 +239,29 @@ export function ShapeSlicerSimulation() {
         <p>{observation}</p>
       </div>
       <LifeInvestigations
-        items={[
-          {
-            label: "Rotate a cube",
-            predict: "Does a central cube slice always have four sides?",
-            choices: ["Always four", "Can have more"],
-            fixed:
-              "Keep the same cube and cut through its center. Compare the unrotated cube with the diagonal orientation. The plane does not move.",
-            cases: [
-              ["Face-parallel cube", () => run(defaultShapeSlicerState)],
-              ["Diagonal cube", () => run(diagonal)],
-            ],
-            explain:
-              "Count the solid’s edges touched by each cut. Why can a solid with square faces have a six-sided cross-section?",
-          },
-          {
-            label: "Move through a sphere",
-            predict:
-              "Will moving a plane away from a sphere’s center change the section’s shape, size, or both?",
-            choices: ["Size only", "Shape and size", "Neither"],
-            fixed:
-              "Keep a sphere of radius 1 and the same orientation. Compare cut height 0 with 0.6 units. Use the straight-on view, not perspective, to compare size.",
-            cases: [
-              [
-                "Sphere · center",
-                () => run({ ...defaultShapeSlicerState, solid: "sphere" }),
-              ],
-              [
-                "Sphere · height 0.6",
-                () =>
-                  run({
-                    ...defaultShapeSlicerState,
-                    solid: "sphere",
-                    offset: 0.6,
-                  }),
-              ],
-            ],
-            explain:
-              "Compare the two circle radii and areas. Why does the circle shrink before the plane stops meeting the sphere?",
-          },
-        ]}
+        resetKey={investigationReset}
+        items={shapeSlicerTrials.map((trial) => ({
+          label: trial.title,
+          predict: trial.question,
+          choices: trial.choices,
+          correctChoice: trial.correctChoice,
+          fixed: trial.controlled,
+          cases: [
+            [trial.caseLabels[0], () => run(trial.before)],
+            [trial.caseLabels[1], () => run(trial.after)],
+          ],
+          evidence: `${trial.evidence} Changed: ${trial.changed}. Held: ${trial.held.join(", ")}.`,
+          explain: trial.explain,
+        }))}
       />
       <p className="life-model-note">
-        Cube side length: 2 units. Sphere radius: 1 unit. The tetrahedron’s
-        vertices lie at alternating corners of that cube. Polygon sections use
-        exact edge–plane intersections; sphere areas use πr², not a polygon
-        estimate. Readouts are rounded. A tangent cut can be a point or line
-        rather than a region with area. Turning the camera changes only your
-        view.
+        {shapeSlicerCoreBoundary} Use the equal-scale straight-on section for
+        size comparisons; camera perspective does not change the model result.
       </p>
+      <details className="life-boundary">
+        <summary>Model boundary</summary>
+        <p>{shapeSlicerBoundary}</p>
+      </details>
     </section>
   );
 }

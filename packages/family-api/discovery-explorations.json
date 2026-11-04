@@ -991,22 +991,22 @@
     "subject": "Mathematics",
     "grade_bands": ["3-5", "6-8"],
     "tags": ["geometry", "solids", "cross-sections", "spatial-reasoning"],
-    "summary": "Rotate a cube, tetrahedron or sphere, move a slicing plane and compare the resulting cross sections.",
-    "question": "Can the same solid make different cross-section shapes?",
-    "explanation": "A cross section is where a solid meets a flat plane. Rotating a solid relative to the plane or moving the plane can change the section. Changing only the viewing angle does not change the actual section. A tetrahedron has four triangular faces. A cube can make several section polygons; a sphere’s non-tangent plane sections are circles of different sizes. This model uses ideal solids and reports area and boundary length in model units. A flat section has no thickness, unlike a physical slice.",
+    "summary": "Predict, make and measure plane sections of a cube, tetrahedron or sphere while controlling orientation and plane height.",
+    "question": "How can one plane make different two-dimensional sections from the same solid?",
+    "explanation": "A cross-section is the two-dimensional intersection of a solid and a plane, not a shadow, outer face or thick physical slice. Rotating a solid relative to a fixed plane can change which faces and edges the plane meets. Moving a parallel plane through a sphere changes circle size but not the circular shape until tangency. Camera motion changes only the view. This ideal model reports computed area and boundary length in model units; readouts are rounded and omit material thickness, deformation and measurement uncertainty.",
     "experiments": [
       {
-        "title": "A cube is not always square inside",
-        "instruction": "Choose the cube with tilt 0°, turn 0° and slice offset 0. Predict the section made by the Diagonal cube slice preset, then compare it with the starting section.",
-        "observe": "The face-parallel center slice is a square, while the diagonal center slice is a hexagon. Compare the number of intersected faces and explain why a cube’s square faces do not force every section to be square."
+        "title": "Rotate a cube",
+        "instruction": "Predict whether every central cube section must have four sides. Keep the side-2 cube and plane height 0 fixed; change only cube orientation from face-parallel to the diagonal preset.",
+        "observe": "The first section is a 4-sided square with area 4.00. The diagonal plane reaches six cube faces and makes a 6-sided hexagon with area 5.20. Use the intersected faces, not the cube’s square silhouette, to explain the result."
       },
       {
         "title": "Move a plane through a sphere",
-        "instruction": "Choose the sphere and keep its orientation fixed. Predict how the section changes when slice offset moves from 0 to 0.6, then compare the radius and area.",
-        "observe": "The radius decreases from 1 to 0.8 units and the area falls to 64% of the central section’s area. Explain why both sections remain circles even though their sizes differ."
+        "instruction": "Predict whether shape, size or both change. Keep the radius-1 sphere and plane orientation fixed; change only plane height from 0 to 0.6 and use the equal-scale straight-on view.",
+        "observe": "Both sections are circles. Radius decreases from 1.00 to 0.80 units and area from 3.14 to 2.01 square units, 64% of the central area. Explain why a parallel plane makes smaller circles as it approaches tangency."
       }
     ],
-    "misconception": "A cross section is not a solid’s shadow or outer silhouette. A plane that misses the solid makes no section; a tangent plane can meet a sphere at just one point.",
+    "misconception": "Square cube faces do not force every cube section to be square. A plane that misses the solid makes no section; a tangent plane can meet at a point or line with zero area.",
     "sources": [
       {
         "title": "Illustrative Mathematics: Different plane sections of a cube",

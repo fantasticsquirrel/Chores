@@ -40,6 +40,9 @@ describe("React-free life and geometry scenes", () => {
   });
   it("updates the exact section and releases old geometry", () => {
     const scene = createShapeSlicerScene(defaultShapeSlicerState);
+    expect(scene.labels?.().map((label) => label.text)).toContain(
+      "Section · square",
+    );
     let geometry: T.BufferGeometry | undefined;
     scene.group.traverse((object) => {
       if (!geometry && object instanceof T.Mesh) geometry = object.geometry;
@@ -47,10 +50,17 @@ describe("React-free life and geometry scenes", () => {
     const dispose = vi.spyOn(geometry!, "dispose");
     scene.update({ ...defaultShapeSlicerState, tilt: 45, turn: 35.26438968 });
     expect(dispose).toHaveBeenCalledOnce();
-    expect(scene.labels().some((label) => label.text === "hexagon")).toBe(true);
-    scene.update({ ...defaultShapeSlicerState, solid: "sphere", offset: 1.75 });
     expect(
-      scene.labels().some((label) => label.text === "no intersection"),
+      scene.labels().some((label) => label.text === "Section · hexagon"),
+    ).toBe(true);
+    scene.update({ ...defaultShapeSlicerState, solid: "sphere", offset: 1.75 });
+    expect(scene.labels?.().map((label) => label.text)).toContain(
+      "Section · no intersection",
+    );
+    expect(
+      scene
+        .labels()
+        .some((label) => label.text === "Section · no intersection"),
     ).toBe(true);
     scene.dispose();
   });

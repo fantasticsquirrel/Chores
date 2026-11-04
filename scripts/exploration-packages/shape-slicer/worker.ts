@@ -3,20 +3,20 @@ import {
   defaultShapeSlicerState as initial,
   crossSection,
   shapeObservation,
+  diagonalCubeState,
+  normalizeShapeSlicerState,
+  shapeSlicerBoundary,
+  shapeSlicerCoreBoundary,
+  shapeSlicerTrials,
 } from "./model";
 import { createShapeSlicerScene } from "./shape";
-const diagonal = {
-  solid: "cube" as const,
-  tilt: 45,
-  turn: 35.26438968,
-  offset: 0,
-};
 installLesson({
   initial,
+  normalize: normalizeShapeSlicerState,
   build: createShapeSlicerScene,
-  title: "Can a cube make a hexagon?",
+  title: "How does a plane make a cross-section?",
   introduction:
-    "A cross-section is the flat region where a plane meets a solid. Rotate the solid or move the cutting plane.",
+    "Predict the section, change only orientation or plane height, and use side, radius and area evidence to explain the result.",
   fields: [
     { id: "solid", label: "Solid", options: ["cube", "tetrahedron", "sphere"] },
     { id: "tilt", label: "Solid tilt (degrees)", min: 0, max: 90, step: 0.1 },
@@ -40,7 +40,11 @@ installLesson({
       label: "Center the cut",
       run: (s) => ({ ...s, offset: 0 }),
     },
-    { id: "diagonal", label: "Diagonal cube cut", run: () => diagonal },
+    {
+      id: "diagonal",
+      label: "Diagonal cube cut",
+      run: () => diagonalCubeState,
+    },
   ],
   describe: (s) =>
     `${shapeObservation(s)} Amber plane horizontal; solid tilt ${s.tilt.toFixed(1)}°, turn ${s.turn.toFixed(1)}°, height ${s.offset.toFixed(2)}. The straight-on view uses equal scale in both directions; camera motion changes view only.`,
@@ -115,32 +119,10 @@ installLesson({
       ],
     };
   },
-  trials: [
-    {
-      title: "Rotate a cube",
-      question: "Does a central cube slice always have four sides?",
-      choices: ["Always four", "Can have more"],
-      controlled:
-        "Keep the same cube and central plane. Compare unrotated and diagonal orientations without moving the plane.",
-      before: initial,
-      after: diagonal,
-      change: "Compare diagonal cube",
-      explain:
-        "Count the solid edges touched by each cut. Why can square faces yield a six-sided section?",
-    },
-    {
-      title: "Move through a sphere",
-      question:
-        "Will moving a plane away from a sphere center change section shape, size, or both?",
-      choices: ["Size only", "Shape and size", "Neither"],
-      controlled:
-        "Keep radius 1 and orientation fixed. Compare height 0 and 0.6 using the straight-on view, not perspective.",
-      before: { ...initial, solid: "sphere" },
-      after: { ...initial, solid: "sphere", offset: 0.6 },
-      change: "Move sphere cut to 0.6",
-      explain:
-        "Compare circle radii and areas. Why does the circle shrink before the plane stops meeting the sphere?",
-    },
-  ],
-  note: "Cube side 2 units; sphere radius 1. Tetrahedron vertices at alternating cube corners. Polygon sections use exact edge–plane intersections; sphere area uses πr², not polygon estimate. Readouts rounded. Tangent cuts can be point or line rather than area. Drag view without changing cut; use cut-height slider or ruler arrows to move plane.",
+  trials: shapeSlicerTrials.map((trial) => ({
+    ...trial,
+    choices: [...trial.choices],
+    held: [...trial.held],
+  })),
+  note: `${shapeSlicerCoreBoundary} Use the equal-scale straight-on section for size comparisons. ${shapeSlicerBoundary}`,
 });

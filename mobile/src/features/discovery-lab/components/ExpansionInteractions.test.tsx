@@ -85,6 +85,7 @@ const cases: {
     action: "Diagonal cube slice",
     changed: { tilt: 45, turn: 35.26438968 },
     result: /cross-section is a hexagon/,
+    reset: "Reset shape slicer",
   },
   {
     id: "adaptation-island",
@@ -110,7 +111,7 @@ const comparisons = [
     id: "cell-explorer",
     titles: ["Compare molecules", "Add a carrier"],
   },
-  { id: "shape-slicer", titles: ["Cube orientation", "Sphere slice position"] },
+  { id: "shape-slicer", titles: ["Rotate a cube", "Move through a sphere"] },
   {
     id: "adaptation-island",
     titles: ["Habitat and survival", "Predation and selection"],
@@ -198,6 +199,15 @@ describe("native nine-topic controls and paired investigations", () => {
             }),
           );
         }
+        if (id === "shape-slicer") {
+          if (index > 0)
+            fireEvent.press(view.getByRole("radio", { name: title }));
+          fireEvent.press(
+            view.getByRole("radio", {
+              name: index === 0 ? "Can make more" : "Size only",
+            }),
+          );
+        }
         fireEvent.press(
           view.getByRole("button", { name: `Set baseline: ${title}` }),
         );
@@ -233,6 +243,36 @@ describe("native nine-topic controls and paired investigations", () => {
       view.queryByRole("button", { name: "Set baseline: Compare molecules" }),
     ).toBeNull();
     expect(view.queryByText(/does not support your prediction/)).toBeNull();
+  });
+  it("gives Shape Slicer numerical feedback and clears stale evidence", () => {
+    const view = render(<NativeExploration id="shape-slicer" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Rotate a cube" }),
+    ).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Always four" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Rotate a cube" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Rotate a cube" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(
+      view.getByText(/square with 4 sides.*hexagon with 6 sides/),
+    ).toBeTruthy();
+    fireEvent.press(
+      view.getByRole("button", { name: "Increase Tilt (degrees)" }),
+    );
+    expect(view.queryByText(/does not support your prediction/)).toBeNull();
+    fireEvent.press(view.getByRole("button", { name: "Reset shape slicer" }));
+    expect(lastState()).toMatchObject({
+      solid: "cube",
+      tilt: 0,
+      turn: 0,
+      offset: 0,
+    });
+    view.unmount();
   });
   it("gives Cloud and Rain exact evidence, feedback, state reset, and physical units", () => {
     const view = render(<NativeExploration id="cloud-rain-lab" />);

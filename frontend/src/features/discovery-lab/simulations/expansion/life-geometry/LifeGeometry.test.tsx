@@ -145,7 +145,7 @@ describe("controlled investigations", () => {
     render(<ShapeSlicerSimulation />);
     fireEvent.click(screen.getByRole("tab", { name: "Move through a sphere" }));
     expect(
-      screen.queryByText(/Why does the circle shrink/),
+      screen.queryByText(/Every non-tangent plane section/),
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Size only" }));
     fireEvent.click(screen.getByRole("button", { name: "Sphere · center" }));
@@ -153,7 +153,7 @@ describe("controlled investigations", () => {
       "Radius 1.00 units",
     );
     expect(
-      screen.queryByText(/Why does the circle shrink/),
+      screen.queryByText(/Every non-tangent plane section/),
     ).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Sphere · height 0.6" }),
@@ -161,7 +161,28 @@ describe("controlled investigations", () => {
     expect(screen.getByRole("status").textContent).toContain(
       "Radius 0.80 units",
     );
-    expect(screen.getByText(/Why does the circle shrink/)).toBeVisible();
+    expect(screen.getByText(/Every non-tangent plane section/)).toBeVisible();
+    expect(screen.getByText(/supports your prediction/i)).toBeVisible();
+    expect(screen.getByText(/Changed: plane height/i)).toBeVisible();
+  });
+  it("marks a wrong shape prediction and clears stale evidence after a manual change", () => {
+    render(<ShapeSlicerSimulation />);
+    fireEvent.click(screen.getByRole("tab", { name: "Move through a sphere" }));
+    fireEvent.click(screen.getByRole("button", { name: "Shape and size" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sphere · center" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Sphere · height 0.6" }),
+    );
+    expect(screen.getByText(/does not support your prediction/i)).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Cut height"), {
+      target: { value: "0.4" },
+    });
+    expect(
+      screen.queryByText(/does not support your prediction/i),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Reset shape slicer" }));
+    expect(screen.getByLabelText("Solid")).toHaveValue("cube");
+    expect(screen.getByRole("status").textContent).toContain("square");
   });
   it("resets both population trials to equal variation and equal five-generation duration", () => {
     render(<AdaptationIslandSimulation />);

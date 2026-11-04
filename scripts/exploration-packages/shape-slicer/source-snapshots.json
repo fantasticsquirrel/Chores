@@ -1,0 +1,17 @@
+{
+  "reviewed": "2026-11-04",
+  "snapshots": [
+    {
+      "file": "illustrative-mathematics-cube-sections.html",
+      "url": "https://tasks.illustrativemathematics.org/content-standards/7/G/A/3/tasks/1532",
+      "bytes": 30191,
+      "sha256": "4e9585cb2e08d27692f0cc1b908b9d68e025b99df27bf2f3b22878ed8d560873"
+    },
+    {
+      "file": "illustrative-mathematics-slicing-solids.html",
+      "url": "https://im.kendallhunt.com/HS/students/2/5/2/index.html",
+      "bytes": 143483,
+      "sha256": "1abbe5cd68dc5680dbb100d711b94aa96257a69997b4248aafadb00d8106cda5"
+    }
+  ]
+}
