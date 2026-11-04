@@ -1,19 +1,22 @@
 import { installLesson } from "../physical-lesson";
 import {
   defaultCellExplorerState as initial,
+  cellExplorerBoundary,
+  cellExplorerCoreBoundary,
+  cellExplorerTrials,
   cellParts,
+  normalizeCellExplorerState,
   stepCellTransport,
   cellObservation,
 } from "./model";
 import { createCellExplorerScene, cellPartOrder } from "./cell";
-const trial = (molecule: "oxygen" | "glucose", carrier: boolean) =>
-  stepCellTransport({ ...initial, molecule, carrier, outside: 12, inside: 4 });
 installLesson({
   initial,
+  normalize: normalizeCellExplorerState,
   build: createCellExplorerScene,
   title: "What can cross a cell membrane?",
   introduction:
-    "Select a cell part, then compare oxygen and glucose moving between equal-sized compartments.",
+    "Predict which substance can cross, change one variable, and use concentration evidence to explain selective permeability.",
   fields: [
     {
       id: "cellType",
@@ -65,32 +68,10 @@ installLesson({
   ],
   describe: (s) =>
     `${s.cellType === "plant" ? "Photosynthetic plant cell with wall, membrane, central vacuole and chloroplasts." : "Animal cell without wall or chloroplasts."} Both have nucleus and mitochondria. ${cellParts[s.selected].name}: ${cellParts[s.selected].function} ${cellObservation(s)} Total concentration units in equal volumes ${(s.inside + s.outside).toFixed(1)}; a transfer step conserves this total.`,
-  trials: [
-    {
-      title: "Compare molecules",
-      question: "With no carrier, will both molecules enter at the same rate?",
-      choices: ["Same transfer", "Different transfer"],
-      controlled:
-        "Start both trials at outside 12, inside 4 with the same cell type and carrier off. Compare one transfer step for oxygen and glucose.",
-      before: trial("oxygen", false),
-      after: trial("glucose", false),
-      change: "Compare glucose after one step",
-      explain:
-        "Which changed inside concentration? What does that show about a selectively permeable membrane?",
-    },
-    {
-      title: "Add a carrier",
-      question:
-        "Can a carrier change glucose transfer without changing the starting concentration difference?",
-      choices: ["Transfer changes", "No change"],
-      controlled:
-        "Start glucose at outside 12 and inside 4 for each trial. Compare one step without and with the carrier.",
-      before: trial("glucose", false),
-      after: trial("glucose", true),
-      change: "Compare carrier after one step",
-      explain:
-        "Compare amounts on each side and total. Does a carrier create glucose, or provide a path?",
-    },
-  ],
-  note: "Organelles enlarged and arranged for inspection, not to scale. Concentrations are relative units in two equal volumes. Each step shows net transfer, not individual molecular motion or elapsed time. Only passive oxygen diffusion and carrier-mediated glucose diffusion; active transport and reactions omitted. A cell wall does not replace a membrane. Molecule symbols rounded; use numeric concentrations.",
+  trials: cellExplorerTrials.map((trial) => ({
+    ...trial,
+    choices: [...trial.choices],
+    held: [...trial.held],
+  })),
+  note: `${cellExplorerCoreBoundary} A cell wall does not replace a membrane. Use numeric concentrations, not rounded molecule symbols, for comparisons. ${cellExplorerBoundary}`,
 });

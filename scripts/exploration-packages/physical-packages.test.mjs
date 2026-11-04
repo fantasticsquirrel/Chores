@@ -629,6 +629,87 @@ test("Magnetic Fields package gates predictions, clears stale evidence and reset
   assert.equal(frame.description, initial.description);
   assert.match(frame.sections[2].text, /After comparing/);
 });
+test("Cell Explorer package preserves shared model, trials and rich scene across bounded states", async () => {
+  const contents = `
+    import {createCellExplorerScene as original} from './packages/discovery-scenes/src/expansion/life-geometry/cell';
+    import {createCellExplorerScene as converted} from './scripts/exploration-packages/cell-explorer/cell';
+    import {stepCellTransport as originalStep, cellExplorerTrials as originalTrials} from './packages/family-api/src/discovery-models/cell-explorer';
+    import {stepCellTransport as convertedStep, cellExplorerTrials as convertedTrials} from './scripts/exploration-packages/cell-explorer/model';
+    import {serializeExpansionScene} from './scripts/exploration-packages/shared/serialize-scene';
+    const p={title:'Parity',background:['#10212b','#142b35','#10212b']};
+    const states=[
+      {cellType:'plant',selected:'membrane',molecule:'oxygen',carrier:false,outside:12,inside:4},
+      {cellType:'plant',selected:'chloroplast',molecule:'glucose',carrier:false,outside:20,inside:0},
+      {cellType:'animal',selected:'mitochondrion',molecule:'glucose',carrier:true,outside:4,inside:12},
+      {cellType:'animal',selected:'membrane',molecule:'oxygen',carrier:false,outside:8,inside:8}
+    ];
+    globalThis.trials=[originalTrials,convertedTrials];
+    globalThis.result=states.map((state)=>{
+      const a=original(state), b=converted(state);
+      const originalModel=originalStep(state), convertedModel=convertedStep(state);
+      const originalScene=serializeExpansionScene(a,p), convertedScene=serializeExpansionScene(b,p);
+      const output={state,model:JSON.stringify(originalModel)===JSON.stringify(convertedModel),scene:JSON.stringify(originalScene)===JSON.stringify(convertedScene)};
+      a.dispose(); b.dispose(); return output;
+    });`;
+  const bundle = await build({
+    stdin: { contents, resolveDir: process.cwd(), loader: "ts" },
+    bundle: true,
+    write: false,
+    platform: "node",
+    format: "iife",
+  });
+  const context = { console };
+  vm.runInNewContext(bundle.outputFiles[0].text, context);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.trials[1])),
+    JSON.parse(JSON.stringify(context.trials[0])),
+    "Cell Explorer package trial content parity",
+  );
+  for (const result of context.result) {
+    assert.equal(
+      result.model,
+      true,
+      `Cell Explorer package model parity ${JSON.stringify(result.state)}`,
+    );
+    assert.equal(
+      result.scene,
+      true,
+      `Cell Explorer package scene parity ${JSON.stringify(result.state)}`,
+    );
+  }
+});
+test("Cell Explorer package gates predictions, clears stale evidence and resets", async () => {
+  const send = await worker("cell-explorer");
+  const initial = send({ type: "reset", values: {} });
+  let frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /After comparing/);
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /does not support your prediction/);
+  assert.match(frame.sections[2].text, /Oxygen changed.*Glucose stayed/);
+  assert.match(frame.sections[2].text, /Changed: molecule/);
+  frame = send({
+    type: "control",
+    control: "outside",
+    values: { outside: 20 },
+  });
+  assert.match(frame.sections[2].text, /After comparing/);
+
+  send({ type: "control", control: "trial_1", values: {} });
+  send({ type: "control", control: "predict_0", values: {} });
+  send({ type: "control", control: "baseline", values: {} });
+  frame = send({ type: "control", control: "comparison", values: {} });
+  assert.match(frame.sections[2].text, /supports your prediction/);
+  assert.match(frame.sections[2].text, /total stayed 16\.0/);
+  assert.match(frame.footnote, /not measurements or elapsed time/);
+  assert.match(frame.footnote, /facilitated diffusion/);
+
+  frame = send({ type: "reset", values: {} });
+  assert.deepEqual(frame.controls, initial.controls);
+  assert.equal(frame.description, initial.description);
+  assert.match(frame.sections[2].text, /After comparing/);
+});
 test("Cloud and Rain package gates predictions and reports exact correct or incorrect evidence", async () => {
   const send = await worker("cloud-rain-lab");
   let frame = send({ type: "reset", values: {} });

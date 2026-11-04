@@ -1,13 +1,21 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 export type LifeInvestigation = {
   label: string;
   predict: string;
-  choices: string[];
+  choices: readonly string[];
+  correctChoice?: string;
   fixed: string;
-  cases: [string, () => string][];
+  cases: readonly (readonly [string, () => string])[];
+  evidence?: string;
   explain: string;
 };
-export function LifeInvestigations({ items }: { items: LifeInvestigation[] }) {
+export function LifeInvestigations({
+  items,
+  resetKey,
+}: {
+  items: readonly LifeInvestigation[];
+  resetKey?: number;
+}) {
   const id = useId();
   const [active, setActive] = useState(0),
     [prediction, setPrediction] = useState<string | null>(null),
@@ -18,6 +26,11 @@ export function LifeInvestigations({ items }: { items: LifeInvestigation[] }) {
     setPrediction(null);
     setResults({});
   };
+  useEffect(() => {
+    setPrediction(null);
+    setResults({});
+  }, [resetKey]);
+  const comparisonComplete = Object.keys(results).length === item.cases.length;
   return (
     <section className="life-investigation" aria-label="Guided investigations">
       <div className="life-tabs" role="tablist" aria-label="Investigations">
@@ -100,10 +113,19 @@ export function LifeInvestigations({ items }: { items: LifeInvestigation[] }) {
         <div>
           <small>3. Explain</small>
           <p>
-            {Object.keys(results).length === item.cases.length
+            {comparisonComplete
               ? item.explain
               : "Run both trials, then use their evidence to explain the comparison."}
           </p>
+          {comparisonComplete && item.correctChoice && (
+            <p className="life-feedback" aria-live="polite">
+              The evidence{" "}
+              {prediction === item.correctChoice
+                ? "supports"
+                : "does not support"}{" "}
+              your prediction. {item.evidence}
+            </p>
+          )}
           {Object.entries(results).map(([label, result]) => (
             <p className="life-snapshot" key={label}>
               <strong>Evidence from {label.toLowerCase()}:</strong> {result}

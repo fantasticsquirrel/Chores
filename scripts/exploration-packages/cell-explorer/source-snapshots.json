@@ -1,0 +1,18 @@
+{
+  "reviewed": "2026-11-04",
+  "snapshots": [
+    {
+      "file": "openstax-eukaryotic-cells.html",
+      "url": "https://openstax.org/books/biology-2e/pages/4-3-eukaryotic-cells",
+      "bytes": 407112,
+      "sha256": "706499a351a4f016687bbc4aa4bd7a9a7bff8f44b85ba8fc17445e4b18179ab7"
+    },
+    {
+      "file": "openstax-passive-transport.html",
+      "url": "https://openstax.org/books/biology-2e/pages/5-2-passive-transport",
+      "bytes": 401100,
+      "sha256": "629c2f2cb22f8b540b1e0e15cc4240b5a16212d7c0fa286395334df308d3a0c3"
+    }
+  ],
+  "note": "The cited NCBI page was read through the research interface; an automated retrieval returned a CAPTCHA challenge and was not retained as a source snapshot."
+}

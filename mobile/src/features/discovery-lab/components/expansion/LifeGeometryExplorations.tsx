@@ -1,10 +1,11 @@
 import {
-  CellComparisons,
   ShapeComparisons,
   AdaptationComparisons,
 } from "./lifeGeometryComparisons";
-import { useState } from "react";
+import { useState, type SetStateAction } from "react";
 import {
+  cellExplorerBoundary,
+  cellExplorerCoreBoundary,
   defaultCellExplorerState,
   defaultShapeSlicerState,
   defaultAdaptationIslandState,
@@ -16,6 +17,7 @@ import {
   nextIslandGeneration,
   resetIsland,
   islandObservation,
+  type CellExplorerState,
   type CellPart,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
 import { ActionButton } from "../../../../components/ActionButton";
@@ -29,15 +31,24 @@ import {
   Meter,
   ModelNote,
 } from "../LearningPrimitives";
+import { CellComparison } from "./cells/CellComparison";
 
 export function CellExploration() {
   const [state, setState] = useState(defaultCellExplorerState);
+  const [comparisonReset, setComparisonReset] = useState(0);
+  const setManualState = (next: SetStateAction<CellExplorerState>) => {
+    setState(next);
+    setComparisonReset((value) => value + 1);
+  };
   const label = cellObservation(state);
   const parts = (Object.keys(cellParts) as CellPart[]).filter(
     (part) => state.cellType === "plant" || !cellParts[part].plantOnly,
   );
   return (
-    <LearningFrame onReset={() => setState(defaultCellExplorerState)}>
+    <LearningFrame
+      resetLabel="Reset cell explorer"
+      onReset={() => setManualState(defaultCellExplorerState)}
+    >
       <Diagram
         visualState={{ kind: "cell-explorer", ...state }}
         label={`${state.cellType} cell. ${cellParts[state.selected].name}. ${label}`}
@@ -71,7 +82,7 @@ export function CellExploration() {
         label="Cell type"
         value={state.cellType}
         onChange={(cellType) =>
-          setState({
+          setManualState({
             ...state,
             cellType,
             selected:
@@ -88,7 +99,7 @@ export function CellExploration() {
       <Choice
         label="Cell part"
         value={state.selected}
-        onChange={(selected) => setState({ ...state, selected })}
+        onChange={(selected) => setManualState({ ...state, selected })}
         options={parts.map((value) => ({
           value,
           label: cellParts[value].name,
@@ -97,7 +108,7 @@ export function CellExploration() {
       <Choice
         label="Molecule"
         value={state.molecule}
-        onChange={(molecule) => setState({ ...state, molecule })}
+        onChange={(molecule) => setManualState({ ...state, molecule })}
         options={[
           { value: "oxygen", label: "Oxygen" },
           { value: "glucose", label: "Glucose" },
@@ -105,33 +116,31 @@ export function CellExploration() {
       />
       <ActionButton
         label={state.carrier ? "Remove glucose carrier" : "Add glucose carrier"}
-        onPress={() => setState({ ...state, carrier: !state.carrier })}
+        onPress={() => setManualState({ ...state, carrier: !state.carrier })}
       />
       <Control
         label="Outside concentration"
         value={state.outside}
         min={0}
         max={20}
-        onChange={(outside) => setState({ ...state, outside })}
+        onChange={(outside) => setManualState({ ...state, outside })}
       />
       <Control
         label="Inside concentration"
         value={state.inside}
         min={0}
         max={20}
-        onChange={(inside) => setState({ ...state, inside })}
+        onChange={(inside) => setManualState({ ...state, inside })}
       />
       <ActionButton
         label="Transfer one step"
-        onPress={() => setState(stepCellTransport(state))}
+        onPress={() => setManualState(stepCellTransport(state))}
       />
-      <CellComparisons setState={setState} />
+      <CellComparison onApply={setState} resetKey={comparisonReset} />
       <ModelNote>
-        Equal-size compartments and relative concentration units. A step
-        transfers at most one unit and conserves the total. The carrier enables
-        passive glucose diffusion, not energy-powered transport. Organelle sizes
-        and placement are schematic. Molecule symbols are rounded; use the
-        concentration readouts for exact comparisons.
+        {cellExplorerCoreBoundary} A cell wall does not replace a membrane.
+        Molecule symbols are rounded; use the concentration readouts for exact
+        comparisons. {cellExplorerBoundary}
       </ModelNote>
     </LearningFrame>
   );

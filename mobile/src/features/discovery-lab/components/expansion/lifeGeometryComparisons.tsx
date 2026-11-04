@@ -1,66 +1,13 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  defaultCellExplorerState,
   defaultShapeSlicerState,
   defaultAdaptationIslandState,
-  stepCellTransport,
   nextIslandGeneration,
-  type CellExplorerState,
   type ShapeSlicerState,
   type AdaptationIslandState,
 } from "@family-manager/family-api/discovery-models/expansion-life-geometry";
 import { ControlledComparison } from "./ControlledComparison";
 type Setter<T> = Dispatch<SetStateAction<T>>;
-export function CellComparisons({
-  setState,
-}: {
-  setState: Setter<CellExplorerState>;
-}) {
-  return (
-    <>
-      <ControlledComparison
-        title="Different molecules"
-        prediction="Predict: can oxygen and glucose both cross a membrane without a glucose carrier?"
-        baseline="Restored outside 12 and inside 4, oxygen, no carrier, then ran one transfer step."
-        change="Restored the same concentrations with no carrier, changed only the molecule to glucose, then ran one equal step."
-        explain="Compare final concentrations. Why is the membrane selectively permeable?"
-        onBaseline={() => setState(stepCellTransport(defaultCellExplorerState))}
-        onChange={() =>
-          setState(
-            stepCellTransport({
-              ...defaultCellExplorerState,
-              molecule: "glucose",
-            }),
-          )
-        }
-      />
-      <ControlledComparison
-        title="Glucose and carrier"
-        prediction="Predict: with the same concentration difference, will glucose cross if its carrier is missing?"
-        baseline="Restored outside 12 and inside 4, glucose, no carrier, then ran one step."
-        change="Restored the same concentrations, added the carrier, then ran one equal step."
-        explain="What evidence shows selective permeability? Is the movement toward lower or higher concentration?"
-        onBaseline={() =>
-          setState(
-            stepCellTransport({
-              ...defaultCellExplorerState,
-              molecule: "glucose",
-            }),
-          )
-        }
-        onChange={() =>
-          setState(
-            stepCellTransport({
-              ...defaultCellExplorerState,
-              molecule: "glucose",
-              carrier: true,
-            }),
-          )
-        }
-      />
-    </>
-  );
-}
 export function ShapeComparisons({
   setState,
 }: {

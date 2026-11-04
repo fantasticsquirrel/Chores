@@ -78,6 +78,7 @@ const cases: {
     action: "Transfer one step",
     changed: { outside: 11, inside: 5 },
     result: /Outside 11.0; inside 5.0/,
+    reset: "Reset cell explorer",
   },
   {
     id: "shape-slicer",
@@ -107,7 +108,7 @@ const comparisons = [
   },
   {
     id: "cell-explorer",
-    titles: ["Different molecules", "Glucose and carrier"],
+    titles: ["Compare molecules", "Add a carrier"],
   },
   { id: "shape-slicer", titles: ["Cube orientation", "Sphere slice position"] },
   {
@@ -188,6 +189,15 @@ describe("native nine-topic controls and paired investigations", () => {
             }),
           );
         }
+        if (id === "cell-explorer") {
+          if (index > 0)
+            fireEvent.press(view.getByRole("radio", { name: title }));
+          fireEvent.press(
+            view.getByRole("radio", {
+              name: index === 0 ? "Different transfer" : "Transfer changes",
+            }),
+          );
+        }
         fireEvent.press(
           view.getByRole("button", { name: `Set baseline: ${title}` }),
         );
@@ -201,6 +211,29 @@ describe("native nine-topic controls and paired investigations", () => {
       view.unmount();
     },
   );
+  it("gives Cell Explorer wrong-answer feedback and clears it after a manual change", () => {
+    const view = render(<NativeExploration id="cell-explorer" />);
+    ready(view);
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Compare molecules" }),
+    ).toBeNull();
+    fireEvent.press(view.getByRole("radio", { name: "Same transfer" }));
+    fireEvent.press(
+      view.getByRole("button", { name: "Set baseline: Compare molecules" }),
+    );
+    fireEvent.press(
+      view.getByRole("button", { name: "Compare: Compare molecules" }),
+    );
+    expect(view.getByText(/does not support your prediction/)).toBeTruthy();
+    expect(view.getByText(/Oxygen changed.*Glucose stayed/)).toBeTruthy();
+    fireEvent.press(
+      view.getByRole("button", { name: "Increase Outside concentration" }),
+    );
+    expect(
+      view.queryByRole("button", { name: "Set baseline: Compare molecules" }),
+    ).toBeNull();
+    expect(view.queryByText(/does not support your prediction/)).toBeNull();
+  });
   it("gives Cloud and Rain exact evidence, feedback, state reset, and physical units", () => {
     const view = render(<NativeExploration id="cloud-rain-lab" />);
     ready(view);

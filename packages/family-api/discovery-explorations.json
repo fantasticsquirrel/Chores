@@ -953,26 +953,30 @@
     "subject": "Biology",
     "grade_bands": ["3-5", "6-8"],
     "tags": ["cells", "organelles", "transport", "biology"],
-    "summary": "Inspect plant and animal cell structures, then compare how oxygen and glucose cross a model membrane.",
-    "question": "Why can a concentration difference move one substance across a membrane but not another?",
-    "explanation": "Plant and animal cells share structures such as a cell membrane, nucleus and mitochondria. This green plant-cell example also has chloroplasts, a cell wall and a large central vacuole; many non-green plant cells lack chloroplasts. A selectively permeable membrane allows some substances through more easily than others. Oxygen diffuses through the model’s lipid layer, while glucose needs a carrier protein. Equal-sized compartments, relative concentration units and fixed transfer steps simplify the comparison; active transport and metabolism are omitted.",
+    "summary": "Inspect cell structures, then test how molecule type and a specific carrier affect passive membrane transport.",
+    "question": "Why can the same concentration difference move oxygen across a membrane but leave glucose blocked?",
+    "explanation": "Plant and animal cells share a membrane, nucleus and mitochondria. This photosynthetic plant-cell example also has chloroplasts, a cell wall and a large central vacuole; many plant cells lack chloroplasts. A lipid membrane is selectively permeable. Oxygen can diffuse through its lipid interior, while polar glucose needs a specific transport protein. Facilitated diffusion through that carrier still moves glucose down its concentration gradient without energy input. Equal-size compartments, relative concentration units and fixed one-unit steps make the comparison visible; they are not measurements or elapsed time.",
     "experiments": [
       {
-        "title": "Same gradient, different molecules",
-        "instruction": "Start with outside concentration 12, inside concentration 4 and no glucose carrier. Predict the difference between oxygen and glucose. Transfer oxygen for one step, restore both starting concentrations, then choose glucose and transfer one step.",
-        "observe": "Oxygen moves down its concentration gradient, while glucose does not cross this model membrane without a carrier. Explain why a concentration difference alone does not ensure passage."
+        "title": "Compare molecules",
+        "instruction": "Predict first. Start each trial at outside 12 and inside 4. Keep equal compartment size, cell type, carrier off and one model step fixed; change only the molecule from oxygen to glucose.",
+        "observe": "Oxygen changes from 12.0/4.0 to 11.0/5.0, while glucose stays at 12.0/4.0 without its carrier. Explain why a concentration difference drives net movement only when the membrane provides a path."
       },
       {
-        "title": "Provide a selective pathway",
-        "instruction": "Choose glucose, restore outside concentration 12 and inside concentration 4, and leave the carrier absent. Predict the effect of adding the glucose carrier, then compare one transfer step without it and one with it, restoring the starting concentrations between trials.",
-        "observe": "With the carrier, glucose moves from higher to lower concentration while the total amount stays the same. Explain why this is passive transport rather than a pump moving material against its gradient."
+        "title": "Add a carrier",
+        "instruction": "Predict first. Use glucose at outside 12 and inside 4 in both trials. Keep equal compartment size and one model step fixed; change only whether the specific glucose carrier is present.",
+        "observe": "Without the carrier glucose stays at 12.0/4.0; with it glucose changes to 11.0/5.0 while the total stays 16.0 relative units. Explain why a selective path enables facilitated diffusion but does not create or pump glucose."
       }
     ],
-    "misconception": "Plant cells have mitochondria as well as any chloroplasts they contain. A cell wall is outside the membrane, not a replacement for its selective control of transport.",
+    "misconception": "Equal concentration does not mean molecules stop moving; it means opposite movements balance so net transfer is zero. Plant cells also have mitochondria, and their wall lies outside rather than replacing the selectively permeable membrane.",
     "sources": [
       {
-        "title": "OpenStax: Eukaryotic cell structures and functions",
-        "url": "https://openstax.org/books/concepts-biology/pages/3-3-eukaryotic-cells"
+        "title": "NCBI Bookshelf: Selective permeability and membrane transport proteins",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK9928/"
+      },
+      {
+        "title": "OpenStax Biology 2e: Plant and animal cell structures",
+        "url": "https://openstax.org/books/biology-2e/pages/4-3-eukaryotic-cells"
       },
       {
         "title": "OpenStax: Selective permeability and passive transport",

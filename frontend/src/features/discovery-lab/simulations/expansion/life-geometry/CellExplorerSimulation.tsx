@@ -1,5 +1,8 @@
-import { useState } from "react";
+import { useState, type SetStateAction } from "react";
 import {
+  cellExplorerBoundary,
+  cellExplorerCoreBoundary,
+  cellExplorerTrials,
   cellObservation,
   cellParts,
   defaultCellExplorerState,
@@ -19,22 +22,20 @@ export function CellExplorerSimulation() {
   const [state, setState] = useState<CellExplorerState>(
     defaultCellExplorerState,
   );
+  const [investigationReset, setInvestigationReset] = useState(0);
+  const setManualState = (next: SetStateAction<CellExplorerState>) => {
+    setState(next);
+    setInvestigationReset((value) => value + 1);
+  };
   const set = <K extends keyof CellExplorerState>(
     key: K,
     value: CellExplorerState[K],
-  ) => setState((previous) => ({ ...previous, [key]: value }));
+  ) => setManualState((previous) => ({ ...previous, [key]: value }));
   const selectPart = (part: CellPart) => {
     if (state.cellType === "plant" || !cellParts[part].plantOnly)
       set("selected", part);
   };
-  const run = (molecule: CellExplorerState["molecule"], carrier: boolean) => {
-    const next = stepCellTransport({
-      ...state,
-      outside: 12,
-      inside: 4,
-      molecule,
-      carrier,
-    });
+  const run = (next: CellExplorerState) => {
     setState(next);
     return cellObservation(next);
   };
@@ -45,8 +46,8 @@ export function CellExplorerSimulation() {
       <header>
         <h2>What can cross a cell membrane?</h2>
         <p>
-          Select a cell part, then compare oxygen and glucose moving between
-          equal-sized compartments.
+          Predict which substance can cross, change one variable, and use the
+          concentration evidence to explain selective permeability.
         </p>
       </header>
       <div className="life-workspace">
@@ -69,7 +70,7 @@ export function CellExplorerSimulation() {
               onChange={(event) => {
                 const cellType = event.target
                   .value as CellExplorerState["cellType"];
-                setState((previous) => ({
+                setManualState((previous) => ({
                   ...previous,
                   cellType,
                   selected:
@@ -143,13 +144,16 @@ export function CellExplorerSimulation() {
             onChange={(value) => set("inside", value)}
           />
           <div className="life-actions">
-            <button type="button" onClick={() => setState(stepCellTransport)}>
+            <button
+              type="button"
+              onClick={() => setManualState(stepCellTransport)}
+            >
               Transfer one step
             </button>
             <button
               type="button"
               onClick={() =>
-                setState((previous) => ({
+                setManualState((previous) => ({
                   ...previous,
                   outside: 12,
                   inside: 4,
@@ -157,6 +161,12 @@ export function CellExplorerSimulation() {
               }
             >
               Reset concentrations
+            </button>
+            <button
+              type="button"
+              onClick={() => setManualState(defaultCellExplorerState)}
+            >
+              Reset cell explorer
             </button>
           </div>
         </div>
@@ -171,46 +181,30 @@ export function CellExplorerSimulation() {
         </span>
       </div>
       <LifeInvestigations
-        items={[
-          {
-            label: "Compare molecules",
-            predict:
-              "With no carrier, will both molecules enter at the same rate?",
-            choices: ["Same transfer", "Different transfer"],
-            fixed:
-              "Start both trials at outside 12 and inside 4. Keep the cell type and carrier off. Change only the molecule, then take one step.",
-            cases: [
-              ["Oxygen · one step", () => run("oxygen", false)],
-              ["Glucose · one step", () => run("glucose", false)],
-            ],
-            explain:
-              "Which trial changed the inside concentration? What does that show about a selectively permeable membrane?",
-          },
-          {
-            label: "Add a carrier",
-            predict:
-              "Can a carrier change glucose transfer without changing the concentration difference?",
-            choices: ["Transfer changes", "No change"],
-            fixed:
-              "Use glucose in both trials, outside 12 and inside 4. Change only whether the glucose carrier is present. Compare one step each.",
-            cases: [
-              ["No carrier · one step", () => run("glucose", false)],
-              ["Carrier · one step", () => run("glucose", true)],
-            ],
-            explain:
-              "Compare the amounts on each side and their total. Does a carrier create glucose, or provide a path across the membrane?",
-          },
-        ]}
+        resetKey={investigationReset}
+        items={cellExplorerTrials.map((trial) => ({
+          label: trial.title,
+          predict: trial.question,
+          choices: trial.choices,
+          correctChoice: trial.correctChoice,
+          fixed: trial.controlled,
+          cases: [
+            [trial.caseLabels[0], () => run({ ...trial.before })],
+            [trial.caseLabels[1], () => run({ ...trial.after })],
+          ],
+          evidence: `${trial.evidence} Changed: ${trial.changed}. Held: ${trial.held.join(", ")}.`,
+          explain: trial.explain,
+        }))}
       />
       <p className="life-model-note">
-        Organelles are enlarged and arranged for inspection, not to scale.
-        Concentrations are relative units in two equal volumes. Each step shows
-        net transfer, not individual molecular motion or real elapsed time. Only
-        passive oxygen diffusion and carrier-mediated glucose diffusion are
-        modeled; active transport and reactions are omitted. A cell wall does
-        not replace a cell membrane. Molecule symbols are rounded; use the
-        numeric concentrations for comparisons.
+        {cellExplorerCoreBoundary} A cell wall does not replace a cell membrane.
+        Use the numeric concentrations, not the rounded molecule symbols, for
+        comparisons.
       </p>
+      <details className="life-boundary">
+        <summary>Model boundary</summary>
+        <p>{cellExplorerBoundary}</p>
+      </details>
     </section>
   );
 }

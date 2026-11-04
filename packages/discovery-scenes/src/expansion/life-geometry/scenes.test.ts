@@ -17,6 +17,17 @@ describe("React-free life and geometry scenes", () => {
     scene.update({ ...defaultCellExplorerState, inside: 5, outside: 11 });
     expect(scene.group.children.length).toBe(count);
     expect(scene.labels().map((label) => label.text)).toContain("Inside 5.0");
+    expect(scene.labels().map((label) => label.text)).toContain(
+      "Oxygen · lipid path",
+    );
+    scene.update({
+      ...defaultCellExplorerState,
+      molecule: "glucose",
+      carrier: false,
+    });
+    expect(scene.labels().map((label) => label.text)).toContain(
+      "Glucose · blocked",
+    );
     scene.update({
       ...defaultCellExplorerState,
       cellType: "animal",

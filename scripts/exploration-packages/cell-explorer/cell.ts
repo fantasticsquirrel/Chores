@@ -115,6 +115,12 @@ export function createCellExplorerScene(
 ): ExpansionScene<CellExplorerState> {
   const group = new T.Group();
   let state = initial;
+  const transportLabel = () => {
+    if (state.outside === state.inside)
+      return `${state.molecule === "oxygen" ? "Oxygen" : "Glucose"} · net zero`;
+    if (state.molecule === "oxygen") return "Oxygen · lipid path";
+    return state.carrier ? "Glucose · carrier path" : "Glucose · blocked";
+  };
   const draw = () =>
     rebuild(group, () => {
       const plant = state.cellType === "plant",
@@ -268,7 +274,7 @@ export function createCellExplorerScene(
         { text: `Outside ${state.outside.toFixed(1)}`, at: [3.2, 0, 2.5] },
         { text: `Inside ${state.inside.toFixed(1)}`, at: [5.1, 0, 2.5] },
         {
-          text: state.carrier ? "Membrane + carrier" : "Cell membrane",
+          text: transportLabel(),
           at: [4.1, 0.4, -2.4],
         },
       ];

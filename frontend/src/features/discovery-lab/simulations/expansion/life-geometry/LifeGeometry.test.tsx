@@ -37,6 +37,36 @@ describe("cell controls", () => {
       screen.getByRole("button", { name: "Mitochondrion" }),
     ).not.toBeDisabled();
   });
+  it("reports correct-versus-wrong evidence, clears stale trials, and resets", () => {
+    render(<CellExplorerSimulation />);
+    fireEvent.click(screen.getByRole("button", { name: "Same transfer" }));
+    fireEvent.click(screen.getByRole("button", { name: "Oxygen · one step" }));
+    fireEvent.click(screen.getByRole("button", { name: "Glucose · one step" }));
+    expect(
+      screen.getByText(/does not support your prediction/i),
+    ).toHaveTextContent(/Oxygen changed.*Glucose stayed/i);
+    fireEvent.change(screen.getByLabelText("Outside concentration"), {
+      target: { value: "20" },
+    });
+    expect(
+      screen.queryByText(/does not support your prediction/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Oxygen · one step" }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Molecule"), {
+      target: { value: "glucose" },
+    });
+    fireEvent.click(screen.getByLabelText("Glucose carrier"));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Reset cell explorer" }),
+    );
+    expect(screen.getByLabelText("Molecule")).toHaveValue("oxygen");
+    expect(screen.getByLabelText("Glucose carrier")).not.toBeChecked();
+    expect(screen.getByRole("status").textContent).toContain(
+      "Outside 12.0; inside 4.0",
+    );
+  });
 });
 describe("slicing controls", () => {
   it("reports exact sides and can restore center cut", () => {
@@ -97,6 +127,7 @@ describe("controlled investigations", () => {
     expect(screen.getByRole("status").textContent).toContain(
       "Outside 12.0; inside 4.0",
     );
+    expect(screen.getByText(/supports your prediction/i)).toBeVisible();
     fireEvent.click(screen.getByRole("tab", { name: "Add a carrier" }));
     fireEvent.click(screen.getByRole("button", { name: "Transfer changes" }));
     fireEvent.click(

@@ -2,13 +2,13 @@
   "experiments": [
     {
       "title": "Compare molecules",
-      "instruction": "Choose Compare molecules. With no carrier, will both molecules enter at the same rate? Select your prediction, then Set baseline and Compare glucose after one step. Start both trials at outside 12, inside 4 with the same cell type and carrier off. Compare one transfer step for oxygen and glucose.",
-      "observe": "Photosynthetic plant cell with wall, membrane, central vacuole and chloroplasts. Both have nucleus and mitochondria. Cell membrane: A selectively permeable boundary controls exchange. Small oxygen molecules diffuse through the lipid layer; glucose needs a transport protein in this model. Outside 12.0; inside 4.0 relative concentration units. No glucose transfer: this membrane has no glucose carrier. Total concentration units in equal volumes 16.0; a transfer step conserves this total. Which changed inside concentration? What does that show about a selectively permeable membrane?"
+      "instruction": "Predict first. Start each trial at outside 12 and inside 4. Keep equal compartment size, cell type, carrier off and one model step fixed; change only the molecule from oxygen to glucose.",
+      "observe": "Oxygen changes from 12.0/4.0 to 11.0/5.0, while glucose stays at 12.0/4.0 without its carrier. Explain why a concentration difference drives net movement only when the membrane provides a path."
     },
     {
       "title": "Add a carrier",
-      "instruction": "Choose Add a carrier. Can a carrier change glucose transfer without changing the starting concentration difference? Select your prediction, then Set baseline and Compare carrier after one step. Start glucose at outside 12 and inside 4 for each trial. Compare one step without and with the carrier.",
-      "observe": "Photosynthetic plant cell with wall, membrane, central vacuole and chloroplasts. Both have nucleus and mitochondria. Cell membrane: A selectively permeable boundary controls exchange. Small oxygen molecules diffuse through the lipid layer; glucose needs a transport protein in this model. Outside 11.0; inside 5.0 relative concentration units. Net glucose transfer is inward, from higher to lower concentration. Total concentration units in equal volumes 16.0; a transfer step conserves this total. Compare amounts on each side and total. Does a carrier create glucose, or provide a path?"
+      "instruction": "Predict first. Use glucose at outside 12 and inside 4 in both trials. Keep equal compartment size and one model step fixed; change only whether the specific glucose carrier is present.",
+      "observe": "Without the carrier glucose stays at 12.0/4.0; with it glucose changes to 11.0/5.0 while the total stays 16.0 relative units. Explain why a selective path enables facilitated diffusion but does not create or pump glucose."
     }
   ]
 }

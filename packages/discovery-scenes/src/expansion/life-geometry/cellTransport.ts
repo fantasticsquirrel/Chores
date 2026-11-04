@@ -43,6 +43,14 @@ export function drawCellTransport(group: T.Group, state: CellExplorerState) {
       );
     ring(group, 4.1, 0.42, 0, 0.17, 0.14, "#d1bee3", 0.025);
   }
+  if (
+    state.molecule === "glucose" &&
+    !state.carrier &&
+    state.outside !== state.inside
+  ) {
+    rod(group, v(3.72, 0.62, -0.22), v(3.96, 0.62, 0.22), 0.045, "#f5dda2");
+    rod(group, v(3.72, 0.62, 0.22), v(3.96, 0.62, -0.22), 0.045, "#f5dda2");
+  }
   for (const [count, side] of [
     [state.outside, -1],
     [state.inside, 1],

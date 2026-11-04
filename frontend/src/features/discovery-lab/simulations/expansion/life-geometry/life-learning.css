@@ -40,6 +40,27 @@
 .life-snapshot strong {
   color: #ead7af;
 }
+.life-feedback {
+  padding: 11px;
+  background: #314c46;
+  border: 1px solid #78977f;
+  border-radius: 8px;
+}
+.life-boundary {
+  padding: 18px 26px;
+  border-top: 1px solid #42585d;
+  color: #c8d5d2;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.life-boundary summary {
+  cursor: pointer;
+  color: #ead7af;
+  font-weight: 700;
+}
+.life-boundary p {
+  margin: 10px 0 0;
+}
 .life-model-note {
   padding: 18px 26px;
   margin: 0;
